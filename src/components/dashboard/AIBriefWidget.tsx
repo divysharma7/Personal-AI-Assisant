@@ -98,7 +98,7 @@ export default function AIBriefWidget({ items }: Props) {
         </button>
       </div>
 
-      <div className="flex-1 flex items-start">
+      <div className="flex-1 flex items-start overflow-auto">
         {loading ? (
           <div className="w-full space-y-2 pt-1">
             <div className="h-3 w-full rounded-lg skeleton-shimmer"><div className="skeleton-shine" /></div>
@@ -106,10 +106,10 @@ export default function AIBriefWidget({ items }: Props) {
             <div className="h-3 w-3/5 rounded-lg skeleton-shimmer"><div className="skeleton-shine" /></div>
           </div>
         ) : brief ? (
-          <p className="text-sm leading-relaxed" style={{ color: 'var(--text-2)' }}>{brief}</p>
+          <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: 'var(--text-2)' }}>{brief}</p>
         ) : (
           <p className="text-xs" style={{ color: 'var(--text-3)' }}>
-            {items.length === 0 ? 'Loading your schedule…' : 'Click ↻ to generate'}
+            {items.length === 0 ? 'Loading your schedule...' : 'Click the refresh button to generate your daily brief.'}
           </p>
         )}
       </div>

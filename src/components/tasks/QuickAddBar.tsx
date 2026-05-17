@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Zap, Send } from 'lucide-react'
+import { Zap, Send, Mic, MicOff } from 'lucide-react'
 import { format } from 'date-fns'
 import { parseQuickAdd, type ParsedTask } from '@/lib/nlpParser'
 import { useItems } from '@/hooks/useItems'
@@ -11,9 +11,42 @@ export default function QuickAddBar() {
   const [input, setInput] = useState('')
   const [parsed, setParsed] = useState<ParsedTask>({ title: '', dueDate: null, tags: [], priority: null })
   const [success, setSuccess] = useState(false)
+  const [listening, setListening] = useState(false)
+  const recognitionRef = useRef<SpeechRecognition | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const { addItem } = useItems()
+
+  // Check if Web Speech API is available
+  const speechSupported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
+
+  const toggleVoice = useCallback(() => {
+    if (listening && recognitionRef.current) {
+      recognitionRef.current.stop()
+      setListening(false)
+      return
+    }
+    if (!speechSupported) return
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    const recognition = new SR()
+    recognition.continuous = false
+    recognition.interimResults = false
+    recognition.lang = 'en-US'
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = event.results[0]?.[0]?.transcript || ''
+      if (transcript) {
+        const combined = input ? `${input} ${transcript}` : transcript
+        setInput(combined)
+        setParsed(parseQuickAdd(combined))
+      }
+      setListening(false)
+    }
+    recognition.onerror = () => setListening(false)
+    recognition.onend = () => setListening(false)
+    recognition.start()
+    recognitionRef.current = recognition
+    setListening(true)
+  }, [listening, speechSupported, input])
 
   // Debounced parse on input change
   const handleChange = useCallback((value: string) => {
@@ -87,6 +120,20 @@ export default function QuickAddBar() {
             className="flex-1 bg-transparent outline-none text-sm"
             style={{ color: 'var(--text-1)' }}
           />
+          {speechSupported && (
+            <button
+              onClick={toggleVoice}
+              className="flex items-center justify-center w-6 h-6 rounded-lg transition-all"
+              style={{
+                background: listening ? '#ef4444' : 'var(--input-bg)',
+                color: listening ? '#fff' : 'var(--text-3)',
+                border: listening ? 'none' : '1px solid var(--border)',
+              }}
+              title={listening ? 'Stop listening' : 'Voice input'}
+            >
+              {listening ? <MicOff size={12} /> : <Mic size={12} />}
+            </button>
+          )}
           <button
             onClick={handleSubmit}
             disabled={!parsed.title.trim()}

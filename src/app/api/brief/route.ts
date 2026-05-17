@@ -158,13 +158,16 @@ export async function POST(req: Request) {
     upcomingLines.slice(0, 3).forEach(l => contextLines.push(`  - ${l}`))
   }
 
-  const systemMsg = `You are a concise personal assistant. Your ONLY job is to summarise the schedule data provided by the user into 1–2 plain sentences. Rules:
-- ONLY mention items that are explicitly listed in the data below. Do not add, infer, or invent any tasks, events, or details that are not in the list.
-- Do not give advice, suggestions, or action items.
-- No bullet points, no markdown, no greeting, no sign-off.
+  const systemMsg = `You are a concise personal assistant. Summarise the schedule data into 2–3 plain sentences. Rules:
+- ONLY mention items explicitly listed in the data. Do not add, infer, or invent anything.
+- Start with a brief greeting appropriate for the time of day (Good morning, Good afternoon, etc.).
+- Mention overdue items first if any, then today's schedule, then tomorrow if relevant.
+- If habits data is present, mention today's habit completion briefly.
+- End with a one-sentence weather note if weather data is provided.
+- No bullet points, no markdown, no sign-off.
 - Output only the brief text, nothing else.`
 
-  const userMsg = `Here is my current schedule data:\n\n${contextLines.join('\n')}\n\nWrite a 1–2 sentence brief strictly based on this data only.`
+  const userMsg = `Here is my current schedule data:\n\n${contextLines.join('\n')}\n\nWrite a 2–3 sentence brief strictly based on this data only.`
 
   try {
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
