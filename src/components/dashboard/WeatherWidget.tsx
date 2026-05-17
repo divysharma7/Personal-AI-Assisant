@@ -79,8 +79,10 @@ export default function WeatherWidget() {
   if (loading) return (
     <div className="flex flex-col h-full">
       <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: 'var(--text-3)' }}>Weather</p>
-      <div className="flex-1 flex items-center justify-center">
-        <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }} />
+      <div className="flex-1 space-y-3 pt-2">
+        <div className="h-8 w-20 rounded-lg skeleton-shimmer"><div className="skeleton-shine" /></div>
+        <div className="h-3 w-28 rounded-lg skeleton-shimmer"><div className="skeleton-shine" /></div>
+        <div className="h-3 w-16 rounded-lg skeleton-shimmer"><div className="skeleton-shine" /></div>
       </div>
     </div>
   )
@@ -104,7 +106,7 @@ export default function WeatherWidget() {
       <div className="flex items-end gap-3 mb-3">
         <span style={{ fontSize: 44, lineHeight: 1 }}>{emoji}</span>
         <div>
-          <p className="font-bold leading-none" style={{ fontSize: 36, color: 'var(--text-1)' }}>
+          <p className="font-bold leading-none tabular-nums" style={{ fontSize: 36, color: 'var(--text-1)' }}>
             {data.temp}°
           </p>
           <p className="text-sm" style={{ color: 'var(--text-2)' }}>{label}</p>
@@ -119,7 +121,7 @@ export default function WeatherWidget() {
         ].map(({ label, value }) => (
           <div key={label} className="rounded-lg p-2 text-center" style={{ background: 'var(--input-bg)' }}>
             <p className="text-xs" style={{ color: 'var(--text-3)' }}>{label}</p>
-            <p className="text-xs font-semibold mt-0.5" style={{ color: 'var(--text-1)' }}>{value}</p>
+            <p className="text-xs font-semibold tabular-nums mt-0.5" style={{ color: 'var(--text-1)' }}>{value}</p>
           </div>
         ))}
       </div>

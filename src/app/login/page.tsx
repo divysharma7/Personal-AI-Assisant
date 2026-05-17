@@ -3,6 +3,8 @@ import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, LogIn } from 'lucide-react'
+import { smooth } from '@/shared/design-system'
+import Link from 'next/link'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -48,7 +50,7 @@ export default function LoginPage() {
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ type: 'spring', stiffness: 260, damping: 24 }}
+        transition={smooth}
         className="w-full max-w-sm"
       >
         {/* Brand */}
@@ -132,8 +134,11 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-slate-600 text-xs mt-6">
-          PIM — Personal Intelligent Manager
+        <p className="text-center text-slate-500 text-sm mt-6">
+          Don&apos;t have an account?{' '}
+          <Link href="/signup" className="font-medium hover:underline" style={{ color: 'var(--accent)' }}>
+            Sign up
+          </Link>
         </p>
       </motion.div>
     </div>

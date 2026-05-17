@@ -4,7 +4,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { List, CalendarDays, Brain, Users, Settings2, type LucideIcon } from 'lucide-react'
+import { List, CalendarDays, Brain, Users, Settings2, CheckSquare, Timer, type LucideIcon } from 'lucide-react'
+import { snappy, gentle } from '@/shared/design-system'
 
 interface NavItem {
   href:  string
@@ -16,6 +17,8 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: '/calendar?view=agenda', icon: List,        label: 'Agenda',   match: () => false },
   { href: '/calendar?view=month',  icon: CalendarDays, label: 'Calendar', match: p => p === '/calendar' },
+  { href: '/tasks',                icon: CheckSquare,  label: 'Tasks',    match: p => p === '/tasks' },
+  { href: '/pomodoro',              icon: Timer,        label: 'Pomodoro', match: p => p === '/pomodoro' },
   { href: '/memories',             icon: Brain,        label: 'Memories', match: p => p === '/memories' },
   { href: '/contacts',             icon: Users,        label: 'Contacts', match: p => p === '/contacts' },
   { href: '/settings',             icon: Settings2,    label: 'Settings', match: p => p === '/settings' },
@@ -39,7 +42,7 @@ function Tooltip({ label }: { label: string }) {
         initial={{ opacity: 0, x: -6 }}
         animate={{ opacity: 1, x: 0  }}
         exit={{ opacity: 0,   x: -4  }}
-        transition={{ duration: 0.12, ease: 'easeOut' }}
+        transition={gentle}
         style={{
           display:      'block',
           background:   'var(--card)',
@@ -71,7 +74,7 @@ function DockBtn({
     <motion.div
       initial={{ x: -18, opacity: 0 }}
       animate={{ x: 0,   opacity: 1 }}
-      transition={{ type: 'spring', stiffness: 320, damping: 28, delay }}
+      transition={{ ...snappy, delay }}
       whileTap={{ scale: 0.91 }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -91,11 +94,11 @@ function DockBtn({
           background: active
             ? 'var(--accent)'
             : hovered
-              ? 'rgba(99,102,241,0.14)'
+              ? 'var(--accent-soft)'
               : 'var(--dock-btn-bg)',
           border: `1.5px solid ${
             active  ? 'rgba(255,255,255,0.25)' :
-            hovered ? 'rgba(99,102,241,0.35)' :
+            hovered ? 'var(--accent-glow)' :
                       'var(--dock-btn-border)'
           }`,
           color: active ? '#fff' : hovered ? 'var(--accent)' : 'var(--text-2)',
@@ -116,7 +119,7 @@ function HomeBtn({ active, delay }: { active: boolean; delay: number }) {
     <motion.div
       initial={{ x: -18, opacity: 0 }}
       animate={{ x: 0,   opacity: 1 }}
-      transition={{ type: 'spring', stiffness: 320, damping: 28, delay }}
+      transition={{ ...snappy, delay }}
       whileTap={{ scale: 0.91 }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -137,11 +140,11 @@ function HomeBtn({ active, delay }: { active: boolean; delay: number }) {
           background: active
             ? 'rgba(255,255,255,0.15)'
             : hovered
-              ? 'rgba(99,102,241,0.14)'
+              ? 'var(--accent-soft)'
               : 'var(--dock-btn-bg)',
           border: `1.5px solid ${
             active  ? 'rgba(255,255,255,0.25)' :
-            hovered ? 'rgba(99,102,241,0.35)' :
+            hovered ? 'var(--accent-glow)' :
                       'var(--dock-btn-border)'
           }`,
           transition: 'background 0.18s ease, border-color 0.18s ease',
@@ -169,7 +172,7 @@ export default function LeftDock() {
       <motion.div
         initial={{ x: -36, opacity: 0 }}
         animate={{ x: 0,   opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 280, damping: 26, delay: 0.05 }}
+        transition={{ ...snappy, delay: 0.05 }}
         style={{
           display:              'flex',
           flexDirection:        'column',

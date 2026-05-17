@@ -3,6 +3,15 @@
 @tailwind utilities;
 
 @layer base {
+  /* ── Typography — Inter variable font features ─────────── */
+  html {
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
   /* ── Item type colors — update per theme ────────────────── */
   :root, [data-theme="dark"] {
     --color-event:    #818cf8;
@@ -32,11 +41,14 @@
     --text-2: #7b91ad;
     --text-3: #3d5068;
     --accent: #6366f1;
+    --accent-hover: #4F46E5;
+    --accent-soft: rgba(99,102,241,0.1);
+    --accent-foreground: #FFFFFF;
     --accent-light: #818cf8;
     --accent-dim: #0f1235;
     --accent-glow: #6366f140;
-    --btn-primary-bg: #6366f1;
-    --btn-primary-hover: #4f52c8;
+    --btn-primary-bg: var(--accent);
+    --btn-primary-hover: var(--accent-hover);
 
     /* Calendar-specific */
     --cal-header-bg: #070b14;
@@ -66,7 +78,7 @@
     --sidebar-border: #131f35;
     --sidebar-item-hover: #111e33;
     --sidebar-active-bg: #0f1535;
-    --sidebar-active-color: #818cf8;
+    --sidebar-active-color: var(--accent-light);
 
     /* Card shadow (dark — very subtle) */
     --card-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2);
@@ -91,11 +103,14 @@
     --text-2: #4a5880;
     --text-3: #9aa5c4;
     --accent: #6366f1;
+    --accent-hover: #4F46E5;
+    --accent-soft: #EEF2FF;
+    --accent-foreground: #FFFFFF;
     --accent-light: #818cf8;
     --accent-dim: #eef0ff;
     --accent-glow: #6366f125;
-    --btn-primary-bg: #6366f1;
-    --btn-primary-hover: #4f52c8;
+    --btn-primary-bg: var(--accent);
+    --btn-primary-hover: var(--accent-hover);
 
     /* Card shadow used instead of borders */
     --card-shadow: 0 1px 3px rgba(15,23,62,0.07), 0 4px 12px rgba(15,23,62,0.05);
@@ -136,7 +151,7 @@
     --sidebar-border: #e4e9f5;
     --sidebar-item-hover: #edf0fb;
     --sidebar-active-bg: #eef0ff;
-    --sidebar-active-color: #6366f1;
+    --sidebar-active-color: var(--accent);
   }
 
   * {
@@ -326,4 +341,20 @@
   border-radius: 9999px;
   background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
   pointer-events: none;
+}
+
+/* ── Skeleton shimmer animation ─────────────────────────── */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.skeleton-shimmer .skeleton-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, var(--border) 50%, transparent 100%);
+  animation: shimmer 1.5s infinite;
 }

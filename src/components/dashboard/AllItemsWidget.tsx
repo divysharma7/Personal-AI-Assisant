@@ -1,10 +1,14 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { Calendar, CheckSquare, Bell, CheckCircle2, Circle, List, ArrowUpRight } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Calendar, CheckSquare, Bell, List, ArrowUpRight } from 'lucide-react'
 import { isToday, isTomorrow, isPast, format, isThisYear } from 'date-fns'
 import type { AnyItem, CalendarEvent, Task, Reminder } from '@/types'
 import { ITEM_COLORS } from '@/lib/utils'
+import { taskCompletion } from '@/shared/design-system'
+import AnimatedTaskCheckbox from '@/components/tasks/AnimatedTaskCheckbox'
+import AnimatedTaskTitle from '@/components/tasks/AnimatedTaskTitle'
 
 interface Props {
   items: AnyItem[]
@@ -116,9 +120,9 @@ export default function AllItemsWidget({ items, onUpdateItem }: Props) {
       {/* List */}
       <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
         {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-2">
-            <List size={22} style={{ color: 'var(--text-3)' }} />
-            <p className="text-xs" style={{ color: 'var(--text-3)' }}>Nothing here yet</p>
+          <div className="flex flex-col items-center justify-center h-full gap-2 opacity-70">
+            <Calendar size={28} style={{ color: 'var(--text-3)' }} />
+            <p className="text-xs font-medium" style={{ color: 'var(--text-3)' }}>Your schedule is clear.</p>
           </div>
         ) : (
           filtered.map(item => {
@@ -127,23 +131,29 @@ export default function AllItemsWidget({ items, onUpdateItem }: Props) {
             const color = ITEM_COLORS[item.type]
             const overdue = date && isPast(date) && !isToday(date) && !done
 
+            const isTask = item.type === 'task'
+
             return (
-              <div
+              <motion.div
                 key={item._id}
-                onClick={() => item.type === 'task' ? toggleTask(item as Task) : undefined}
-                className={`flex items-start gap-2.5 px-2.5 py-2 rounded-xl transition-colors ${item.type === 'task' ? 'cursor-pointer' : ''}`}
+                onClick={() => isTask ? toggleTask(item as Task) : undefined}
+                variants={isTask ? taskCompletion.row : undefined}
+                animate={isTask ? (done ? 'checked' : 'unchecked') : undefined}
+                className={`flex items-start gap-2.5 px-2.5 py-2 rounded-xl transition-colors ${isTask ? 'cursor-pointer' : ''}`}
                 style={{
                   background: done ? 'transparent' : 'var(--input-bg)',
                   border: `1px solid ${done ? 'transparent' : 'var(--border)'}`,
-                  opacity: done ? 0.45 : 1,
                 }}
               >
-                {/* Icon */}
+                {/* Icon / Checkbox */}
                 <div className="flex-shrink-0 mt-0.5">
-                  {item.type === 'task'
-                    ? done
-                      ? <CheckCircle2 size={13} style={{ color }} />
-                      : <Circle       size={13} style={{ color: 'var(--text-3)' }} />
+                  {isTask
+                    ? <AnimatedTaskCheckbox
+                        checked={done}
+                        onToggle={() => toggleTask(item as Task)}
+                        size={13}
+                        color={color}
+                      />
                     : item.type === 'event'
                       ? <Calendar size={13} style={{ color }} />
                       : <Bell     size={13} style={{ color }} />
@@ -152,15 +162,20 @@ export default function AllItemsWidget({ items, onUpdateItem }: Props) {
 
                 {/* Title + date */}
                 <div className="flex-1 min-w-0">
-                  <p
-                    className="text-xs font-medium truncate"
-                    style={{
-                      color: done ? 'var(--text-3)' : 'var(--text-1)',
-                      textDecoration: done ? 'line-through' : 'none',
-                    }}
-                  >
-                    {item.title}
-                  </p>
+                  {isTask ? (
+                    <AnimatedTaskTitle
+                      title={item.title}
+                      completed={done}
+                      className="text-xs font-medium truncate"
+                    />
+                  ) : (
+                    <p
+                      className="text-xs font-medium truncate"
+                      style={{ color: 'var(--text-1)' }}
+                    >
+                      {item.title}
+                    </p>
+                  )}
                   {date && (
                     <p
                       className="text-xs mt-0.5"
@@ -175,13 +190,13 @@ export default function AllItemsWidget({ items, onUpdateItem }: Props) {
                 </div>
 
                 {/* Priority badge for high-priority tasks */}
-                {item.type === 'task' && (item as Task).priority === 'high' && !done && (
+                {isTask && (item as Task).priority === 'high' && !done && (
                   <span className="text-xs px-1.5 py-0.5 rounded-md flex-shrink-0 font-medium"
                     style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}>
                     !
                   </span>
                 )}
-              </div>
+              </motion.div>
             )
           })
         )}

@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { quickFade } from '@/shared/design-system'
 import TopBarActions from '@/components/layout/TopBarActions'
 import { format, addMonths, subMonths, addWeeks, subWeeks, addDays, subDays } from 'date-fns'
 import MonthGrid from './MonthGrid'
@@ -28,6 +29,7 @@ const VIEW_PILLS: { id: CalView; label: string }[] = [
   { id: 'month',  label: 'Month'  },
   { id: 'week',   label: 'Week'   },
   { id: 'day',    label: 'Day'    },
+  { id: 'agenda', label: 'Agenda' },
 ]
 
 export default function CalendarView({ view, items, loading, onItemClick, onNewItem, onViewChange, onUpdateItem, onDeleteItem }: CalendarViewProps) {
@@ -54,31 +56,45 @@ export default function CalendarView({ view, items, loading, onItemClick, onNewI
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header bar — three-zone layout: left | center | right */}
+      {/* Header bar — responsive: stacked on mobile, three-zone on desktop */}
       <div
-        className="relative flex items-center px-5 py-3 flex-shrink-0"
+        className="flex flex-col md:flex-row md:relative md:items-center px-3 md:px-5 py-2 md:py-3 gap-2 md:gap-0 flex-shrink-0"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
-        {/* Left: title + spinner */}
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <motion.h2
-            key={title}
-            initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-            className="text-base font-bold truncate"
-            style={{ color: 'var(--text-1)' }}
-          >
-            {title}
-          </motion.h2>
-          {loading && (
-            <div className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin flex-shrink-0"
-              style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }} />
-          )}
+        {/* Top row on mobile: title + nav */}
+        <div className="flex items-center justify-between md:flex-1 md:min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
+            {view !== 'agenda' && (
+              <button onClick={goBack} className="btn-ghost p-1.5 md:hidden"><ChevronLeft size={15} /></button>
+            )}
+            <motion.h2
+              key={title}
+              initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+              className="text-sm md:text-base font-bold truncate"
+              style={{ color: 'var(--text-1)' }}
+            >
+              {title}
+            </motion.h2>
+            {view !== 'agenda' && (
+              <button onClick={goForward} className="btn-ghost p-1.5 md:hidden"><ChevronRight size={15} /></button>
+            )}
+            {loading && (
+              <div className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin flex-shrink-0"
+                style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }} />
+            )}
+          </div>
+          <div className="flex items-center gap-1 md:hidden">
+            {view !== 'agenda' && (
+              <button onClick={goToday} className="btn-ghost text-xs px-2 py-1">Today</button>
+            )}
+            <TopBarActions />
+          </div>
         </div>
 
-        {/* Center: view switcher — always centered regardless of right content */}
-        <div className="absolute left-1/2 -translate-x-1/2">
+        {/* Center: view switcher — scrollable on mobile */}
+        <div className="md:absolute md:left-1/2 md:-translate-x-1/2 overflow-x-auto">
           <div
-            className="flex items-center rounded-xl p-0.5 gap-0.5"
+            className="flex items-center rounded-xl p-0.5 gap-0.5 w-max"
             style={{ background: 'var(--input-bg)', border: '1px solid var(--border)' }}
           >
             {VIEW_PILLS.map(({ id, label }) => (
@@ -100,8 +116,8 @@ export default function CalendarView({ view, items, loading, onItemClick, onNewI
           </div>
         </div>
 
-        {/* Right: nav + top bar actions */}
-        <div className="flex items-center gap-1 flex-1 justify-end">
+        {/* Right: nav + top bar actions — desktop only */}
+        <div className="hidden md:flex items-center gap-1 flex-1 justify-end">
           {view !== 'agenda' && (
             <>
               <button onClick={goToday} className="btn-ghost text-xs px-3 py-1.5">Today</button>
@@ -119,7 +135,7 @@ export default function CalendarView({ view, items, loading, onItemClick, onNewI
           key={view + current.toISOString()}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.15 }}
+          transition={quickFade}
           className="h-full"
         >
           {view === 'month' && (

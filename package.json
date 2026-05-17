@@ -10,13 +10,19 @@
     "seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@posthook/node": "^1.2.0",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@tanstack/react-query": "^5.100.10",
     "@tiptap/extension-placeholder": "^3.22.4",
     "@tiptap/extension-task-item": "^3.22.4",
     "@tiptap/extension-task-list": "^3.22.4",
     "@tiptap/react": "^3.22.4",
     "@tiptap/starter-kit": "^3.22.4",
     "bcryptjs": "^2.4.3",
+    "chrono-node": "^2.9.1",
     "clsx": "^2.1.0",
     "date-fns": "^3.3.1",
     "firebase-admin": "^13.7.0",
@@ -30,6 +36,7 @@
     "react-dom": "^18.3.0",
     "tailwind-merge": "^2.2.1",
     "uuid": "^13.0.0",
+    "vaul": "^1.1.2",
     "web-push": "^3.6.7"
   },
   "devDependencies": {

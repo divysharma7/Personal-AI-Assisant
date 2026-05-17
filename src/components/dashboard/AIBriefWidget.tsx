@@ -100,10 +100,10 @@ export default function AIBriefWidget({ items }: Props) {
 
       <div className="flex-1 flex items-start">
         {loading ? (
-          <div className="flex items-center gap-2" style={{ color: 'var(--text-3)' }}>
-            <div className="w-3 h-3 rounded-full border-2 border-t-transparent animate-spin flex-shrink-0"
-              style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }} />
-            <span className="text-xs">Generating your brief…</span>
+          <div className="w-full space-y-2 pt-1">
+            <div className="h-3 w-full rounded-lg skeleton-shimmer"><div className="skeleton-shine" /></div>
+            <div className="h-3 w-4/5 rounded-lg skeleton-shimmer"><div className="skeleton-shine" /></div>
+            <div className="h-3 w-3/5 rounded-lg skeleton-shimmer"><div className="skeleton-shine" /></div>
           </div>
         ) : brief ? (
           <p className="text-sm leading-relaxed" style={{ color: 'var(--text-2)' }}>{brief}</p>

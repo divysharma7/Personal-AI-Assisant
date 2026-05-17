@@ -20,12 +20,37 @@ function isPublic(pathname: string) {
   return PUBLIC_PREFIXES.some(p => pathname.startsWith(p))
 }
 
+/**
+ * Resolve a JWT token from the request using priority order:
+ * 1. Cookie (pim_token)
+ * 2. Authorization: Bearer <token> header
+ * 3. x-api-key header (treated as a JWT)
+ */
+function resolveToken(request: NextRequest): string | undefined {
+  // 1. Cookie-based auth (highest priority)
+  const cookieToken = request.cookies.get(COOKIE_NAME)?.value
+  if (cookieToken) return cookieToken
+
+  // 2. Bearer token from Authorization header
+  const authHeader = request.headers.get('authorization')
+  if (authHeader?.startsWith('Bearer ')) {
+    const bearerToken = authHeader.slice(7).trim()
+    if (bearerToken) return bearerToken
+  }
+
+  // 3. x-api-key header (lowest priority)
+  const apiKey = request.headers.get('x-api-key')
+  if (apiKey) return apiKey
+
+  return undefined
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (isPublic(pathname)) return NextResponse.next()
 
-  const token = request.cookies.get(COOKIE_NAME)?.value
+  const token = resolveToken(request)
 
   if (!token) {
     return pathname.startsWith('/api/')

@@ -2,8 +2,11 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { format, isToday, isTomorrow, isFuture, isPast } from 'date-fns'
-import { MapPin, AlertCircle, CheckCircle2, Circle, MessageSquare } from 'lucide-react'
+import { MapPin, AlertCircle, CheckCircle2, MessageSquare, CalendarDays } from 'lucide-react'
 import { ITEM_COLORS, ITEM_BG, formatTime } from '@/lib/utils'
+import { taskCompletion } from '@/shared/design-system'
+import AnimatedTaskCheckbox from '@/components/tasks/AnimatedTaskCheckbox'
+import AnimatedTaskTitle from '@/components/tasks/AnimatedTaskTitle'
 import ItemDetailPanel from './ItemDetailPanel'
 import type { AnyItem, CalendarEvent, Task, Reminder } from '@/types'
 
@@ -143,11 +146,9 @@ export default function AgendaView({ items, onItemClick, onUpdateItem, onDeleteI
         {/* Agenda list */}
         <div className="flex-1 overflow-y-auto">
           {grouped.size === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center gap-3 py-24">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: 'var(--accent-dim)' }}>
-                <CheckCircle2 size={22} style={{ color: 'var(--accent-light)' }} />
-              </div>
-              <p className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>All clear!</p>
+            <div className="flex flex-col items-center justify-center h-full text-center gap-3 py-24 opacity-70">
+              <CalendarDays size={30} style={{ color: 'var(--text-3)' }} />
+              <p className="text-sm font-medium" style={{ color: 'var(--text-3)' }}>Your day is wide open.</p>
               <p className="text-xs" style={{ color: 'var(--text-3)' }}>
                 {filter === 'done' ? 'No completed tasks yet.' : 'No upcoming events, tasks, or reminders.'}
               </p>
@@ -189,7 +190,8 @@ export default function AgendaView({ items, onItemClick, onUpdateItem, onDeleteI
                         key={item._id}
                         onClick={() => setSelected(isSelected ? null : item)}
                         className={`agenda-item flex items-stretch rounded-xl cursor-pointer overflow-hidden${isSelected ? ' selected' : ''}`}
-                        style={{ opacity: isDone ? 0.5 : 1 }}
+                        variants={isTask ? taskCompletion.row : undefined}
+                        animate={isTask ? (isDone ? 'checked' : 'unchecked') : undefined}
                       >
                         {/* Left color bar */}
                         <div className="w-1 flex-shrink-0" style={{ background: isDone ? 'var(--border)' : isOverdue ? '#ef4444' : color }} />
@@ -199,14 +201,12 @@ export default function AgendaView({ items, onItemClick, onUpdateItem, onDeleteI
 
                           {/* Checkbox (tasks only) */}
                           {isTask && (
-                            <button
-                              onClick={e => { e.stopPropagation(); toggleTaskDone(item as Task) }}
-                              className="flex-shrink-0 transition-opacity hover:opacity-70"
-                              style={{ color: isDone ? color : 'var(--text-3)' }}
-                              title={isDone ? 'Mark as todo' : 'Mark as done'}
-                            >
-                              {isDone ? <CheckCircle2 size={18} /> : <Circle size={18} />}
-                            </button>
+                            <AnimatedTaskCheckbox
+                              checked={isDone}
+                              onToggle={() => toggleTaskDone(item as Task)}
+                              size={18}
+                              color={color}
+                            />
                           )}
 
                           {/* Main content */}
@@ -219,21 +219,27 @@ export default function AgendaView({ items, onItemClick, onUpdateItem, onDeleteI
                               >
                                 {TYPE_LABEL[item.type]}
                               </span>
-                              <span
-                                className="text-sm font-medium truncate"
-                                style={{
-                                  color: isOverdue ? '#ef4444' : 'var(--text-1)',
-                                  textDecoration: isDone ? 'line-through' : 'none',
-                                }}
-                              >
-                                {item.title}
-                              </span>
+                              {isTask ? (
+                                <AnimatedTaskTitle
+                                  title={item.title}
+                                  completed={isDone}
+                                  className="text-sm font-medium truncate"
+                                  style={{ color: isOverdue ? '#ef4444' : undefined }}
+                                />
+                              ) : (
+                                <span
+                                  className="text-sm font-medium truncate"
+                                  style={{ color: isOverdue ? '#ef4444' : 'var(--text-1)' }}
+                                >
+                                  {item.title}
+                                </span>
+                              )}
                             </div>
 
                             {/* Meta row */}
                             <div className="flex items-center gap-2 flex-wrap">
                               {item.type === 'event' && (
-                                <span className="text-xs" style={{ color: 'var(--text-3)' }}>
+                                <span className="text-xs tabular-nums" style={{ color: 'var(--text-3)' }}>
                                   {formatTime(item.startDate)} — {formatTime(item.endDate)}
                                 </span>
                               )}
@@ -243,12 +249,12 @@ export default function AgendaView({ items, onItemClick, onUpdateItem, onDeleteI
                                 </span>
                               )}
                               {item.type === 'reminder' && (
-                                <span className="text-xs" style={{ color: 'var(--text-3)' }}>
+                                <span className="text-xs tabular-nums" style={{ color: 'var(--text-3)' }}>
                                   {formatTime((item as Reminder).reminderDate)}
                                 </span>
                               )}
                               {isTask && (item as Task).dueDate && !isOverdue && (
-                                <span className="text-xs" style={{ color: 'var(--text-3)' }}>
+                                <span className="text-xs tabular-nums" style={{ color: 'var(--text-3)' }}>
                                   {formatTime((item as Task).dueDate!)}
                                 </span>
                               )}

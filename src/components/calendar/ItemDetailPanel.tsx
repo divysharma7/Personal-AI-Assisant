@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { X, MapPin, Clock, Calendar, Bell, CheckCircle2, Circle, Send, MessageSquare, Pencil, Check, Trash2 } from 'lucide-react'
+import { snappy } from '@/shared/design-system'
 import { format, isPast, isToday } from 'date-fns'
 import { ITEM_COLORS, ITEM_BG, formatTime } from '@/lib/utils'
 import UmbrellaPicker from '@/components/umbrellas/UmbrellaPicker'
@@ -144,7 +145,7 @@ export default function ItemDetailPanel({ item, onClose, onUpdateItem, onDeleteI
       initial={{ opacity: 0, x: 24 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 24 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+      transition={snappy}
       className="flex flex-col h-full overflow-hidden"
       style={{ borderLeft: '1px solid var(--border)' }}
     >

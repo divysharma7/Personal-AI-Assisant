@@ -16,7 +16,13 @@ import {
 
 const JournalEditor = dynamic(
   () => import('@/components/journal/JournalEditor'),
-  { ssr: false, loading: () => <div style={{ color: 'var(--text-3)', fontSize: 14 }}>Loading editor…</div> }
+  { ssr: false, loading: () => (
+    <div className="p-4 space-y-3">
+      <div className="h-3 w-3/4 rounded-lg skeleton-shimmer"><div className="skeleton-shine" /></div>
+      <div className="h-3 w-1/2 rounded-lg skeleton-shimmer"><div className="skeleton-shine" /></div>
+      <div className="h-3 w-5/6 rounded-lg skeleton-shimmer"><div className="skeleton-shine" /></div>
+    </div>
+  )}
 )
 
 const AUTOSAVE_MS = 1500
@@ -232,7 +238,7 @@ export default function JournalPage() {
                     <button
                       key={ds}
                       onClick={() => setSelectedDate(ds)}
-                      className="relative flex flex-col items-center justify-center rounded-lg py-1 transition-colors"
+                      className="relative flex flex-col items-center justify-center rounded-lg py-1 tabular-nums transition-colors"
                       style={{
                         fontSize:   11,
                         color:      !inMonth ? 'var(--text-3)' : isActive ? 'white' : 'var(--text-2)',

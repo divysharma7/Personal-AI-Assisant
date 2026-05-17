@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Calendar, ChevronLeft, ChevronRight, StickyNote, Brain, Users, List, LayoutDashboard, Settings2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { smooth } from '@/shared/design-system'
 import type { CalView } from '@/components/calendar/CalendarView'
 import NotesSection from '@/components/notes/NotesSection'
 
@@ -25,7 +26,7 @@ export default function Sidebar({ collapsed, onToggle, currentView, onViewChange
   return (
     <motion.aside
       animate={{ width: collapsed ? 68 : 220 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      transition={smooth}
       className="relative flex flex-col h-full flex-shrink-0 overflow-hidden"
       style={{ borderRight: '1px solid var(--sidebar-border)', background: 'var(--surface)' }}
     >

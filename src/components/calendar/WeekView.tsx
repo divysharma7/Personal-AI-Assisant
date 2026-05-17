@@ -196,19 +196,20 @@ export default function WeekView({ date, items, onItemClick, onNewItem, onUpdate
         className="flex flex-shrink-0 z-10"
         style={{ borderBottom: '1px solid var(--border)', background: 'var(--cal-header-bg)' }}
       >
-        <div className="w-14 flex-shrink-0 border-r" style={{ borderColor: 'var(--cal-col-border)' }} />
+        <div className="w-10 md:w-14 flex-shrink-0 border-r" style={{ borderColor: 'var(--cal-col-border)' }} />
         {days.map(day => (
           <div
             key={day.toISOString()}
-            className="flex-1 py-3 text-center border-r last:border-0"
+            className="flex-1 py-2 md:py-3 text-center border-r last:border-0"
             style={{ borderColor: 'var(--cal-col-border)' }}
           >
-            <p className="text-xs font-semibold tracking-widest" style={{ color: 'var(--text-3)' }}>
-              {format(day, 'EEE').toUpperCase()}
+            <p className="text-[10px] md:text-xs font-semibold tracking-widest" style={{ color: 'var(--text-3)' }}>
+              {format(day, 'EEEEE').toUpperCase()}
+              <span className="hidden md:inline">{format(day, 'EEE').toUpperCase().slice(1)}</span>
             </p>
-            <div className="flex items-center justify-center mt-1.5">
+            <div className="flex items-center justify-center mt-1">
               <span
-                className="w-8 h-8 flex items-center justify-center text-sm font-bold rounded-full"
+                className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center text-xs md:text-sm font-bold rounded-full"
                 style={isToday(day) ? { background: 'var(--accent)', color: '#fff' } : { color: 'var(--text-1)' }}
               >
                 {format(day, 'd')}
@@ -223,15 +224,16 @@ export default function WeekView({ date, items, onItemClick, onNewItem, onUpdate
         <div ref={gridRef} className="flex" style={{ height: HOURS.length * HOUR_HEIGHT, position: 'relative' }}>
 
           {/* Time gutter */}
-          <div className="w-14 flex-shrink-0 relative border-r" style={{ borderColor: 'var(--cal-col-border)' }}>
+          <div className="w-10 md:w-14 flex-shrink-0 relative border-r" style={{ borderColor: 'var(--cal-col-border)' }}>
             {HOURS.map(h => (
               <div
                 key={h}
-                className="absolute right-2 text-right pointer-events-none"
+                className="absolute right-1 md:right-2 text-right pointer-events-none"
                 style={{ top: h * HOUR_HEIGHT - 8, lineHeight: 1 }}
               >
-                <span style={{ color: 'var(--text-3)', fontSize: 11, fontWeight: 500 }}>
-                  {h === 0 ? '' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`}
+                <span style={{ color: 'var(--text-3)', fontSize: 10, fontWeight: 500 }}>
+                  {h === 0 ? '' : h < 12 ? `${h}` : h === 12 ? '12p' : `${h - 12}`}
+                  <span className="hidden md:inline">{h === 0 ? '' : h < 12 ? ' AM' : h === 12 ? 'M' : ' PM'}</span>
                 </span>
               </div>
             ))}

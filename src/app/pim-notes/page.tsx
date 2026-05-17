@@ -690,7 +690,7 @@ function PimNotesInner() {
                   color: folderConfirmVal === confirmFolder.name ? 'white' : 'var(--text-3)',
                   border: `1px solid ${folderConfirmVal === confirmFolder.name ? '#ef4444' : 'var(--border)'}`,
                   cursor: folderConfirmVal === confirmFolder.name ? 'pointer' : 'not-allowed',
-                  transition: 'all 0.15s',
+                  transition: 'background 0.15s cubic-bezier(0.16,1,0.3,1), color 0.15s cubic-bezier(0.16,1,0.3,1), border-color 0.15s cubic-bezier(0.16,1,0.3,1)',
                 }}
               >
                 Delete folder

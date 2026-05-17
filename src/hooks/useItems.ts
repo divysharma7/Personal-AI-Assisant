@@ -1,72 +1,121 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { AnyItem, CalendarEvent, Task, Reminder } from '@/types'
 
+const ITEMS_KEY = ['items'] as const
+
+async function fetchItems(): Promise<AnyItem[]> {
+  const [events, tasks, reminders] = await Promise.all([
+    fetch('/api/events').then(r => r.json()),
+    fetch('/api/tasks').then(r => r.json()),
+    fetch('/api/reminders').then(r => r.json()),
+  ])
+  return [...events, ...tasks, ...reminders] as AnyItem[]
+}
+
 export function useItems() {
-  const [items, setItems] = useState<AnyItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
 
-  const fetchAll = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true)
-    try {
-      const [events, tasks, reminders] = await Promise.all([
-        fetch('/api/events').then(r => r.json()),
-        fetch('/api/tasks').then(r => r.json()),
-        fetch('/api/reminders').then(r => r.json()),
-      ])
-      setItems([...events, ...tasks, ...reminders] as AnyItem[])
-    } catch (e) {
-      console.error('Failed to fetch items', e)
-    } finally {
-      if (!silent) setLoading(false)
-    }
-  }, [])
+  const { data: items = [], isLoading: loading, refetch } = useQuery({
+    queryKey: ITEMS_KEY,
+    queryFn: fetchItems,
+  })
 
-  /** Silent background refresh — no loading spinner, used by AI chat */
-  const silentRefresh = useCallback(() => fetchAll(true), [fetchAll])
+  // Silent refresh just invalidates the cache (background refetch)
+  const silentRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ITEMS_KEY })
+  }, [queryClient])
 
-  useEffect(() => { fetchAll() }, [fetchAll])
-
-  // Refresh data whenever the app becomes visible (user opens from toolbar / switches back)
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') fetchAll(true)
-    }
-    document.addEventListener('visibilitychange', handleVisibility)
-    return () => document.removeEventListener('visibilitychange', handleVisibility)
-  }, [fetchAll])
+  // ── Add Item ───────────────────────────────────────────────────
+  const addMutation = useMutation({
+    mutationFn: async ({ type, data }: { type: AnyItem['type']; data: Partial<CalendarEvent | Task | Reminder> }) => {
+      const endpoint = type === 'event' ? '/api/events' : type === 'task' ? '/api/tasks' : '/api/reminders'
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) throw new Error('Failed to create item')
+      return await res.json() as AnyItem
+    },
+    onMutate: async ({ type, data }) => {
+      await queryClient.cancelQueries({ queryKey: ITEMS_KEY })
+      const prev = queryClient.getQueryData<AnyItem[]>(ITEMS_KEY)
+      // Optimistic: add a temp item at the start
+      const optimistic = { ...data, type, _id: `temp-${Date.now()}` } as AnyItem
+      queryClient.setQueryData<AnyItem[]>(ITEMS_KEY, old => [optimistic, ...(old ?? [])])
+      return { prev }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.prev) queryClient.setQueryData(ITEMS_KEY, context.prev)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ITEMS_KEY })
+    },
+  })
 
   const addItem = useCallback(async (type: AnyItem['type'], data: Partial<CalendarEvent | Task | Reminder>) => {
-    const endpoint = type === 'event' ? '/api/events' : type === 'task' ? '/api/tasks' : '/api/reminders'
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    })
-    if (!res.ok) throw new Error('Failed to create item')
-    const created = await res.json() as AnyItem
-    setItems(prev => [created, ...prev])
-    return created
-  }, [])
+    return addMutation.mutateAsync({ type, data })
+  }, [addMutation])
+
+  // ── Update Item ────────────────────────────────────────────────
+  const updateMutation = useMutation({
+    mutationFn: async ({ type, id, data }: { type: AnyItem['type']; id: string; data: Partial<AnyItem> }) => {
+      const endpoint = type === 'event' ? `/api/events/${id}` : type === 'task' ? `/api/tasks/${id}` : `/api/reminders/${id}`
+      const res = await fetch(endpoint, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) throw new Error('Failed to update item')
+      return await res.json() as AnyItem
+    },
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: ITEMS_KEY })
+      const prev = queryClient.getQueryData<AnyItem[]>(ITEMS_KEY)
+      queryClient.setQueryData<AnyItem[]>(ITEMS_KEY, old =>
+        (old ?? []).map(i => i._id === id ? { ...i, ...data } as AnyItem : i)
+      )
+      return { prev }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.prev) queryClient.setQueryData(ITEMS_KEY, context.prev)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ITEMS_KEY })
+    },
+  })
 
   const updateItem = useCallback(async (type: AnyItem['type'], id: string, data: Partial<AnyItem>) => {
-    const endpoint = type === 'event' ? `/api/events/${id}` : type === 'task' ? `/api/tasks/${id}` : `/api/reminders/${id}`
-    const res = await fetch(endpoint, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    })
-    if (!res.ok) throw new Error('Failed to update item')
-    const updated = await res.json() as AnyItem
-    setItems(prev => prev.map(i => i._id === id ? updated : i))
-    return updated
-  }, [])
+    return updateMutation.mutateAsync({ type, id, data })
+  }, [updateMutation])
+
+  // ── Delete Item ────────────────────────────────────────────────
+  const deleteMutation = useMutation({
+    mutationFn: async ({ type, id }: { type: AnyItem['type']; id: string }) => {
+      const endpoint = type === 'event' ? `/api/events/${id}` : type === 'task' ? `/api/tasks/${id}` : `/api/reminders/${id}`
+      await fetch(endpoint, { method: 'DELETE' })
+    },
+    onMutate: async ({ id }) => {
+      await queryClient.cancelQueries({ queryKey: ITEMS_KEY })
+      const prev = queryClient.getQueryData<AnyItem[]>(ITEMS_KEY)
+      queryClient.setQueryData<AnyItem[]>(ITEMS_KEY, old =>
+        (old ?? []).filter(i => i._id !== id)
+      )
+      return { prev }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.prev) queryClient.setQueryData(ITEMS_KEY, context.prev)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ITEMS_KEY })
+    },
+  })
 
   const deleteItem = useCallback(async (type: AnyItem['type'], id: string) => {
-    const endpoint = type === 'event' ? `/api/events/${id}` : type === 'task' ? `/api/tasks/${id}` : `/api/reminders/${id}`
-    await fetch(endpoint, { method: 'DELETE' })
-    setItems(prev => prev.filter(i => i._id !== id))
-  }, [])
+    return deleteMutation.mutateAsync({ type, id })
+  }, [deleteMutation])
 
-  return { items, loading, refetch: fetchAll, silentRefresh, addItem, updateItem, deleteItem }
+  return { items, loading, refetch, silentRefresh, addItem, updateItem, deleteItem }
 }

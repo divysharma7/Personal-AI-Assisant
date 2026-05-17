@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, Plus, Search, Phone, Mail, Building2, MapPin, Tag, X, Trash2, Copy, Check } from 'lucide-react'
+import { snappy } from '@/shared/design-system'
+import { SkeletonCard } from '@/shared/ui/Skeleton'
 import TopBarActions from '@/components/layout/TopBarActions'
 import FloatingChat from '@/components/chat/FloatingChat'
 import { useItems } from '@/hooks/useItems'
@@ -93,7 +95,7 @@ function ContactForm({ initial, onSave, onClose }: ContactFormProps) {
         initial={{ scale: 0.92, y: 16 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.92, y: 16 }}
-        transition={{ type: 'spring', stiffness: 340, damping: 28 }}
+        transition={snappy}
         className="glass-card p-6 w-full max-w-md"
         style={{ maxHeight: '90vh', overflowY: 'auto' }}
       >
@@ -363,17 +365,38 @@ function ContactsInner() {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-6 pb-6">
+          {loading && (
+            <div className="grid gap-3 mt-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="glass-card p-4" style={{ minHeight: 140 }}>
+                  <SkeletonCard />
+                </div>
+              ))}
+            </div>
+          )}
+
           {!loading && contacts.length === 0 && (
             <motion.div
               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col items-center justify-center h-48 gap-3"
+              className="flex flex-col items-center justify-center h-48 gap-3 opacity-70"
             >
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: 'var(--accent-dim)' }}>
-                <Users size={28} style={{ color: ACCENT }} />
-              </div>
-              <p className="text-sm font-medium" style={{ color: 'var(--text-2)' }}>No contacts yet</p>
+              <Users size={30} style={{ color: 'var(--text-3)' }} />
+              <p className="text-sm font-medium" style={{ color: 'var(--text-3)' }}>No contacts yet.</p>
               <p className="text-xs text-center max-w-xs" style={{ color: 'var(--text-3)' }}>
-                Add people you want to keep handy — electricians, neighbours, ISP helpers, doctors…
+                Add people you want to keep handy — electricians, neighbours, ISP helpers, doctors...
+              </p>
+            </motion.div>
+          )}
+
+          {!loading && contacts.length > 0 && filtered.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col items-center justify-center h-48 gap-3 opacity-70"
+            >
+              <Search size={28} style={{ color: 'var(--text-3)' }} />
+              <p className="text-sm font-medium" style={{ color: 'var(--text-3)' }}>No matches found.</p>
+              <p className="text-xs text-center max-w-xs" style={{ color: 'var(--text-3)' }}>
+                Try different words or check the spelling.
               </p>
             </motion.div>
           )}

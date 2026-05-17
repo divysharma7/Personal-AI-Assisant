@@ -8,8 +8,18 @@ import { ChevronLeft, ChevronRight, BookOpen } from 'lucide-react'
 
 const JournalEditor = dynamic(
   () => import('@/components/journal/JournalEditor'),
-  { ssr: false, loading: () => <div style={{ padding: 16, color: 'var(--text-3)', fontSize: 13 }}>Loading…</div> }
+  { ssr: false, loading: () => <JournalSkeleton /> }
 )
+
+function JournalSkeleton() {
+  return (
+    <div className="p-4 space-y-3">
+      <div className="h-3 w-3/4 rounded-lg skeleton-shimmer"><div className="skeleton-shine" /></div>
+      <div className="h-3 w-1/2 rounded-lg skeleton-shimmer"><div className="skeleton-shine" /></div>
+      <div className="h-3 w-5/6 rounded-lg skeleton-shimmer"><div className="skeleton-shine" /></div>
+    </div>
+  )
+}
 
 const AUTOSAVE_MS = 1500
 
@@ -127,7 +137,7 @@ export default function DailyJournalWidget() {
                 }}>
                   {format(day, 'EEE').toUpperCase().slice(0, 2)}
                 </span>
-                <span style={{
+                <span className="tabular-nums" style={{
                   fontSize: 12, lineHeight: 1.5,
                   fontWeight: today || isSelected ? 700 : 400,
                   color: isSelected ? 'white' : today ? 'var(--text-1)' : 'var(--text-2)',
@@ -165,8 +175,10 @@ export default function DailyJournalWidget() {
       {/* ── Editor ────────────────────────────────────────────────────────── */}
       <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
         {loading ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <div className="animate-spin" style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid var(--accent)', borderTopColor: 'transparent' }} />
+          <div className="p-4 space-y-3">
+            <div className="h-3 w-3/4 rounded-lg skeleton-shimmer"><div className="skeleton-shine" /></div>
+            <div className="h-3 w-1/2 rounded-lg skeleton-shimmer"><div className="skeleton-shine" /></div>
+            <div className="h-3 w-2/3 rounded-lg skeleton-shimmer"><div className="skeleton-shine" /></div>
           </div>
         ) : (
           <div style={{ height: '100%', overflowY: 'auto' }}>

@@ -64,7 +64,7 @@ export default function MiniCalendarWidget({ items }: Props) {
           return (
             <div key={day.toISOString()} className="flex flex-col items-center py-0.5">
               <div
-                className="w-7 h-7 flex items-center justify-center rounded-full text-xs font-medium"
+                className="w-7 h-7 flex items-center justify-center rounded-full text-xs font-medium tabular-nums"
                 style={today
                   ? { background: 'var(--accent)', color: '#fff', fontWeight: 700 }
                   : { color: inMonth ? 'var(--text-2)' : 'var(--text-3)' }

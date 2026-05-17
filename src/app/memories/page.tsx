@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { listTransition } from '@/shared/design-system'
 import AddMemoryBar from '@/components/memories/AddMemoryBar'
 import MemoryRow, { isDone, getNextStatus } from '@/components/memories/MemoryRow'
 import { TYPE_CONFIG } from '@/components/memories/typeConfig'
@@ -9,6 +10,7 @@ import { useItems } from '@/hooks/useItems'
 import type { Memory, MemoryType } from '@/types'
 import type { CalView } from '@/components/calendar/CalendarView'
 import { Brain, List, Layers, ChevronDown, ChevronRight } from 'lucide-react'
+import { SkeletonList } from '@/shared/ui/Skeleton'
 import TopBarActions from '@/components/layout/TopBarActions'
 
 type ViewMode = 'queue' | 'type'
@@ -190,13 +192,15 @@ export default function MemoriesPage() {
 
         {/* List */}
         <div className="flex-1 overflow-y-auto px-4 pb-2" onClick={() => setFocusedId(null)}>
+          {loading && <div className="mt-4 px-2"><SkeletonList rows={6} /></div>}
+
           {!loading && memories.length === 0 && (
             <motion.div
               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col items-center justify-center h-48 gap-3"
+              className="flex flex-col items-center justify-center h-48 gap-3 opacity-70"
             >
-              <Brain size={28} style={{ color: 'var(--text-3)' }} />
-              <p className="text-sm" style={{ color: 'var(--text-2)' }}>Nothing captured yet</p>
+              <Brain size={30} style={{ color: 'var(--text-3)' }} />
+              <p className="text-sm font-medium" style={{ color: 'var(--text-3)' }}>Capture something worth remembering.</p>
               <p className="text-xs text-center max-w-xs" style={{ color: 'var(--text-3)' }}>
                 Type anything above — a movie, book, place, contact, or just a thought
               </p>
@@ -216,7 +220,7 @@ export default function MemoriesPage() {
                     {active.map(m => (
                       <motion.div key={m._id}
                         initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.15 }}
+                        exit={{ opacity: 0, height: 0 }} transition={listTransition}
                       >
                         <Row memory={m} />
                       </motion.div>
@@ -239,7 +243,7 @@ export default function MemoriesPage() {
                     {doneOpen && done.map(m => (
                       <motion.div key={m._id}
                         initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.15 }}
+                        exit={{ opacity: 0, height: 0 }} transition={listTransition}
                       >
                         <Row memory={m} />
                       </motion.div>

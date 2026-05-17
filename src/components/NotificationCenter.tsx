@@ -2,6 +2,7 @@
 import { useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Bell, X, Calendar, CheckSquare, BellRing } from 'lucide-react'
+import { snappy } from '@/shared/design-system'
 import { useWebNotifications } from '@/hooks/useWebNotifications'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -81,7 +82,7 @@ export default function NotificationCenter() {
                 initial={{ opacity: 0, y: 24, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0,  scale: 1    }}
                 exit={{    opacity: 0, y: 8,  scale: 0.95 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                transition={snappy}
                 className="pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-2xl shadow-2xl"
                 style={{
                   background: 'var(--card)',

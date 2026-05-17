@@ -4,6 +4,7 @@ import { CalendarPlus, CheckSquare, Bell } from 'lucide-react'
 import Image from 'next/image'
 import AddItemModal from '@/components/modals/AddItemModal'
 import FloatingChat from '@/components/chat/FloatingChat'
+import QuickAddBar from '@/components/tasks/QuickAddBar'
 import ClockWidget from '@/components/dashboard/ClockWidget'
 import MiniCalendarWidget from '@/components/dashboard/MiniCalendarWidget'
 import WeatherWidget from '@/components/dashboard/WeatherWidget'
@@ -113,6 +114,11 @@ export default function DashboardPage() {
           <PWAInstallButton />
           <TopBarActions />
         </div>
+      </div>
+
+      {/* ── Quick Add ──────────────────────────────────────────────────── */}
+      <div className="px-6 pt-3 flex-shrink-0">
+        <QuickAddBar />
       </div>
 
       {/* ── Bento grid ───────────────────────────────────────────────────── */}

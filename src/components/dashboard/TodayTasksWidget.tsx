@@ -1,9 +1,13 @@
 'use client'
 import { useState, useRef } from 'react'
-import { CheckCircle2, Circle, CheckSquare, Plus } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { CheckCircle2, CheckSquare, Plus } from 'lucide-react'
 import { isToday } from 'date-fns'
 import type { AnyItem, Task } from '@/types'
 import { ITEM_COLORS } from '@/lib/utils'
+import { taskCompletion } from '@/shared/design-system'
+import AnimatedTaskCheckbox from '@/components/tasks/AnimatedTaskCheckbox'
+import AnimatedTaskTitle from '@/components/tasks/AnimatedTaskTitle'
 
 interface Props {
   items: AnyItem[]
@@ -81,44 +85,43 @@ export default function TodayTasksWidget({ items, onUpdateItem, onAddItem }: Pro
       {/* Task list */}
       <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
         {tasks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-2 py-4">
-            <CheckCircle2 size={22} style={{ color: 'var(--text-3)' }} />
-            <p className="text-xs" style={{ color: 'var(--text-3)' }}>No tasks due today</p>
+          <div className="flex flex-col items-center justify-center h-full gap-2 py-4 opacity-70">
+            <CheckCircle2 size={28} style={{ color: 'var(--text-3)' }} />
+            <p className="text-xs font-medium" style={{ color: 'var(--text-3)' }}>Nothing for today. Enjoy the calm.</p>
           </div>
         ) : (
           tasks.map(task => {
             const done = task.status === 'done'
             return (
-              <button
+              <motion.button
                 key={task._id}
                 onClick={() => toggle(task)}
+                variants={taskCompletion.row}
+                animate={done ? 'checked' : 'unchecked'}
                 className="flex items-center gap-2.5 w-full text-left px-2.5 py-2 rounded-xl transition-colors"
                 style={{
                   background: done ? 'transparent' : 'var(--input-bg)',
                   border: `1px solid ${done ? 'transparent' : 'var(--border)'}`,
-                  opacity: done ? 0.45 : 1,
                 }}
               >
-                {done
-                  ? <CheckCircle2 size={14} style={{ color: ITEM_COLORS.task, flexShrink: 0 }} />
-                  : <Circle      size={14} style={{ color: 'var(--text-3)',   flexShrink: 0 }} />
-                }
-                <span
+                <AnimatedTaskCheckbox
+                  checked={done}
+                  onToggle={() => toggle(task)}
+                  size={14}
+                  color={ITEM_COLORS.task}
+                />
+                <AnimatedTaskTitle
+                  title={task.title}
+                  completed={done}
                   className="text-xs flex-1 truncate font-medium"
-                  style={{
-                    color: done ? 'var(--text-3)' : 'var(--text-1)',
-                    textDecoration: done ? 'line-through' : 'none',
-                  }}
-                >
-                  {task.title}
-                </span>
+                />
                 {task.priority === 'high' && !done && (
                   <span className="text-xs px-1.5 py-0.5 rounded-md flex-shrink-0 font-medium"
                     style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}>
                     !
                   </span>
                 )}
-              </button>
+              </motion.button>
             )
           })
         )}

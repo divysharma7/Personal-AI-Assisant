@@ -9,6 +9,7 @@ import {
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/contexts/ThemeContext'
+import { snappy, smooth } from '@/shared/design-system'
 import type { ChatMessage, StepItem, StepIcon, StreamChunk, ContactRef } from '@/types'
 import MarkdownMessage from './MarkdownMessage'
 
@@ -239,14 +240,14 @@ export default function FloatingChat({ onRefreshItems }: FloatingChatProps) {
             initial={{ opacity: 0, scale: 0.88, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.88, y: 20 }}
-            transition={{ type: 'spring', stiffness: 340, damping: 28 }}
+            transition={smooth}
             className="rounded-2xl overflow-hidden flex flex-col"
             style={{
               width: currentW,
               height: currentH,
               background: 'var(--glass-card-bg)',
               border: '1px solid var(--glass-border)',
-              boxShadow: '0 25px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(35,61,255,0.1)',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.5), 0 0 0 1px var(--accent-soft)',
               
             }}
           >
@@ -329,8 +330,8 @@ export default function FloatingChat({ onRefreshItems }: FloatingChatProps) {
                             }}
                             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all active:scale-95"
                             style={{
-                              background: 'rgba(35,61,255,0.12)',
-                              border: '1px solid rgba(35,61,255,0.25)',
+                              background: 'var(--accent-soft)',
+                              border: '1px solid var(--accent-glow)',
                               color: 'var(--accent)',
                             }}
                           >
@@ -392,7 +393,7 @@ export default function FloatingChat({ onRefreshItems }: FloatingChatProps) {
               initial={{ opacity: 0, x: 14 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 14 }}
-              transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+              transition={snappy}
               className="text-sm font-medium whitespace-nowrap select-none pointer-events-none px-3 py-1.5 rounded-xl"
               style={{
                 color: 'var(--text-1)',
@@ -409,7 +410,7 @@ export default function FloatingChat({ onRefreshItems }: FloatingChatProps) {
         <motion.button
           animate={{ scale: hovered ? 1.08 : 1 }}
           whileTap={{ scale: 0.92 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+          transition={snappy}
           onClick={() => size === 'bubble' ? open() : close()}
           className="w-14 h-14 flex items-center justify-center text-white relative"
           style={{ background: 'none', border: 'none', outline: 'none' }}
@@ -430,14 +431,14 @@ export default function FloatingChat({ onRefreshItems }: FloatingChatProps) {
                   scale: 1,
                   opacity: 1,
                   filter: [
-                    'drop-shadow(0 0 4px rgba(35,61,255,0.3))',
-                    'drop-shadow(0 0 14px rgba(35,61,255,0.65))',
-                    'drop-shadow(0 0 4px rgba(35,61,255,0.3))',
+                    'drop-shadow(0 0 4px var(--accent-glow))',
+                    'drop-shadow(0 0 14px var(--accent))',
+                    'drop-shadow(0 0 4px var(--accent-glow))',
                   ],
                 }}
                 exit={{ scale: 0.6, opacity: 0 }}
                 transition={{
-                  scale: { type: 'spring', stiffness: 300, damping: 24 },
+                  scale: smooth,
                   opacity: { duration: 0.2 },
                   filter: { repeat: Infinity, duration: 3, ease: 'easeInOut' },
                 }}

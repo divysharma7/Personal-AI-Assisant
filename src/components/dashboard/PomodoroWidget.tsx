@@ -1,19 +1,19 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { Play, Pause, RotateCcw, Coffee, ChevronDown, X, Calendar, CheckSquare } from 'lucide-react'
 import { isToday, format } from 'date-fns'
+import { usePomodoroContext } from '@/contexts/PomodoroContext'
 import type { AnyItem, Task, CalendarEvent } from '@/types'
 
-const WORK_SEC  = 25 * 60
-const BREAK_SEC =  5 * 60
+const WORK_SEC = 25 * 60
 
 interface PickerItem {
   id: string
   type: 'task' | 'event'
   title: string
-  durationSec: number   // tasks → WORK_SEC, events → actual duration
-  subtitle?: string     // events show time range
+  durationSec: number
+  subtitle?: string
 }
 
 interface Props {
@@ -21,36 +21,31 @@ interface Props {
 }
 
 export default function PomodoroWidget({ items = [] }: Props) {
-  const [mode, setMode]             = useState<'work' | 'break'>('work')
-  const [totalSec, setTotalSec]     = useState(WORK_SEC)
-  const [secondsLeft, setSecondsLeft] = useState(WORK_SEC)
-  const [running, setRunning]       = useState(false)
-  const [sessions, setSessions]     = useState(0)
-  const [selected, setSelected]     = useState<PickerItem | null>(null)
+  const { state, actions } = usePomodoroContext()
   const [pickerOpen, setPickerOpen] = useState(false)
-  const [mounted, setMounted]       = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => { setMounted(true) }, [])
 
   // Build picker list: upcoming/active events today + incomplete tasks due today
-  const pickerItems: PickerItem[] = [
-    ...( items.filter(i => {
+  const pickerItems: PickerItem[] = useMemo(() => [
+    ...(items.filter(i => {
       if (i.type !== 'event') return false
       const e = i as CalendarEvent
       return isToday(new Date(e.startDate))
     }) as CalendarEvent[]).map(e => {
       const start = new Date(e.startDate)
-      const end   = new Date(e.endDate)
+      const end = new Date(e.endDate)
       const durSec = Math.max(60, Math.round((end.getTime() - start.getTime()) / 1000))
       return {
         id: e._id!,
         type: 'event' as const,
         title: e.title,
         durationSec: durSec,
-        subtitle: `${format(start, 'h:mm')}–${format(end, 'h:mm a')}`,
+        subtitle: `${format(start, 'h:mm')}\u2013${format(end, 'h:mm a')}`,
       }
     }),
-    ...( items.filter(i => {
+    ...(items.filter(i => {
       if (i.type !== 'task') return false
       const t = i as Task
       return t.status !== 'done' && (t.dueDate ? isToday(new Date(t.dueDate)) : false)
@@ -60,111 +55,59 @@ export default function PomodoroWidget({ items = [] }: Props) {
       title: t.title,
       durationSec: WORK_SEC,
     })),
-  ]
+  ], [items])
 
   function selectItem(item: PickerItem | null) {
-    setSelected(item)
-    const dur = item?.durationSec ?? WORK_SEC
-    setTotalSec(dur)
-    setSecondsLeft(dur)
-    setRunning(false)
+    if (item) {
+      actions.setTask(item.id, item.title, item.durationSec)
+    } else {
+      actions.setTask(null, '')
+    }
     setPickerOpen(false)
   }
 
-  const focusActive = running && mode === 'work'
-  const progress    = 1 - secondsLeft / totalSec
-  const color       = mode === 'work' ? 'var(--accent)' : 'var(--color-task)'
+  const focusActive = state.running && state.mode === 'work'
+  const progress = 1 - state.secondsLeft / state.totalSec
+  const color = state.mode === 'work' ? 'var(--accent)' : 'var(--color-task)'
 
-  useEffect(() => {
-    if (!running) return
-    const id = setInterval(() => {
-      setSecondsLeft(s => {
-        if (s <= 1) {
-          setRunning(false)
-          if (mode === 'work') {
-            setSessions(n => n + 1)
-            setMode('break')
-            setTotalSec(BREAK_SEC)
-            return BREAK_SEC
-          }
-          setMode('work')
-          const dur = selected?.durationSec ?? WORK_SEC
-          setTotalSec(dur)
-          return dur
-        }
-        return s - 1
-      })
-    }, 1000)
-    return () => clearInterval(id)
-  }, [running, mode, selected])
-
-  function reset() {
-    setRunning(false)
-    if (mode === 'work') {
-      const dur = selected?.durationSec ?? WORK_SEC
-      setTotalSec(dur)
-      setSecondsLeft(dur)
-    } else {
-      setTotalSec(BREAK_SEC)
-      setSecondsLeft(BREAK_SEC)
-    }
-  }
-
-  function switchMode(next: 'work' | 'break') {
-    if (next === mode) return
-    setMode(next)
-    setRunning(false)
-    if (next === 'work') {
-      const dur = selected?.durationSec ?? WORK_SEC
-      setTotalSec(dur)
-      setSecondsLeft(dur)
-    } else {
-      setTotalSec(BREAK_SEC)
-      setSecondsLeft(BREAK_SEC)
-    }
-  }
-
-  const mm = String(Math.floor(secondsLeft / 60)).padStart(2, '0')
-  const ss = String(secondsLeft % 60).padStart(2, '0')
+  const mm = String(Math.floor(state.secondsLeft / 60)).padStart(2, '0')
+  const ss = String(state.secondsLeft % 60).padStart(2, '0')
 
   function Ring({ size, strokeW, r }: { size: number; strokeW: number; r: number }) {
     const c = 2 * Math.PI * r
     return (
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--border)" strokeWidth={strokeW} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--border)" strokeWidth={strokeW} />
         <circle
-          cx={size/2} cy={size/2} r={r} fill="none"
+          cx={size / 2} cy={size / 2} r={r} fill="none"
           stroke={color} strokeWidth={strokeW} strokeLinecap="round"
           strokeDasharray={c}
           strokeDashoffset={c * (1 - progress)}
-          style={{ transition: running ? 'stroke-dashoffset 1s linear' : 'none' }}
+          style={{ transition: state.running ? 'stroke-dashoffset 1s linear' : 'none' }}
         />
       </svg>
     )
   }
 
-  // ── Focus overlay ────────────────────────────────────────────
+  // Focus overlay
   const overlay = focusActive && mounted ? createPortal(
     <div
       className="fixed inset-0 flex flex-col items-center justify-center z-50"
       style={{ background: 'rgba(7, 11, 20, 0.94)', backdropFilter: 'blur(6px)' }}
     >
-      <button onClick={reset} className="absolute top-6 right-6 btn-ghost p-2 opacity-40 hover:opacity-100" title="End session">
+      <button onClick={actions.reset} className="absolute top-6 right-6 btn-ghost p-2 opacity-40 hover:opacity-100" title="End session">
         <X size={16} />
       </button>
 
       <div className="mb-12 text-center px-8">
-        {selected ? (
+        {state.taskTitle ? (
           <>
             <p className="text-xs font-semibold tracking-widest uppercase mb-2" style={{ color: 'var(--text-3)' }}>
-              {selected.type === 'event' ? 'in session' : 'focusing on'}
+              focusing on
             </p>
             <p className="text-xl font-semibold" style={{ color: '#e2e8f0', maxWidth: 440 }}>
-              {selected.title}
+              {state.taskTitle}
             </p>
-            {selected.subtitle && (
-              <p className="text-sm mt-1.5" style={{ color: '#4a5880' }}>{selected.subtitle}</p>
-            )}
           </>
         ) : (
           <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#3d5068' }}>deep focus</p>
@@ -183,39 +126,46 @@ export default function PomodoroWidget({ items = [] }: Props) {
       </div>
 
       <div className="flex items-center gap-5 mt-12">
-        <button onClick={reset} className="btn-ghost p-2.5 opacity-50 hover:opacity-100">
+        <button onClick={actions.reset} className="btn-ghost p-2.5 opacity-50 hover:opacity-100">
           <RotateCcw size={16} />
         </button>
         <button
-          onClick={() => setRunning(r => !r)}
+          onClick={() => state.running ? actions.pause() : actions.start()}
           className="w-14 h-14 rounded-full flex items-center justify-center"
           style={{ background: 'var(--accent)', color: '#fff' }}
         >
-          {running ? <Pause size={20} /> : <Play size={20} style={{ marginLeft: 2 }} />}
+          {state.running ? <Pause size={20} /> : <Play size={20} style={{ marginLeft: 2 }} />}
         </button>
         <div className="w-10 flex items-center gap-1" style={{ color: '#3d5068' }}>
-          {sessions > 0 && <><Coffee size={13} /><span className="text-sm">{sessions}</span></>}
+          {state.sessions > 0 && <><Coffee size={13} /><span className="text-sm">{state.sessions}</span></>}
         </div>
       </div>
     </div>,
     document.body
   ) : null
 
-  // ── Widget ───────────────────────────────────────────────────
+  // Widget
   return (
     <>
       {overlay}
       <div className="flex flex-col h-full">
         {/* Header + mode toggle */}
         <div className="flex items-center justify-between mb-3 flex-shrink-0">
-          <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: 'var(--text-3)' }}>Focus</p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: 'var(--text-3)' }}>Focus</p>
+            {state.todayCompleted > 0 && (
+              <span className="text-xs px-1.5 py-0.5 rounded-md" style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}>
+                {state.todayCompleted}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-1">
             {(['work', 'break'] as const).map(m => (
               <button
                 key={m}
-                onClick={() => switchMode(m)}
+                onClick={() => actions.switchMode(m)}
                 className="px-2 py-0.5 rounded-md text-xs font-medium transition-colors capitalize"
-                style={mode === m
+                style={state.mode === m
                   ? { background: m === 'work' ? 'var(--accent)' : 'var(--color-task)', color: '#fff' }
                   : { background: 'var(--input-bg)', color: 'var(--text-3)' }}
               >
@@ -225,8 +175,8 @@ export default function PomodoroWidget({ items = [] }: Props) {
           </div>
         </div>
 
-        {/* Picker — work mode only */}
-        {mode === 'work' && (
+        {/* Picker - work mode only */}
+        {state.mode === 'work' && (
           <div className="mb-3 flex-shrink-0 relative">
             <button
               onClick={() => setPickerOpen(o => !o)}
@@ -234,11 +184,11 @@ export default function PomodoroWidget({ items = [] }: Props) {
               style={{
                 background: 'var(--input-bg)',
                 border: '1px solid var(--input-border)',
-                color: selected ? 'var(--text-1)' : 'var(--text-3)',
+                color: state.taskTitle ? 'var(--text-1)' : 'var(--text-3)',
               }}
             >
               <span className="flex-1 text-left truncate">
-                {selected ? selected.title : 'Pick a task or event…'}
+                {state.taskTitle || 'Pick a task or event\u2026'}
               </span>
               <ChevronDown size={11} style={{ flexShrink: 0, opacity: 0.5 }} />
             </button>
@@ -266,7 +216,6 @@ export default function PomodoroWidget({ items = [] }: Props) {
                   <p className="px-3 py-2 text-xs" style={{ color: 'var(--text-3)' }}>Nothing scheduled today</p>
                 )}
 
-                {/* Group by type */}
                 {(['event', 'task'] as const).map(type => {
                   const group = pickerItems.filter(p => p.type === type)
                   if (group.length === 0) return null
@@ -281,8 +230,8 @@ export default function PomodoroWidget({ items = [] }: Props) {
                           onClick={() => selectItem(item)}
                           className="w-full text-left px-3 py-2 text-xs transition-colors flex items-center gap-2"
                           style={{
-                            color: item.id === selected?.id ? 'var(--accent)' : 'var(--text-1)',
-                            background: item.id === selected?.id ? 'var(--accent-dim)' : 'transparent',
+                            color: item.id === state.taskId ? 'var(--accent)' : 'var(--text-1)',
+                            background: item.id === state.taskId ? 'var(--accent-dim)' : 'transparent',
                           }}
                         >
                           {type === 'event'
@@ -315,7 +264,7 @@ export default function PomodoroWidget({ items = [] }: Props) {
                 {mm}:{ss}
               </span>
               <span className="text-xs mt-0.5" style={{ color: 'var(--text-3)' }}>
-                {mode === 'work' ? 'focus' : 'break'}
+                {state.mode === 'work' ? 'focus' : 'break'}
               </span>
             </div>
           </div>
@@ -323,16 +272,16 @@ export default function PomodoroWidget({ items = [] }: Props) {
 
         {/* Controls */}
         <div className="flex items-center justify-center gap-4 flex-shrink-0">
-          <button onClick={reset} className="btn-ghost p-2"><RotateCcw size={13} /></button>
+          <button onClick={actions.reset} className="btn-ghost p-2"><RotateCcw size={13} /></button>
           <button
-            onClick={() => setRunning(r => !r)}
+            onClick={() => state.running ? actions.pause() : actions.start()}
             className="w-10 h-10 rounded-full flex items-center justify-center transition-colors"
             style={{ background: color, color: '#fff' }}
           >
-            {running ? <Pause size={16} /> : <Play size={16} style={{ marginLeft: 2 }} />}
+            {state.running ? <Pause size={16} /> : <Play size={16} style={{ marginLeft: 2 }} />}
           </button>
           <div className="flex items-center gap-1 w-8" style={{ color: 'var(--text-3)' }}>
-            {sessions > 0 && <><Coffee size={12} /><span className="text-xs">{sessions}</span></>}
+            {state.sessions > 0 && <><Coffee size={12} /><span className="text-xs">{state.sessions}</span></>}
           </div>
         </div>
       </div>

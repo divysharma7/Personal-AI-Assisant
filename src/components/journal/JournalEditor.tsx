@@ -258,7 +258,7 @@ export default function JournalEditor({ content, onChange, date }: Props) {
           border: 1.5px solid var(--border-hover);
           border-radius: 3px;
           cursor: pointer;
-          transition: all 0.15s;
+          transition: background 0.15s cubic-bezier(0.16,1,0.3,1), border-color 0.15s cubic-bezier(0.16,1,0.3,1);
           position: relative;
           background: transparent;
           flex-shrink: 0;

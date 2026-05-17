@@ -15,9 +15,12 @@ function CalendarContent() {
   const searchParams = useSearchParams()
   const paramView    = searchParams.get('view') as CalView | null
 
-  const [view, setView]         = useState<CalView>(
-    paramView && VALID_VIEWS.includes(paramView) ? paramView : 'month'
-  )
+  // Default to 'day' on mobile, 'week' on desktop
+  const [view, setView]         = useState<CalView>(() => {
+    if (paramView && VALID_VIEWS.includes(paramView)) return paramView
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) return 'day'
+    return 'week'
+  })
   const [modalOpen, setModalOpen] = useState(false)
   const [dragStart, setDragStart] = useState<string | undefined>()
   const [dragEnd,   setDragEnd]   = useState<string | undefined>()
