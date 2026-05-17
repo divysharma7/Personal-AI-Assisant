@@ -196,6 +196,34 @@
     linear-gradient(180deg, #070b14 0%, #070b14 100%);
   }
 
+  /* ── Density scaling ──────────────────────────────────── */
+  :root {
+    --density-padding: 1;
+    --density-font: 1;
+    --density-gap: 1;
+  }
+
+  /* ── Reduce motion ─────────────────────────────────────── */
+  .reduce-motion *,
+  .reduce-motion *::before,
+  .reduce-motion *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 150ms !important;
+    transition-timing-function: ease !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html:not(.motion-override) *,
+    html:not(.motion-override) *::before,
+    html:not(.motion-override) *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 150ms !important;
+      transition-timing-function: ease !important;
+    }
+  }
+
   ::selection {
     background: var(--accent-dim);
   }
