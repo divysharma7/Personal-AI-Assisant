@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight, ChevronDown } from 'lucide-react'
 import AnimatedTaskCheckbox from './AnimatedTaskCheckbox'
 import AnimatedTaskTitle from './AnimatedTaskTitle'
+import SwipeableTaskRow from './SwipeableTaskRow'
+import { useMediaQuery } from '@/shared/hooks/useMediaQuery'
 import { snappy, smooth } from '@/shared/design-system'
 import { cn } from '@/lib/utils'
 
@@ -24,6 +26,7 @@ interface TaskTreeProps {
   tasks: TreeTask[]
   onTaskClick?: (task: TreeTask) => void
   onStatusChange?: (taskId: string, status: TreeTask['status']) => void
+  onDelete?: (taskId: string) => void
 }
 
 interface TreeNode {
@@ -69,8 +72,10 @@ function TaskRow({
   onToggleExpand,
   onTaskClick,
   onStatusChange,
+  onDelete,
   onIndent,
   onOutdent,
+  isMobile,
 }: {
   node: TreeNode
   depth: number
@@ -78,8 +83,10 @@ function TaskRow({
   onToggleExpand: () => void
   onTaskClick?: (task: TreeTask) => void
   onStatusChange?: (taskId: string, status: TreeTask['status']) => void
+  onDelete?: (taskId: string) => void
   onIndent: (taskId: string) => void
   onOutdent: (taskId: string) => void
+  isMobile: boolean
 }) {
   const { task } = node
   const hasChildren = node.children.length > 0
@@ -101,111 +108,67 @@ function TaskRow({
     onStatusChange?.(task._id, newStatus)
   }
 
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-      transition={snappy}
-      className="group"
+  const rowContent = (
+    <div
+      tabIndex={0}
+      role="treeitem"
+      aria-expanded={hasChildren ? expanded : undefined}
+      onKeyDown={handleKeyDown}
+      onClick={() => onTaskClick?.(task)}
+      className={cn(
+        'flex items-center gap-2 py-2 px-3 rounded-lg cursor-pointer transition-colors',
+        'outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-1',
+      )}
+      style={{
+        paddingLeft: `${depth * 20 + 12}px`,
+        background: 'transparent',
+        minHeight: 44,
+      }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-overlay)' }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
     >
-      <div
-        tabIndex={0}
-        role="treeitem"
-        aria-expanded={hasChildren ? expanded : undefined}
-        onKeyDown={handleKeyDown}
-        onClick={() => onTaskClick?.(task)}
-        className={cn(
-          'flex items-center gap-2 py-2 px-3 rounded-lg cursor-pointer transition-colors',
-          'outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-1',
-        )}
-        style={{
-          paddingLeft: `${depth * 20 + 12}px`,
-          background: 'transparent',
-        }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.background = 'var(--bg-overlay)'
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLElement).style.background = 'transparent'
-        }}
-      >
-        {/* Expand/collapse chevron */}
-        <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
-          {hasChildren && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onToggleExpand()
-              }}
-              className="p-0.5 rounded hover:bg-[var(--surface-2)] transition-colors"
-            >
-              <motion.div
-                animate={{ rotate: expanded ? 90 : 0 }}
-                transition={snappy}
-              >
-                <ChevronRight size={14} style={{ color: 'var(--text-3)' }} />
-              </motion.div>
-            </button>
-          )}
-        </div>
-
-        {/* Checkbox */}
-        <AnimatedTaskCheckbox
-          checked={isCompleted}
-          onToggle={handleToggleStatus}
-          color={PRIORITY_COLORS[task.priority] || 'var(--color-task)'}
-        />
-
-        {/* Title */}
-        <div className="flex-1 min-w-0">
-          <AnimatedTaskTitle
-            title={task.title}
-            completed={isCompleted}
-            className="text-sm"
-          />
-        </div>
-
-        {/* Priority dot */}
-        <div
-          className="w-2 h-2 rounded-full flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{ background: PRIORITY_COLORS[task.priority] }}
-          title={`Priority: ${task.priority}`}
-        />
-
-        {/* Due date */}
-        {task.dueDate && (
-          <span
-            className="text-xs flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-            style={{ color: 'var(--text-3)' }}
+      <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+        {hasChildren && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleExpand() }}
+            className="p-0.5 rounded hover:bg-[var(--surface-2)] transition-colors"
           >
-            {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-          </span>
+            <motion.div animate={{ rotate: expanded ? 90 : 0 }} transition={snappy}>
+              <ChevronRight size={14} style={{ color: 'var(--text-3)' }} />
+            </motion.div>
+          </button>
         )}
       </div>
+      <AnimatedTaskCheckbox checked={isCompleted} onToggle={handleToggleStatus} color={PRIORITY_COLORS[task.priority] || 'var(--color-task)'} />
+      <div className="flex-1 min-w-0">
+        <AnimatedTaskTitle title={task.title} completed={isCompleted} className="text-sm" />
+      </div>
+      <div className="w-2 h-2 rounded-full flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: PRIORITY_COLORS[task.priority] }} title={`Priority: ${task.priority}`} />
+      {task.dueDate && (
+        <span className="text-xs flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-3)' }}>
+          {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+        </span>
+      )}
+    </div>
+  )
+
+  return (
+    <motion.div layout initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0, marginBottom: 0 }} transition={snappy} className="group">
+      {isMobile ? (
+        <SwipeableTaskRow onSwipeRight={handleToggleStatus} onSwipeLeft={onDelete ? () => onDelete(task._id) : undefined} disabled={isCompleted}>
+          {rowContent}
+        </SwipeableTaskRow>
+      ) : rowContent}
     </motion.div>
   )
 }
 
 function TaskBranch({
-  nodes,
-  depth,
-  expandedIds,
-  onToggleExpand,
-  onTaskClick,
-  onStatusChange,
-  onIndent,
-  onOutdent,
+  nodes, depth, expandedIds, onToggleExpand, onTaskClick, onStatusChange, onDelete, onIndent, onOutdent, isMobile,
 }: {
-  nodes: TreeNode[]
-  depth: number
-  expandedIds: Set<string>
-  onToggleExpand: (id: string) => void
-  onTaskClick?: (task: TreeTask) => void
-  onStatusChange?: (taskId: string, status: TreeTask['status']) => void
-  onIndent: (taskId: string) => void
-  onOutdent: (taskId: string) => void
+  nodes: TreeNode[]; depth: number; expandedIds: Set<string>; onToggleExpand: (id: string) => void
+  onTaskClick?: (task: TreeTask) => void; onStatusChange?: (taskId: string, status: TreeTask['status']) => void
+  onDelete?: (taskId: string) => void; onIndent: (taskId: string) => void; onOutdent: (taskId: string) => void; isMobile: boolean
 }) {
   return (
     <AnimatePresence initial={false}>
@@ -213,36 +176,13 @@ function TaskBranch({
         const expanded = expandedIds.has(node.task._id)
         return (
           <div key={node.task._id}>
-            <TaskRow
-              node={node}
-              depth={depth}
-              expanded={expanded}
-              onToggleExpand={() => onToggleExpand(node.task._id)}
-              onTaskClick={onTaskClick}
-              onStatusChange={onStatusChange}
-              onIndent={onIndent}
-              onOutdent={onOutdent}
-            />
+            <TaskRow node={node} depth={depth} expanded={expanded} onToggleExpand={() => onToggleExpand(node.task._id)}
+              onTaskClick={onTaskClick} onStatusChange={onStatusChange} onDelete={onDelete} onIndent={onIndent} onOutdent={onOutdent} isMobile={isMobile} />
             <AnimatePresence initial={false}>
               {expanded && node.children.length > 0 && (
-                <motion.div
-                  key={`children-${node.task._id}`}
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={smooth}
-                  style={{ overflow: 'hidden' }}
-                >
-                  <TaskBranch
-                    nodes={node.children}
-                    depth={depth + 1}
-                    expandedIds={expandedIds}
-                    onToggleExpand={onToggleExpand}
-                    onTaskClick={onTaskClick}
-                    onStatusChange={onStatusChange}
-                    onIndent={onIndent}
-                    onOutdent={onOutdent}
-                  />
+                <motion.div key={`children-${node.task._id}`} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={smooth} style={{ overflow: 'hidden' }}>
+                  <TaskBranch nodes={node.children} depth={depth + 1} expandedIds={expandedIds} onToggleExpand={onToggleExpand}
+                    onTaskClick={onTaskClick} onStatusChange={onStatusChange} onDelete={onDelete} onIndent={onIndent} onOutdent={onOutdent} isMobile={isMobile} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -253,7 +193,8 @@ function TaskBranch({
   )
 }
 
-export default function TaskTree({ tasks, onTaskClick, onStatusChange }: TaskTreeProps) {
+export default function TaskTree({ tasks, onTaskClick, onStatusChange, onDelete }: TaskTreeProps) {
+  const isMobile = useMediaQuery('(max-width: 768px)')
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
     // Default: expand all parent tasks
     const parents = new Set<string>()
@@ -302,16 +243,9 @@ export default function TaskTree({ tasks, onTaskClick, onStatusChange }: TaskTre
 
   return (
     <div role="tree" className="py-2">
-      <TaskBranch
-        nodes={tree}
-        depth={0}
-        expandedIds={expandedIds}
-        onToggleExpand={toggleExpand}
-        onTaskClick={onTaskClick}
-        onStatusChange={onStatusChange}
-        onIndent={handleIndent}
-        onOutdent={handleOutdent}
-      />
+      <TaskBranch nodes={tree} depth={0} expandedIds={expandedIds} onToggleExpand={toggleExpand}
+        onTaskClick={onTaskClick} onStatusChange={onStatusChange} onDelete={onDelete}
+        onIndent={handleIndent} onOutdent={handleOutdent} isMobile={isMobile} />
     </div>
   )
 }

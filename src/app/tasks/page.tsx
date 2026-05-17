@@ -7,6 +7,7 @@ import KanbanView from '@/components/tasks/KanbanView'
 import EisenhowerView from '@/components/tasks/EisenhowerView'
 import QuickAddBar from '@/components/tasks/QuickAddBar'
 import TaskDetailPage from '@/components/tasks/TaskDetailPage'
+import PullToRefresh from '@/components/shared/PullToRefresh'
 import { useMediaQuery } from '@/shared/hooks/useMediaQuery'
 import { cn } from '@/lib/utils'
 import { quickFade } from '@/shared/design-system'
@@ -86,6 +87,13 @@ export default function TasksPage() {
       console.error('Failed to update task', e)
       fetchTasks()
     }
+  }, [fetchTasks])
+
+  const handleDelete = useCallback(async (taskId: string) => {
+    setTasks(prev => prev.filter(t => t._id !== taskId))
+    try {
+      await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' })
+    } catch { fetchTasks() }
   }, [fetchTasks])
 
   const handleDetailClose = useCallback(() => {
@@ -174,35 +182,17 @@ export default function TasksPage() {
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-auto">
-            <motion.div
-              key={view}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={quickFade}
-              className="h-full"
-            >
+          <PullToRefresh onRefresh={fetchTasks} className="flex-1 overflow-auto">
+            <motion.div key={view} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={quickFade} className="h-full">
               {view === 'list' ? (
-                <TaskTree
-                  tasks={tasks}
-                  onTaskClick={handleTaskClick}
-                  onStatusChange={handleStatusChange}
-                />
+                <TaskTree tasks={tasks} onTaskClick={handleTaskClick} onStatusChange={handleStatusChange} onDelete={handleDelete} />
               ) : view === 'board' ? (
-                <KanbanView
-                  tasks={tasks}
-                  onStatusChange={handleStatusChange}
-                />
+                <KanbanView tasks={tasks} onStatusChange={handleStatusChange} onTaskClick={handleTaskClick} />
               ) : (
-                <EisenhowerView
-                  tasks={tasks}
-                  onStatusChange={handleStatusChange}
-                  onTaskClick={handleTaskClick}
-                  onTaskUpdate={handleTaskUpdate}
-                />
+                <EisenhowerView tasks={tasks} onStatusChange={handleStatusChange} onTaskClick={handleTaskClick} onTaskUpdate={handleTaskUpdate} />
               )}
             </motion.div>
-          </div>
+          </PullToRefresh>
         </div>
 
         {/* Task detail panel (desktop: side panel, mobile: full screen overlay) */}
