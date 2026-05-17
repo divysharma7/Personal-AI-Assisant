@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { List, CalendarDays, Brain, Users, Settings2, CheckSquare, Timer, type LucideIcon } from 'lucide-react'
+import { List, CalendarDays, Brain, Users, Settings2, CheckSquare, Timer, Repeat, BarChart3, type LucideIcon } from 'lucide-react'
 import { snappy, gentle } from '@/shared/design-system'
 
 interface NavItem {
@@ -19,6 +19,8 @@ const NAV: NavItem[] = [
   { href: '/calendar?view=month',  icon: CalendarDays, label: 'Calendar', match: p => p === '/calendar' },
   { href: '/tasks',                icon: CheckSquare,  label: 'Tasks',    match: p => p === '/tasks' },
   { href: '/pomodoro',              icon: Timer,        label: 'Pomodoro', match: p => p === '/pomodoro' },
+  { href: '/habits',               icon: Repeat,       label: 'Habits',   match: p => p === '/habits' },
+  { href: '/stats',                icon: BarChart3,    label: 'Stats',    match: p => p === '/stats' },
   { href: '/memories',             icon: Brain,        label: 'Memories', match: p => p === '/memories' },
   { href: '/contacts',             icon: Users,        label: 'Contacts', match: p => p === '/contacts' },
   { href: '/settings',             icon: Settings2,    label: 'Settings', match: p => p === '/settings' },
