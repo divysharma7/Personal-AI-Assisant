@@ -390,6 +390,27 @@ export const copy = {
     shortcutHint: "^N",
   },
 
+  // ───────── Matrix ─────────
+  matrix: {
+    title: "Eisenhower Matrix",
+    quadrants: {
+      doFirst: { title: "Do First", subtitle: "Urgent + Important" },
+      schedule: { title: "Schedule", subtitle: "Not Urgent + Important" },
+      delegate: { title: "Delegate", subtitle: "Urgent + Not Important" },
+      eliminate: { title: "Eliminate", subtitle: "Not Urgent + Not Important" },
+    },
+    addTask: "Add task",
+    estHoursPlaceholder: "Est. hours",
+    empty: "No tasks in this quadrant",
+    summary: {
+      totalEffort: "Total effort",
+      doFirstEffort: "Do First",
+      atRisk: "At risk",
+      doneToday: "Done today",
+    },
+    filterNote: "Only showing tasks with priority and effort assigned",
+  },
+
   // ───────── Folders ─────────
   folders: {
     createPlaceholder: "Folder name...",

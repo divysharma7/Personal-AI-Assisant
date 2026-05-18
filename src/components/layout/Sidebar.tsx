@@ -7,6 +7,7 @@ import {
   Inbox,
   CalendarDays,
   CheckCircle2,
+  LayoutGrid,
   Bell,
   ChevronRight,
   Plus,
@@ -30,6 +31,7 @@ const NAV_ITEMS = [
   { label: copy.inbox.title, icon: Inbox, href: '/' },
   { label: copy.today.title, icon: CalendarDays, href: '/today' },
   { label: copy.tasks.title, icon: CheckCircle2, href: '/tasks' },
+  { label: copy.matrix.title, icon: LayoutGrid, href: '/matrix' },
   { label: copy.updates.title, icon: Bell, href: '/updates' },
 ] as const
 
