@@ -82,16 +82,16 @@ export default function PomodoroPage() {
     <div className="flex flex-col flex-1 overflow-auto min-h-0">
       {/* Top bar */}
       <div
-        className="flex items-center gap-2.5 px-6 py-3 flex-shrink-0"
+        className="flex items-center gap-2.5 px-8 py-4 flex-shrink-0"
         style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}
       >
-        <p className="text-sm font-bold" style={{ color: 'var(--text-1)' }}>Pomodoro</p>
+        <p className="text-lg font-bold" style={{ color: 'var(--text-1)', letterSpacing: '-0.02em' }}>Pomodoro</p>
         <span className="text-xs" style={{ color: 'var(--text-3)' }}>
           {state.todayCompleted > 0 && `${state.todayCompleted} session${state.todayCompleted > 1 ? 's' : ''} today`}
         </span>
       </div>
 
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto px-10 py-6">
         <div className="max-w-3xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left: Large timer */}
           <motion.div
@@ -136,11 +136,10 @@ export default function PomodoroPage() {
 
                 {pickerOpen && (
                   <div
-                    className="absolute left-0 right-0 top-full mt-1 rounded-xl z-10"
+                    className="absolute left-0 right-0 top-full mt-1 rounded-2xl z-10"
                     style={{
-                      background: 'var(--card)',
+                      background: 'var(--surface)',
                       border: '1px solid var(--border)',
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
                       maxHeight: 220,
                       overflowY: 'auto',
                     }}
@@ -237,7 +236,7 @@ export default function PomodoroPage() {
 
             {/* Recent sessions */}
             <div>
-              <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: 'var(--text-3)' }}>
+              <p className="section-header mb-3">
                 Recent sessions
               </p>
               {recentSessions.length === 0 && (
@@ -247,8 +246,8 @@ export default function PomodoroPage() {
                 {recentSessions.map(s => (
                   <div
                     key={s._id}
-                    className="flex items-center gap-3 px-3 py-2 rounded-xl"
-                    style={{ background: 'var(--input-bg)', border: '1px solid var(--border)' }}
+                    className="flex items-center gap-3 px-3 py-2 rounded-2xl"
+                    style={{ background: 'var(--surface)' }}
                   >
                     <div
                       className="w-2 h-2 rounded-full flex-shrink-0"

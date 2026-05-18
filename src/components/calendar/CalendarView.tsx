@@ -58,7 +58,7 @@ export default function CalendarView({ view, items, loading, onItemClick, onNewI
     <div className="flex flex-col h-full">
       {/* Header bar — responsive: stacked on mobile, three-zone on desktop */}
       <div
-        className="flex flex-col md:flex-row md:relative md:items-center px-3 md:px-5 py-2 md:py-3 gap-2 md:gap-0 flex-shrink-0"
+        className="flex flex-col md:flex-row md:relative md:items-center px-3 md:px-8 py-2 md:py-4 gap-2 md:gap-0 flex-shrink-0"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
         {/* Top row on mobile: title + nav */}
@@ -70,8 +70,8 @@ export default function CalendarView({ view, items, loading, onItemClick, onNewI
             <motion.h2
               key={title}
               initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-              className="text-sm md:text-base font-bold truncate"
-              style={{ color: 'var(--text-1)' }}
+              className="text-sm md:text-lg font-bold truncate"
+              style={{ color: 'var(--text-1)', letterSpacing: '-0.02em' }}
             >
               {title}
             </motion.h2>

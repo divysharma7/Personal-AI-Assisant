@@ -47,9 +47,9 @@ export default function HabitsPage() {
     <>
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
-          <h1 className="text-base font-bold" style={{ color: 'var(--text-1)' }}>Habits</h1>
-          <button onClick={() => setShowAdd(s => !s)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+        <div className="flex items-center justify-between px-8 py-4 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
+          <h1 className="text-lg font-bold" style={{ color: 'var(--text-1)', letterSpacing: '-0.02em' }}>Habits</h1>
+          <button onClick={() => setShowAdd(s => !s)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
             style={{ background: 'var(--accent)', color: '#fff' }}>
             <Plus size={13} /> Add Habit
           </button>
@@ -60,7 +60,7 @@ export default function HabitsPage() {
           {showAdd && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={smooth}
               className="overflow-hidden" style={{ borderBottom: '1px solid var(--border)' }}>
-              <div className="px-5 py-4 space-y-3">
+              <div className="px-8 py-4 space-y-3">
                 <input className="input-field" placeholder="Habit name..." value={newName} onChange={e => setNewName(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleCreate()} autoFocus />
                 <div className="flex items-center gap-2 flex-wrap">
@@ -95,7 +95,7 @@ export default function HabitsPage() {
         </AnimatePresence>
 
         {/* Habit list */}
-        <div className="flex-1 overflow-auto px-5 py-4 space-y-3">
+        <div className="flex-1 overflow-auto px-8 py-4 space-y-3">
           {isLoading ? (
             <div className="flex items-center justify-center py-16">
               <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }} />
@@ -111,7 +111,7 @@ export default function HabitsPage() {
                 const doneToday = habit.completions.includes(today)
                 return (
                   <motion.div key={habit._id} layout initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }} transition={snappy}
-                    className="rounded-xl p-4" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+                    className="rounded-2xl p-4" style={{ background: 'var(--surface)' }}>
                     <div className="flex items-center gap-3">
                       {/* Toggle today */}
                       <button onClick={() => toggleToday(habit)} className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all"

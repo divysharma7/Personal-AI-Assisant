@@ -52,8 +52,8 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-1 overflow-hidden">
-      <div className="flex flex-col flex-shrink-0 h-full py-6 px-3" style={{ width: 200, borderRight: '1px solid var(--border)', background: 'var(--surface)' }}>
-        <p className="text-xs font-semibold tracking-widest px-3 mb-3" style={{ color: 'var(--text-3)' }}>SETTINGS</p>
+      <div className="flex flex-col flex-shrink-0 h-full py-6 px-3" style={{ width: 240, borderRight: '1px solid var(--border)', background: 'var(--surface)' }}>
+        <p className="section-header px-3 mb-3">SETTINGS</p>
         <nav className="space-y-0.5">
           {SECTIONS.map(s => (
             <button key={s.id} onClick={() => setActive(s.id)} className={cn('sidebar-item w-full', active === s.id && 'active')}>
@@ -64,15 +64,15 @@ export default function SettingsPage() {
       </div>
 
       <main className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-shrink-0 flex items-center gap-2 px-6 py-3" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
+        <div className="flex-shrink-0 flex items-center gap-2 px-8 py-4" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
           <Settings2 size={14} style={{ color: 'var(--accent-light)' }} />
-          <span className="text-sm font-bold" style={{ color: 'var(--text-1)' }}>Settings</span>
+          <span className="text-lg font-bold" style={{ color: 'var(--text-1)', letterSpacing: '-0.02em' }}>Settings</span>
           <div className="ml-auto"><TopBarActions /></div>
         </div>
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-2xl mx-auto px-10 py-10">
             <div className="mb-8">
-              <h1 className="text-lg font-bold" style={{ color: 'var(--text-1)' }}>
+              <h1 className="text-xl font-bold" style={{ color: 'var(--text-1)', letterSpacing: '-0.02em' }}>
                 {SECTIONS.find(s => s.id === active)?.label}
               </h1>
             </div>
@@ -124,7 +124,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Reduce motion */}
-                <div className="flex items-center justify-between rounded-xl p-4" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+                <div className="flex items-center justify-between rounded-2xl p-4" style={{ background: 'var(--surface)' }}>
                   <div>
                     <p className="text-sm font-semibold" style={{ color: 'var(--text-1)' }}>Reduce motion</p>
                     <p className="text-xs mt-0.5" style={{ color: 'var(--text-3)' }}>Replace spring animations with subtle fades</p>
@@ -142,7 +142,7 @@ export default function SettingsPage() {
             {active === 'sound' && (
               <div className="space-y-6">
                 {/* Sound toggle */}
-                <div className="flex items-center justify-between rounded-xl p-4" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+                <div className="flex items-center justify-between rounded-2xl p-4" style={{ background: 'var(--surface)' }}>
                   <div>
                     <p className="text-sm font-semibold" style={{ color: 'var(--text-1)' }}>UI Sounds</p>
                     <p className="text-xs mt-0.5" style={{ color: 'var(--text-3)' }}>Play sounds on task complete, timer end, etc.</p>

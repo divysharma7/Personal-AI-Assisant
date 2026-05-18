@@ -40,7 +40,7 @@ function BarChart({ data, color, maxLabel }: { data: { label: string; value: num
 
 function StatCard({ icon: Icon, label, value, sub, color }: { icon: typeof CheckSquare; label: string; value: string | number; sub?: string; color: string }) {
   return (
-    <div className="rounded-xl p-4" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+    <div className="rounded-2xl p-4" style={{ background: 'var(--surface)' }}>
       <div className="flex items-center gap-2 mb-2">
         <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${color}20` }}>
           <Icon size={14} style={{ color }} />
@@ -99,8 +99,8 @@ export default function StatsPage() {
   return (
     <>
       <main className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
-          <h1 className="text-base font-bold" style={{ color: 'var(--text-1)' }}>Statistics</h1>
+        <div className="flex items-center justify-between px-8 py-4 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
+          <h1 className="text-lg font-bold" style={{ color: 'var(--text-1)', letterSpacing: '-0.02em' }}>Statistics</h1>
           <div className="flex items-center rounded-xl p-0.5 gap-0.5" style={{ background: 'var(--input-bg)', border: '1px solid var(--border)' }}>
             {(['7d', '30d', '90d'] as Range[]).map(r => (
               <button key={r} onClick={() => setRange(r)}
@@ -112,7 +112,7 @@ export default function StatsPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto px-5 py-4 space-y-5">
+        <div className="flex-1 overflow-auto px-8 py-4 space-y-5">
           {/* Stat cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <StatCard icon={CheckSquare} label="Tasks Done" value={totalTasksCompleted} sub={`Last ${range}`} color="#22c55e" />
@@ -122,13 +122,13 @@ export default function StatsPage() {
           </div>
 
           {/* Tasks chart */}
-          <div className="rounded-xl p-4" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+          <div className="rounded-2xl p-4" style={{ background: 'var(--surface)' }}>
             <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-1)' }}>Tasks Completed</h3>
             <BarChart data={taskData} color="#22c55e" maxLabel="tasks" />
           </div>
 
           {/* Focus chart */}
-          <div className="rounded-xl p-4" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+          <div className="rounded-2xl p-4" style={{ background: 'var(--surface)' }}>
             <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-1)' }}>Focus Minutes</h3>
             <BarChart data={focusData} color="#6366f1" maxLabel="min" />
           </div>

@@ -60,7 +60,7 @@ export default function PomodoroStats() {
 
       {/* Bar chart - last 7 days */}
       <div>
-        <p className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: 'var(--text-3)' }}>
+        <p className="section-header mb-3">
           Last 7 days
         </p>
         <svg width="100%" height={80} viewBox="0 0 280 80" preserveAspectRatio="none">
@@ -117,8 +117,8 @@ function StatCard({ icon, label, value, color }: {
 }) {
   return (
     <div
-      className="rounded-xl p-3"
-      style={{ background: 'var(--input-bg)', border: '1px solid var(--border)' }}
+      className="rounded-2xl p-3"
+      style={{ background: 'var(--surface)' }}
     >
       <div className="flex items-center gap-1.5 mb-1" style={{ color }}>
         {icon}
