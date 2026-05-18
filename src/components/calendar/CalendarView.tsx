@@ -56,10 +56,9 @@ export default function CalendarView({ view, items, loading, onItemClick, onNewI
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header bar — responsive: stacked on mobile, three-zone on desktop */}
+      {/* Header — Superlist style: no border, generous padding */}
       <div
-        className="flex flex-col md:flex-row md:relative md:items-center px-3 md:px-8 py-2 md:py-4 gap-2 md:gap-0 flex-shrink-0"
-        style={{ borderBottom: '1px solid var(--border)' }}
+        className="flex flex-col md:flex-row md:relative md:items-center px-4 md:px-8 pt-6 md:pt-8 pb-3 md:pb-4 gap-2 md:gap-0 flex-shrink-0"
       >
         {/* Top row on mobile: title + nav */}
         <div className="flex items-center justify-between md:flex-1 md:min-w-0">

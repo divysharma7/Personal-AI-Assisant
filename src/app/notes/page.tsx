@@ -11,50 +11,39 @@ export default function NotesPage() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Header */}
-      <header
-        className="flex-shrink-0 flex items-center gap-3 px-6 py-3"
-        style={{ borderBottom: '1px solid var(--border)', background: 'var(--cal-header-bg)' }}
-      >
-        <StickyNote size={15} style={{ color: 'var(--accent)' }} />
-        <span className="font-semibold text-sm" style={{ color: 'var(--text-1)' }}>Post-its</span>
-        <span className="text-xs" style={{ color: 'var(--text-3)' }}>{notes.length}/30</span>
-        {maxReached && (
-          <span className="text-xs px-2 py-0.5 rounded-lg" style={{ background: 'rgba(251,191,36,0.1)', color: '#fbbf24' }}>
-            Max 30
-          </span>
-        )}
-        <div className="ml-auto flex items-center gap-1.5">
-          {NOTE_COLORS.map(c => (
-            <motion.button
-              key={c.bg}
-              whileHover={{ scale: 1.2 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => !maxReached && addNote(c.bg)}
+      {/* Header — Superlist style */}
+      <div className="flex-shrink-0 px-8 md:px-10 pt-8 pb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="text-[32px] md:text-[36px] font-bold" style={{ color: 'var(--text-1)', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+              Post-its
+            </h1>
+            <span className="text-[13px] font-medium" style={{ color: 'var(--text-3)' }}>{notes.length}/30</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            {NOTE_COLORS.map(c => (
+              <motion.button
+                key={c.bg}
+                whileHover={{ scale: 1.2 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => !maxReached && addNote(c.bg)}
+                disabled={maxReached}
+                title={`Add ${c.label} note`}
+                className="w-5 h-5 rounded-full disabled:opacity-30 disabled:cursor-not-allowed"
+                style={{ background: c.bg }}
+              />
+            ))}
+            <button
+              onClick={() => !maxReached && addNote()}
               disabled={maxReached}
-              title={`Add ${c.label} note`}
-              className="w-5 h-5 rounded-full disabled:opacity-30 disabled:cursor-not-allowed"
-              style={{ background: c.bg, boxShadow: `0 0 0 2px var(--border-hover)` }}
-            />
-          ))}
-          <button
-            onClick={() => !maxReached && addNote()}
-            disabled={maxReached}
-            className="btn-primary flex items-center gap-1.5 text-xs px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed ml-1"
-          >
-            <Plus size={13} />
-            New note
-          </button>
+              className="flex items-center gap-1.5 text-[13px] font-medium px-4 py-2 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed ml-2"
+              style={{ background: 'var(--text-1)', color: 'var(--card)' }}
+            >
+              <Plus size={13} />
+              New note
+            </button>
+          </div>
         </div>
-      </header>
-
-      {/* Privacy notice */}
-      <div
-        className="flex-shrink-0 flex items-center justify-center gap-2 px-4 py-1.5 text-xs"
-        style={{ background: 'rgba(251,191,36,0.06)', borderBottom: '1px solid rgba(251,191,36,0.12)', color: 'var(--text-3)' }}
-      >
-        <span style={{ color: '#fbbf24' }}>⚠</span>
-        Avoid storing passwords, financial details, or other sensitive private information in notes.
       </div>
 
       {/* Canvas */}

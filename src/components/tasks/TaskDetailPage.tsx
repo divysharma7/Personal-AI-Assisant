@@ -293,10 +293,9 @@ export default function TaskDetailPage({ taskId, onClose, onUpdate }: TaskDetail
 
   return (
     <PanelWrapper isMobile={isMobile} onClose={onClose} panelRef={panelRef}>
-      {/* Close / back button */}
+      {/* Header — Superlist style: no border, clean */}
       <div
-        className="flex items-center justify-between px-5 py-3 flex-shrink-0"
-        style={{ borderBottom: '1px solid var(--border)' }}
+        className="flex items-center justify-between px-5 py-4 flex-shrink-0"
       >
         <div className="flex items-center gap-2">
           {isMobile ? (
@@ -304,7 +303,9 @@ export default function TaskDetailPage({ taskId, onClose, onUpdate }: TaskDetail
               <ArrowLeft size={18} />
             </button>
           ) : (
-            <span className="text-xs font-medium" style={{ color: 'var(--text-3)' }}>Task Detail</span>
+            <button onClick={onClose} className="p-1.5 rounded-lg" style={{ color: 'var(--text-3)' }}>
+              <X size={16} />
+            </button>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -335,11 +336,6 @@ export default function TaskDetailPage({ taskId, onClose, onUpdate }: TaskDetail
               </motion.span>
             )}
           </AnimatePresence>
-          {!isMobile && (
-            <button onClick={onClose} className="p-1.5 rounded-lg" style={{ color: 'var(--text-3)' }}>
-              <X size={16} />
-            </button>
-          )}
         </div>
       </div>
 
