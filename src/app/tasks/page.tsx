@@ -173,8 +173,7 @@ export default function TasksPage() {
                 {showTip && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.15 }} className="mt-4">
-                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl text-[13px]"
-                      style={{ background: 'var(--accent-soft)', color: 'var(--text-2)' }}>
+                    <div className="tip-banner">
                       <Sparkles size={16} style={{ color: 'var(--accent)', flexShrink: 0 }} />
                       <span className="flex-1">View, sort, and access all of your tasks in one place</span>
                       <button className="p-1 flex-shrink-0" style={{ color: 'var(--text-3)' }}>
@@ -195,10 +194,7 @@ export default function TasksPage() {
                 <button className="p-2 rounded-lg" style={{ color: 'var(--text-3)' }}><Search size={15} /></button>
                 {FILTERS.map(f => (
                   <button key={f.id} onClick={() => setFilter(f.id)}
-                    className="px-3 py-1.5 rounded-full text-[13px] font-medium transition-all"
-                    style={filter === f.id
-                      ? { background: 'var(--text-1)', color: 'var(--card)' }
-                      : { color: 'var(--text-2)', border: '1px solid var(--border)' }}>
+                    className={`pill-interactive ${filter === f.id ? 'active' : ''}`}>
                     {f.label}
                   </button>
                 ))}
@@ -261,21 +257,14 @@ function SuperlistTaskRow({ task, onToggle, onClick }: { task: TreeTask; onToggl
   }
 
   return (
-    <div className="flex items-start gap-2 py-3 px-1 group rounded-lg transition-colors cursor-pointer"
+    <div className="row-interactive flex items-start gap-2 py-3 px-1 group"
       style={{ minHeight: 48 }}
-      onClick={onClick}
-      onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-overlay, rgba(255,255,255,0.02))')}
-      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+      onClick={onClick}>
 
       {/* Checkbox */}
       <button onClick={handleToggle}
-        className="w-[20px] h-[20px] rounded-full flex items-center justify-center flex-shrink-0 mt-[3px]"
-        style={{
-          border: showStrike ? 'none' : '2px solid var(--text-3)',
-          background: showStrike ? '#E85D40' : 'transparent',
-          transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
-          transform: justDone ? 'scale(1.15)' : 'scale(1)',
-        }}>
+        className={`checkbox-interactive mt-[3px] ${showStrike ? 'checked' : ''} ${justDone ? 'just-checked' : ''}`}
+        style={{ '--checkbox-size': '20px', '--checkbox-complete-color': '#E85D40' } as React.CSSProperties}>
         {showStrike && (
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
             <path d="M2 5L4.5 7.5L8 3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -290,11 +279,8 @@ function SuperlistTaskRow({ task, onToggle, onClick }: { task: TreeTask; onToggl
 
       {/* Title + metadata */}
       <div className="flex-1 min-w-0">
-        <span className="text-[14px]" style={{
-          color: showStrike ? 'var(--text-3)' : 'var(--text-1)',
-          textDecoration: showStrike ? 'line-through' : 'none',
-          textDecorationColor: '#E85D40', textDecorationThickness: '2px',
-          transition: 'color 0.2s',
+        <span className={`text-[14px] ${showStrike ? 'strike-through' : ''}`} style={{
+          color: showStrike ? undefined : 'var(--text-1)',
         }}>
           {task.title}
         </span>
@@ -311,7 +297,7 @@ function SuperlistTaskRow({ task, onToggle, onClick }: { task: TreeTask; onToggl
       </div>
 
       {/* Right actions */}
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity mt-[3px]">
+      <div className="hover-reveal flex items-center gap-1 mt-[3px]">
         <button className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: 'var(--accent)', color: '#fff' }}
           onClick={e => { e.stopPropagation(); onClick() }}>
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none">

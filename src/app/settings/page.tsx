@@ -82,10 +82,10 @@ export default function SettingsPage() {
                 <button
                   key={s.id}
                   onClick={() => setActive(s.id)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all"
+                  className={`pill-interactive ${active === s.id ? 'active' : ''}`}
                   style={active === s.id
-                    ? { background: 'var(--accent)', color: '#fff' }
-                    : { background: 'var(--surface)', color: 'var(--text-2)' }}
+                    ? { background: 'var(--accent)', color: '#fff', borderColor: 'transparent' }
+                    : { background: 'var(--surface)' }}
                 >
                   <s.icon size={14} />
                   {s.label}
@@ -148,10 +148,8 @@ export default function SettingsPage() {
                       <p className="text-xs mt-0.5" style={{ color: 'var(--text-3)' }}>Replace spring animations with subtle fades</p>
                     </div>
                     <button onClick={() => setReduceMotion(!reduceMotion)}
-                      className="w-10 h-6 rounded-full transition-colors relative"
-                      style={{ background: reduceMotion ? 'var(--accent)' : 'var(--input-bg)' }}>
-                      <div className="absolute w-4 h-4 rounded-full bg-white top-1 transition-all"
-                        style={{ left: reduceMotion ? 22 : 4 }} />
+                      className={`toggle ${reduceMotion ? 'on' : ''}`}>
+                      <div className="thumb" />
                     </button>
                   </div>
                 </div>
@@ -166,10 +164,8 @@ export default function SettingsPage() {
                       <p className="text-xs mt-0.5" style={{ color: 'var(--text-3)' }}>Play sounds on task complete, timer end, etc.</p>
                     </div>
                     <button onClick={() => setSoundEnabled(!soundEnabled)}
-                      className="w-10 h-6 rounded-full transition-colors relative"
-                      style={{ background: soundEnabled ? 'var(--accent)' : 'var(--input-bg)' }}>
-                      <div className="absolute w-4 h-4 rounded-full bg-white top-1 transition-all"
-                        style={{ left: soundEnabled ? 22 : 4 }} />
+                      className={`toggle ${soundEnabled ? 'on' : ''}`}>
+                      <div className="thumb" />
                     </button>
                   </div>
 

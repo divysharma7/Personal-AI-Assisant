@@ -231,25 +231,18 @@ function TodayTaskRow({ task, onToggle }: { task: Task; onToggle: () => void }) 
   }
 
   return (
-    <div className="flex items-center gap-2 py-2.5 px-1 group rounded-lg transition-colors"
-      style={{ minHeight: 44 }}
-      onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-overlay, rgba(255,255,255,0.02))')}
-      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+    <div className="row-interactive flex items-center gap-2 py-2.5 px-1 group"
+      style={{ minHeight: 44 }}>
 
       {/* Drag handle — visible on hover */}
-      <div className="w-4 flex items-center justify-center opacity-0 group-hover:opacity-40 transition-opacity cursor-grab">
+      <div className="drag-handle w-4 flex items-center justify-center">
         <GripVertical size={12} />
       </div>
 
       {/* Checkbox */}
       <button onClick={handleClick}
-        className="w-[20px] h-[20px] rounded-full flex items-center justify-center flex-shrink-0"
-        style={{
-          border: showStrike ? 'none' : '2px solid var(--text-3)',
-          background: showStrike ? '#E85D40' : 'transparent',
-          transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
-          transform: justDone ? 'scale(1.15)' : 'scale(1)',
-        }}>
+        className={`checkbox-interactive ${showStrike ? 'checked' : ''} ${justDone ? 'just-checked' : ''}`}
+        style={{ '--checkbox-size': '20px', '--checkbox-complete-color': '#E85D40' } as React.CSSProperties}>
         {showStrike && (
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
             <path d="M2 5L4.5 7.5L8 3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -264,12 +257,8 @@ function TodayTaskRow({ task, onToggle }: { task: Task; onToggle: () => void }) 
 
       {/* Title + metadata */}
       <div className="flex-1 min-w-0">
-        <span className="text-[14px]" style={{
-          color: showStrike ? 'var(--text-3)' : 'var(--text-1)',
-          textDecoration: showStrike ? 'line-through' : 'none',
-          textDecorationColor: '#E85D40',
-          textDecorationThickness: '2px',
-          transition: 'color 0.2s, text-decoration-color 0.2s',
+        <span className={`text-[14px] ${showStrike ? 'strike-through' : ''}`} style={{
+          color: showStrike ? undefined : 'var(--text-1)',
         }}>
           {task.title}
         </span>
@@ -286,7 +275,7 @@ function TodayTaskRow({ task, onToggle }: { task: Task; onToggle: () => void }) 
       </div>
 
       {/* Right actions — arrow on hover */}
-      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="hover-reveal flex items-center gap-1">
         <button className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: 'var(--accent)', color: '#fff' }}>
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
             <path d="M3 5H7M7 5L5 3M7 5L5 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

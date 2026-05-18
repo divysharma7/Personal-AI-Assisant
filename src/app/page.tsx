@@ -116,12 +116,9 @@ function DatePopover({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: -4 }}
       transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-      className="absolute z-50 rounded-xl p-3"
+      className="popover absolute p-3"
       style={{
         width: 280,
-        background: 'var(--card)',
-        border: '1px solid var(--border)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.24)',
         top: '100%',
         left: 0,
         marginTop: 4,
@@ -133,10 +130,7 @@ function DatePopover({
           <button
             key={opt.label}
             onClick={() => { onChange(opt.date); onClose() }}
-            className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-[13px] transition-colors text-left"
-            style={{ color: 'var(--text-1)' }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-overlay)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            className="popover-item text-[13px] text-left"
           >
             <CalIcon size={14} style={{ color: 'var(--text-3)' }} />
             {opt.label}
@@ -154,19 +148,15 @@ function DatePopover({
         <div className="flex gap-1">
           <button
             onClick={() => setViewMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
-            className="w-6 h-6 flex items-center justify-center rounded-md"
+            className="btn-icon w-6 h-6"
             style={{ color: 'var(--text-3)' }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-overlay)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
             <ChevronLeft size={14} />
           </button>
           <button
             onClick={() => setViewMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
-            className="w-6 h-6 flex items-center justify-center rounded-md"
+            className="btn-icon w-6 h-6"
             style={{ color: 'var(--text-3)' }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-overlay)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
             <ChevronRight size={14} />
           </button>
@@ -192,24 +182,18 @@ function DatePopover({
             <button
               key={day.toISOString()}
               onClick={() => { onChange(day); onClose() }}
-              className="w-full aspect-square flex items-center justify-center rounded-full text-[12px] transition-colors"
+              className={`w-full aspect-square flex items-center justify-center rounded-full text-[12px] transition-colors ${!isSelected ? 'popover-item' : ''}`}
               style={{
                 color: isSelected
                   ? '#fff'
                   : isCurrentMonth
                     ? 'var(--text-1)'
                     : 'var(--text-3)',
-                background: isSelected ? ACCENT_INDIGO : 'transparent',
+                background: isSelected ? ACCENT_INDIGO : undefined,
                 fontWeight: isTodayDay ? 700 : 400,
                 boxShadow: isTodayDay && !isSelected
                   ? `inset 0 0 0 1.5px ${ACCENT_INDIGO}`
                   : undefined,
-              }}
-              onMouseEnter={e => {
-                if (!isSelected) e.currentTarget.style.background = 'var(--bg-overlay)'
-              }}
-              onMouseLeave={e => {
-                if (!isSelected) e.currentTarget.style.background = 'transparent'
               }}
             >
               {format(day, 'd')}
@@ -254,12 +238,9 @@ function PriorityPopover({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: -4 }}
       transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-      className="absolute z-50 rounded-xl py-1.5"
+      className="popover absolute py-1.5"
       style={{
         width: 160,
-        background: 'var(--card)',
-        border: '1px solid var(--border)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.24)',
         top: '100%',
         left: 0,
         marginTop: 4,
@@ -269,12 +250,10 @@ function PriorityPopover({
         <button
           key={opt.key}
           onClick={() => { onChange(opt.key); onClose() }}
-          className="flex items-center gap-2 w-full px-3 py-1.5 text-[13px] transition-colors text-left"
+          className={`popover-item w-full text-[13px] text-left ${value === opt.key ? 'selected' : ''}`}
           style={{
-            color: value === opt.key ? opt.color : 'var(--text-1)',
+            color: value === opt.key ? opt.color : undefined,
           }}
-          onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-overlay)')}
-          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
         >
           <BarChart3 size={14} style={{ color: opt.color }} />
           <span className="flex-1">{opt.label}</span>
@@ -362,10 +341,7 @@ function DetailPanel({
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <button
           onClick={onClose}
-          className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-          style={{ color: 'var(--text-2)' }}
-          onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-overlay)')}
-          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+          className="btn-icon w-8 h-8"
         >
           <X size={18} />
         </button>
@@ -377,10 +353,7 @@ function DetailPanel({
             }}
           />
           <button
-            className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-            style={{ color: 'var(--text-2)' }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-overlay)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            className="btn-icon w-8 h-8"
           >
             <MoreVertical size={16} />
           </button>
@@ -393,13 +366,7 @@ function DetailPanel({
         <div className="flex items-start gap-3 mt-2">
           <button
             onClick={handleToggle}
-            className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-            style={{
-              border: showStrike ? 'none' : '2px solid var(--text-3)',
-              background: showStrike ? ACCENT_RED : 'transparent',
-              transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              transform: justCompleted ? 'scale(1.15)' : 'scale(1)',
-            }}
+            className={`checkbox-interactive mt-0.5 ${showStrike ? 'checked' : ''} ${justCompleted ? 'just-checked' : ''}`}
           >
             {showStrike && (
               <Check size={14} color="#fff" strokeWidth={2.5} />
@@ -410,11 +377,9 @@ function DetailPanel({
             onChange={e => setEditTitle(e.target.value)}
             onBlur={handleTitleBlur}
             onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
-            className="flex-1 bg-transparent outline-none text-[24px] font-bold"
+            className={`flex-1 bg-transparent outline-none text-[24px] font-bold ${showStrike ? 'strike-through' : ''}`}
             style={{
-              color: showStrike ? 'var(--text-3)' : 'var(--text-1)',
-              textDecoration: showStrike ? 'line-through' : 'none',
-              textDecorationColor: showStrike ? ACCENT_RED : 'transparent',
+              color: showStrike ? undefined : 'var(--text-1)',
               lineHeight: 1.2,
             }}
           />
@@ -426,11 +391,11 @@ function DetailPanel({
           <div className="relative">
             <button
               onClick={() => setShowDatePop(!showDatePop)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-colors"
+              className="chip"
               style={{
-                background: task.dueDate ? 'rgba(139,125,255,0.1)' : 'var(--bg-overlay)',
-                color: task.dueDate ? ACCENT_INDIGO : 'var(--text-3)',
-                border: `1px solid ${task.dueDate ? 'rgba(139,125,255,0.2)' : 'var(--border)'}`,
+                background: task.dueDate ? 'rgba(139,125,255,0.1)' : undefined,
+                color: task.dueDate ? ACCENT_INDIGO : undefined,
+                borderColor: task.dueDate ? 'rgba(139,125,255,0.2)' : undefined,
               }}
             >
               <CalIcon size={12} />
@@ -454,11 +419,11 @@ function DetailPanel({
           <div className="relative">
             <button
               onClick={() => setShowPriorityPop(!showPriorityPop)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-colors"
+              className="chip"
               style={{
-                background: task.priority ? `${PRIORITY_COLORS[task.priority]}15` : 'var(--bg-overlay)',
-                color: task.priority ? PRIORITY_COLORS[task.priority] : 'var(--text-3)',
-                border: `1px solid ${task.priority ? `${PRIORITY_COLORS[task.priority]}30` : 'var(--border)'}`,
+                background: task.priority ? `${PRIORITY_COLORS[task.priority]}15` : undefined,
+                color: task.priority ? PRIORITY_COLORS[task.priority] : undefined,
+                borderColor: task.priority ? `${PRIORITY_COLORS[task.priority]}30` : undefined,
               }}
             >
               <BarChart3 size={12} />
@@ -480,12 +445,7 @@ function DetailPanel({
 
           {/* Label chip (stub) */}
           <button
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium transition-colors"
-            style={{
-              background: 'var(--bg-overlay)',
-              color: 'var(--text-3)',
-              border: '1px solid var(--border)',
-            }}
+            className="chip"
           >
             <Tag size={12} />
             Label
@@ -577,34 +537,21 @@ function TaskRow({
   return (
     <div
       onClick={onSelect}
-      className="flex items-start gap-2 px-4 py-3 rounded-xl transition-colors group relative cursor-pointer"
+      className={`row-interactive flex items-start gap-2 px-4 py-3 group relative ${isSelected ? 'selected' : ''}`}
       style={{
         minHeight: 48,
-        background: isSelected ? 'var(--bg-overlay)' : 'transparent',
         borderRight: isDetailOpen ? `3px solid ${ACCENT_INDIGO}` : '3px solid transparent',
-      }}
-      onMouseEnter={e => {
-        if (!isSelected) e.currentTarget.style.background = 'var(--bg-overlay)'
-      }}
-      onMouseLeave={e => {
-        if (!isSelected) e.currentTarget.style.background = 'transparent'
       }}
     >
       {/* Drag handle */}
-      <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity mt-0.5" style={{ color: 'var(--text-3)' }}>
+      <div className="drag-handle flex items-center mt-0.5">
         <GripVertical size={14} />
       </div>
 
       {/* Checkbox */}
       <button
         onClick={handleToggle}
-        className="w-[22px] h-[22px] rounded-full flex items-center justify-center flex-shrink-0 mt-[1px]"
-        style={{
-          border: showStrike ? 'none' : '2px solid var(--text-3)',
-          background: showStrike ? ACCENT_RED : 'transparent',
-          transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
-          transform: justCompleted ? 'scale(1.15)' : 'scale(1)',
-        }}
+        className={`checkbox-interactive mt-[1px] ${showStrike ? 'checked' : ''} ${justCompleted ? 'just-checked' : ''}`}
       >
         {showStrike && (
           <svg width="11" height="11" viewBox="0 0 10 10" fill="none">
@@ -621,13 +568,9 @@ function TaskRow({
             <BarChart3 size={13} style={{ color: PRIORITY_COLORS[task.priority], flexShrink: 0 }} />
           )}
           <span
-            className="text-[15px] font-medium truncate"
+            className={`text-[15px] font-medium truncate ${showStrike ? 'strike-through' : ''}`}
             style={{
-              color: showStrike ? 'var(--text-3)' : 'var(--text-1)',
-              textDecoration: showStrike ? 'line-through' : 'none',
-              textDecorationColor: showStrike ? ACCENT_RED : 'transparent',
-              textDecorationThickness: '2px',
-              transition: 'color 0.2s, text-decoration-color 0.2s',
+              color: showStrike ? undefined : 'var(--text-1)',
             }}
           >
             {task.title}
@@ -655,10 +598,8 @@ function TaskRow({
       {/* Right: detail arrow */}
       <button
         onClick={e => { e.stopPropagation(); onOpenDetail() }}
-        className="w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all flex-shrink-0 mt-0.5"
-        style={{ color: 'var(--text-3)', border: '1px solid var(--border)' }}
-        onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-overlay)')}
-        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+        className="hover-reveal btn-icon w-7 h-7 rounded-full flex-shrink-0 mt-0.5"
+        style={{ border: '1px solid var(--border)' }}
       >
         <ArrowRight size={14} />
       </button>
@@ -854,20 +795,10 @@ export default function InboxPage() {
               Inbox
             </h1>
             <div className="flex items-center gap-1">
-              <button
-                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-                style={{ color: 'var(--text-2)' }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-overlay)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-              >
+              <button className="btn-icon w-8 h-8">
                 <SlidersHorizontal size={16} />
               </button>
-              <button
-                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
-                style={{ color: 'var(--text-2)' }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-overlay)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-              >
+              <button className="btn-icon w-8 h-8">
                 <MoreVertical size={16} />
               </button>
             </div>
@@ -883,14 +814,7 @@ export default function InboxPage() {
                 transition={{ duration: 0.15 }}
                 className="mt-4"
               >
-                <div
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-[13px]"
-                  style={{
-                    background: 'rgba(99,91,255,0.08)',
-                    border: '1px solid rgba(139,125,255,0.15)',
-                    color: 'var(--text-2)',
-                  }}
-                >
+                <div className="tip-banner">
                   <BookOpen size={16} style={{ color: ACCENT_INDIGO, flexShrink: 0 }} />
                   <span className="flex-1">
                     Manage all new and incoming tasks — create, move, schedule, and more
@@ -970,16 +894,10 @@ export default function InboxPage() {
                       <button
                         onMouseDown={e => e.preventDefault()}
                         onClick={() => setOpenPopover(openPopover === 'date' ? null : 'date')}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                        className="btn-icon w-7 h-7"
                         style={{
-                          color: newTaskDate ? ACCENT_INDIGO : 'var(--text-3)',
-                          background: newTaskDate ? 'rgba(139,125,255,0.1)' : 'transparent',
-                        }}
-                        onMouseEnter={e => {
-                          if (!newTaskDate) e.currentTarget.style.background = 'var(--bg-overlay)'
-                        }}
-                        onMouseLeave={e => {
-                          if (!newTaskDate) e.currentTarget.style.background = 'transparent'
+                          color: newTaskDate ? ACCENT_INDIGO : undefined,
+                          background: newTaskDate ? 'rgba(139,125,255,0.1)' : undefined,
                         }}
                       >
                         <CalIcon size={15} />
@@ -1008,16 +926,10 @@ export default function InboxPage() {
                       <button
                         onMouseDown={e => e.preventDefault()}
                         onClick={() => setOpenPopover(openPopover === 'priority' ? null : 'priority')}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                        className="btn-icon w-7 h-7"
                         style={{
-                          color: newTaskPriority ? PRIORITY_COLORS[newTaskPriority] : 'var(--text-3)',
-                          background: newTaskPriority ? `${PRIORITY_COLORS[newTaskPriority]}15` : 'transparent',
-                        }}
-                        onMouseEnter={e => {
-                          if (!newTaskPriority) e.currentTarget.style.background = 'var(--bg-overlay)'
-                        }}
-                        onMouseLeave={e => {
-                          if (!newTaskPriority) e.currentTarget.style.background = 'transparent'
+                          color: newTaskPriority ? PRIORITY_COLORS[newTaskPriority] : undefined,
+                          background: newTaskPriority ? `${PRIORITY_COLORS[newTaskPriority]}15` : undefined,
                         }}
                       >
                         <BarChart3 size={15} />
@@ -1038,10 +950,7 @@ export default function InboxPage() {
 
                     {/* Tag button (stub) */}
                     <button
-                      className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-                      style={{ color: 'var(--text-3)' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-overlay)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                      className="btn-icon w-7 h-7"
                     >
                       <Tag size={15} />
                     </button>
@@ -1071,7 +980,7 @@ export default function InboxPage() {
           {/* ── Task List ──────────────────────────────────────── */}
           {loading && tasks.length === 0 && (
             <div className="py-12 text-center">
-              <div className="inline-block w-5 h-5 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--text-3)', borderTopColor: 'transparent' }} />
+              <div className="spinner" />
             </div>
           )}
 
@@ -1169,8 +1078,7 @@ export default function InboxPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-medium"
-            style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text-1)', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}
+            className="toast"
           >
             <CheckCircle2 size={15} style={{ color: '#22c55e' }} />
             {toast}

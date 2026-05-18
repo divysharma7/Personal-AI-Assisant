@@ -102,7 +102,7 @@ export default function HabitsPage() {
             <div className="space-y-3">
           {isLoading ? (
             <div className="flex items-center justify-center py-16">
-              <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }} />
+              <div className="spinner" style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }} />
             </div>
           ) : habits.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-2">
@@ -115,11 +115,11 @@ export default function HabitsPage() {
                 const doneToday = habit.completions.includes(today)
                 return (
                   <motion.div key={habit._id} layout initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }} transition={snappy}
-                    className="rounded-2xl p-4" style={{ background: 'var(--surface)' }}>
+                    className="card-lift p-4" style={{ background: 'var(--surface)' }}>
                     <div className="flex items-center gap-3">
                       {/* Toggle today */}
-                      <button onClick={() => toggleToday(habit)} className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
-                        style={{ background: doneToday ? habit.color : 'transparent', border: `2px solid ${habit.color}` }}>
+                      <button onClick={() => toggleToday(habit)} className={`checkbox-interactive ${doneToday ? 'checked' : ''}`}
+                        style={{ '--checkbox-size': '32px', '--checkbox-complete-color': habit.color, borderColor: habit.color } as React.CSSProperties}>
                         {doneToday && <Check size={14} color="#fff" strokeWidth={3} />}
                       </button>
 

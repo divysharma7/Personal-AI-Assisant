@@ -62,7 +62,7 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   return (
     <Link
       href={item.href}
-      className="flex items-center gap-3 px-3 py-[7px] rounded-lg text-[13px] font-medium transition-colors relative"
+      className={`row-interactive flex items-center gap-3 px-3 py-[7px] text-[13px] font-medium relative ${active ? 'selected' : ''}`}
       style={{
         color: active ? 'var(--text-1)' : 'var(--text-2)',
       }}
@@ -84,7 +84,7 @@ function ListLink({ item, active }: { item: ListItem; active: boolean }) {
   return (
     <Link
       href={item.href}
-      className="flex items-center gap-2.5 px-3 py-[6px] rounded-lg text-[13px] transition-colors relative"
+      className={`row-interactive flex items-center gap-2.5 px-3 py-[6px] text-[13px] relative ${active ? 'selected' : ''}`}
       style={{
         color: active ? 'var(--text-1)' : 'var(--text-2)',
         fontWeight: active ? 500 : 400,
@@ -193,19 +193,16 @@ export default function SuperlistSidebar() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 8 }}
                 transition={{ duration: 0.12 }}
-                className="absolute bottom-14 left-2 rounded-xl p-1.5 min-w-[180px] z-50"
-                style={{ background: 'var(--card)', border: '1px solid var(--border)', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}
+                className="popover absolute bottom-14 left-2 p-1.5 min-w-[180px]"
               >
                 <Link href="/settings" onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-colors"
-                  style={{ color: 'var(--text-2)' }}
+                  className="popover-item text-[13px]"
                 >
                   <Settings size={14} /> Settings
                 </Link>
                 <button
                   onClick={() => { setMenuOpen(false); fetch('/api/auth/logout', { method: 'POST' }).then(() => window.location.href = '/login') }}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] w-full text-left transition-colors"
-                  style={{ color: 'var(--text-2)' }}
+                  className="popover-item text-[13px] w-full text-left"
                 >
                   <LogOut size={14} /> Sign out
                 </button>
