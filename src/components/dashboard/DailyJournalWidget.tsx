@@ -24,9 +24,10 @@ function JournalSkeleton() {
 const AUTOSAVE_MS = 1500
 
 export default function DailyJournalWidget() {
-  const [weekStart, setWeekStart] = useState(() =>
-    startOfWeek(new Date(), { weekStartsOn: 1 })
-  )
+  const [weekStart, setWeekStart] = useState(() => {
+    const d = new Date(); d.setHours(0,0,0,0)
+    return startOfWeek(d, { weekStartsOn: 1 })
+  })
   const [selected,    setSelected]    = useState(format(new Date(), 'yyyy-MM-dd'))
   const [entryDates,  setEntryDates]  = useState<Set<string>>(new Set())
   const [content,     setContent]     = useState('')

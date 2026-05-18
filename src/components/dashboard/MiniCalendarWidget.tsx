@@ -11,7 +11,7 @@ const DAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 interface Props { items: AnyItem[] }
 
 export default function MiniCalendarWidget({ items }: Props) {
-  const [month, setMonth] = useState(new Date())
+  const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1))
 
   const days = eachDayOfInterval({
     start: startOfWeek(startOfMonth(month), { weekStartsOn: 0 }),

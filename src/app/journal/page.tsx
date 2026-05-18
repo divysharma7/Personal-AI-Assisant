@@ -33,7 +33,7 @@ export default function JournalPage() {
 
   // ── Selected date ──────────────────────────────────────────────────────────
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
-  const [calMonth,     setCalMonth]     = useState(new Date())
+  const [calMonth,     setCalMonth]     = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1))
   const today = format(new Date(), 'yyyy-MM-dd')
 
   // ── Entry dates (for calendar dots) ───────────────────────────────────────

@@ -21,12 +21,17 @@ function formatCountdown(ms: number): string {
 }
 
 export default function ClockWidget({ items = [] }: Props) {
-  const [now, setNow] = useState(new Date())
+  const [mounted, setMounted] = useState(false)
+  const [now, setNow] = useState(() => new Date(0))
 
   useEffect(() => {
+    setMounted(true)
+    setNow(new Date())
     const id = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(id)
   }, [])
+
+  if (!mounted) return <div className="h-full" />
 
   const nextItem = useMemo(() => {
     const candidates = items.filter(i => {

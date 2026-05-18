@@ -6,7 +6,7 @@ import {
   X, Maximize2, Minimize2, Send, ChevronDown,
   Search, CheckCircle2, AlertTriangle, Plus, Zap, XCircle, Trash2, User,
 } from 'lucide-react'
-import Image from 'next/image'
+/* eslint-disable @next/next/no-img-element */
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/contexts/ThemeContext'
 import { snappy, smooth } from '@/shared/design-system'
@@ -257,7 +257,7 @@ export default function FloatingChat({ onRefreshItems }: FloatingChatProps) {
               style={{ borderBottom: '1px solid var(--border)', background: 'var(--accent-dim)' }}
             >
               <div className="flex items-center gap-2.5">
-                <Image src="/logo_new.png" alt="PIM" unoptimized width={38} height={38} className="object-contain" />
+                <img src="/logo_new.png" alt="LAIF" width={38} height={38} className="object-contain" />
                 <p className="text-xs" style={{ color: streaming ? (theme === 'light' ? '#047857' : '#34d399') : 'var(--text-3)' }}>
                   {streaming ? 'Working...' : 'a real assistant'}
                 </p>
@@ -285,7 +285,7 @@ export default function FloatingChat({ onRefreshItems }: FloatingChatProps) {
               {messages.map(msg => (
                 <div key={msg.id} className={cn('flex items-start', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
                   {msg.role === 'assistant' && (
-                    <Image src="/logo_new.png" alt="PIM" unoptimized width={24} height={24} className="object-contain mr-2 flex-shrink-0" />
+                    <img src="/logo_new.png" alt="LAIF" width={24} height={24} className="object-contain mr-2 flex-shrink-0" />
                   )}
                   <div style={{ maxWidth: size === 'expanded' ? '75%' : '82%' }}>
                     <div

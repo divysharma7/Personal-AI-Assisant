@@ -33,7 +33,7 @@ const VIEW_PILLS: { id: CalView; label: string }[] = [
 ]
 
 export default function CalendarView({ view, items, loading, onItemClick, onNewItem, onViewChange, onUpdateItem, onDeleteItem }: CalendarViewProps) {
-  const [current, setCurrent] = useState(new Date())
+  const [current, setCurrent] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()))
 
   const goBack = () => {
     if (view === 'month')  setCurrent(d => subMonths(d, 1))

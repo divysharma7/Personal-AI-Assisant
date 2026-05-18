@@ -59,7 +59,7 @@ export default function PKMSView() {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── Journal calendar ─────────────────────────────────────────────────────
-  const [calMonth, setCalMonth]       = useState(new Date())
+  const [calMonth, setCalMonth]       = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1))
   const [journalDate, setJournalDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'))
   const [loadingJournal, setLoadingJournal] = useState(false)
   const [writingJournal, setWritingJournal] = useState(false)
