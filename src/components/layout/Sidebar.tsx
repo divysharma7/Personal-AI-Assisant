@@ -34,7 +34,7 @@ const LISTS = [
   { emoji: '\uD83C\uDFAF', name: 'Habits' },
 ]
 
-export function Sidebar() {
+export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [recentOpen, setRecentOpen] = useState(true)

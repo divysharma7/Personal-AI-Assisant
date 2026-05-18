@@ -2,8 +2,8 @@
 
 import { usePathname } from 'next/navigation'
 import { useEffect, useState, type ReactNode } from 'react'
-import { Sidebar } from './Sidebar'
-import { ArtworkPane } from './ArtworkPane'
+import Sidebar from './Sidebar'
+import ArtworkPane from './ArtworkPane'
 import { copy } from '@/lib/copy'
 
 const SHELL_EXCLUDED = ['/login', '/signup', '/onboarding']
@@ -27,7 +27,7 @@ function DesktopOnlyNotice() {
   )
 }
 
-export function AppShell({ children }: { children: ReactNode }) {
+export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const [isDesktop, setIsDesktop] = useState(true)
 

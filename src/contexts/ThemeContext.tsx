@@ -31,7 +31,7 @@ function applyTheme(resolved: ResolvedTheme) {
   document.documentElement.setAttribute('data-theme', resolved)
 }
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
+export default function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('dark')
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>('dark')
 

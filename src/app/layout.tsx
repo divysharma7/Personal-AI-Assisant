@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { Inter, Source_Serif_4 } from 'next/font/google'
-import { ThemeProvider } from '@/contexts/ThemeContext'
-import { QueryProvider } from '@/shared/providers/QueryProvider'
-import { AppShell } from '@/components/layout/AppShell'
+import ThemeProvider from '@/contexts/ThemeContext'
+import QueryProvider from '@/shared/providers/QueryProvider'
+import AppShell from '@/components/layout/AppShell'
 import './globals.css'
 
 const inter = Inter({

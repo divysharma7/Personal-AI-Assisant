@@ -21,7 +21,7 @@ function getDailyImageUrl(): string {
   return `https://source.unsplash.com/collection/${collections[idx]}/760x1080?day=${dayOfYear}`
 }
 
-export function ArtworkPane() {
+export default function ArtworkPane() {
   const imageUrl = useMemo(() => getDailyImageUrl(), [])
 
   return (
