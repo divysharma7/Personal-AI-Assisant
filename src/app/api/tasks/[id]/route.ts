@@ -19,6 +19,14 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   return NextResponse.json({ ...task, _id: String(task._id), type: 'task' })
 }
 
+export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+  await connectDB()
+  const body = await req.json()
+  const task = await TaskModel.findByIdAndUpdate(params.id, { $set: body }, { new: true }).lean() as LeanDoc | null
+  if (!task) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  return NextResponse.json({ ...task, _id: String(task._id), type: 'task' })
+}
+
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
   await connectDB()
   await TaskModel.findByIdAndDelete(params.id)

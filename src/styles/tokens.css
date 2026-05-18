@@ -1,28 +1,40 @@
 /* ══════════════════════════════════════════
    LAIF Design Tokens — Single Source of Truth
-   Inspired by divysharma.com token architecture
+   4 themes: Light, Dark, Blackout, System
    ══════════════════════════════════════════ */
 
 :root {
   /* ── Typography ── */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Source Serif 4', 'Source Serif Pro', Georgia, serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-  /* ── Font Scale (fluid where needed) ── */
+  /* ── Font Scale (from 01-design-system.md §2) ── */
+  --text-meta: 12px;
+  --text-body: 14px;
+  --text-task: 15px;
+  --text-h3: 18px;
+  --text-h2: 22px;
+  --text-h1: 28px;
+  --text-page: 32px;
+  --text-list: 48px;
+
+  /* Legacy aliases for existing components */
   --text-xs: 0.6875rem;    /* 11px */
   --text-sm: 0.8125rem;    /* 13px */
   --text-base: 0.9375rem;  /* 15px */
   --text-lg: 1.125rem;     /* 18px */
   --text-xl: 1.5rem;       /* 24px */
-  --h3: 1.5rem;            /* 24px */
-  --h2: 2rem;              /* 32px */
-  --h1: clamp(2rem, 4vw, 2.625rem); /* 32-42px */
+  --h3: 1.5rem;
+  --h2: 2rem;
+  --h1: clamp(2rem, 4vw, 2.625rem);
 
   /* ── Font Weights ── */
   --weight-normal: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
   --weight-bold: 700;
+  --weight-extrabold: 800;
 
   /* ── Line Heights ── */
   --leading-none: 1;
@@ -38,7 +50,7 @@
   --tracking-wide: 0.04em;
   --tracking-wider: 0.08em;
 
-  /* ── Spacing (4px base) ── */
+  /* ── Spacing (8px grid) ── */
   --space-0: 0;
   --space-px: 1px;
   --space-0.5: 0.125rem;   /* 2px */
@@ -53,13 +65,18 @@
   --space-10: 2.5rem;      /* 40px */
   --space-12: 3rem;        /* 48px */
 
-  /* ── Radii ── */
+  /* ── Radii (from 01-design-system.md §3) ── */
+  --radius-btn: 8px;
+  --radius-chip: 8px;
+  --radius-popover: 12px;
+  --radius-pane: 16px;
+  --radius-full: 9999px;
+  /* Legacy aliases */
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
   --radius-2xl: 20px;
-  --radius-full: 9999px;
 
   /* ── Shadows ── */
   --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
@@ -93,11 +110,13 @@
   --z-tooltip: 1300;
 
   /* ── Layout ── */
-  --sidebar-width: 200px;
-  --artwork-width: 280px;
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 64px;
+  --artwork-width: 380px;
+  --detail-width: 420px;
   --content-max-width: 720px;
-  --pane-gap: 12px;
-  --pane-padding: var(--space-10);
+  --pane-gap: 1px;
+  --pane-padding: var(--space-6);
 
   /* ── Semantic Accent Colors (theme-independent) ── */
   --color-success: #22c55e;
@@ -138,81 +157,282 @@
   --row-padding-x: var(--space-4);
   --row-padding-y: var(--space-3);
   --row-gap: var(--space-2);
+
+  /* ── Density ── */
+  --content-max-width: 720px;
+  --density-padding: 1;
+  --density-font: 1;
+  --density-gap: 1;
+
+  /* ── Item type colors ── */
+  --color-event: #818cf8;
+  --color-task: #34d399;
+  --color-reminder: #fbbf24;
+  --bg-event: rgba(129,140,248,0.08);
+  --bg-task: rgba(52,211,153,0.08);
+  --bg-reminder: rgba(251,191,36,0.08);
 }
 
-/* ══════════════════════════════════════════
-   Dark Theme Tokens
-   ══════════════════════════════════════════ */
-:root, [data-theme="dark"] {
-  --bg: #0D0D0D;
-  --surface: #141414;
-  --surface-raised: #1A1A1A;
-  --card: #141414;
-  --border: rgba(255,255,255,0.06);
-  --border-hover: rgba(255,255,255,0.12);
-  --border-active: rgba(255,255,255,0.18);
-  --text-1: #F0F0F0;
-  --text-2: #888888;
-  --text-3: #555555;
-  --bg-overlay: rgba(255,255,255,0.03);
-  --bg-hover: rgba(255,255,255,0.05);
-  --bg-active: rgba(255,255,255,0.08);
-  --bg-selected: rgba(255,255,255,0.06);
-  --accent: #6366f1;
-  --accent-hover: #5558e8;
-  --accent-soft: rgba(99,102,241,0.08);
-  --accent-foreground: #FFFFFF;
-  --input-bg: rgba(255,255,255,0.04);
-  --input-border: rgba(255,255,255,0.08);
-  --input-focus-border: var(--accent);
-  --input-focus-ring: rgba(99,102,241,0.15);
-  --scrollbar-thumb: rgba(255,255,255,0.08);
-  --scrollbar-thumb-hover: rgba(255,255,255,0.15);
-  --focus-ring-color: rgba(99,102,241,0.4);
-}
 
 /* ══════════════════════════════════════════
-   Light Theme Tokens
+   LIGHT THEME — Superlist Light
+   #F8F6F2 pane, #EDEAE6 canvas
    ══════════════════════════════════════════ */
 [data-theme="light"] {
-  --bg: #F5F0EB;
-  --surface: #F0EBE5;
+  --bg-canvas: #EDEAE6;
+  --bg-pane: #F8F6F2;
+  --bg-pane-2: #FFFFFF;
+  --bg-hover: #EDEAE6;
+  --bg-selected: #FFE9E5;
+  --border: #E2DDD5;
+  --text-primary: #1A1A1F;
+  --text-muted: #6B6B75;
+  --text-faint: #A0A0AA;
+  --accent: #FF4D3D;
+  --accent-soft: #FFE9E5;
+  --info: #3B82F6;
+  --priority-high: #FF4D3D;
+  --priority-medium: #FFB23D;
+  --priority-low: #5DA8FF;
+
+  /* Map to legacy variable names used by existing components */
+  --bg: #EDEAE6;
+  --surface: #F8F6F2;
   --surface-raised: #FFFFFF;
-  --card: #FFFFFF;
-  --border: rgba(0,0,0,0.06);
+  --card: #F8F6F2;
   --border-hover: rgba(0,0,0,0.12);
   --border-active: rgba(0,0,0,0.18);
-  --text-1: #1A1A1A;
-  --text-2: #777777;
-  --text-3: #AAAAAA;
-  --bg-overlay: rgba(0,0,0,0.02);
-  --bg-hover: rgba(0,0,0,0.04);
-  --bg-active: rgba(0,0,0,0.06);
-  --bg-selected: rgba(0,0,0,0.04);
-  --accent: #6366f1;
-  --accent-hover: #5558e8;
-  --accent-soft: rgba(99,102,241,0.06);
+  --text-1: #1A1A1F;
+  --text-2: #6B6B75;
+  --text-3: #A0A0AA;
+  --accent-hover: #E8443A;
   --accent-foreground: #FFFFFF;
+  --accent-light: #FF4D3D;
+  --accent-dim: rgba(255,77,61,0.08);
+  --accent-glow: rgba(255,77,61,0.15);
+  --bg-overlay: rgba(0,0,0,0.02);
+  --bg-active: rgba(0,0,0,0.06);
   --input-bg: rgba(0,0,0,0.03);
   --input-border: rgba(0,0,0,0.08);
   --input-focus-border: var(--accent);
-  --input-focus-ring: rgba(99,102,241,0.1);
+  --input-focus-ring: rgba(255,77,61,0.1);
   --scrollbar-thumb: rgba(0,0,0,0.08);
   --scrollbar-thumb-hover: rgba(0,0,0,0.15);
-  --focus-ring-color: rgba(99,102,241,0.3);
+  --focus-ring-color: rgba(255,77,61,0.4);
+  --btn-primary-bg: var(--accent);
+  --btn-primary-hover: var(--accent-hover);
+  --glass-bg: #FFFFFF;
+  --glass-card-bg: #FFFFFF;
+  --glass-border: rgba(0,0,0,0.06);
+
+  /* Sidebar */
+  --sidebar-border: #E2DDD5;
+  --sidebar-item-hover: rgba(0,0,0,0.04);
+  --sidebar-active-bg: #FFE9E5;
+  --sidebar-active-color: #FF4D3D;
+
+  /* Calendar */
+  --cal-header-bg: #F8F6F2;
+  --cal-today-bg: rgba(255,77,61,0.04);
+  --cal-row-border: rgba(0,0,0,0.04);
+  --cal-row-border-half: rgba(0,0,0,0.02);
+  --cal-col-border: rgba(0,0,0,0.04);
+  --cal-cell-bg: transparent;
+  --cal-weekend-bg: rgba(0,0,0,0.01);
+  --cal-out-of-month-bg: rgba(0,0,0,0.02);
+  --cal-hover-bg: rgba(0,0,0,0.02);
+
+  /* Dock */
+  --dock-bg: rgba(248,246,242,0.95);
+  --dock-border: #E2DDD5;
+  --dock-shadow: 0 -1px 0 rgba(0,0,0,0.04);
+  --dock-btn-bg: transparent;
+  --dock-btn-border: transparent;
+
+  --card-shadow: none;
+  --card-shadow-hover: none;
+  --bg-scenery: none;
+
+  /* Item type colors (light) */
+  --color-event: #6366f1;
+  --color-task: #059669;
+  --color-reminder: #d97706;
+  --bg-event: rgba(99,102,241,0.06);
+  --bg-task: rgba(5,150,105,0.06);
+  --bg-reminder: rgba(217,119,6,0.06);
 }
+
+
+/* ══════════════════════════════════════════
+   DARK THEME — Superlist Dark
+   #17171E pane, #0E0E12 canvas
+   ══════════════════════════════════════════ */
+:root,
+[data-theme="dark"] {
+  --bg-canvas: #0E0E12;
+  --bg-pane: #17171E;
+  --bg-pane-2: #1E1E26;
+  --bg-hover: #23232B;
+  --bg-selected: rgba(255, 77, 61, 0.12);
+  --border: #2A2A33;
+  --text-primary: #F2F2F5;
+  --text-muted: #A0A0AA;
+  --text-faint: #6B6B75;
+  --accent: #FF4D3D;
+  --accent-soft: rgba(255, 77, 61, 0.12);
+  --info: #5DA8FF;
+  --priority-high: #FF4D3D;
+  --priority-medium: #FFB23D;
+  --priority-low: #5DA8FF;
+
+  /* Map to legacy variable names */
+  --bg: #0E0E12;
+  --surface: #17171E;
+  --surface-raised: #1E1E26;
+  --card: #17171E;
+  --border-hover: rgba(255,255,255,0.12);
+  --border-active: rgba(255,255,255,0.18);
+  --text-1: #F2F2F5;
+  --text-2: #A0A0AA;
+  --text-3: #6B6B75;
+  --accent-hover: #E8443A;
+  --accent-foreground: #FFFFFF;
+  --accent-light: #FF4D3D;
+  --accent-dim: rgba(255,77,61,0.08);
+  --accent-glow: rgba(255,77,61,0.15);
+  --bg-overlay: rgba(255,255,255,0.03);
+  --bg-active: rgba(255,255,255,0.08);
+  --input-bg: rgba(255,255,255,0.04);
+  --input-border: rgba(255,255,255,0.08);
+  --input-focus-border: var(--accent);
+  --input-focus-ring: rgba(255,77,61,0.15);
+  --scrollbar-thumb: rgba(255,255,255,0.08);
+  --scrollbar-thumb-hover: rgba(255,255,255,0.15);
+  --focus-ring-color: rgba(255,77,61,0.4);
+  --btn-primary-bg: var(--accent);
+  --btn-primary-hover: var(--accent-hover);
+  --glass-bg: #17171E;
+  --glass-card-bg: #17171E;
+  --glass-border: rgba(255,255,255,0.06);
+
+  /* Sidebar */
+  --sidebar-border: #2A2A33;
+  --sidebar-item-hover: rgba(255,255,255,0.04);
+  --sidebar-active-bg: rgba(255,77,61,0.12);
+  --sidebar-active-color: #FF4D3D;
+
+  /* Calendar */
+  --cal-header-bg: #0E0E12;
+  --cal-today-bg: rgba(255,77,61,0.06);
+  --cal-row-border: rgba(255,255,255,0.04);
+  --cal-row-border-half: rgba(255,255,255,0.02);
+  --cal-col-border: rgba(255,255,255,0.04);
+  --cal-cell-bg: transparent;
+  --cal-weekend-bg: rgba(255,255,255,0.01);
+  --cal-out-of-month-bg: transparent;
+  --cal-hover-bg: rgba(255,255,255,0.03);
+
+  /* Dock */
+  --dock-bg: rgba(14,14,18,0.92);
+  --dock-border: #2A2A33;
+  --dock-shadow: 0 -1px 0 rgba(255,255,255,0.04);
+  --dock-btn-bg: transparent;
+  --dock-btn-border: transparent;
+
+  --card-shadow: none;
+  --card-shadow-hover: none;
+  --bg-scenery: none;
+}
+
+
+/* ══════════════════════════════════════════
+   BLACKOUT THEME — Pure black everything
+   ══════════════════════════════════════════ */
+[data-theme="blackout"] {
+  --bg-canvas: #000000;
+  --bg-pane: #000000;
+  --bg-pane-2: #0A0A0A;
+  --bg-hover: #141414;
+  --bg-selected: rgba(255, 77, 61, 0.12);
+  --border: #1A1A1A;
+  --text-primary: #F2F2F5;
+  --text-muted: #A0A0AA;
+  --text-faint: #6B6B75;
+  --accent: #FF4D3D;
+  --accent-soft: rgba(255, 77, 61, 0.12);
+  --info: #5DA8FF;
+
+  /* Map to legacy variable names */
+  --bg: #000000;
+  --surface: #000000;
+  --surface-raised: #0A0A0A;
+  --card: #000000;
+  --border-hover: rgba(255,255,255,0.10);
+  --border-active: rgba(255,255,255,0.15);
+  --text-1: #F2F2F5;
+  --text-2: #A0A0AA;
+  --text-3: #6B6B75;
+  --accent-hover: #E8443A;
+  --accent-foreground: #FFFFFF;
+  --accent-light: #FF4D3D;
+  --accent-dim: rgba(255,77,61,0.08);
+  --accent-glow: rgba(255,77,61,0.15);
+  --bg-overlay: rgba(255,255,255,0.03);
+  --bg-active: rgba(255,255,255,0.06);
+  --input-bg: rgba(255,255,255,0.04);
+  --input-border: rgba(255,255,255,0.06);
+  --input-focus-border: var(--accent);
+  --input-focus-ring: rgba(255,77,61,0.12);
+  --scrollbar-thumb: rgba(255,255,255,0.06);
+  --scrollbar-thumb-hover: rgba(255,255,255,0.12);
+  --focus-ring-color: rgba(255,77,61,0.4);
+  --btn-primary-bg: var(--accent);
+  --btn-primary-hover: var(--accent-hover);
+  --glass-bg: #000000;
+  --glass-card-bg: #000000;
+  --glass-border: rgba(255,255,255,0.04);
+
+  /* Sidebar */
+  --sidebar-border: #1A1A1A;
+  --sidebar-item-hover: rgba(255,255,255,0.04);
+  --sidebar-active-bg: rgba(255,77,61,0.12);
+  --sidebar-active-color: #FF4D3D;
+
+  /* Calendar */
+  --cal-header-bg: #000000;
+  --cal-today-bg: rgba(255,77,61,0.06);
+  --cal-row-border: rgba(255,255,255,0.03);
+  --cal-row-border-half: rgba(255,255,255,0.015);
+  --cal-col-border: rgba(255,255,255,0.03);
+  --cal-cell-bg: transparent;
+  --cal-weekend-bg: rgba(255,255,255,0.01);
+  --cal-out-of-month-bg: transparent;
+  --cal-hover-bg: rgba(255,255,255,0.03);
+
+  /* Dock */
+  --dock-bg: rgba(0,0,0,0.95);
+  --dock-border: #1A1A1A;
+  --dock-shadow: 0 -1px 0 rgba(255,255,255,0.03);
+  --dock-btn-bg: transparent;
+  --dock-btn-border: transparent;
+
+  --card-shadow: none;
+  --card-shadow-hover: none;
+  --bg-scenery: none;
+}
+
 
 /* ══════════════════════════════════════════
    Global Interactive States
    ══════════════════════════════════════════ */
 
-/* ── Focus Ring — consistent across all interactive elements ── */
+/* ── Focus Ring ── */
 :focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring-color);
   outline-offset: var(--focus-ring-offset);
 }
 
-/* ── Reduced Motion — accessibility ── */
+/* ── Reduced Motion ── */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

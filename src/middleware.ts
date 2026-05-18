@@ -9,6 +9,7 @@ const SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? '')
 const PUBLIC_PREFIXES = [
   '/login',
   '/signup',
+  '/onboarding',
   '/api/auth/login',
   '/api/auth/signup',
   '/api/auth/logout',

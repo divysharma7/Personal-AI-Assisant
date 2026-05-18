@@ -1,20 +1,18 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { List, Columns3, Grid2x2, Search, X, Sparkles, Plus, SlidersHorizontal, GripVertical } from 'lucide-react'
-import TaskTree, { type TreeTask } from '@/components/tasks/TaskTree'
+import { List, Columns3, Grid2x2, Search, X, Plus, SlidersHorizontal, GripVertical, BookOpen, BarChart3, ArrowRight, Calendar as CalIcon } from 'lucide-react'
+import type { TreeTask } from '@/components/tasks/TaskTree'
 import KanbanView from '@/components/tasks/KanbanView'
 import EisenhowerView from '@/components/tasks/EisenhowerView'
-import TaskDetailPage from '@/components/tasks/TaskDetailPage'
-import PullToRefresh from '@/components/shared/PullToRefresh'
-import AddItemModal from '@/components/modals/AddItemModal'
-import { useMediaQuery } from '@/shared/hooks/useMediaQuery'
 import { quickFade } from '@/shared/design-system'
-import { format } from 'date-fns'
+import { format, addDays, isPast, isToday as dfIsToday } from 'date-fns'
 import type { AnyItem } from '@/types'
 
 type ViewMode = 'list' | 'board' | 'matrix'
 type Filter = 'me' | 'upcoming' | 'done'
+
+const ACCENT_INDIGO = '#8B7DFF'
 
 // Completion sounds
 const TONES = [
@@ -34,28 +32,18 @@ function playCompleteSound() {
     o1.connect(g); o2.connect(g); g.connect(ctx.destination)
     g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.4)
     o1.start(t); o2.start(t + 0.05); o1.stop(t + 0.4); o2.stop(t + 0.45)
-  } catch {}
+  } catch { /* silent */ }
 }
 
-const PRIORITY_ICONS: Record<string, { color: string; bars: number }> = {
-  high: { color: '#FF3B30', bars: 3 },
-  medium: { color: '#FF9500', bars: 2 },
-  low: { color: '#007AFF', bars: 1 },
+const PRIORITY_COLORS: Record<string, string> = {
+  high: '#FF4D3D', medium: '#FFB23D', low: '#5DA8FF',
 }
 
-function PriorityIcon({ priority }: { priority: string }) {
-  const p = PRIORITY_ICONS[priority]
-  if (!p) return null
-  return (
-    <div className="flex items-end gap-[1.5px] h-[14px]" title={priority}>
-      {[1, 2, 3].map(i => (
-        <div key={i} className="w-[3px] rounded-sm" style={{
-          height: i === 1 ? 6 : i === 2 ? 9 : 13,
-          background: i <= p.bars ? p.color : 'var(--border)',
-        }} />
-      ))}
-    </div>
-  )
+// Empty state copy per filter
+const EMPTY_STATES: Record<Filter, string> = {
+  me: 'No tasks assigned to you. Pull a few from Inbox?',
+  upcoming: 'Nothing on the horizon.',
+  done: 'No completed tasks in the last 30 days.',
 }
 
 export default function TasksPage() {
@@ -63,9 +51,7 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<ViewMode>('list')
   const [filter, setFilter] = useState<Filter>('me')
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
-  const [showTip, setShowTip] = useState(true)
-  const [modalOpen, setModalOpen] = useState(false)
+  const [sortBy, setSortBy] = useState<'creation' | 'due' | 'priority'>('creation')
 
   const fetchTasks = useCallback(async () => {
     setLoading(true)
@@ -97,7 +83,9 @@ export default function TasksPage() {
     } catch { fetchTasks() }
   }, [fetchTasks])
 
-  const handleTaskClick = useCallback((task: TreeTask) => { setSelectedTaskId(task._id) }, [])
+  const handleTaskClick = useCallback((task: TreeTask) => {
+    // placeholder - could open detail panel
+  }, [])
 
   const handleTaskUpdate = useCallback(async (id: string, data: Partial<unknown>) => {
     setTasks(prev => prev.map(t => t._id === id ? { ...t, ...data } : t))
@@ -106,22 +94,47 @@ export default function TasksPage() {
     } catch { fetchTasks() }
   }, [fetchTasks])
 
-  const handleDelete = useCallback(async (taskId: string) => {
-    setTasks(prev => prev.filter(t => t._id !== taskId))
-    try { await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' }) } catch { fetchTasks() }
+  const handleAddTask = useCallback(async () => {
+    const title = prompt('New task title:')
+    if (!title?.trim()) return
+    try {
+      const res = await fetch('/api/tasks', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title.trim(), status: 'todo', priority: 'medium', color: '#34d399' }),
+      })
+      if (res.ok) fetchTasks()
+    } catch { /* silent */ }
   }, [fetchTasks])
 
-  async function handleAddItem(type: AnyItem['type'], data: Record<string, unknown>) {
-    const res = await fetch('/api/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
-    if (res.ok) fetchTasks()
-  }
-
   // Filter tasks
-  const filteredTasks = tasks.filter(t => {
-    if (filter === 'done') return t.status === 'done'
-    if (filter === 'upcoming') return t.status !== 'done' && t.dueDate
-    return t.status !== 'done'
-  })
+  const filteredTasks = useMemo(() => {
+    const now = new Date()
+    const thirtyDaysAgo = addDays(now, -30)
+    const thirtyDaysOut = addDays(now, 30)
+
+    let result = tasks
+    if (filter === 'done') {
+      result = tasks.filter(t => t.status === 'done')
+    } else if (filter === 'upcoming') {
+      result = tasks.filter(t => t.status !== 'done' && t.dueDate && new Date(t.dueDate) > now && new Date(t.dueDate) <= thirtyDaysOut)
+    } else {
+      result = tasks.filter(t => t.status !== 'done')
+    }
+
+    // Sort
+    if (sortBy === 'due') {
+      result = [...result].sort((a, b) => {
+        if (!a.dueDate && !b.dueDate) return 0
+        if (!a.dueDate) return 1
+        if (!b.dueDate) return -1
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+      })
+    } else if (sortBy === 'priority') {
+      const prio: Record<string, number> = { high: 0, medium: 1, low: 2 }
+      result = [...result].sort((a, b) => (prio[a.priority] ?? 3) - (prio[b.priority] ?? 3))
+    }
+    return result
+  }, [tasks, filter, sortBy])
 
   const FILTERS: { id: Filter; label: string }[] = [
     { id: 'me', label: 'Tasks for me' },
@@ -131,121 +144,100 @@ export default function TasksPage() {
 
   return (
     <main className="flex-1 flex flex-col overflow-hidden relative">
-      <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-          <PullToRefresh onRefresh={fetchTasks} className="flex-1 overflow-auto">
-            <div className="px-8 md:px-10 py-8 md:py-10">
+      <div className="flex-1 overflow-auto">
+        <div className="px-8 md:px-10 py-8 md:py-10">
 
-              {/* Top bar — Creation date + New task (like Superlist screenshot) */}
-              <div className="flex items-center justify-end gap-2 mb-3">
-                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium"
-                  style={{ background: 'var(--surface)', color: 'var(--text-2)' }}>
-                  <SlidersHorizontal size={12} /> Creation date
-                </button>
-                <button onClick={() => setModalOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium"
-                  style={{ color: 'var(--text-2)' }}>
-                  <Plus size={13} /> New task
-                </button>
-                {/* View switcher */}
-                <div className="flex items-center gap-0.5 rounded-lg p-0.5 ml-1" style={{ background: 'var(--surface)' }}>
-                  {([
-                    { id: 'list' as ViewMode, icon: List },
-                    { id: 'board' as ViewMode, icon: Columns3 },
-                    { id: 'matrix' as ViewMode, icon: Grid2x2 },
-                  ]).map(v => (
-                    <button key={v.id} onClick={() => setView(v.id)}
-                      className="p-1.5 rounded-md transition-colors"
-                      style={view === v.id ? { background: 'var(--card)', color: 'var(--text-1)' } : { color: 'var(--text-3)' }}>
-                      <v.icon size={14} />
-                    </button>
-                  ))}
-                </div>
-              </div>
+          {/* Header */}
+          <div className="flex items-start justify-between">
+            <h1 className="text-[32px] font-bold"
+              style={{ color: 'var(--text-1)', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+              Tasks
+            </h1>
+            <div className="flex items-center gap-2">
+              {/* Sort dropdown */}
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value as typeof sortBy)}
+                className="pill-interactive text-[13px] bg-transparent cursor-pointer"
+                style={{ paddingRight: 24 }}
+              >
+                <option value="creation">Creation date</option>
+                <option value="due">Due date</option>
+                <option value="priority">Priority</option>
+              </select>
 
-              {/* Title */}
-              <h1 className="text-[36px] md:text-[42px] font-bold" style={{ color: 'var(--text-1)', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
-                Tasks
-              </h1>
+              {/* New task */}
+              <button onClick={handleAddTask}
+                className="pill-interactive text-[13px] flex items-center gap-1.5">
+                <Plus size={14} /> New task
+              </button>
 
-              {/* Tip banner */}
-              <AnimatePresence>
-                {showTip && (
-                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.15 }} className="mt-4">
-                    <div className="tip-banner">
-                      <Sparkles size={16} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-                      <span className="flex-1">View, sort, and access all of your tasks in one place</span>
-                      <button className="p-1 flex-shrink-0" style={{ color: 'var(--text-3)' }}>
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                          <path d="M4 4L10 10M10 4L4 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
-                      </button>
-                      <button onClick={() => setShowTip(false)} className="p-1 flex-shrink-0" style={{ color: 'var(--text-3)' }}>
-                        <X size={14} />
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Filter tabs — Superlist style */}
-              <div className="flex items-center gap-2 mt-5">
-                <button className="p-2 rounded-lg" style={{ color: 'var(--text-3)' }}><Search size={15} /></button>
-                {FILTERS.map(f => (
-                  <button key={f.id} onClick={() => setFilter(f.id)}
-                    className={`pill-interactive ${filter === f.id ? 'active' : ''}`}>
-                    {f.label}
+              {/* View switcher */}
+              <div className="flex items-center gap-0.5 rounded-lg p-0.5" style={{ background: 'var(--bg-overlay)' }}>
+                {([
+                  { id: 'list' as ViewMode, icon: List },
+                  { id: 'board' as ViewMode, icon: Columns3 },
+                  { id: 'matrix' as ViewMode, icon: Grid2x2 },
+                ] as const).map(v => (
+                  <button key={v.id} onClick={() => setView(v.id)}
+                    className="p-1.5 rounded-md transition-colors"
+                    style={view === v.id
+                      ? { background: 'var(--card)', color: 'var(--text-1)' }
+                      : { color: 'var(--text-3)' }}>
+                    <v.icon size={14} />
                   </button>
                 ))}
               </div>
-
-              {/* Task list */}
-              <div className="mt-4">
-                <motion.div key={view} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={quickFade}>
-                  {view === 'list' ? (
-                    filteredTasks.length > 0 ? (
-                      <div className="space-y-px">
-                        {filteredTasks.map(task => (
-                          <SuperlistTaskRow key={task._id} task={task}
-                            onToggle={() => handleStatusChange(task._id, task.status === 'done' ? 'todo' : 'done')}
-                            onClick={() => handleTaskClick(task)} />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="py-16 text-center">
-                        <p className="text-[14px]" style={{ color: 'var(--text-3)' }}>
-                          {filter === 'done' ? 'No completed tasks yet.' : 'No tasks. Create one above.'}
-                        </p>
-                      </div>
-                    )
-                  ) : view === 'board' ? (
-                    <KanbanView tasks={filteredTasks} onStatusChange={handleStatusChange} onTaskClick={handleTaskClick} />
-                  ) : (
-                    <EisenhowerView tasks={filteredTasks} onStatusChange={handleStatusChange} onTaskClick={handleTaskClick} onTaskUpdate={handleTaskUpdate} />
-                  )}
-                </motion.div>
-              </div>
             </div>
-          </PullToRefresh>
+          </div>
+
+          {/* Filter tabs */}
+          <div className="flex items-center gap-2 mt-5">
+            {FILTERS.map(f => (
+              <button key={f.id} onClick={() => setFilter(f.id)}
+                className={`pill-interactive ${filter === f.id ? 'active' : ''}`}>
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Task list */}
+          <div className="mt-4">
+            {loading && tasks.length === 0 && (
+              <div className="py-12 text-center"><div className="spinner" /></div>
+            )}
+            <motion.div key={view} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={quickFade}>
+              {view === 'list' ? (
+                filteredTasks.length > 0 ? (
+                  <div className="space-y-px">
+                    {filteredTasks.map(task => (
+                      <TaskListRow key={task._id} task={task}
+                        onToggle={() => handleStatusChange(task._id, task.status === 'done' ? 'todo' : 'done')}
+                        onClick={() => handleTaskClick(task)} />
+                    ))}
+                  </div>
+                ) : !loading ? (
+                  <div className="py-20 text-center">
+                    <p className="text-[14px]" style={{ color: 'var(--text-3)' }}>
+                      {EMPTY_STATES[filter]}
+                    </p>
+                  </div>
+                ) : null
+              ) : view === 'board' ? (
+                <KanbanView tasks={filteredTasks} onStatusChange={handleStatusChange} onTaskClick={handleTaskClick} />
+              ) : (
+                <EisenhowerView tasks={filteredTasks} onStatusChange={handleStatusChange} onTaskClick={handleTaskClick} onTaskUpdate={handleTaskUpdate} />
+              )}
+            </motion.div>
+          </div>
         </div>
-
-        <AnimatePresence>
-          {selectedTaskId && (
-            <TaskDetailPage key={selectedTaskId} taskId={selectedTaskId}
-              onClose={() => setSelectedTaskId(null)} onUpdate={handleTaskUpdate} />
-          )}
-        </AnimatePresence>
       </div>
-
-      <AddItemModal open={modalOpen} onClose={() => setModalOpen(false)}
-        onAdd={async (type, data) => { await handleAddItem(type, data as Record<string, unknown>); setModalOpen(false) }} defaultType="task" />
     </main>
   )
 }
 
-// ─── Superlist-style task row ────────────────────────────────────────────────
-function SuperlistTaskRow({ task, onToggle, onClick }: { task: TreeTask; onToggle: () => void; onClick: () => void }) {
+// ─── Task list row ────────────────────────────────────────────────
+function TaskListRow({ task, onToggle, onClick }: { task: TreeTask; onToggle: () => void; onClick: () => void }) {
   const [justDone, setJustDone] = useState(false)
   const done = task.status === 'done'
   const showStrike = done || justDone
@@ -257,52 +249,41 @@ function SuperlistTaskRow({ task, onToggle, onClick }: { task: TreeTask; onToggl
   }
 
   return (
-    <div className="row-interactive flex items-start gap-2 py-3 px-1 group"
-      style={{ minHeight: 48 }}
-      onClick={onClick}>
-
-      {/* Checkbox */}
+    <div className="row-interactive flex items-center gap-2 py-3 px-4 group"
+      style={{ minHeight: 48 }} onClick={onClick}>
+      <div className="drag-handle w-4 flex items-center justify-center">
+        <GripVertical size={14} />
+      </div>
       <button onClick={handleToggle}
-        className={`checkbox-interactive mt-[3px] ${showStrike ? 'checked' : ''} ${justDone ? 'just-checked' : ''}`}
-        style={{ '--checkbox-size': '20px', '--checkbox-complete-color': '#E85D40' } as React.CSSProperties}>
+        className={`checkbox-interactive mt-[1px] ${showStrike ? 'checked' : ''} ${justDone ? 'just-checked' : ''}`}>
         {showStrike && (
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <svg width="11" height="11" viewBox="0 0 10 10" fill="none">
             <path d="M2 5L4.5 7.5L8 3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         )}
       </button>
-
-      {/* Priority icon */}
-      {task.priority && task.priority !== 'medium' && (
-        <div className="mt-[4px]"><PriorityIcon priority={task.priority} /></div>
+      {task.priority && (
+        <BarChart3 size={13} style={{ color: PRIORITY_COLORS[task.priority], flexShrink: 0 }} />
       )}
-
-      {/* Title + metadata */}
       <div className="flex-1 min-w-0">
-        <span className={`text-[14px] ${showStrike ? 'strike-through' : ''}`} style={{
-          color: showStrike ? undefined : 'var(--text-1)',
-        }}>
+        <span className={`text-[15px] font-medium truncate ${showStrike ? 'strike-through' : ''}`}
+          style={{ color: showStrike ? undefined : 'var(--text-1)' }}>
           {task.title}
         </span>
-        {/* Metadata below: due date + list name */}
-        {!showStrike && (
+        {!showStrike && task.dueDate && (
           <div className="flex items-center gap-2 mt-0.5">
-            {task.dueDate && (
-              <span className="text-[11px] flex items-center gap-1" style={{ color: 'var(--text-3)' }}>
-                📅 {format(new Date(task.dueDate), 'MMM d')}
-              </span>
-            )}
+            <span className="text-[12px] flex items-center gap-1" style={{ color: 'var(--text-3)' }}>
+              <CalIcon size={11} />
+              {format(new Date(task.dueDate), 'MMM d')}
+            </span>
           </div>
         )}
       </div>
-
-      {/* Right actions */}
-      <div className="hover-reveal flex items-center gap-1 mt-[3px]">
-        <button className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: 'var(--accent)', color: '#fff' }}
+      <div className="hover-reveal flex items-center gap-1">
+        <button className="btn-icon w-7 h-7 rounded-full flex-shrink-0"
+          style={{ border: '1px solid var(--border)' }}
           onClick={e => { e.stopPropagation(); onClick() }}>
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M3 5H7M7 5L5 3M7 5L5 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <ArrowRight size={14} />
         </button>
       </div>
     </div>

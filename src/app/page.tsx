@@ -3,12 +3,13 @@ import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import {
   Plus, SlidersHorizontal, MoreVertical, BookOpen, ExternalLink, X,
   Calendar as CalIcon, BarChart3, Tag, CornerDownLeft, GripVertical,
-  Check, ArrowRight, ChevronLeft, ChevronRight, ChevronDown, CheckCircle2,
+  Check, ArrowRight, ChevronDown, CheckCircle2,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import FloatingChat from '@/components/chat/FloatingChat'
 import { useItems } from '@/hooks/useItems'
-import { snappy, smooth, scaleIn } from '@/shared/design-system'
+import { smooth } from '@/shared/design-system'
+import { copy } from '@/lib/copy'
 import {
   format, isToday as dfIsToday, isTomorrow, addDays, startOfMonth, endOfMonth,
   eachDayOfInterval, startOfWeek, endOfWeek, isSameDay, isSameMonth,
@@ -68,13 +69,6 @@ function playCompletionSound() {
   } catch { /* silent */ }
 }
 
-// ─── Comment type (local only) ──────────────────────────────────────────────
-interface LocalComment {
-  id: string
-  text: string
-  createdAt: Date
-}
-
 // ─── DatePopover ────────────────────────────────────────────────────────────
 function DatePopover({
   value,
@@ -104,9 +98,9 @@ function DatePopover({
   const today = new Date()
 
   const quickOptions = [
-    { label: 'Today', date: today },
-    { label: 'Tomorrow', date: addDays(today, 1) },
-    { label: 'Next week', date: addDays(today, 7) },
+    { label: copy.popovers.date.today, date: today },
+    { label: copy.popovers.date.tomorrow, date: addDays(today, 1) },
+    { label: copy.popovers.date.nextWeek, date: addDays(today, 7) },
   ]
 
   return (
@@ -189,10 +183,10 @@ function DatePopover({
                   : isCurrentMonth
                     ? 'var(--text-1)'
                     : 'var(--text-3)',
-                background: isSelected ? ACCENT_INDIGO : undefined,
+                background: isSelected ? 'var(--accent)' : undefined,
                 fontWeight: isTodayDay ? 700 : 400,
                 boxShadow: isTodayDay && !isSelected
-                  ? `inset 0 0 0 1.5px ${ACCENT_INDIGO}`
+                  ? `inset 0 0 0 1.5px var(--accent)`
                   : undefined,
               }}
             >
@@ -200,6 +194,23 @@ function DatePopover({
             </button>
           )
         })}
+      </div>
+
+      {/* Time row (stub) */}
+      <div style={{ height: 1, background: 'var(--border)', margin: '8px -4px' }} />
+      <div className="popover-item text-[13px]" style={{ color: 'var(--text-2)' }}>
+        <CalIcon size={14} style={{ color: 'var(--text-3)' }} />
+        {copy.popovers.date.time}
+      </div>
+      {/* Remind me row (disabled) */}
+      <div className="popover-item text-[13px] opacity-40 cursor-not-allowed" style={{ color: 'var(--text-3)' }}>
+        <CalIcon size={14} />
+        {copy.popovers.date.remindMe}
+      </div>
+      {/* Repeat row (stub) */}
+      <div className="popover-item text-[13px]" style={{ color: 'var(--text-2)' }}>
+        <CalIcon size={14} style={{ color: 'var(--text-3)' }} />
+        {copy.popovers.date.repeat}
       </div>
     </motion.div>
   )
@@ -224,6 +235,16 @@ function PriorityPopover({
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [onClose])
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === '1') { onChange('high'); onClose() }
+      else if (e.key === '2') { onChange('medium'); onClose() }
+      else if (e.key === '3') { onChange('low'); onClose() }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [onChange, onClose])
 
   const options: { key: TaskPriority; label: string; color: string; shortcut: string }[] = [
     { key: 'high', label: 'High', color: ACCENT_RED, shortcut: '1' },
@@ -264,7 +285,40 @@ function PriorityPopover({
   )
 }
 
+// ─── PageHeader ────────────────────────────────────────────────────────────
+function PageHeader({ title }: { title: string }) {
+  return (
+    <div className="flex items-start justify-between">
+      <h1
+        className="font-bold"
+        style={{
+          color: 'var(--text-1)',
+          fontSize: 'var(--text-page, 32px)',
+          letterSpacing: '-0.03em',
+          lineHeight: 1.1,
+        }}
+      >
+        {title}
+      </h1>
+      <div className="flex items-center gap-1">
+        <button className="btn-icon w-8 h-8">
+          <SlidersHorizontal size={16} />
+        </button>
+        <button className="btn-icon w-8 h-8">
+          <MoreVertical size={16} />
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Detail Panel ───────────────────────────────────────────────────────────
+interface LocalComment {
+  id: string
+  text: string
+  createdAt: Date
+}
+
 function DetailPanel({
   task,
   onClose,
@@ -286,7 +340,6 @@ function DetailPanel({
   const [done, setDone] = useState(task.status === 'done')
   const [justCompleted, setJustCompleted] = useState(false)
 
-  // Sync when task changes
   useEffect(() => {
     setEditTitle(task.title)
     setEditDesc(task.description ?? '')
@@ -323,7 +376,6 @@ function DetailPanel({
   }
 
   const showStrike = done || justCompleted
-  const gradientColor = task.color || ACCENT_INDIGO
 
   return (
     <motion.div
@@ -333,44 +385,26 @@ function DetailPanel({
       transition={smooth}
       className="absolute inset-0 z-40 flex flex-col overflow-hidden"
       style={{
-        background: 'var(--card)',
+        background: 'var(--bg-pane, var(--card))',
         borderLeft: '1px solid var(--border)',
       }}
     >
-      {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <button
-          onClick={onClose}
-          className="btn-icon w-8 h-8"
-        >
+        <button onClick={onClose} className="btn-icon w-8 h-8">
           <X size={18} />
         </button>
-        <div className="flex items-center gap-2">
-          <div
-            className="w-6 h-6 rounded-full"
-            style={{
-              background: `linear-gradient(135deg, ${gradientColor}, ${gradientColor}88)`,
-            }}
-          />
-          <button
-            className="btn-icon w-8 h-8"
-          >
-            <MoreVertical size={16} />
-          </button>
-        </div>
+        <button className="btn-icon w-8 h-8">
+          <MoreVertical size={16} />
+        </button>
       </div>
 
-      {/* Scrollable body */}
       <div className="flex-1 overflow-auto px-5 pb-4">
-        {/* Checkbox + Title */}
         <div className="flex items-start gap-3 mt-2">
           <button
             onClick={handleToggle}
             className={`checkbox-interactive mt-0.5 ${showStrike ? 'checked' : ''} ${justCompleted ? 'just-checked' : ''}`}
           >
-            {showStrike && (
-              <Check size={14} color="#fff" strokeWidth={2.5} />
-            )}
+            {showStrike && <Check size={14} color="#fff" strokeWidth={2.5} />}
           </button>
           <input
             value={editTitle}
@@ -385,17 +419,15 @@ function DetailPanel({
           />
         </div>
 
-        {/* Chip row */}
         <div className="flex items-center gap-2 mt-4 flex-wrap relative">
-          {/* Date chip */}
           <div className="relative">
             <button
               onClick={() => setShowDatePop(!showDatePop)}
               className="chip"
               style={{
-                background: task.dueDate ? 'rgba(139,125,255,0.1)' : undefined,
-                color: task.dueDate ? ACCENT_INDIGO : undefined,
-                borderColor: task.dueDate ? 'rgba(139,125,255,0.2)' : undefined,
+                background: task.dueDate ? 'rgba(255,77,61,0.1)' : undefined,
+                color: task.dueDate ? ACCENT_RED : undefined,
+                borderColor: task.dueDate ? 'rgba(255,77,61,0.2)' : undefined,
               }}
             >
               <CalIcon size={12} />
@@ -415,7 +447,6 @@ function DetailPanel({
             </AnimatePresence>
           </div>
 
-          {/* Priority chip */}
           <div className="relative">
             <button
               onClick={() => setShowPriorityPop(!showPriorityPop)}
@@ -443,36 +474,27 @@ function DetailPanel({
             </AnimatePresence>
           </div>
 
-          {/* Label chip (stub) */}
-          <button
-            className="chip"
-          >
+          <button className="chip">
             <Tag size={12} />
             Label
           </button>
         </div>
 
-        {/* Description textarea */}
         <textarea
           value={editDesc}
           onChange={e => setEditDesc(e.target.value)}
           onBlur={handleDescBlur}
-          placeholder="Click here to add a task, or type '/' to choose a different content type"
+          placeholder={copy.list.emptyBlockPlaceholder}
           className="w-full mt-5 bg-transparent outline-none resize-none text-[14px] leading-relaxed"
-          style={{
-            color: 'var(--text-1)',
-            minHeight: 120,
-          }}
+          style={{ color: 'var(--text-1)', minHeight: 120 }}
         />
 
-        {/* Footer — created by */}
         <div className="mt-6 text-center">
           <span className="text-[12px]" style={{ color: 'var(--text-3)' }}>
             Created by Divy &middot; {task.createdAt ? formatDistanceToNow(new Date(task.createdAt), { addSuffix: true }) : 'just now'}
           </span>
         </div>
 
-        {/* Comments */}
         <div className="mt-6">
           {comments.length > 0 && (
             <div className="flex flex-col gap-2 mb-3">
@@ -489,13 +511,12 @@ function DetailPanel({
         </div>
       </div>
 
-      {/* Comment input */}
       <div className="px-4 py-3" style={{ borderTop: '1px solid var(--border)' }}>
         <input
           value={commentText}
           onChange={e => setCommentText(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') handleCommentSubmit() }}
-          placeholder="Leave a message..."
+          placeholder={copy.task.leaveMessagePlaceholder}
           className="w-full bg-transparent outline-none text-[13px]"
           style={{ color: 'var(--text-1)' }}
         />
@@ -540,15 +561,13 @@ function TaskRow({
       className={`row-interactive flex items-start gap-2 px-4 py-3 group relative ${isSelected ? 'selected' : ''}`}
       style={{
         minHeight: 48,
-        borderRight: isDetailOpen ? `3px solid ${ACCENT_INDIGO}` : '3px solid transparent',
+        borderRight: isDetailOpen ? `3px solid var(--accent)` : '3px solid transparent',
       }}
     >
-      {/* Drag handle */}
       <div className="drag-handle flex items-center mt-0.5">
         <GripVertical size={14} />
       </div>
 
-      {/* Checkbox */}
       <button
         onClick={handleToggle}
         className={`checkbox-interactive mt-[1px] ${showStrike ? 'checked' : ''} ${justCompleted ? 'just-checked' : ''}`}
@@ -560,24 +579,19 @@ function TaskRow({
         )}
       </button>
 
-      {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          {/* Priority pip */}
           {task.priority && (
             <BarChart3 size={13} style={{ color: PRIORITY_COLORS[task.priority], flexShrink: 0 }} />
           )}
           <span
             className={`text-[15px] font-medium truncate ${showStrike ? 'strike-through' : ''}`}
-            style={{
-              color: showStrike ? undefined : 'var(--text-1)',
-            }}
+            style={{ color: showStrike ? undefined : 'var(--text-1)' }}
           >
             {task.title}
           </span>
         </div>
 
-        {/* Metadata sub-row */}
         {(task.dueDate || task.priority) && !showStrike && (
           <div className="flex items-center gap-2 mt-0.5">
             {task.dueDate && (
@@ -595,7 +609,6 @@ function TaskRow({
         )}
       </div>
 
-      {/* Right: detail arrow */}
       <button
         onClick={e => { e.stopPropagation(); onOpenDetail() }}
         className="hover-reveal btn-icon w-7 h-7 rounded-full flex-shrink-0 mt-0.5"
@@ -611,7 +624,6 @@ function TaskRow({
 export default function InboxPage() {
   const { items, loading, silentRefresh, addItem, updateItem } = useItems()
 
-  // State
   const [showTip, setShowTip] = useState(true)
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null)
@@ -624,7 +636,6 @@ export default function InboxPage() {
 
   const newTaskInputRef = useRef<HTMLInputElement>(null)
 
-  // Toast state
   const [toast, setToast] = useState<string | null>(null)
   const toastTimer = useRef<NodeJS.Timeout>()
 
@@ -634,7 +645,6 @@ export default function InboxPage() {
     toastTimer.current = setTimeout(() => setToast(null), 2500)
   }, [])
 
-  // Derived: tasks only, split active vs done
   const allTasks = useMemo(() => {
     return items.filter((i): i is Task => i.type === 'task')
   }, [items])
@@ -643,7 +653,6 @@ export default function InboxPage() {
   const doneTasks = useMemo(() => allTasks.filter(t => t.status === 'done'), [allTasks])
   const [showDone, setShowDone] = useState(false)
 
-  // Task list for keyboard nav
   const taskIds = useMemo(() => tasks.map(t => t._id!), [tasks])
 
   const selectedTask = useMemo(
@@ -657,14 +666,12 @@ export default function InboxPage() {
       const target = e.target as HTMLElement
       const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
 
-      // Ctrl+N or Meta+N: focus new task
       if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
         e.preventDefault()
         newTaskInputRef.current?.focus()
         return
       }
 
-      // Esc: blur / close popover / close detail
       if (e.key === 'Escape') {
         if (openPopover) {
           setOpenPopover(null)
@@ -680,28 +687,13 @@ export default function InboxPage() {
         }
       }
 
-      // When new task input is focused
       if (focusedNewTask && !openPopover) {
-        if (e.key === '1' && !isInput) {
-          e.preventDefault()
-          setNewTaskPriority('high')
-          return
-        }
-        if (e.key === '2' && !isInput) {
-          e.preventDefault()
-          setNewTaskPriority('medium')
-          return
-        }
-        if (e.key === '3' && !isInput) {
-          e.preventDefault()
-          setNewTaskPriority('low')
-          return
-        }
+        if (e.key === '1' && !isInput) { e.preventDefault(); setNewTaskPriority('high'); return }
+        if (e.key === '2' && !isInput) { e.preventDefault(); setNewTaskPriority('medium'); return }
+        if (e.key === '3' && !isInput) { e.preventDefault(); setNewTaskPriority('low'); return }
       }
 
-      // When NOT in an input and no detail panel
       if (!isInput && !detailTaskId) {
-        // Space: toggle selected
         if (e.key === ' ' && selectedTaskId) {
           e.preventDefault()
           const t = tasks.find(t => t._id === selectedTaskId)
@@ -713,7 +705,6 @@ export default function InboxPage() {
           return
         }
 
-        // Arrow up/down
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
           e.preventDefault()
           const currentIdx = selectedTaskId ? taskIds.indexOf(selectedTaskId) : -1
@@ -750,7 +741,6 @@ export default function InboxPage() {
     setNewTaskDate(null)
     setNewTaskPriority(null)
     setOpenPopover(null)
-    // Keep focus on input for rapid entry
     newTaskInputRef.current?.focus()
   }, [newTaskTitle, newTaskDate, newTaskPriority, addItem])
 
@@ -782,27 +772,11 @@ export default function InboxPage() {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden relative">
-      {/* Main scrollable area */}
       <div className="flex-1 overflow-auto">
-        <div className="px-8 md:px-10 py-8 md:py-10">
+        <div className="px-6 py-8" style={{ maxWidth: 'var(--content-max-width)', margin: '0 auto' }}>
 
           {/* ── Header ─────────────────────────────────────────── */}
-          <div className="flex items-start justify-between">
-            <h1
-              className="text-[32px] font-bold"
-              style={{ color: 'var(--text-1)', letterSpacing: '-0.03em', lineHeight: 1.1 }}
-            >
-              Inbox
-            </h1>
-            <div className="flex items-center gap-1">
-              <button className="btn-icon w-8 h-8">
-                <SlidersHorizontal size={16} />
-              </button>
-              <button className="btn-icon w-8 h-8">
-                <MoreVertical size={16} />
-              </button>
-            </div>
-          </div>
+          <PageHeader title={copy.inbox.title} />
 
           {/* ── Tip Banner ─────────────────────────────────────── */}
           <AnimatePresence>
@@ -817,7 +791,7 @@ export default function InboxPage() {
                 <div className="tip-banner">
                   <BookOpen size={16} style={{ color: ACCENT_INDIGO, flexShrink: 0 }} />
                   <span className="flex-1">
-                    Manage all new and incoming tasks — create, move, schedule, and more
+                    {copy.inbox.tipBanner}
                   </span>
                   <button className="flex-shrink-0 p-1" style={{ color: ACCENT_INDIGO }}>
                     <ExternalLink size={14} />
@@ -842,7 +816,6 @@ export default function InboxPage() {
                 background: focusedNewTask ? 'var(--bg-overlay)' : 'transparent',
               }}
             >
-              {/* Plus icon */}
               <div
                 className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors"
                 style={{
@@ -852,7 +825,6 @@ export default function InboxPage() {
                 <Plus size={18} />
               </div>
 
-              {/* Input area */}
               <div className="flex-1 min-w-0">
                 <input
                   ref={newTaskInputRef}
@@ -860,7 +832,6 @@ export default function InboxPage() {
                   onChange={e => setNewTaskTitle(e.target.value)}
                   onFocus={() => setFocusedNewTask(true)}
                   onBlur={() => {
-                    // Delay blur to allow popover clicks
                     setTimeout(() => {
                       if (!openPopover) setFocusedNewTask(false)
                     }, 150)
@@ -876,12 +847,11 @@ export default function InboxPage() {
                       setOpenPopover(null)
                     }
                   }}
-                  placeholder={focusedNewTask ? 'Create a task' : 'New task'}
+                  placeholder={focusedNewTask ? 'Create a task' : copy.list.inlineNewTaskPlaceholder}
                   className="w-full bg-transparent outline-none text-[15px] font-medium"
                   style={{ color: 'var(--text-1)' }}
                 />
 
-                {/* Sub-row icons — shown when focused */}
                 {focusedNewTask && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
@@ -889,21 +859,20 @@ export default function InboxPage() {
                     exit={{ opacity: 0, height: 0 }}
                     className="flex items-center gap-1 mt-2"
                   >
-                    {/* Date button */}
                     <div className="relative">
                       <button
                         onMouseDown={e => e.preventDefault()}
                         onClick={() => setOpenPopover(openPopover === 'date' ? null : 'date')}
                         className="btn-icon w-7 h-7"
                         style={{
-                          color: newTaskDate ? ACCENT_INDIGO : undefined,
-                          background: newTaskDate ? 'rgba(139,125,255,0.1)' : undefined,
+                          color: newTaskDate ? 'var(--accent)' : undefined,
+                          background: newTaskDate ? 'rgba(255,77,61,0.1)' : undefined,
                         }}
                       >
                         <CalIcon size={15} />
                       </button>
                       {newTaskDate && (
-                        <span className="text-[11px] ml-1" style={{ color: ACCENT_INDIGO }}>
+                        <span className="text-[11px] ml-1" style={{ color: 'var(--accent)' }}>
                           {format(newTaskDate, 'MMM d')}
                         </span>
                       )}
@@ -921,7 +890,6 @@ export default function InboxPage() {
                       </AnimatePresence>
                     </div>
 
-                    {/* Priority button */}
                     <div className="relative">
                       <button
                         onMouseDown={e => e.preventDefault()}
@@ -948,17 +916,13 @@ export default function InboxPage() {
                       </AnimatePresence>
                     </div>
 
-                    {/* Tag button (stub) */}
-                    <button
-                      className="btn-icon w-7 h-7"
-                    >
+                    <button className="btn-icon w-7 h-7">
                       <Tag size={15} />
                     </button>
                   </motion.div>
                 )}
               </div>
 
-              {/* Right: keyboard hint */}
               <div className="flex items-center flex-shrink-0 mt-1">
                 {focusedNewTask ? (
                   <CornerDownLeft size={16} style={{ color: 'var(--text-3)' }} />
@@ -974,7 +938,6 @@ export default function InboxPage() {
             </div>
           </div>
 
-          {/* Divider */}
           <div className="mt-2 mb-1" style={{ height: 1, background: 'var(--border)' }} />
 
           {/* ── Task List ──────────────────────────────────────── */}
@@ -984,7 +947,6 @@ export default function InboxPage() {
             </div>
           )}
 
-          {/* Active tasks */}
           <AnimatePresence initial={false}>
             {tasks.map(task => (
               <motion.div
@@ -1006,7 +968,6 @@ export default function InboxPage() {
             ))}
           </AnimatePresence>
 
-          {/* Empty state */}
           {!loading && tasks.length === 0 && doneTasks.length === 0 && (
             <div className="py-20 text-center">
               <p className="text-[14px]" style={{ color: 'var(--text-3)' }}>
@@ -1085,8 +1046,6 @@ export default function InboxPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <FloatingChat onRefreshItems={silentRefresh} />
     </div>
   )
 }

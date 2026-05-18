@@ -1,12 +1,13 @@
 'use client'
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { THEMES, DENSITY_SCALES, type ThemeDef, type DensityLevel } from '@/lib/themes'
+import { THEMES, DENSITY_SCALES, type ThemeId, type ThemeDef, type DensityLevel } from '@/lib/themes'
 
 interface ThemeContextValue {
-  theme: string // theme id
+  theme: ThemeId
   themeObj: ThemeDef
-  setTheme: (id: string) => void
-  toggle: () => void // legacy dark/light toggle
+  resolvedMode: 'light' | 'dark' // what is actually applied
+  setTheme: (id: ThemeId) => void
+  toggle: () => void
   density: DensityLevel
   setDensity: (d: DensityLevel) => void
   reduceMotion: boolean
@@ -19,23 +20,27 @@ interface ThemeContextValue {
 
 const ThemeCtx = createContext<ThemeContextValue>(null!)
 
-function applyTheme(t: ThemeDef) {
+function getSystemMode(): 'light' | 'dark' {
+  if (typeof window === 'undefined') return 'light'
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
+function resolveDataTheme(id: ThemeId): string {
+  if (id === 'system') {
+    return getSystemMode() === 'dark' ? 'dark' : 'light'
+  }
+  return id
+}
+
+function resolveMode(id: ThemeId): 'light' | 'dark' {
+  if (id === 'system') return getSystemMode()
+  if (id === 'light') return 'light'
+  return 'dark' // dark + blackout
+}
+
+function applyThemeToDOM(id: ThemeId) {
   const el = document.documentElement
-  el.setAttribute('data-theme', t.mode)
-  el.setAttribute('data-theme-id', t.id)
-  el.style.setProperty('--bg', t.bg)
-  el.style.setProperty('--surface', t.surface)
-  el.style.setProperty('--card', t.card)
-  el.style.setProperty('--border', t.border)
-  el.style.setProperty('--text-1', t.text1)
-  el.style.setProperty('--text-2', t.text2)
-  el.style.setProperty('--text-3', t.text3)
-  el.style.setProperty('--accent', t.accent)
-  el.style.setProperty('--accent-hover', t.accentHover)
-  el.style.setProperty('--accent-soft', `${t.accent}18`)
-  el.style.setProperty('--accent-light', t.accent)
-  el.style.setProperty('--accent-dim', `${t.accent}15`)
-  el.style.setProperty('--accent-glow', `${t.accent}40`)
+  el.setAttribute('data-theme', resolveDataTheme(id))
 }
 
 function applyDensity(d: DensityLevel) {
@@ -46,7 +51,8 @@ function applyDensity(d: DensityLevel) {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [themeId, setThemeId] = useState('midnight')
+  const [themeId, setThemeId] = useState<ThemeId>('light')
+  const [resolvedMode, setResolvedMode] = useState<'light' | 'dark'>('light')
   const [density, setDensityState] = useState<DensityLevel>('comfortable')
   const [reduceMotion, setReduceMotionState] = useState(false)
   const [soundEnabled, setSoundEnabledState] = useState(false)
@@ -54,12 +60,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize from localStorage + OS preference
   useEffect(() => {
-    const stored = localStorage.getItem('pim-theme-id') || localStorage.getItem('pim-theme') || 'midnight'
-    // Map legacy 'dark'/'light' to new theme ids
-    const mapped = stored === 'dark' ? 'midnight' : stored === 'light' ? 'daylight' : stored
-    const found = THEMES.find(t => t.id === mapped) || THEMES[0]
-    setThemeId(found.id)
-    applyTheme(found)
+    const stored = localStorage.getItem('laif-theme') || localStorage.getItem('pim-theme-id') || localStorage.getItem('pim-theme') || 'light'
+    // Map legacy theme ids to new system
+    let mapped: ThemeId = 'light'
+    if (stored === 'dark' || stored === 'midnight' || stored === 'ocean' || stored === 'forest' || stored === 'nord') {
+      mapped = 'dark'
+    } else if (stored === 'blackout') {
+      mapped = 'blackout'
+    } else if (stored === 'system') {
+      mapped = 'system'
+    } else if (stored === 'light' || stored === 'daylight' || stored === 'sunset') {
+      mapped = 'light'
+    }
+
+    setThemeId(mapped)
+    setResolvedMode(resolveMode(mapped))
+    applyThemeToDOM(mapped)
 
     const d = (localStorage.getItem('pim-density') || 'comfortable') as DensityLevel
     setDensityState(d)
@@ -74,21 +90,31 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setSoundPackState((localStorage.getItem('pim-sound-pack') || 'minimal') as 'minimal' | 'playful')
   }, [])
 
+  // Listen for system theme changes when in "system" mode
+  useEffect(() => {
+    if (themeId !== 'system') return
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const handler = () => {
+      setResolvedMode(resolveMode('system'))
+      applyThemeToDOM('system')
+    }
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [themeId])
+
   const themeObj = THEMES.find(t => t.id === themeId) || THEMES[0]
 
-  const setTheme = useCallback((id: string) => {
-    const t = THEMES.find(x => x.id === id)
-    if (!t) return
+  const setTheme = useCallback((id: ThemeId) => {
     setThemeId(id)
-    localStorage.setItem('pim-theme-id', id)
-    localStorage.setItem('pim-theme', t.mode) // legacy compat
-    applyTheme(t)
+    setResolvedMode(resolveMode(id))
+    localStorage.setItem('laif-theme', id)
+    applyThemeToDOM(id)
   }, [])
 
   const toggle = useCallback(() => {
-    const nextMode = themeObj.mode === 'dark' ? 'daylight' : 'midnight'
-    setTheme(nextMode)
-  }, [themeObj.mode, setTheme])
+    const next: ThemeId = resolvedMode === 'dark' ? 'light' : 'dark'
+    setTheme(next)
+  }, [resolvedMode, setTheme])
 
   const setDensity = useCallback((d: DensityLevel) => {
     setDensityState(d)
@@ -115,7 +141,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeCtx.Provider value={{
-      theme: themeId, themeObj, setTheme, toggle,
+      theme: themeId, themeObj, resolvedMode, setTheme, toggle,
       density, setDensity,
       reduceMotion, setReduceMotion,
       soundEnabled, soundPack, setSoundEnabled, setSoundPack,

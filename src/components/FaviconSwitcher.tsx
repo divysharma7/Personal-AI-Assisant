@@ -14,7 +14,7 @@ export default function FaviconSwitcher() {
     })
     // Update PWA theme-color meta tag so the browser chrome matches the theme
     const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
-    if (meta) meta.content = theme === 'light' ? '#f4f6fb' : '#070b14'
+    if (meta) meta.content = theme === 'light' ? '#EDEAE6' : '#0E0E12'
   }, [theme])
 
   return null
