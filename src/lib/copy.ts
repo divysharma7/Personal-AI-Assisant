@@ -489,6 +489,69 @@ export const copy = {
     },
   },
 
+  // ───────── Focus ─────────
+  focus: {
+    title: "Focus",
+    idle: {
+      pickTask: "Pick a task to focus on",
+      freeSession: "Free focus",
+      startCta: "Start session",
+    },
+    active: {
+      pause: "Pause",
+      resume: "Resume",
+      extend: "Extend",
+      end: "End session",
+    },
+    prompt: {
+      title: "Session complete",
+      logged: (min: number) => `${min} minutes logged`,
+      takeBreak: (min: number) => `Take a ${min}-min break`,
+      extendFlow: "Extend +15 min — I'm in flow",
+      extendKeep: "Extend +25 min — keep going",
+      doneForNow: "Done for now",
+    },
+    break: {
+      ready: "Ready for the next session?",
+      startNext: "Start next",
+    },
+    themes: {
+      aurora: "Aurora",
+      minimal: "Minimal",
+      liquid: "Liquid",
+    },
+    stats: {
+      today: "Today",
+      thisWeek: "This week",
+      total: "Total",
+      avg: "Average session",
+      longest: "Longest session",
+      streak: "Focus streak",
+    },
+    settings: {
+      durations: "Default Durations",
+      work: "Work session",
+      shortBreak: "Short break",
+      longBreak: "Long break",
+      longBreakEvery: "Long break every",
+      sessions: "sessions",
+      appearance: "Appearance",
+      clockTheme: "Clock theme",
+      sound: "Sound",
+      soundOnComplete: "Sound on complete",
+      shortcuts: "Keyboard shortcuts",
+      sidebar: "Show active session in sidebar",
+    },
+    sidebar: {
+      active: "Focusing",
+      return: "Return to focus",
+    },
+    today: {
+      banner: (title: string, remaining: string) =>
+        `Focusing on "${title}" — ${remaining} remaining`,
+    },
+  },
+
   // ───────── Folders ─────────
   folders: {
     createPlaceholder: "Folder name...",

@@ -57,12 +57,34 @@ const PLACEHOLDER_FOCUS = {
   streak: 4,
 }
 
+const PLACEHOLDER_FOCUS_EXTENDED = {
+  sessionsToday: 3,
+  sessionsThisWeek: 15,
+  totalSessions: 142,
+  minutesToday: 75,
+  minutesThisWeek: 375,
+  totalMinutes: 3550,
+  avgSessionMinutes: 25,
+  longestSessionMinutes: 52,
+  mostFocusedTask: { title: 'Write LinkedIn post', hours: 3.2 },
+  // 24 cells representing focus minutes per hour of day
+  hourlyHeatmap: [
+    0, 0, 0, 0, 0, 0, 5, 15, 45, 60, 50, 30,
+    10, 25, 40, 55, 45, 35, 20, 10, 5, 0, 0, 0,
+  ],
+  // 4 weeks x 7 days of session counts
+  weeklyTrend: [
+    [1, 2, 0, 3, 1, 0, 1],
+    [2, 1, 3, 2, 2, 1, 0],
+    [0, 3, 2, 4, 1, 1, 2],
+    [2, 3, 1, 4, 2, 0, 3],
+  ],
+}
+
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<Tab>('Overview')
   const { habits, weekCompletions, todayCompletionRate } = useHabits()
   const { tasks } = useTasks()
-  const [focusRange, setFocusRange] = useState<'week' | 'month'>('week')
-
   const activeHabits = useMemo(() => habits.filter((h) => !h.archived), [habits])
 
   // Tasks completed this week
@@ -452,10 +474,109 @@ export default function ProfilePage() {
           {/* ─── Focus tab ─── */}
           {activeTab === 'Focus' && (
             <motion.div key="focus" {...fade} transition={ease.normal} className="flex flex-col gap-6">
-              {/* Sessions bar chart */}
+              {/* Session count cards */}
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: 'Sessions today', value: PLACEHOLDER_FOCUS_EXTENDED.sessionsToday },
+                  { label: 'Sessions this week', value: PLACEHOLDER_FOCUS_EXTENDED.sessionsThisWeek },
+                  { label: 'Total sessions', value: PLACEHOLDER_FOCUS_EXTENDED.totalSessions },
+                ].map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="rounded-xl p-4"
+                    style={{
+                      backgroundColor: 'var(--bg-pane-2)',
+                      border: '1px solid var(--border)',
+                    }}
+                  >
+                    <p className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>
+                      {stat.value}
+                    </p>
+                    <p className="mt-1 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                      {stat.label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Focus minutes cards */}
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: 'Minutes today', value: PLACEHOLDER_FOCUS_EXTENDED.minutesToday },
+                  { label: 'Minutes this week', value: PLACEHOLDER_FOCUS_EXTENDED.minutesThisWeek },
+                  { label: 'Total minutes', value: PLACEHOLDER_FOCUS_EXTENDED.totalMinutes },
+                ].map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="rounded-xl p-4"
+                    style={{
+                      backgroundColor: 'var(--bg-pane-2)',
+                      border: '1px solid var(--border)',
+                    }}
+                  >
+                    <p className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>
+                      {stat.value}
+                    </p>
+                    <p className="mt-1 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                      {stat.label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Average + Longest + Most focused */}
+              <div className="grid grid-cols-3 gap-3">
+                <div
+                  className="rounded-xl p-4"
+                  style={{
+                    backgroundColor: 'var(--bg-pane-2)',
+                    border: '1px solid var(--border)',
+                  }}
+                >
+                  <p className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>
+                    {PLACEHOLDER_FOCUS_EXTENDED.avgSessionMinutes}m
+                  </p>
+                  <p className="mt-1 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                    Average session
+                  </p>
+                </div>
+                <div
+                  className="rounded-xl p-4"
+                  style={{
+                    backgroundColor: 'var(--bg-pane-2)',
+                    border: '1px solid var(--border)',
+                  }}
+                >
+                  <p className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>
+                    {PLACEHOLDER_FOCUS_EXTENDED.longestSessionMinutes}m
+                  </p>
+                  <p className="mt-1 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                    Longest session
+                  </p>
+                </div>
+                <div
+                  className="rounded-xl p-4"
+                  style={{
+                    backgroundColor: 'var(--bg-pane-2)',
+                    border: '1px solid var(--border)',
+                  }}
+                >
+                  <p className="text-lg font-bold" style={{ color: 'var(--accent)' }}>
+                    {PLACEHOLDER_FOCUS_EXTENDED.mostFocusedTask.title}
+                  </p>
+                  <p className="mt-1 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                    Most focused this week
+                  </p>
+                  <p className="text-[10px]" style={{ color: 'var(--text-faint)' }}>
+                    {PLACEHOLDER_FOCUS_EXTENDED.mostFocusedTask.hours}h
+                  </p>
+                </div>
+              </div>
+
+              {/* Hour-of-day heatmap */}
               <div>
                 <h3 className="mb-3 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                  {COPY.focusTab.sessions}
+                  Focus by hour of day
                 </h3>
                 <div
                   className="rounded-xl p-4"
@@ -464,32 +585,25 @@ export default function ProfilePage() {
                     border: '1px solid var(--border)',
                   }}
                 >
-                  <div className="flex items-end gap-3" style={{ height: 120 }}>
-                    {PLACEHOLDER_FOCUS.weekSessions.map((count, i) => {
-                      const maxS = Math.max(...PLACEHOLDER_FOCUS.weekSessions, 1)
-                      const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                  <div className="grid grid-cols-12 gap-1">
+                    {PLACEHOLDER_FOCUS_EXTENDED.hourlyHeatmap.map((minutes, hour) => {
+                      const maxH = Math.max(...PLACEHOLDER_FOCUS_EXTENDED.hourlyHeatmap, 1)
+                      const intensity = minutes / maxH
                       return (
-                        <div key={i} className="flex flex-1 flex-col items-center gap-1">
-                          <span className="text-[10px] font-medium" style={{ color: 'var(--text-faint)' }}>
-                            {count}
-                          </span>
-                          <div className="relative w-full flex justify-center" style={{ height: 80 }}>
-                            <motion.div
-                              initial={{ height: 0 }}
-                              animate={{ height: `${(count / maxS) * 100}%` }}
-                              transition={ease.normal}
-                              className="w-6 rounded-t-md"
-                              style={{
-                                backgroundColor: 'var(--accent)',
-                                position: 'absolute',
-                                bottom: 0,
-                                minHeight: count > 0 ? 4 : 0,
-                              }}
-                            />
-                          </div>
-                          <span className="text-[10px] font-medium" style={{ color: 'var(--text-faint)' }}>
-                            {dayLabels[i]}
-                          </span>
+                        <div key={hour} className="flex flex-col items-center gap-1">
+                          <div
+                            className="h-6 w-full rounded-sm"
+                            style={{
+                              backgroundColor: 'var(--accent)',
+                              opacity: minutes > 0 ? 0.15 + intensity * 0.85 : 0.05,
+                            }}
+                            title={`${hour}:00 - ${minutes}m`}
+                          />
+                          {hour % 3 === 0 && (
+                            <span className="text-[8px]" style={{ color: 'var(--text-faint)' }}>
+                              {hour}
+                            </span>
+                          )}
                         </div>
                       )
                     })}
@@ -497,9 +611,11 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Big number cards */}
-              <div className="grid grid-cols-3 gap-3">
-                {/* Total focus hours */}
+              {/* Weekly trend: 4 weeks x 7 days */}
+              <div>
+                <h3 className="mb-3 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Weekly trend (sessions per day)
+                </h3>
                 <div
                   className="rounded-xl p-4"
                   style={{
@@ -507,62 +623,41 @@ export default function ProfilePage() {
                     border: '1px solid var(--border)',
                   }}
                 >
-                  <p className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>
-                    {focusRange === 'week' ? PLACEHOLDER_FOCUS.weekHours : PLACEHOLDER_FOCUS.monthHours}h
-                  </p>
-                  <p className="mt-1 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                    {COPY.focusTab.totalHours}
-                  </p>
-                  <div className="mt-2 flex gap-1">
-                    {(['week', 'month'] as const).map((r) => (
-                      <button
-                        key={r}
-                        onClick={() => setFocusRange(r)}
-                        className="rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors duration-150 cursor-pointer"
-                        style={{
-                          backgroundColor: focusRange === r ? 'var(--accent)' : 'var(--bg-hover)',
-                          color: focusRange === r ? '#FFFFFF' : 'var(--text-faint)',
-                        }}
-                      >
-                        {r === 'week' ? COPY.focusTab.thisWeek : COPY.focusTab.thisMonth}
-                      </button>
-                    ))}
+                  <div className="flex flex-col gap-2">
+                    {PLACEHOLDER_FOCUS_EXTENDED.weeklyTrend.map((week, weekIdx) => {
+                      const maxW = Math.max(...week, 1)
+                      return (
+                        <div key={weekIdx} className="flex items-center gap-2">
+                          <span className="w-12 text-[10px] font-medium" style={{ color: 'var(--text-faint)' }}>
+                            W-{3 - weekIdx}
+                          </span>
+                          <div className="flex flex-1 items-end gap-1" style={{ height: 24 }}>
+                            {week.map((count, dayIdx) => (
+                              <div
+                                key={dayIdx}
+                                className="flex-1 rounded-t-sm"
+                                style={{
+                                  height: `${Math.max((count / maxW) * 100, count > 0 ? 15 : 4)}%`,
+                                  backgroundColor: 'var(--accent)',
+                                  opacity: count > 0 ? 0.5 + (count / maxW) * 0.5 : 0.1,
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })}
+                    <div className="flex items-center gap-2">
+                      <span className="w-12" />
+                      <div className="flex flex-1 gap-1">
+                        {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
+                          <span key={i} className="flex-1 text-center text-[8px]" style={{ color: 'var(--text-faint)' }}>
+                            {d}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
-
-                {/* Average session */}
-                <div
-                  className="rounded-xl p-4"
-                  style={{
-                    backgroundColor: 'var(--bg-pane-2)',
-                    border: '1px solid var(--border)',
-                  }}
-                >
-                  <p className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>
-                    {PLACEHOLDER_FOCUS.avgMinutes}m
-                  </p>
-                  <p className="mt-1 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                    {COPY.focusTab.avgSession}
-                  </p>
-                </div>
-
-                {/* Focus streak */}
-                <div
-                  className="rounded-xl p-4"
-                  style={{
-                    backgroundColor: 'var(--bg-pane-2)',
-                    border: '1px solid var(--border)',
-                  }}
-                >
-                  <p className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>
-                    {PLACEHOLDER_FOCUS.streak}
-                  </p>
-                  <p className="mt-1 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                    {COPY.focusTab.focusStreak}
-                  </p>
-                  <p className="text-[10px]" style={{ color: 'var(--text-faint)' }}>
-                    {COPY.focusTab.consecutiveDays}
-                  </p>
                 </div>
               </div>
             </motion.div>

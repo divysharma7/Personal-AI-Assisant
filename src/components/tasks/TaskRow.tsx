@@ -11,7 +11,9 @@ import {
   Calendar,
   Tag,
   Clock,
+  Play,
 } from 'lucide-react'
+import { useFocusState } from '@/contexts/FocusContext'
 import { copy } from '@/lib/copy'
 import { buttonPress, checkBounce, fadeSlideUp, ease } from '@/lib/motion'
 import type { TaskRecord } from '@/hooks/useTasks'
@@ -66,11 +68,13 @@ export default function TaskRow({
 }: TaskRowProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const { focus } = useFocusState()
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [editTitle, setEditTitle] = useState(task.title)
   const titleRef = useRef<HTMLInputElement>(null)
   const isCompleted = task.status === 'done'
   const dueDateStr = formatRelativeDate(task.dueDate ?? null)
+  const isFocusingThisTask = focus.isActive && focus.taskId === task._id
 
   const handleTitleSubmit = useCallback(() => {
     setIsEditingTitle(false)
@@ -179,6 +183,48 @@ export default function TaskRow({
         <div className="flex-shrink-0" style={{ color: PRIORITY_COLORS[task.priority] || 'var(--text-faint)' }}>
           <BarChart3 size={14} strokeWidth={1.5} />
         </div>
+      )}
+
+      {/* Focus play / pulsing dot */}
+      {isFocusingThisTask ? (
+        <span
+          className="flex-shrink-0 h-2.5 w-2.5 rounded-full"
+          style={{
+            backgroundColor: 'var(--accent)',
+            opacity: 0.6 + 0.4 * Math.sin((Date.now() % 4000) / 4000 * Math.PI * 2),
+            animation: 'pulse 2s ease-in-out infinite',
+          }}
+          title="Focus session active"
+        />
+      ) : (
+        <motion.button
+          {...buttonPress}
+          onClick={(e) => {
+            e.stopPropagation()
+            window.dispatchEvent(
+              new CustomEvent('laif:start-focus', {
+                detail: { taskId: task._id, taskTitle: task.title },
+              })
+            )
+          }}
+          className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md transition-all duration-150 cursor-pointer"
+          style={{
+            opacity: isHovered ? 0.7 : 0,
+            color: 'var(--accent)',
+            backgroundColor: 'transparent',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+            e.currentTarget.style.opacity = '1'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent'
+            e.currentTarget.style.opacity = isHovered ? '0.7' : '0'
+          }}
+          title="Start focus session"
+        >
+          <Play size={12} strokeWidth={2} />
+        </motion.button>
       )}
 
       {/* Title + metadata */}

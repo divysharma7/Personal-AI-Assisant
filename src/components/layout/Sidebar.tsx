@@ -21,7 +21,9 @@ import {
   Loader2,
   Flame,
   BarChart3,
+  Target,
 } from 'lucide-react'
+import { useFocusState } from '@/contexts/FocusContext'
 import { copy } from '@/lib/copy'
 import { collapse, fadeSlideDown, fadeSlideUp, fade, buttonPress, spring, ease } from '@/lib/motion'
 import { useLists } from '@/hooks/useLists'
@@ -32,21 +34,48 @@ import type { ListDoc } from '@/hooks/useLists'
 // TODO: move to copy.ts
 const HABITS_NAV_LABEL = 'Habits'
 
+const FOCUS_NAV_LABEL = 'Focus'
+
 const NAV_ITEMS = [
   { label: copy.inbox.title, icon: Inbox, href: '/' },
   { label: copy.today.title, icon: CalendarDays, href: '/today' },
   { label: copy.tasks.title, icon: CheckCircle2, href: '/tasks' },
   { label: HABITS_NAV_LABEL, icon: Flame, href: '/habits' },
   { label: copy.matrix.title, icon: LayoutGrid, href: '/matrix' },
+  { label: FOCUS_NAV_LABEL, icon: Target, href: '/focus' },
   { label: copy.updates.title, icon: Bell, href: '/updates' },
 ] as const
 
 /* ── Emoji presets for icon picker ── */
 const EMOJI_PRESETS = ['\uD83D\uDCC1', '\uD83D\uDCCB', '\uD83D\uDCDD', '\uD83C\uDFAF', '\uD83D\uDD25', '\u2B50']
 
+function FocusPulsingDot() {
+  const [, setTick] = useState(0)
+
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 100)
+    return () => clearInterval(id)
+  }, [])
+
+  // Derive opacity from 4s heartbeat cycle
+  const phase = (Date.now() % 4000) / 4000
+  const opacity = 0.4 + 0.6 * Math.sin(phase * Math.PI * 2)
+
+  return (
+    <span
+      className="inline-block h-2 w-2 rounded-full flex-shrink-0"
+      style={{
+        backgroundColor: 'var(--accent)',
+        opacity,
+      }}
+    />
+  )
+}
+
 export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
+  const { focus } = useFocusState()
   const [favoritesOpen, setFavoritesOpen] = useState(true)
   const [meetingsOpen, setMeetingsOpen] = useState(true)
   const [listsHovered, setListsHovered] = useState(false)
@@ -317,6 +346,8 @@ export default function Sidebar() {
       <nav className="flex flex-col gap-0.5">
         {NAV_ITEMS.map((item) => {
           const active = isActive(item.href)
+          const isFocusItem = item.href === '/focus'
+          const showFocusDot = isFocusItem && focus.isActive
           return (
             <button
               key={item.href}
@@ -340,7 +371,22 @@ export default function Sidebar() {
                 />
               )}
               <item.icon size={20} strokeWidth={1.5} />
-              <span className="flex-1 text-left text-[14px]">{item.label}</span>
+              <div className="flex flex-1 flex-col text-left">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[14px]">{item.label}</span>
+                  {showFocusDot && (
+                    <FocusPulsingDot />
+                  )}
+                </div>
+                {showFocusDot && focus.taskTitle && (
+                  <span
+                    className="truncate text-[11px]"
+                    style={{ color: 'var(--text-faint)' }}
+                  >
+                    {focus.taskTitle}
+                  </span>
+                )}
+              </div>
             </button>
           )
         })}

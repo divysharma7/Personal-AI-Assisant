@@ -27,6 +27,17 @@ const UserSchema = new Schema({
     streakFreezeEnabled: { type: Boolean, default: true },
     celebrationEnabled: { type: Boolean, default: true },
   },
+  // Focus preferences
+  focusPreferences: {
+    defaultWorkMin: { type: Number, default: 25 },
+    defaultShortBreakMin: { type: Number, default: 5 },
+    defaultLongBreakMin: { type: Number, default: 15 },
+    longBreakEveryNSessions: { type: Number, default: 4 },
+    theme: { type: String, enum: ['aurora', 'minimal', 'liquid'], default: 'aurora' },
+    soundOnComplete: { type: Boolean, default: true },
+    showInSidebar: { type: Boolean, default: true },
+    keyboardShortcutsEnabled: { type: Boolean, default: true },
+  },
 }, { timestamps: true })
 
 export default models.User || mongoose.model('User', UserSchema)

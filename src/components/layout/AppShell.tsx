@@ -7,6 +7,7 @@ import Sidebar from './Sidebar'
 import ArtworkPane from './ArtworkPane'
 import { copy } from '@/lib/copy'
 import { fade, ease } from '@/lib/motion'
+import { useFocusState } from '@/contexts/FocusContext'
 import { useTasks } from '@/hooks/useTasks'
 import { useLabels } from '@/hooks/useLabels'
 import type { TaskRecord } from '@/hooks/useTasks'
@@ -41,6 +42,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null)
   const [panelStack, setPanelStack] = useState<string[]>([])
 
+  const { focus } = useFocusState()
   const { tasks, updateTask, deleteTask } = useTasks()
   const { labels, createLabel } = useLabels()
 
@@ -163,11 +165,30 @@ export default function AppShell({ children }: { children: ReactNode }) {
   // Small viewport notice
   if (!isDesktop) return <DesktopOnlyNotice />
 
+  // Focus progress percentage (CSS-animated via transition)
+  const focusProgress = focus.isActive && focus.totalSeconds > 0
+    ? ((focus.totalSeconds - focus.remainingSeconds) / focus.totalSeconds) * 100
+    : 0
+
   return (
     <div
-      className="flex h-screen p-[3px]"
+      className="relative flex h-screen p-[3px]"
       style={{ backgroundColor: 'var(--bg-canvas)' }}
     >
+      {/* Top progress hairline — visible during active focus */}
+      {focus.isActive && (
+        <div
+          className="absolute left-0 top-0 z-[9999] h-[2px]"
+          style={{
+            width: `${focusProgress}%`,
+            transition: 'width 1s linear',
+            background: 'linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 60%, white))',
+            backgroundSize: '200% 100%',
+            animation: 'focusHairlineShimmer 2s linear infinite',
+          }}
+        />
+      )}
+
       {/* Left: Sidebar */}
       <Sidebar />
 

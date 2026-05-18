@@ -21,6 +21,7 @@ import { useHabits } from '@/hooks/useHabits'
 import type { Habit } from '@/hooks/useHabits'
 import { playCompletionSound } from '@/lib/sounds'
 import { fadeSlideUp, collapse, stagger, ease, buttonPress, checkBounce } from '@/lib/motion'
+import { useFocusState } from '@/contexts/FocusContext'
 import TaskRow from '@/components/tasks/TaskRow'
 import InfoBanner from '@/components/shared/InfoBanner'
 import TimeBlockPicker from '@/components/tasks/TimeBlockPicker'
@@ -69,11 +70,18 @@ function formatTimeSlot(start: string, end: string): string {
   return `${fmt(new Date(start))} - ${fmt(new Date(end))}`
 }
 
+function formatFocusTime(seconds: number): string {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
 export default function TodayPage() {
   const { tasks, createTask, toggleComplete, updateTask } = useTasks()
   const { labels } = useLabels()
   const { connected: googleConnected, syncTask } = useGoogleCalendar()
   const { habits, toggleToday, weekCompletions, todayStr: getTodayStr } = useHabits()
+  const { focus } = useFocusState()
   const [tipDismissed, setTipDismissed] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskFocused, setNewTaskFocused] = useState(false)
@@ -370,6 +378,40 @@ export default function TodayPage() {
           visible={!tipDismissed}
         />
       </div>
+
+      {/* Active focus session banner */}
+      <AnimatePresence>
+        {focus.isActive && (
+          <motion.a
+            href="/focus"
+            {...fadeSlideUp}
+            transition={ease.normal}
+            className="mb-4 flex items-center justify-between rounded-xl px-4 py-3 cursor-pointer no-underline"
+            style={{
+              backgroundColor: 'var(--accent-soft)',
+              border: '1px solid var(--accent)',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
+          >
+            <span className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+              <span>Focusing on &ldquo;{focus.taskTitle}&rdquo;</span>
+              <span style={{ color: 'var(--accent)' }}>
+                &mdash; {formatFocusTime(focus.remainingSeconds)} remaining
+              </span>
+            </span>
+            <span
+              className="rounded-full px-3 py-1 text-xs font-semibold"
+              style={{
+                backgroundColor: 'var(--accent)',
+                color: '#FFFFFF',
+              }}
+            >
+              Return to focus
+            </span>
+          </motion.a>
+        )}
+      </AnimatePresence>
 
       {/* New task row */}
       <div

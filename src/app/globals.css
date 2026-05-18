@@ -455,6 +455,56 @@ body {
   content: attr(data-placeholder);
 }
 
+/* ─── Focus session hairline bar ─── */
+@keyframes focusHairlineShimmer {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 200% 0%; }
+}
+
+/* ─── Focus theme variables ─── */
+[data-focus-theme="aurora"] {
+  --focus-bg: linear-gradient(135deg, #0a0a2e, #1a0a3e);
+  --focus-primary: #7c3aed;
+  --focus-secondary: #c084fc;
+  --focus-glow: rgba(124, 58, 237, 0.3);
+  --focus-text: rgba(255, 255, 255, 0.9);
+}
+
+[data-focus-theme="minimal"] {
+  --focus-bg: #0a0a0a;
+  --focus-primary: var(--accent);
+  --focus-secondary: var(--accent);
+  --focus-glow: rgba(255, 77, 61, 0.15);
+  --focus-text: rgba(255, 255, 255, 0.95);
+}
+
+[data-focus-theme="liquid"] {
+  --focus-bg: linear-gradient(135deg, #fecdd3, #fde68a);
+  --focus-primary: #f97316;
+  --focus-secondary: #fb923c;
+  --focus-glow: rgba(249, 115, 22, 0.2);
+  --focus-text: #1a1a1a;
+}
+
+/* Aurora background drift animation */
+.aurora-theme-bg {
+  background-size: 200% 200%;
+  animation: aurora-drift 15s ease-in-out infinite;
+}
+
+@keyframes aurora-drift {
+  0%, 100% { background-position: 0% 50%; }
+  25% { background-position: 100% 0%; }
+  50% { background-position: 100% 100%; }
+  75% { background-position: 0% 100%; }
+}
+
+/* Minimal dot pulse */
+@keyframes minimal-dot-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
 /* ─── Reduced motion ─── */
 @media (prefers-reduced-motion: reduce) {
   *,
