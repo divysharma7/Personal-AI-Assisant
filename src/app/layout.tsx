@@ -1,20 +1,13 @@
 import type { Metadata } from 'next'
-import { Inter, Source_Serif_4 } from 'next/font/google'
+import { Inter } from 'next/font/google'
+import './globals.css'
 import ThemeProvider from '@/contexts/ThemeContext'
 import QueryProvider from '@/shared/providers/QueryProvider'
 import AppShell from '@/components/layout/AppShell'
-import './globals.css'
 
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
-  display: 'swap',
-})
-
-const sourceSerif = Source_Serif_4({
-  subsets: ['latin'],
-  variable: '--font-serif',
-  weight: ['700', '800'],
   display: 'swap',
 })
 
@@ -29,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" data-theme="dark" className={`${inter.variable} ${sourceSerif.variable}`}>
+    <html lang="en" data-theme="dark" className={inter.variable}>
       <body>
         <ThemeProvider>
           <QueryProvider>

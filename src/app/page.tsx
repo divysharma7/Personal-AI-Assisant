@@ -42,6 +42,9 @@ function playCompletionSound() {
 }
 
 export default function InboxPage() {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
   const { items, addItem, updateItem } = useItems()
   const [tipDismissed, setTipDismissed] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
