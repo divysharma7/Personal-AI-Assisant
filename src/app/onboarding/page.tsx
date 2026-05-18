@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { X, Check } from 'lucide-react'
 import { copy } from '@/lib/copy'
+import { fade, fadeSlideUp, scaleIn, buttonPress, spring, ease } from '@/lib/motion'
 
 type Step = 1 | 2 | 3
 
@@ -90,7 +92,9 @@ export default function OnboardingPage() {
       </div>
 
       {/* Card */}
-      <div
+      <motion.div
+        {...scaleIn}
+        transition={spring.smooth}
         className="w-full max-w-md rounded-3xl p-8"
         style={{
           backgroundColor: 'rgba(28, 24, 38, 0.75)',
@@ -98,178 +102,183 @@ export default function OnboardingPage() {
           WebkitBackdropFilter: 'blur(20px)',
         }}
       >
-        {/* Step 1: Name */}
-        {step === 1 && (
-          <div className="flex flex-col">
-            <h2 className="mb-2 text-2xl font-bold text-white">
-              {copy.onboarding.step1.title}
-            </h2>
-            <p className="mb-6 text-sm text-white/60">
-              {copy.onboarding.step1.body}
-            </p>
+        <AnimatePresence mode="wait">
+          {/* Step 1: Name */}
+          {step === 1 && (
+            <motion.div key="step-1" {...fadeSlideUp} transition={ease.normal} className="flex flex-col">
+              <h2 className="mb-2 text-2xl font-bold text-white">
+                {copy.onboarding.step1.title}
+              </h2>
+              <p className="mb-6 text-sm text-white/60">
+                {copy.onboarding.step1.body}
+              </p>
 
-            <div className="relative mb-6">
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={copy.onboarding.step1.placeholder}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && name.trim()) setStep(2)
-                }}
-                className="w-full rounded-xl px-4 py-3 pr-24 text-sm text-white outline-none"
-                style={{
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                }}
-                autoFocus
-              />
-              {name && (
-                <button
-                  onClick={() => setName('')}
-                  className="absolute right-20 top-1/2 -translate-y-1/2 cursor-pointer text-white/40 transition-colors duration-150 hover:text-white/70"
-                >
-                  <X size={14} />
-                </button>
-              )}
-              <button
-                onClick={() => name.trim() && setStep(2)}
-                disabled={!name.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors duration-150 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
-                style={{
-                  backgroundColor: name.trim() ? 'rgba(255,255,255,0.2)' : 'transparent',
-                  color: 'white',
-                }}
-              >
-                {copy.onboarding.step1.cta}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Intent */}
-        {step === 2 && (
-          <div className="flex flex-col">
-            <h2 className="mb-2 text-2xl font-bold text-white">
-              {copy.onboarding.step2.title}
-            </h2>
-            <p className="mb-6 text-sm text-white/60">
-              {copy.onboarding.step2.body}
-            </p>
-
-            <div className="mb-6 flex flex-col gap-3">
-              {copy.onboarding.step2.options.map((option, i) => (
-                <button
-                  key={option}
-                  onClick={() => handleOptionToggle(i)}
-                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-left text-sm transition-colors duration-150 cursor-pointer"
+              <div className="relative mb-6">
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={copy.onboarding.step1.placeholder}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && name.trim()) setStep(2)
+                  }}
+                  className="w-full rounded-xl px-4 py-3 pr-24 text-sm text-white outline-none"
                   style={{
-                    backgroundColor: selectedOptions[i]
-                      ? 'rgba(255, 77, 61, 0.15)'
-                      : 'rgba(255,255,255,0.05)',
-                    border: selectedOptions[i]
-                      ? '1px solid rgba(255, 77, 61, 0.3)'
-                      : '1px solid rgba(255,255,255,0.08)',
+                    backgroundColor: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                  }}
+                  autoFocus
+                />
+                {name && (
+                  <button
+                    onClick={() => setName('')}
+                    className="absolute right-20 top-1/2 -translate-y-1/2 cursor-pointer text-white/40 transition-colors duration-150 hover:text-white/70"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+                <motion.button
+                  onClick={() => name.trim() && setStep(2)}
+                  disabled={!name.trim()}
+                  whileTap={{ scale: 0.97 }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors duration-150 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                  style={{
+                    backgroundColor: name.trim() ? 'rgba(255,255,255,0.2)' : 'transparent',
                     color: 'white',
                   }}
                 >
-                  <div
-                    className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150"
+                  {copy.onboarding.step1.cta}
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 2: Intent */}
+          {step === 2 && (
+            <motion.div key="step-2" {...fadeSlideUp} transition={ease.normal} className="flex flex-col">
+              <h2 className="mb-2 text-2xl font-bold text-white">
+                {copy.onboarding.step2.title}
+              </h2>
+              <p className="mb-6 text-sm text-white/60">
+                {copy.onboarding.step2.body}
+              </p>
+
+              <div className="mb-6 flex flex-col gap-3">
+                {copy.onboarding.step2.options.map((option, i) => (
+                  <button
+                    key={option}
+                    onClick={() => handleOptionToggle(i)}
+                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-left text-sm transition-colors duration-150 cursor-pointer"
                     style={{
-                      backgroundColor: selectedOptions[i] ? '#FF4D3D' : 'transparent',
+                      backgroundColor: selectedOptions[i]
+                        ? 'rgba(255, 77, 61, 0.15)'
+                        : 'rgba(255,255,255,0.05)',
                       border: selectedOptions[i]
+                        ? '1px solid rgba(255, 77, 61, 0.3)'
+                        : '1px solid rgba(255,255,255,0.08)',
+                      color: 'white',
+                    }}
+                  >
+                    <div
+                      className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150"
+                      style={{
+                        backgroundColor: selectedOptions[i] ? '#FF4D3D' : 'transparent',
+                        border: selectedOptions[i]
+                          ? '2px solid #FF4D3D'
+                          : '2px solid rgba(255,255,255,0.3)',
+                      }}
+                    >
+                      {selectedOptions[i] && (
+                        <Check size={12} strokeWidth={2.5} className="text-white" />
+                      )}
+                    </div>
+                    <span>{option}</span>
+                  </button>
+                ))}
+              </div>
+
+              <motion.button
+                onClick={() => anyOptionSelected && setStep(3)}
+                disabled={!anyOptionSelected}
+                whileTap={{ scale: 0.97 }}
+                className="w-full rounded-full py-3 text-sm font-semibold transition-colors duration-150 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                style={{
+                  backgroundColor: anyOptionSelected ? 'white' : 'rgba(255,255,255,0.1)',
+                  color: anyOptionSelected ? '#1A1A1F' : 'white',
+                }}
+              >
+                {copy.onboarding.step2.cta}
+              </motion.button>
+            </motion.div>
+          )}
+
+          {/* Step 3: Terms */}
+          {step === 3 && (
+            <motion.div key="step-3" {...fadeSlideUp} transition={ease.normal} className="flex flex-col">
+              <h2 className="mb-6 text-2xl font-bold text-white">
+                {copy.onboarding.step3.title}
+              </h2>
+
+              <div className="mb-6 flex flex-col gap-3">
+                {/* Terms checkbox */}
+                <button
+                  onClick={() => setTermsAccepted(!termsAccepted)}
+                  className="flex items-start gap-3 text-left text-sm cursor-pointer"
+                >
+                  <div
+                    className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150"
+                    style={{
+                      backgroundColor: termsAccepted ? '#FF4D3D' : 'transparent',
+                      border: termsAccepted
                         ? '2px solid #FF4D3D'
                         : '2px solid rgba(255,255,255,0.3)',
                     }}
                   >
-                    {selectedOptions[i] && (
+                    {termsAccepted && (
                       <Check size={12} strokeWidth={2.5} className="text-white" />
                     )}
                   </div>
-                  <span>{option}</span>
+                  <span className="text-white/80">{copy.onboarding.step3.terms}</span>
                 </button>
-              ))}
-            </div>
 
-            <button
-              onClick={() => anyOptionSelected && setStep(3)}
-              disabled={!anyOptionSelected}
-              className="w-full rounded-full py-3 text-sm font-semibold transition-colors duration-150 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
-              style={{
-                backgroundColor: anyOptionSelected ? 'white' : 'rgba(255,255,255,0.1)',
-                color: anyOptionSelected ? '#1A1A1F' : 'white',
-              }}
-            >
-              {copy.onboarding.step2.cta}
-            </button>
-          </div>
-        )}
-
-        {/* Step 3: Terms */}
-        {step === 3 && (
-          <div className="flex flex-col">
-            <h2 className="mb-6 text-2xl font-bold text-white">
-              {copy.onboarding.step3.title}
-            </h2>
-
-            <div className="mb-6 flex flex-col gap-3">
-              {/* Terms checkbox */}
-              <button
-                onClick={() => setTermsAccepted(!termsAccepted)}
-                className="flex items-start gap-3 text-left text-sm cursor-pointer"
-              >
-                <div
-                  className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150"
-                  style={{
-                    backgroundColor: termsAccepted ? '#FF4D3D' : 'transparent',
-                    border: termsAccepted
-                      ? '2px solid #FF4D3D'
-                      : '2px solid rgba(255,255,255,0.3)',
-                  }}
+                {/* Emails checkbox */}
+                <button
+                  onClick={() => setEmailsOptIn(!emailsOptIn)}
+                  className="flex items-start gap-3 text-left text-sm cursor-pointer"
                 >
-                  {termsAccepted && (
-                    <Check size={12} strokeWidth={2.5} className="text-white" />
-                  )}
-                </div>
-                <span className="text-white/80">{copy.onboarding.step3.terms}</span>
-              </button>
+                  <div
+                    className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150"
+                    style={{
+                      backgroundColor: emailsOptIn ? '#FF4D3D' : 'transparent',
+                      border: emailsOptIn
+                        ? '2px solid #FF4D3D'
+                        : '2px solid rgba(255,255,255,0.3)',
+                    }}
+                  >
+                    {emailsOptIn && (
+                      <Check size={12} strokeWidth={2.5} className="text-white" />
+                    )}
+                  </div>
+                  <span className="text-white/80">{copy.onboarding.step3.emails}</span>
+                </button>
+              </div>
 
-              {/* Emails checkbox */}
-              <button
-                onClick={() => setEmailsOptIn(!emailsOptIn)}
-                className="flex items-start gap-3 text-left text-sm cursor-pointer"
+              <motion.button
+                onClick={handleComplete}
+                disabled={!termsAccepted || loading}
+                whileTap={{ scale: 0.97 }}
+                className="w-full rounded-full py-3 text-sm font-semibold transition-colors duration-150 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                style={{
+                  backgroundColor: termsAccepted ? 'white' : 'rgba(255,255,255,0.1)',
+                  color: termsAccepted ? '#1A1A1F' : 'white',
+                }}
               >
-                <div
-                  className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150"
-                  style={{
-                    backgroundColor: emailsOptIn ? '#FF4D3D' : 'transparent',
-                    border: emailsOptIn
-                      ? '2px solid #FF4D3D'
-                      : '2px solid rgba(255,255,255,0.3)',
-                  }}
-                >
-                  {emailsOptIn && (
-                    <Check size={12} strokeWidth={2.5} className="text-white" />
-                  )}
-                </div>
-                <span className="text-white/80">{copy.onboarding.step3.emails}</span>
-              </button>
-            </div>
-
-            <button
-              onClick={handleComplete}
-              disabled={!termsAccepted || loading}
-              className="w-full rounded-full py-3 text-sm font-semibold transition-colors duration-150 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
-              style={{
-                backgroundColor: termsAccepted ? 'white' : 'rgba(255,255,255,0.1)',
-                color: termsAccepted ? '#1A1A1F' : 'white',
-              }}
-            >
-              {loading ? copy.onboarding.step3.ctaLoading : copy.onboarding.step3.cta}
-            </button>
-          </div>
-        )}
-      </div>
+                {loading ? copy.onboarding.step3.ctaLoading : copy.onboarding.step3.cta}
+              </motion.button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
 
       {/* Footer */}
       <div className="mt-8">

@@ -1,10 +1,12 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+import { motion } from 'framer-motion'
 import { useEffect, useState, type ReactNode } from 'react'
 import Sidebar from './Sidebar'
 import ArtworkPane from './ArtworkPane'
 import { copy } from '@/lib/copy'
+import { fade, ease } from '@/lib/motion'
 
 const SHELL_EXCLUDED = ['/login', '/signup', '/onboarding']
 
@@ -14,7 +16,9 @@ function DesktopOnlyNotice() {
       className="flex min-h-screen flex-col items-center justify-center px-6 text-center"
       style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-primary)' }}
     >
-      <div
+      <motion.div
+        {...fade}
+        transition={ease.slow}
         className="rounded-2xl p-8"
         style={{ backgroundColor: 'var(--bg-pane)', maxWidth: 400 }}
       >
@@ -22,7 +26,7 @@ function DesktopOnlyNotice() {
         <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
           {copy.desktopOnly.body}
         </p>
-      </div>
+      </motion.div>
     </div>
   )
 }

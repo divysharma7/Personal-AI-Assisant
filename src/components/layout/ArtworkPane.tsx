@@ -1,6 +1,8 @@
 'use client'
 
 import { useMemo } from 'react'
+import { motion } from 'framer-motion'
+import { fade, ease } from '@/lib/motion'
 
 /** Get a daily-rotating Unsplash landscape image */
 function getDailyImageUrl(): string {
@@ -33,7 +35,9 @@ export default function ArtworkPane() {
       }}
     >
       {/* Unsplash image background */}
-      <div
+      <motion.div
+        {...fade}
+        transition={ease.slow}
         className="absolute inset-0 bg-cover bg-center opacity-30 transition-opacity duration-500"
         style={{ backgroundImage: `url(${imageUrl})` }}
       />

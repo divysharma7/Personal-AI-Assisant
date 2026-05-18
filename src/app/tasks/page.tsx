@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useRef, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   SlidersHorizontal,
   MoreVertical,
@@ -14,6 +15,7 @@ import { copy } from '@/lib/copy'
 import { useItems } from '@/hooks/useItems'
 import type { Task } from '@/types'
 import { formatDate } from '@/lib/utils'
+import { fadeSlideUp, buttonPress, stagger, ease } from '@/lib/motion'
 
 type FilterTab = 'forMe' | 'upcoming' | 'done'
 type ViewMode = 'List' | 'Board' | 'Matrix'
@@ -155,8 +157,9 @@ export default function TasksPage() {
             { key: 'done', label: copy.tasks.filters.done },
           ] as const
         ).map((tab) => (
-          <button
+          <motion.button
             key={tab.key}
+            {...buttonPress}
             onClick={() => setActiveFilter(tab.key)}
             className="rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors duration-150 cursor-pointer"
             style={{
@@ -169,7 +172,7 @@ export default function TasksPage() {
             }}
           >
             {tab.label}
-          </button>
+          </motion.button>
         ))}
       </div>
 
@@ -201,61 +204,66 @@ export default function TasksPage() {
       </div>
 
       {/* Task list */}
-      <div className="flex flex-col gap-0.5">
-        {filteredTasks.map((task) => (
-          <div
-            key={task._id}
-            className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors duration-150 cursor-pointer"
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-            }}
-          >
-            <button
-              onClick={() => handleToggle(task)}
-              className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150 cursor-pointer"
-              style={{
-                border:
-                  task.status === 'done'
-                    ? 'none'
-                    : '1.5px solid var(--border)',
-                backgroundColor:
-                  task.status === 'done' ? 'var(--accent)' : 'transparent',
+      <motion.div className="flex flex-col gap-0.5" {...stagger()}>
+        <AnimatePresence mode="popLayout">
+          {filteredTasks.map((task) => (
+            <motion.div
+              key={task._id}
+              {...fadeSlideUp}
+              transition={ease.normal}
+              layout
+              className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors duration-150 cursor-pointer"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
               }}
             >
-              {task.status === 'done' && (
-                <Check size={12} strokeWidth={2.5} className="text-white" />
-              )}
-            </button>
-            <div className="flex flex-1 flex-col gap-0.5">
-              <span
-                className="text-[15px] font-medium"
+              <button
+                onClick={() => handleToggle(task)}
+                className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150 cursor-pointer"
                 style={{
-                  color:
+                  border:
                     task.status === 'done'
-                      ? 'var(--text-faint)'
-                      : 'var(--text-primary)',
-                  textDecoration: task.status === 'done' ? 'line-through' : 'none',
+                      ? 'none'
+                      : '1.5px solid var(--border)',
+                  backgroundColor:
+                    task.status === 'done' ? 'var(--accent)' : 'transparent',
                 }}
               >
-                {task.title}
-              </span>
-              {task.dueDate && (
-                <span className="text-xs" style={{ color: 'var(--text-faint)' }}>
-                  {formatDate(task.dueDate, 'MMM d')}
+                {task.status === 'done' && (
+                  <Check size={12} strokeWidth={2.5} className="text-white" />
+                )}
+              </button>
+              <div className="flex flex-1 flex-col gap-0.5">
+                <span
+                  className="text-[15px] font-medium"
+                  style={{
+                    color:
+                      task.status === 'done'
+                        ? 'var(--text-faint)'
+                        : 'var(--text-primary)',
+                    textDecoration: task.status === 'done' ? 'line-through' : 'none',
+                  }}
+                >
+                  {task.title}
                 </span>
-              )}
-            </div>
-          </div>
-        ))}
+                {task.dueDate && (
+                  <span className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                    {formatDate(task.dueDate, 'MMM d')}
+                  </span>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
         {filteredTasks.length === 0 && (
           <p className="py-8 text-center text-sm" style={{ color: 'var(--text-faint)' }}>
             No tasks to show
           </p>
         )}
-      </div>
+      </motion.div>
     </div>
   )
 }

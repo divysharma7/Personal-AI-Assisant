@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useRef, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   SlidersHorizontal,
   MoreVertical,
@@ -16,6 +17,7 @@ import { useItems } from '@/hooks/useItems'
 import type { Task } from '@/types'
 import { formatDate } from '@/lib/utils'
 import { isToday, isTomorrow, isBefore, startOfToday } from 'date-fns'
+import { fadeSlideUp, collapse, stagger, ease } from '@/lib/motion'
 
 export default function TodayPage() {
   const { items, addItem, updateItem } = useItems()
@@ -82,52 +84,62 @@ export default function TodayPage() {
           {label} ({tasks.length})
         </span>
       </button>
-      {open && (
-        <div className="flex flex-col gap-0.5">
-          {tasks.map((task) => (
-            <div
-              key={task._id}
-              className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors duration-150 cursor-pointer"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
-            >
-              <button
-                onClick={() => handleToggle(task)}
-                className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150 cursor-pointer"
-                style={{
-                  border: '1.5px solid var(--border)',
-                  backgroundColor: 'transparent',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--accent)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border)'
-                }}
-              />
-              <div className="flex flex-1 flex-col gap-0.5">
-                <span className="text-[15px] font-medium" style={{ color: 'var(--text-primary)' }}>
-                  {task.title}
-                </span>
-                {task.dueDate && (
-                  <span className="text-xs" style={{ color: 'var(--text-faint)' }}>
-                    {formatDate(task.dueDate, 'MMM d')}
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
-          {tasks.length === 0 && (
-            <p className="px-4 py-2 text-xs" style={{ color: 'var(--text-faint)' }}>
-              No tasks
-            </p>
-          )}
-        </div>
-      )}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            {...collapse}
+            transition={ease.normal}
+            className="flex flex-col gap-0.5 overflow-hidden"
+          >
+            <motion.div {...stagger()}>
+              {tasks.map((task) => (
+                <motion.div
+                  key={task._id}
+                  {...fadeSlideUp}
+                  transition={ease.normal}
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors duration-150 cursor-pointer"
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                  }}
+                >
+                  <button
+                    onClick={() => handleToggle(task)}
+                    className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150 cursor-pointer"
+                    style={{
+                      border: '1.5px solid var(--border)',
+                      backgroundColor: 'transparent',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--accent)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--border)'
+                    }}
+                  />
+                  <div className="flex flex-1 flex-col gap-0.5">
+                    <span className="text-[15px] font-medium" style={{ color: 'var(--text-primary)' }}>
+                      {task.title}
+                    </span>
+                    {task.dueDate && (
+                      <span className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                        {formatDate(task.dueDate, 'MMM d')}
+                      </span>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+              {tasks.length === 0 && (
+                <p className="px-4 py-2 text-xs" style={{ color: 'var(--text-faint)' }}>
+                  No tasks
+                </p>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 
@@ -173,27 +185,31 @@ export default function TodayPage() {
       </h1>
 
       {/* Tip banner */}
-      {!tipDismissed && (
-        <div
-          className="mb-5 flex items-center gap-3 rounded-xl px-4 py-3"
-          style={{
-            backgroundColor: 'rgba(99, 91, 255, 0.08)',
-            border: '1px solid rgba(99, 91, 255, 0.3)',
-          }}
-        >
-          <BookOpen size={18} className="flex-shrink-0" style={{ color: '#635BFF' }} />
-          <p className="flex-1 text-sm" style={{ color: '#635BFF' }}>
-            {copy.today.tipBanner}
-          </p>
-          <button
-            onClick={() => setTipDismissed(true)}
-            className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
-            style={{ color: '#635BFF' }}
+      <AnimatePresence>
+        {!tipDismissed && (
+          <motion.div
+            {...fadeSlideUp}
+            transition={ease.normal}
+            className="mb-5 flex items-center gap-3 rounded-xl px-4 py-3"
+            style={{
+              backgroundColor: 'rgba(99, 91, 255, 0.08)',
+              border: '1px solid rgba(99, 91, 255, 0.3)',
+            }}
           >
-            <X size={14} strokeWidth={2} />
-          </button>
-        </div>
-      )}
+            <BookOpen size={18} className="flex-shrink-0" style={{ color: '#635BFF' }} />
+            <p className="flex-1 text-sm" style={{ color: '#635BFF' }}>
+              {copy.today.tipBanner}
+            </p>
+            <button
+              onClick={() => setTipDismissed(true)}
+              className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
+              style={{ color: '#635BFF' }}
+            >
+              <X size={14} strokeWidth={2} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* New task row */}
       <div

@@ -1,9 +1,11 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { copy } from '@/lib/copy'
 import { useTheme, type Theme } from '@/contexts/ThemeContext'
+import { fade, buttonPress, ease } from '@/lib/motion'
 
 type SettingsTab = 'profile' | 'features' | 'subscriptions' | 'integrations'
 
@@ -87,9 +89,10 @@ export default function SettingsPage() {
         style={{ borderColor: 'var(--border)' }}
       >
         {TABS.map((tab) => (
-          <button
+          <motion.button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
+            whileTap={{ scale: 0.97 }}
             className="relative px-4 py-2.5 text-sm font-medium transition-colors duration-150 cursor-pointer"
             style={{
               color:
@@ -105,132 +108,138 @@ export default function SettingsPage() {
                 style={{ backgroundColor: 'var(--accent)' }}
               />
             )}
-          </button>
+          </motion.button>
         ))}
       </div>
 
       {/* Tab content */}
       <div className="max-w-lg">
-        {/* Profile tab */}
-        {activeTab === 'profile' && (
-          <div className="flex flex-col gap-5">
-            <div className="flex gap-4">
-              <div className="flex-1">
+        <AnimatePresence mode="wait">
+          {/* Profile tab */}
+          {activeTab === 'profile' && (
+            <motion.div key="profile" {...fade} transition={ease.normal} className="flex flex-col gap-5">
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label
+                    className="mb-1.5 block text-xs font-medium"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    {copy.settings.profile.firstName}
+                  </label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="input-field"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label
+                    className="mb-1.5 block text-xs font-medium"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    {copy.settings.profile.lastName}
+                  </label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="input-field"
+                  />
+                </div>
+              </div>
+
+              <div>
                 <label
                   className="mb-1.5 block text-xs font-medium"
                   style={{ color: 'var(--text-muted)' }}
                 >
-                  {copy.settings.profile.firstName}
+                  {copy.settings.profile.email}
                 </label>
                 <input
                   type="text"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="input-field"
+                  value={email}
+                  readOnly
+                  className="input-field cursor-not-allowed opacity-60"
                 />
               </div>
-              <div className="flex-1">
+
+              <div
+                className="mt-4 border-t pt-6"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                <button
+                  className="rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-150 cursor-pointer"
+                  style={{
+                    color: 'var(--priority-high)',
+                    backgroundColor: 'transparent',
+                    border: '1px solid var(--priority-high)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 77, 61, 0.1)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                  }}
+                >
+                  {copy.settings.profile.deleteAccount}
+                </button>
+                <p
+                  className="mt-2 text-xs"
+                  style={{ color: 'var(--text-faint)' }}
+                >
+                  {copy.settings.profile.deleteWarning}
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Features tab */}
+          {activeTab === 'features' && (
+            <motion.div key="features" {...fade} transition={ease.normal} className="flex flex-col gap-5">
+              <div>
                 <label
                   className="mb-1.5 block text-xs font-medium"
                   style={{ color: 'var(--text-muted)' }}
                 >
-                  {copy.settings.profile.lastName}
+                  {copy.settings.features.themeLabel}
                 </label>
-                <input
-                  type="text"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="input-field"
-                />
+                <select
+                  value={currentThemeLabel}
+                  onChange={(e) => {
+                    const t = THEME_MAP[e.target.value]
+                    if (t) setTheme(t)
+                  }}
+                  className="input-field cursor-pointer"
+                >
+                  {copy.settings.features.themeOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
               </div>
-            </div>
+            </motion.div>
+          )}
 
-            <div>
-              <label
-                className="mb-1.5 block text-xs font-medium"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                {copy.settings.profile.email}
-              </label>
-              <input
-                type="text"
-                value={email}
-                readOnly
-                className="input-field cursor-not-allowed opacity-60"
-              />
-            </div>
-
-            <div
-              className="mt-4 border-t pt-6"
-              style={{ borderColor: 'var(--border)' }}
-            >
-              <button
-                className="rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-150 cursor-pointer"
-                style={{
-                  color: 'var(--priority-high)',
-                  backgroundColor: 'transparent',
-                  border: '1px solid var(--priority-high)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 77, 61, 0.1)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                }}
-              >
-                {copy.settings.profile.deleteAccount}
-              </button>
-              <p
-                className="mt-2 text-xs"
-                style={{ color: 'var(--text-faint)' }}
-              >
-                {copy.settings.profile.deleteWarning}
+          {/* Subscriptions tab */}
+          {activeTab === 'subscriptions' && (
+            <motion.div key="subscriptions" {...fade} transition={ease.normal}>
+              <p className="py-8 text-sm" style={{ color: 'var(--text-faint)' }}>
+                No active subscriptions.
               </p>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
 
-        {/* Features tab */}
-        {activeTab === 'features' && (
-          <div className="flex flex-col gap-5">
-            <div>
-              <label
-                className="mb-1.5 block text-xs font-medium"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                {copy.settings.features.themeLabel}
-              </label>
-              <select
-                value={currentThemeLabel}
-                onChange={(e) => {
-                  const t = THEME_MAP[e.target.value]
-                  if (t) setTheme(t)
-                }}
-                className="input-field cursor-pointer"
-              >
-                {copy.settings.features.themeOptions.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
-
-        {/* Subscriptions tab */}
-        {activeTab === 'subscriptions' && (
-          <p className="py-8 text-sm" style={{ color: 'var(--text-faint)' }}>
-            No active subscriptions.
-          </p>
-        )}
-
-        {/* Integrations tab */}
-        {activeTab === 'integrations' && (
-          <p className="py-8 text-sm" style={{ color: 'var(--text-faint)' }}>
-            No integrations connected.
-          </p>
-        )}
+          {/* Integrations tab */}
+          {activeTab === 'integrations' && (
+            <motion.div key="integrations" {...fade} transition={ease.normal}>
+              <p className="py-8 text-sm" style={{ color: 'var(--text-faint)' }}>
+                No integrations connected.
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )

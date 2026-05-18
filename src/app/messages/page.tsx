@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   SlidersHorizontal,
   MoreVertical,
@@ -9,6 +10,7 @@ import {
   MessageCircle,
 } from 'lucide-react'
 import { copy } from '@/lib/copy'
+import { fade, ease } from '@/lib/motion'
 
 export default function MessagesPage() {
   const [tipDismissed, setTipDismissed] = useState(false)
@@ -78,7 +80,11 @@ export default function MessagesPage() {
       )}
 
       {/* Empty state */}
-      <div className="flex flex-1 flex-col items-center justify-center py-20">
+      <motion.div
+        {...fade}
+        transition={ease.slow}
+        className="flex flex-1 flex-col items-center justify-center py-20"
+      >
         {/* Decorative squiggle SVG */}
         <svg
           width="120"
@@ -113,7 +119,7 @@ export default function MessagesPage() {
         <p className="text-sm" style={{ color: 'var(--text-faint)' }}>
           {copy.messages.emptyState}
         </p>
-      </div>
+      </motion.div>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Inbox,
@@ -8,13 +9,13 @@ import {
   CheckCircle2,
   MessageCircle,
   ChevronRight,
-  ChevronDown,
   Plus,
   SlidersHorizontal,
   Settings,
   LogOut,
 } from 'lucide-react'
 import { copy } from '@/lib/copy'
+import { collapse, fadeSlideDown, buttonPress, spring, ease } from '@/lib/motion'
 
 /* ── Primary nav items ── */
 const NAV_ITEMS = [
@@ -123,11 +124,9 @@ export default function Sidebar() {
         onClick={() => setRecentOpen(!recentOpen)}
         className="mb-1 flex items-center gap-1.5 px-3 py-1 cursor-pointer"
       >
-        {recentOpen ? (
-          <ChevronDown size={12} style={{ color: 'var(--text-faint)' }} />
-        ) : (
+        <motion.div animate={{ rotate: recentOpen ? 90 : 0 }} transition={ease.fast}>
           <ChevronRight size={12} style={{ color: 'var(--text-faint)' }} />
-        )}
+        </motion.div>
         <span
           className="text-[11px] font-semibold uppercase tracking-wide"
           style={{ color: 'var(--text-faint)' }}
@@ -135,13 +134,15 @@ export default function Sidebar() {
           {copy.sidebar.sectionRecent}
         </span>
       </button>
-      {recentOpen && (
-        <div className="mb-1 flex flex-col gap-0.5 px-3">
-          <span className="py-1.5 text-xs" style={{ color: 'var(--text-faint)' }}>
-            No recent items
-          </span>
-        </div>
-      )}
+      <AnimatePresence>
+        {recentOpen && (
+          <motion.div {...collapse} transition={ease.normal} className="mb-1 flex flex-col gap-0.5 px-3 overflow-hidden">
+            <span className="py-1.5 text-xs" style={{ color: 'var(--text-faint)' }}>
+              No recent items
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Separator ── */}
       <div className="my-4 h-px" style={{ backgroundColor: 'var(--border)' }} />
@@ -232,48 +233,52 @@ export default function Sidebar() {
         </button>
 
         {/* Popover */}
-        {avatarOpen && (
-          <div
-            ref={popoverRef}
-            className="absolute bottom-full right-0 mb-2 w-48 rounded-xl p-2 shadow-lg"
-            style={{
-              backgroundColor: 'var(--bg-pane-2)',
-              border: '1px solid var(--border)',
-            }}
-          >
-            <button
-              onClick={() => {
-                setAvatarOpen(false)
-                router.push('/settings')
-              }}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors duration-150 cursor-pointer"
-              style={{ color: 'var(--text-primary)' }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
+        <AnimatePresence>
+          {avatarOpen && (
+            <motion.div
+              {...fadeSlideDown}
+              transition={ease.fast}
+              ref={popoverRef}
+              className="absolute bottom-full right-0 mb-2 w-48 rounded-xl p-2 shadow-lg"
+              style={{
+                backgroundColor: 'var(--bg-pane-2)',
+                border: '1px solid var(--border)',
               }}
             >
-              <Settings size={16} strokeWidth={1.5} />
-              <span>{copy.settings.title}</span>
-            </button>
-            <button
-              onClick={handleSignOut}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors duration-150 cursor-pointer"
-              style={{ color: 'var(--text-primary)' }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
-            >
-              <LogOut size={16} strokeWidth={1.5} />
-              <span>{copy.settings.signOut}</span>
-            </button>
-          </div>
-        )}
+              <button
+                onClick={() => {
+                  setAvatarOpen(false)
+                  router.push('/settings')
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors duration-150 cursor-pointer"
+                style={{ color: 'var(--text-primary)' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
+              >
+                <Settings size={16} strokeWidth={1.5} />
+                <span>{copy.settings.title}</span>
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors duration-150 cursor-pointer"
+                style={{ color: 'var(--text-primary)' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
+              >
+                <LogOut size={16} strokeWidth={1.5} />
+                <span>{copy.settings.signOut}</span>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </aside>
   )

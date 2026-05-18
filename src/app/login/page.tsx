@@ -1,9 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { copy } from '@/lib/copy'
+import { fadeSlideUp, buttonPress, ease } from '@/lib/motion'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -44,7 +46,9 @@ export default function LoginPage() {
       className="flex min-h-screen items-center justify-center px-4"
       style={{ backgroundColor: '#0E0E12' }}
     >
-      <div
+      <motion.div
+        {...fadeSlideUp}
+        transition={ease.normal}
         className="w-full max-w-md rounded-2xl p-8"
         style={{
           backgroundColor: '#17171E',
@@ -76,18 +80,22 @@ export default function LoginPage() {
         </p>
 
         {/* Error */}
-        {error && (
-          <div
-            className="mb-4 rounded-xl px-4 py-3 text-sm"
-            style={{
-              backgroundColor: 'rgba(255, 77, 61, 0.1)',
-              color: '#FF4D3D',
-              border: '1px solid rgba(255, 77, 61, 0.2)',
-            }}
-          >
-            {error}
-          </div>
-        )}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              {...fadeSlideUp}
+              transition={ease.fast}
+              className="mb-4 rounded-xl px-4 py-3 text-sm"
+              style={{
+                backgroundColor: 'rgba(255, 77, 61, 0.1)',
+                color: '#FF4D3D',
+                border: '1px solid rgba(255, 77, 61, 0.2)',
+              }}
+            >
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -129,14 +137,15 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <button
+          <motion.button
             type="submit"
             disabled={loading || !username.trim() || !password}
+            whileTap={{ scale: 0.97 }}
             className="mt-2 w-full rounded-full py-3 text-sm font-semibold text-white transition-colors duration-150 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
             style={{ backgroundColor: '#FF4D3D' }}
           >
             {loading ? 'Signing in...' : copy.auth.login.cta}
-          </button>
+          </motion.button>
         </form>
 
         {/* Sign up link */}
@@ -153,7 +162,7 @@ export default function LoginPage() {
             {copy.auth.login.signupLink}
           </button>
         </p>
-      </div>
+      </motion.div>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   SlidersHorizontal,
   MoreVertical,
@@ -18,6 +19,7 @@ import { copy } from '@/lib/copy'
 import { useItems } from '@/hooks/useItems'
 import type { Task } from '@/types'
 import { formatDate } from '@/lib/utils'
+import { fadeSlideUp, taskComplete, collapse, buttonPress, stagger, ease } from '@/lib/motion'
 
 /* ── Completion sound ── */
 const TONES = [523.25, 587.33, 659.25, 783.99, 880.0]
@@ -97,7 +99,8 @@ export default function InboxPage() {
       <div className="mb-1 flex items-start justify-between">
         <div />
         <div className="flex items-center gap-2">
-          <button
+          <motion.button
+            {...buttonPress}
             className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
             onMouseEnter={(e) => {
@@ -108,8 +111,9 @@ export default function InboxPage() {
             }}
           >
             <SlidersHorizontal size={18} strokeWidth={1.5} />
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            {...buttonPress}
             className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
             onMouseEnter={(e) => {
@@ -120,7 +124,7 @@ export default function InboxPage() {
             }}
           >
             <MoreVertical size={18} strokeWidth={1.5} />
-          </button>
+          </motion.button>
         </div>
       </div>
 
@@ -133,33 +137,37 @@ export default function InboxPage() {
       </h1>
 
       {/* ── Tip banner ── */}
-      {!tipDismissed && (
-        <div
-          className="mb-5 flex items-center gap-3 rounded-xl px-4 py-3"
-          style={{
-            backgroundColor: 'rgba(99, 91, 255, 0.08)',
-            border: '1px solid rgba(99, 91, 255, 0.3)',
-          }}
-        >
-          <BookOpen size={18} className="flex-shrink-0" style={{ color: '#635BFF' }} />
-          <p className="flex-1 text-sm" style={{ color: '#635BFF' }}>
-            {copy.inbox.tipBanner}
-          </p>
-          <button
-            onClick={() => setTipDismissed(true)}
-            className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
-            style={{ color: '#635BFF' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '0.7'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '1'
+      <AnimatePresence>
+        {!tipDismissed && (
+          <motion.div
+            {...fadeSlideUp}
+            transition={ease.normal}
+            className="mb-5 flex items-center gap-3 rounded-xl px-4 py-3"
+            style={{
+              backgroundColor: 'rgba(99, 91, 255, 0.08)',
+              border: '1px solid rgba(99, 91, 255, 0.3)',
             }}
           >
-            <X size={14} strokeWidth={2} />
-          </button>
-        </div>
-      )}
+            <BookOpen size={18} className="flex-shrink-0" style={{ color: '#635BFF' }} />
+            <p className="flex-1 text-sm" style={{ color: '#635BFF' }}>
+              {copy.inbox.tipBanner}
+            </p>
+            <button
+              onClick={() => setTipDismissed(true)}
+              className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
+              style={{ color: '#635BFF' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = '0.7'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = '1'
+              }}
+            >
+              <X size={14} strokeWidth={2} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── New task row ── */}
       <div
@@ -256,52 +264,58 @@ export default function InboxPage() {
       </div>
 
       {/* ── Active tasks ── */}
-      <div className="flex flex-col gap-0.5">
-        {activeTasks.map((task) => (
-          <div
-            key={task._id}
-            className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors duration-150 cursor-pointer"
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-            }}
-          >
-            {/* Checkbox */}
-            <button
-              onClick={() => handleToggleTask(task)}
-              className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150 cursor-pointer"
-              style={{
-                border: '1.5px solid var(--border)',
-                backgroundColor: 'transparent',
-              }}
+      <motion.div className="flex flex-col gap-0.5" {...stagger()}>
+        <AnimatePresence>
+          {activeTasks.map((task) => (
+            <motion.div
+              key={task._id}
+              {...fadeSlideUp}
+              exit={taskComplete.exit}
+              transition={ease.normal}
+              layout
+              className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors duration-150 cursor-pointer"
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--accent)'
+                e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'var(--border)'
+                e.currentTarget.style.backgroundColor = 'transparent'
               }}
-            />
-            {/* Content */}
-            <div className="flex flex-1 flex-col gap-0.5">
-              <span className="text-[15px] font-medium" style={{ color: 'var(--text-primary)' }}>
-                {task.title}
-              </span>
-              {task.dueDate && (
-                <span className="text-xs" style={{ color: 'var(--text-faint)' }}>
-                  {formatDate(task.dueDate, 'MMM d')}
+            >
+              {/* Checkbox */}
+              <button
+                onClick={() => handleToggleTask(task)}
+                className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150 cursor-pointer"
+                style={{
+                  border: '1.5px solid var(--border)',
+                  backgroundColor: 'transparent',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--accent)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border)'
+                }}
+              />
+              {/* Content */}
+              <div className="flex flex-1 flex-col gap-0.5">
+                <span className="text-[15px] font-medium" style={{ color: 'var(--text-primary)' }}>
+                  {task.title}
                 </span>
-              )}
-            </div>
-          </div>
-        ))}
+                {task.dueDate && (
+                  <span className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                    {formatDate(task.dueDate, 'MMM d')}
+                  </span>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
         {activeTasks.length === 0 && (
           <p className="py-8 text-center text-sm" style={{ color: 'var(--text-faint)' }}>
             {copy.list.emptyBlockPlaceholder}
           </p>
         )}
-      </div>
+      </motion.div>
 
       {/* ── Done section ── */}
       {doneTasks.length > 0 && (
@@ -320,39 +334,45 @@ export default function InboxPage() {
               {copy.task.completedCta} ({doneTasks.length})
             </span>
           </button>
-          {doneOpen && (
-            <div className="flex flex-col gap-0.5">
-              {doneTasks.map((task) => (
-                <div
-                  key={task._id}
-                  className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors duration-150 cursor-pointer"
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                  }}
-                >
-                  <button
-                    onClick={() => handleToggleTask(task)}
-                    className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150 cursor-pointer"
-                    style={{
-                      backgroundColor: 'var(--accent)',
-                      border: 'none',
+          <AnimatePresence>
+            {doneOpen && (
+              <motion.div
+                {...collapse}
+                transition={ease.normal}
+                className="flex flex-col gap-0.5 overflow-hidden"
+              >
+                {doneTasks.map((task) => (
+                  <div
+                    key={task._id}
+                    className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors duration-150 cursor-pointer"
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent'
                     }}
                   >
-                    <Check size={12} strokeWidth={2.5} className="text-white" />
-                  </button>
-                  <span
-                    className="text-[15px] line-through"
-                    style={{ color: 'var(--text-faint)' }}
-                  >
-                    {task.title}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+                    <button
+                      onClick={() => handleToggleTask(task)}
+                      className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150 cursor-pointer"
+                      style={{
+                        backgroundColor: 'var(--accent)',
+                        border: 'none',
+                      }}
+                    >
+                      <Check size={12} strokeWidth={2.5} className="text-white" />
+                    </button>
+                    <span
+                      className="text-[15px] line-through"
+                      style={{ color: 'var(--text-faint)' }}
+                    >
+                      {task.title}
+                    </span>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
     </div>
