@@ -25,7 +25,7 @@ interface NavItem {
 const PRIMARY_NAV: NavItem[] = [
   { href: '/',        icon: Inbox,         label: 'Inbox',    color: '#E85D40', match: p => p === '/' },
   { href: '/tasks',   icon: CheckSquare,   label: 'Tasks',    color: '#E85D40', match: p => p === '/tasks' },
-  { href: '/calendar?view=week', icon: CalendarDays, label: 'Today', color: '#F5A623', match: p => p === '/calendar' },
+  { href: '/today',              icon: CalendarDays, label: 'Today', color: '#F5A623', match: p => p === '/today' },
   { href: '/chat',    icon: MessageCircle, label: 'AI Chat',  color: '#E85D40', match: p => p === '/chat' },
 ]
 
@@ -41,6 +41,7 @@ const LISTS: { group: string; items: ListItem[] }[] = [
   {
     group: 'Productivity',
     items: [
+      { href: '/calendar', emoji: '📅', label: 'Calendar',     match: p => p === '/calendar' },
       { href: '/pomodoro', emoji: '🎯', label: 'Focus Timer',  match: p => p === '/pomodoro' },
       { href: '/habits',   emoji: '🔄', label: 'Habits',       match: p => p === '/habits' },
       { href: '/stats',    emoji: '📊', label: 'Statistics',    match: p => p === '/stats' },
