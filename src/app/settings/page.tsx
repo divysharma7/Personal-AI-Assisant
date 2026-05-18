@@ -80,6 +80,29 @@ export default function SettingsPage() {
   const [newLabelName, setNewLabelName] = useState('')
   const [gcalSetupOpen, setGcalSetupOpen] = useState(false)
 
+  // Calendar settings
+  const [calDefaultView, setCalDefaultView] = useState<'day' | 'week' | 'month'>('week')
+  const [calWeekStartsOn, setCalWeekStartsOn] = useState<'monday' | 'sunday' | 'saturday'>('monday')
+  const [calTimeFormat, setCalTimeFormat] = useState<'12' | '24'>('12')
+  const [calShowCurrentTime, setCalShowCurrentTime] = useState(true)
+  const [calHideHoursFrom, setCalHideHoursFrom] = useState(21)
+  const [calHideHoursTo, setCalHideHoursTo] = useState(7)
+  const [calColorBy, setCalColorBy] = useState<'list' | 'priority' | 'label'>('priority')
+  const [calDailyCapacity, setCalDailyCapacity] = useState(8)
+  const [calShowCapacityBar, setCalShowCapacityBar] = useState(true)
+  const [calShowWarnings, setCalShowWarnings] = useState(true)
+  const [calShowGoogleOverlay, setCalShowGoogleOverlay] = useState(true)
+  const [calShowHabitsOverlay, setCalShowHabitsOverlay] = useState(false)
+  const [calShowFocusOverlay, setCalShowFocusOverlay] = useState(false)
+  const [calSettingsToast, setCalSettingsToast] = useState(false)
+  const calToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const showCalToast = useCallback(() => {
+    setCalSettingsToast(true)
+    if (calToastTimerRef.current) clearTimeout(calToastTimerRef.current)
+    calToastTimerRef.current = setTimeout(() => setCalSettingsToast(false), 2000)
+  }, [])
+
   // Focus settings
   const [focusWorkDuration, setFocusWorkDuration] = useState(25)
   const [focusShortBreak, setFocusShortBreak] = useState(5)
@@ -539,6 +562,282 @@ export default function SettingsPage() {
                       }}
                     />
                   </button>
+                </div>
+              </div>
+
+              {/* ── Calendar settings section ── */}
+              <div className="border-t pt-6" style={{ borderColor: 'var(--border)' }}>
+                <h2 className="mb-5 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Calendar
+                </h2>
+
+                {/* Toast notification */}
+                <AnimatePresence>
+                  {calSettingsToast && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={ease.fast}
+                      className="mb-4 rounded-lg px-3 py-2 text-xs font-medium"
+                      style={{
+                        backgroundColor: 'var(--accent-soft)',
+                        color: 'var(--accent)',
+                      }}
+                    >
+                      Settings updated
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* View Preferences */}
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>
+                  View Preferences
+                </p>
+                <div className="mb-5 flex flex-col gap-3">
+                  {/* Default view */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Default view</span>
+                    <select
+                      value={calDefaultView}
+                      onChange={(e) => { setCalDefaultView(e.target.value as 'day' | 'week' | 'month'); showCalToast() }}
+                      className="rounded-lg px-2 py-1.5 text-sm outline-none cursor-pointer"
+                      style={{
+                        backgroundColor: 'var(--bg-pane-2)',
+                        border: '1px solid var(--border)',
+                        color: 'var(--text-primary)',
+                      }}
+                    >
+                      <option value="day">Day</option>
+                      <option value="week">Week</option>
+                      <option value="month">Month</option>
+                    </select>
+                  </div>
+
+                  {/* Week starts on */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Week starts on</span>
+                    <select
+                      value={calWeekStartsOn}
+                      onChange={(e) => { setCalWeekStartsOn(e.target.value as 'monday' | 'sunday' | 'saturday'); showCalToast() }}
+                      className="rounded-lg px-2 py-1.5 text-sm outline-none cursor-pointer"
+                      style={{
+                        backgroundColor: 'var(--bg-pane-2)',
+                        border: '1px solid var(--border)',
+                        color: 'var(--text-primary)',
+                      }}
+                    >
+                      <option value="monday">Monday</option>
+                      <option value="sunday">Sunday</option>
+                      <option value="saturday">Saturday</option>
+                    </select>
+                  </div>
+
+                  {/* Time format */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Time format</span>
+                    <div className="flex items-center gap-2">
+                      {(['12', '24'] as const).map((fmt) => (
+                        <button
+                          key={fmt}
+                          onClick={() => { setCalTimeFormat(fmt); showCalToast() }}
+                          className="rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-150 cursor-pointer"
+                          style={{
+                            backgroundColor: calTimeFormat === fmt ? 'var(--accent)' : 'var(--bg-hover)',
+                            color: calTimeFormat === fmt ? '#FFFFFF' : 'var(--text-muted)',
+                          }}
+                        >
+                          {fmt}-hour
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Show current time */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Show current time</span>
+                    <button
+                      onClick={() => { setCalShowCurrentTime(!calShowCurrentTime); showCalToast() }}
+                      className="relative h-5 w-9 rounded-full transition-colors duration-200 cursor-pointer"
+                      style={{ backgroundColor: calShowCurrentTime ? 'var(--accent)' : 'var(--border)' }}
+                    >
+                      <span
+                        className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-200"
+                        style={{ transform: calShowCurrentTime ? 'translateX(18px)' : 'translateX(2px)' }}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Display Hours */}
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>
+                  Display Hours
+                </p>
+                <div className="mb-5 flex items-center justify-between">
+                  <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Hide hours from</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      max={23}
+                      value={calHideHoursFrom}
+                      onChange={(e) => {
+                        const v = parseInt(e.target.value, 10)
+                        if (!isNaN(v) && v >= 0 && v <= 23) { setCalHideHoursFrom(v); showCalToast() }
+                      }}
+                      className="w-16 rounded-lg px-2 py-1.5 text-center text-sm outline-none"
+                      style={{
+                        backgroundColor: 'var(--bg-pane-2)',
+                        border: '1px solid var(--border)',
+                        color: 'var(--text-primary)',
+                      }}
+                    />
+                    <span className="text-xs" style={{ color: 'var(--text-faint)' }}>to</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={23}
+                      value={calHideHoursTo}
+                      onChange={(e) => {
+                        const v = parseInt(e.target.value, 10)
+                        if (!isNaN(v) && v >= 0 && v <= 23) { setCalHideHoursTo(v); showCalToast() }
+                      }}
+                      className="w-16 rounded-lg px-2 py-1.5 text-center text-sm outline-none"
+                      style={{
+                        backgroundColor: 'var(--bg-pane-2)',
+                        border: '1px solid var(--border)',
+                        color: 'var(--text-primary)',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Color Coding */}
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>
+                  Color Coding
+                </p>
+                <div className="mb-5 flex items-center justify-between">
+                  <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Color tasks by</span>
+                  <div className="flex items-center gap-2">
+                    {(['list', 'priority', 'label'] as const).map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => { setCalColorBy(opt); showCalToast() }}
+                        className="rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-150 cursor-pointer"
+                        style={{
+                          backgroundColor: calColorBy === opt ? 'var(--accent)' : 'var(--bg-hover)',
+                          color: calColorBy === opt ? '#FFFFFF' : 'var(--text-muted)',
+                        }}
+                      >
+                        {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Capacity */}
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>
+                  Capacity
+                </p>
+                <div className="mb-5 flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Daily capacity</span>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min={1}
+                        max={24}
+                        value={calDailyCapacity}
+                        onChange={(e) => {
+                          const v = parseInt(e.target.value, 10)
+                          if (!isNaN(v) && v > 0 && v <= 24) { setCalDailyCapacity(v); showCalToast() }
+                        }}
+                        className="w-16 rounded-lg px-2 py-1.5 text-center text-sm outline-none"
+                        style={{
+                          backgroundColor: 'var(--bg-pane-2)',
+                          border: '1px solid var(--border)',
+                          color: 'var(--text-primary)',
+                        }}
+                      />
+                      <span className="text-xs" style={{ color: 'var(--text-faint)' }}>hours</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Show capacity bar</span>
+                    <button
+                      onClick={() => { setCalShowCapacityBar(!calShowCapacityBar); showCalToast() }}
+                      className="relative h-5 w-9 rounded-full transition-colors duration-200 cursor-pointer"
+                      style={{ backgroundColor: calShowCapacityBar ? 'var(--accent)' : 'var(--border)' }}
+                    >
+                      <span
+                        className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-200"
+                        style={{ transform: calShowCapacityBar ? 'translateX(18px)' : 'translateX(2px)' }}
+                      />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Show warnings</span>
+                    <button
+                      onClick={() => { setCalShowWarnings(!calShowWarnings); showCalToast() }}
+                      className="relative h-5 w-9 rounded-full transition-colors duration-200 cursor-pointer"
+                      style={{ backgroundColor: calShowWarnings ? 'var(--accent)' : 'var(--border)' }}
+                    >
+                      <span
+                        className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-200"
+                        style={{ transform: calShowWarnings ? 'translateX(18px)' : 'translateX(2px)' }}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Overlays */}
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>
+                  Overlays
+                </p>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Google Calendar</span>
+                    <button
+                      onClick={() => { setCalShowGoogleOverlay(!calShowGoogleOverlay); showCalToast() }}
+                      className="relative h-5 w-9 rounded-full transition-colors duration-200 cursor-pointer"
+                      style={{ backgroundColor: calShowGoogleOverlay ? 'var(--accent)' : 'var(--border)' }}
+                    >
+                      <span
+                        className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-200"
+                        style={{ transform: calShowGoogleOverlay ? 'translateX(18px)' : 'translateX(2px)' }}
+                      />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Habits</span>
+                    <button
+                      onClick={() => { setCalShowHabitsOverlay(!calShowHabitsOverlay); showCalToast() }}
+                      className="relative h-5 w-9 rounded-full transition-colors duration-200 cursor-pointer"
+                      style={{ backgroundColor: calShowHabitsOverlay ? 'var(--accent)' : 'var(--border)' }}
+                    >
+                      <span
+                        className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-200"
+                        style={{ transform: calShowHabitsOverlay ? 'translateX(18px)' : 'translateX(2px)' }}
+                      />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Focus sessions</span>
+                    <button
+                      onClick={() => { setCalShowFocusOverlay(!calShowFocusOverlay); showCalToast() }}
+                      className="relative h-5 w-9 rounded-full transition-colors duration-200 cursor-pointer"
+                      style={{ backgroundColor: calShowFocusOverlay ? 'var(--accent)' : 'var(--border)' }}
+                    >
+                      <span
+                        className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-200"
+                        style={{ transform: calShowFocusOverlay ? 'translateX(18px)' : 'translateX(2px)' }}
+                      />
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>

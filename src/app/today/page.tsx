@@ -11,6 +11,7 @@ import {
   Calendar,
   Flame,
   Check,
+  CalendarDays,
 } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import { useTasks } from '@/hooks/useTasks'
@@ -362,13 +363,31 @@ export default function TodayPage() {
         </div>
       </div>
 
-      {/* Title */}
-      <h1
-        className="mb-5 text-[32px] font-bold"
-        style={{ color: 'var(--text-primary)' }}
-      >
-        {copy.today.title}
-      </h1>
+      {/* Title + View on calendar link */}
+      <div className="mb-5 flex items-baseline gap-3">
+        <h1
+          className="text-[32px] font-bold"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          {copy.today.title}
+        </h1>
+        <a
+          href="/calendar?view=day&date=today"
+          className="flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium transition-colors duration-150 no-underline"
+          style={{ color: 'var(--text-faint)' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = 'var(--accent)'
+            e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = 'var(--text-faint)'
+            e.currentTarget.style.backgroundColor = 'transparent'
+          }}
+        >
+          <CalendarDays size={12} strokeWidth={1.5} />
+          <span>View on calendar</span>
+        </a>
+      </div>
 
       {/* Tip banner */}
       <div className="mb-5">

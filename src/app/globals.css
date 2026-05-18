@@ -505,6 +505,61 @@ body {
   50% { opacity: 1; }
 }
 
+/* ─── Calendar grid ─── */
+.cal-grid {
+  display: grid;
+  position: relative;
+}
+
+.cal-hour-label {
+  font-size: 11px;
+  color: var(--text-faint);
+  text-align: right;
+  padding-right: 8px;
+}
+
+.cal-block {
+  border-radius: 6px;
+  padding: 4px 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+}
+
+.cal-block:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.cal-block-ghost {
+  opacity: 0.6;
+  border: 2px dashed var(--border);
+}
+
+.cal-time-indicator {
+  position: absolute;
+  left: 60px;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  z-index: 10;
+}
+
+.cal-capacity-fill {
+  transition: width 0.3s, background-color 0.3s;
+}
+
+/* Calendar dot pulse — syncs to heartbeat (Date.now() % 4000) */
+@keyframes cal-dot-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Calendar empty state breathing */
+@keyframes cal-empty-breathe {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
 /* ─── Reduced motion ─── */
 @media (prefers-reduced-motion: reduce) {
   *,

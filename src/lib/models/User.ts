@@ -38,6 +38,20 @@ const UserSchema = new Schema({
     showInSidebar: { type: Boolean, default: true },
     keyboardShortcutsEnabled: { type: Boolean, default: true },
   },
+  // Calendar preferences
+  calendarPreferences: {
+    defaultView: { type: String, enum: ['day', 'week', 'month'], default: 'day' },
+    weekStartsOn: { type: Number, enum: [0, 1, 6], default: 1 },
+    hiddenHoursStart: { type: Number, default: 21 },
+    hiddenHoursEnd: { type: Number, default: 7 },
+    dailyCapacityHours: { type: Number, default: 8 },
+    colorCodingMode: { type: String, enum: ['list', 'priority', 'label'], default: 'list' },
+    showHabitsOnCalendar: { type: Boolean, default: false },
+    showFocusSessionsOnCalendar: { type: Boolean, default: false },
+    showGoogleEventsOnCalendar: { type: Boolean, default: true },
+    timeFormat: { type: String, enum: ['12h', '24h'], default: '12h' },
+    showCurrentTimeIndicator: { type: Boolean, default: true },
+  },
 }, { timestamps: true })
 
 export default models.User || mongoose.model('User', UserSchema)

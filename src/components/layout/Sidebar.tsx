@@ -28,6 +28,7 @@ import { copy } from '@/lib/copy'
 import { collapse, fadeSlideDown, fadeSlideUp, fade, buttonPress, spring, ease } from '@/lib/motion'
 import { useLists } from '@/hooks/useLists'
 import { useFolders } from '@/hooks/useFolders'
+import { useTasks } from '@/hooks/useTasks'
 import type { ListDoc } from '@/hooks/useLists'
 
 /* ── Primary nav items ── */
@@ -35,6 +36,7 @@ import type { ListDoc } from '@/hooks/useLists'
 const HABITS_NAV_LABEL = 'Habits'
 
 const FOCUS_NAV_LABEL = 'Focus'
+const CALENDAR_NAV_LABEL = 'Calendar'
 
 const NAV_ITEMS = [
   { label: copy.inbox.title, icon: Inbox, href: '/' },
@@ -42,6 +44,7 @@ const NAV_ITEMS = [
   { label: copy.tasks.title, icon: CheckCircle2, href: '/tasks' },
   { label: HABITS_NAV_LABEL, icon: Flame, href: '/habits' },
   { label: copy.matrix.title, icon: LayoutGrid, href: '/matrix' },
+  { label: CALENDAR_NAV_LABEL, icon: Calendar, href: '/calendar' },
   { label: FOCUS_NAV_LABEL, icon: Target, href: '/focus' },
   { label: copy.updates.title, icon: Bell, href: '/updates' },
 ] as const
@@ -86,6 +89,14 @@ export default function Sidebar() {
   const [userInitial, setUserInitial] = useState('U')
   const { lists } = useLists()
   const { createFolder, updateFolder, deleteFolder, moveTaskToFolder, isCreating } = useFolders()
+  const { tasks } = useTasks()
+
+  // Check if current time falls within any scheduled task (for Calendar pulsing dot)
+  const hasActiveScheduledTask = tasks.some((t) => {
+    if (!t.scheduledStart || !t.scheduledEnd || t.status === 'done') return false
+    const now = Date.now()
+    return new Date(t.scheduledStart).getTime() <= now && new Date(t.scheduledEnd).getTime() >= now
+  })
 
   // ── Inline creation state ──
   const [isInlineCreating, setIsInlineCreating] = useState(false)
@@ -348,6 +359,8 @@ export default function Sidebar() {
           const active = isActive(item.href)
           const isFocusItem = item.href === '/focus'
           const showFocusDot = isFocusItem && focus.isActive
+          const isCalendarItem = item.href === '/calendar'
+          const showCalendarDot = isCalendarItem && hasActiveScheduledTask
           return (
             <button
               key={item.href}
@@ -375,6 +388,9 @@ export default function Sidebar() {
                 <div className="flex items-center gap-1.5">
                   <span className="text-[14px]">{item.label}</span>
                   {showFocusDot && (
+                    <FocusPulsingDot />
+                  )}
+                  {showCalendarDot && (
                     <FocusPulsingDot />
                   )}
                 </div>
