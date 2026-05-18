@@ -143,6 +143,147 @@ body {
   }
 }
 
+/* ─── TipTap editor ─── */
+.prose-editor {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text-primary);
+}
+
+.prose-editor p {
+  margin: 0.25em 0;
+}
+
+.prose-editor h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 1em 0 0.4em;
+  line-height: 1.2;
+}
+
+.prose-editor h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0.8em 0 0.3em;
+  line-height: 1.3;
+}
+
+.prose-editor h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0.6em 0 0.25em;
+  line-height: 1.4;
+}
+
+.prose-editor ul,
+.prose-editor ol {
+  padding-left: 1.5em;
+  margin: 0.25em 0;
+}
+
+.prose-editor ul li {
+  list-style-type: disc;
+}
+
+.prose-editor ol li {
+  list-style-type: decimal;
+}
+
+.prose-editor blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1em;
+  margin: 0.5em 0;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.prose-editor hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1em 0;
+}
+
+.prose-editor a {
+  color: var(--info);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.prose-editor ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.prose-editor ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5em;
+  list-style-type: none;
+}
+
+.prose-editor ul[data-type="taskList"] li > label {
+  flex-shrink: 0;
+  margin-top: 0.15em;
+}
+
+.prose-editor ul[data-type="taskList"] li > label input[type="checkbox"] {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.prose-editor ul[data-type="taskList"] li > label input[type="checkbox"]:checked {
+  background-color: var(--accent);
+}
+
+.prose-editor ul[data-type="taskList"] li > label input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.prose-editor ul[data-type="taskList"] li[data-checked="true"] > div {
+  text-decoration: line-through;
+  color: var(--text-faint);
+}
+
+.prose-editor p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--text-faint);
+  pointer-events: none;
+  height: 0;
+}
+
+.prose-editor .is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--text-faint);
+  pointer-events: none;
+  height: 0;
+}
+
+/* Title placeholder */
+[data-placeholder]:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-faint);
+}
+
+[data-placeholder]:empty:focus::before {
+  content: attr(data-placeholder);
+}
+
 /* ─── Reduced motion ─── */
 @media (prefers-reduced-motion: reduce) {
   *,

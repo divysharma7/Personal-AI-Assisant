@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import { collapse, fadeSlideDown, buttonPress, spring, ease } from '@/lib/motion'
+import { useLists } from '@/hooks/useLists'
 
 /* ── Primary nav items ── */
 const NAV_ITEMS = [
@@ -25,16 +26,6 @@ const NAV_ITEMS = [
   { label: copy.messages.title, icon: MessageCircle, href: '/messages' },
 ] as const
 
-/* ── Demo lists ── */
-const LISTS = [
-  { emoji: '\uD83D\uDC4B', name: 'Getting Started' },
-  { emoji: '\uD83D\uDCC5', name: 'This Week' },
-  { emoji: '\uD83D\uDCDD', name: 'Meeting Notes' },
-  { emoji: '\uD83C\uDF4E', name: 'Groceries' },
-  { emoji: '\uD83D\uDCDA', name: 'Reading List' },
-  { emoji: '\uD83C\uDFAF', name: 'Habits' },
-]
-
 export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
@@ -43,6 +34,7 @@ export default function Sidebar() {
   const [avatarOpen, setAvatarOpen] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
   const [userInitial, setUserInitial] = useState('U')
+  const { lists, createList, isCreating } = useLists()
 
   // Fetch user info for avatar
   useEffect(() => {
@@ -71,6 +63,16 @@ export default function Sidebar() {
     await fetch('/api/auth/logout', { method: 'POST' })
     router.push('/login')
   }, [router])
+
+  const handleCreateList = useCallback(async () => {
+    if (isCreating) return
+    try {
+      const newList = await createList({ title: '', icon: '' })
+      router.push(`/lists/${newList._id}`)
+    } catch {
+      // silently fail
+    }
+  }, [createList, isCreating, router])
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/'
@@ -169,6 +171,8 @@ export default function Sidebar() {
         {listsHovered && (
           <div className="flex items-center gap-1">
             <button
+              onClick={handleCreateList}
+              disabled={isCreating}
               className="flex h-6 w-6 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
               style={{ color: 'var(--text-faint)' }}
               title={copy.sidebar.newListTooltip}
@@ -199,22 +203,39 @@ export default function Sidebar() {
 
       {/* List items */}
       <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-1">
-        {LISTS.map((list) => (
-          <button
-            key={list.name}
-            className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition-colors duration-150 cursor-pointer"
-            style={{ color: 'var(--text-muted)' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-            }}
-          >
-            <span className="text-base">{list.emoji}</span>
-            <span className="truncate text-[14px]">{list.name}</span>
-          </button>
-        ))}
+        {lists.map((list) => {
+          const active = pathname === `/lists/${list._id}`
+          return (
+            <button
+              key={list._id}
+              onClick={() => router.push(`/lists/${list._id}`)}
+              className="group relative flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition-colors duration-150 cursor-pointer"
+              style={{
+                backgroundColor: active ? 'var(--bg-hover)' : 'transparent',
+                color: active ? 'var(--text-primary)' : 'var(--text-muted)',
+              }}
+              onMouseEnter={(e) => {
+                if (!active) e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+              }}
+              onMouseLeave={(e) => {
+                if (!active) e.currentTarget.style.backgroundColor = 'transparent'
+              }}
+            >
+              {active && (
+                <span
+                  className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full"
+                  style={{ backgroundColor: 'var(--accent)' }}
+                />
+              )}
+              <span className="flex-shrink-0 text-base">
+                {list.icon || '\uD83D\uDCCB'}
+              </span>
+              <span className="truncate text-[14px]">
+                {list.title || copy.list.untitled}
+              </span>
+            </button>
+          )
+        })}
       </div>
 
       {/* ── Separator ── */}
