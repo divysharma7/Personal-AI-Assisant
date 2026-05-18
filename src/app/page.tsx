@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import {
   Plus, SlidersHorizontal, MoreVertical, BookOpen, ExternalLink, X,
   Calendar as CalIcon, BarChart3, Tag, CornerDownLeft, GripVertical,
-  Check, ArrowRight, ChevronLeft, ChevronRight,
+  Check, ArrowRight, ChevronLeft, ChevronRight, ChevronDown, CheckCircle2,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import FloatingChat from '@/components/chat/FloatingChat'
@@ -683,10 +683,24 @@ export default function InboxPage() {
 
   const newTaskInputRef = useRef<HTMLInputElement>(null)
 
-  // Derived: tasks only, filter by type
-  const tasks = useMemo(() => {
+  // Toast state
+  const [toast, setToast] = useState<string | null>(null)
+  const toastTimer = useRef<NodeJS.Timeout>()
+
+  const showToast = useCallback((msg: string) => {
+    setToast(msg)
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    toastTimer.current = setTimeout(() => setToast(null), 2500)
+  }, [])
+
+  // Derived: tasks only, split active vs done
+  const allTasks = useMemo(() => {
     return items.filter((i): i is Task => i.type === 'task')
   }, [items])
+
+  const tasks = useMemo(() => allTasks.filter(t => t.status !== 'done'), [allTasks])
+  const doneTasks = useMemo(() => allTasks.filter(t => t.status === 'done'), [allTasks])
+  const [showDone, setShowDone] = useState(false)
 
   // Task list for keyboard nav
   const taskIds = useMemo(() => tasks.map(t => t._id!), [tasks])
@@ -801,8 +815,11 @@ export default function InboxPage() {
 
   const handleToggleTask = useCallback(async (task: Task) => {
     const newStatus = task.status === 'done' ? 'todo' : 'done'
+    if (newStatus === 'done') {
+      showToast(`"${task.title}" completed`)
+    }
     await updateItem('task', task._id!, { status: newStatus } as Partial<AnyItem>)
-  }, [updateItem])
+  }, [updateItem, showToast])
 
   const handleUpdateTask = useCallback(async (data: Partial<AnyItem>) => {
     if (!detailTaskId) return
@@ -1058,14 +1075,15 @@ export default function InboxPage() {
             </div>
           )}
 
+          {/* Active tasks */}
           <AnimatePresence initial={false}>
             {tasks.map(task => (
               <motion.div
                 key={task._id}
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -40, height: 0 }}
-                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                exit={{ opacity: 0, x: -40, height: 0, marginTop: 0, marginBottom: 0 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
               >
                 <TaskRow
                   task={task}
@@ -1080,11 +1098,50 @@ export default function InboxPage() {
           </AnimatePresence>
 
           {/* Empty state */}
-          {!loading && tasks.length === 0 && (
+          {!loading && tasks.length === 0 && doneTasks.length === 0 && (
             <div className="py-20 text-center">
               <p className="text-[14px]" style={{ color: 'var(--text-3)' }}>
-                No tasks yet. Create one above to get started.
+                Nothing here. Press <kbd className="px-1.5 py-0.5 rounded text-[11px] font-mono" style={{ background: 'var(--bg-overlay)', color: 'var(--text-3)', border: '1px solid var(--border)' }}>^N</kbd> to add a task.
               </p>
+            </div>
+          )}
+
+          {/* Done section */}
+          {doneTasks.length > 0 && (
+            <div className="mt-6">
+              <button
+                onClick={() => setShowDone(s => !s)}
+                className="flex items-center gap-2 px-1 py-2 text-[13px] font-medium transition-colors"
+                style={{ color: 'var(--text-3)' }}
+              >
+                <motion.div animate={{ rotate: showDone ? 0 : -90 }} transition={{ duration: 0.15 }}>
+                  <ChevronDown size={14} />
+                </motion.div>
+                Done ({doneTasks.length})
+              </button>
+              <AnimatePresence initial={false}>
+                {showDone && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    style={{ overflow: 'hidden' }}
+                  >
+                    {doneTasks.map(task => (
+                      <TaskRow
+                        key={task._id}
+                        task={task}
+                        isSelected={selectedTaskId === task._id}
+                        isDetailOpen={detailTaskId === task._id}
+                        onToggle={() => handleToggleTask(task)}
+                        onSelect={() => setSelectedTaskId(task._id!)}
+                        onOpenDetail={() => setDetailTaskId(prev => prev === task._id ? null : task._id!)}
+                      />
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
         </div>
@@ -1101,6 +1158,23 @@ export default function InboxPage() {
             comments={getComments(detailTaskId)}
             onAddComment={text => handleAddComment(detailTaskId, text)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Toast notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.2 }}
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-medium"
+            style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text-1)', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}
+          >
+            <CheckCircle2 size={15} style={{ color: '#22c55e' }} />
+            {toast}
+          </motion.div>
         )}
       </AnimatePresence>
 
