@@ -111,9 +111,9 @@
      LIGHT THEME — Superlist-style clean white
      ══════════════════════════════════════════════════════════ */
   [data-theme="light"] {
-    --bg: #FAFAFA;
-    --surface: #F5F5F5;
-    --surface-1: #EEEEEE;
+    --bg: #F5F0EB;
+    --surface: #F0EBE5;
+    --surface-1: #EAE5DF;
     --card: #FFFFFF;
     --border: rgba(0,0,0,0.06);
     --border-hover: rgba(0,0,0,0.12);
