@@ -19,6 +19,8 @@ import {
   Mic,
   Calendar,
   Loader2,
+  Flame,
+  BarChart3,
 } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import { collapse, fadeSlideDown, fadeSlideUp, fade, buttonPress, spring, ease } from '@/lib/motion'
@@ -27,10 +29,14 @@ import { useFolders } from '@/hooks/useFolders'
 import type { ListDoc } from '@/hooks/useLists'
 
 /* ── Primary nav items ── */
+// TODO: move to copy.ts
+const HABITS_NAV_LABEL = 'Habits'
+
 const NAV_ITEMS = [
   { label: copy.inbox.title, icon: Inbox, href: '/' },
   { label: copy.today.title, icon: CalendarDays, href: '/today' },
   { label: copy.tasks.title, icon: CheckCircle2, href: '/tasks' },
+  { label: HABITS_NAV_LABEL, icon: Flame, href: '/habits' },
   { label: copy.matrix.title, icon: LayoutGrid, href: '/matrix' },
   { label: copy.updates.title, icon: Bell, href: '/updates' },
 ] as const
@@ -902,7 +908,7 @@ export default function Sidebar() {
                 <button
                   onClick={() => {
                     setAvatarOpen(false)
-                    router.push('/settings')
+                    router.push('/profile')
                   }}
                   className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors duration-150 cursor-pointer"
                   style={{ color: 'var(--text-primary)' }}
@@ -913,8 +919,8 @@ export default function Sidebar() {
                     e.currentTarget.style.backgroundColor = 'transparent'
                   }}
                 >
-                  <Settings size={16} strokeWidth={1.5} />
-                  <span>{copy.settings.title}</span>
+                  <BarChart3 size={16} strokeWidth={1.5} />
+                  <span>Statistics</span>
                 </button>
                 <button
                   onClick={handleSignOut}
@@ -929,6 +935,23 @@ export default function Sidebar() {
                 >
                   <LogOut size={16} strokeWidth={1.5} />
                   <span>{copy.settings.signOut}</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setAvatarOpen(false)
+                    router.push('/settings')
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors duration-150 cursor-pointer"
+                  style={{ color: 'var(--text-primary)' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                  }}
+                >
+                  <Settings size={16} strokeWidth={1.5} />
+                  <span>{copy.settings.title}</span>
                 </button>
               </motion.div>
             )}

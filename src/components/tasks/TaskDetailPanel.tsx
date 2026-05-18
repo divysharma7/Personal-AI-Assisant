@@ -472,6 +472,84 @@ export default function TaskDetailPanel({
             )}
           </div>
 
+          {/* ── Habit detail section (when isHabit=true) ── */}
+          {(task as TaskRecord & { isHabit?: boolean; habitData?: {
+            currentStreak?: number;
+            bestStreak?: number;
+            frequency?: string;
+            reminderTime?: string;
+            completions?: string[];
+          } }).isHabit && (
+            <div
+              className="mb-4 rounded-xl p-4"
+              style={{
+                backgroundColor: 'var(--bg-pane-2)',
+                border: '1px solid var(--border)',
+              }}
+            >
+              {/* Streak display */}
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Streak
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                    Current: <strong style={{ color: 'var(--accent)' }}>
+                      {(task as TaskRecord & { habitData?: { currentStreak?: number } }).habitData?.currentStreak ?? 0}
+                    </strong>
+                  </span>
+                  <span className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                    Best: <strong style={{ color: 'var(--text-primary)' }}>
+                      {(task as TaskRecord & { habitData?: { bestStreak?: number } }).habitData?.bestStreak ?? 0}
+                    </strong>
+                  </span>
+                </div>
+              </div>
+
+              {/* Weekly grid placeholder (last 4 weeks) */}
+              <div className="mb-3">
+                <p className="mb-1.5 text-[10px] font-medium" style={{ color: 'var(--text-faint)' }}>
+                  Last 4 weeks
+                </p>
+                <div className="flex flex-col gap-1">
+                  {Array.from({ length: 4 }).map((_, weekIdx) => (
+                    <div key={weekIdx} className="flex gap-1">
+                      {Array.from({ length: 7 }).map((_, dayIdx) => (
+                        <div
+                          key={dayIdx}
+                          className="h-3 w-3 rounded-[2px]"
+                          style={{
+                            backgroundColor: 'var(--bg-hover)',
+                            opacity: 0.5,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Frequency */}
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs" style={{ color: 'var(--text-faint)' }}>Frequency</span>
+                <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                  {(task as TaskRecord & { habitData?: { frequency?: string } }).habitData?.frequency ?? 'Daily'}
+                </span>
+              </div>
+
+              {/* Reminder */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs" style={{ color: 'var(--text-faint)' }}>Reminder</span>
+                <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                  {(task as TaskRecord & { habitData?: { reminderTime?: string } }).habitData?.reminderTime ?? '8:00 PM'}
+                  <span className="ml-1 text-[10px]" style={{ color: 'var(--text-faint)' }}>(coming soon)</span>
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* ── Body: Block editor ── */}
           <div className="mb-6 min-h-[200px]">
             <BlockEditor

@@ -31,6 +31,29 @@ const TaskSchema = new Schema({
   depth: { type: Number, default: 0 },
   path: { type: String, default: '/' },
   order: { type: Number, default: 0 },
+  // Habit fields
+  isHabit: { type: Boolean, default: false },
+  habitGoalType: { type: String, enum: ['binary', 'count', null], default: null },
+  habitTarget: { type: Number, default: null },
+  habitUnit: { type: String, default: null },
+  habitFrequency: { type: mongoose.Schema.Types.Mixed, default: null },
+  // habitFrequency shapes:
+  // { type: 'daily', daysOfWeek: [1,2,3,4,5] }
+  // | { type: 'weekly', timesPerWeek: 3 }
+  // | { type: 'interval', everyDays: 3 }
+  streakCurrent: { type: Number, default: 0 },
+  streakBest: { type: Number, default: 0 },
+  streakLastUpdated: { type: Date, default: null },
+  completions: [{
+    date: String,       // 'YYYY-MM-DD'
+    status: { type: String, enum: ['achieved', 'unachieved', 'skipped', 'frozen'] },
+    value: Number,      // for count habits
+    reason: String,     // for unachieved
+    loggedAt: Date,
+  }],
+  habitReminderTime: { type: String, default: null }, // HH:MM format
+  habitIcon: { type: String, default: null },
+  habitColor: { type: String, default: null },
 }, { timestamps: true })
 
 TaskSchema.index({ parentId: 1, order: 1 })

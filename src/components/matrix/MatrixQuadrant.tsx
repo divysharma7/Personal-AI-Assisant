@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Calendar, Plus } from 'lucide-react'
+import { Check, Calendar, Plus, Flame } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import {
   fadeSlideUp,
@@ -185,6 +185,16 @@ export default function MatrixQuadrant({
                     )}
                   </AnimatePresence>
                 </motion.button>
+
+                {/* Habit flame indicator */}
+                {(task as TaskRecord & { isHabit?: boolean }).isHabit && (
+                  <Flame
+                    size={12}
+                    strokeWidth={2}
+                    className="flex-shrink-0"
+                    style={{ color: '#FF4D3D' }}
+                  />
+                )}
 
                 {/* Title + metadata */}
                 <div className="flex flex-1 flex-col gap-0.5 min-w-0">

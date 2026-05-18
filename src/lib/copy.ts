@@ -411,6 +411,84 @@ export const copy = {
     filterNote: "Only showing tasks with priority and effort assigned",
   },
 
+  // ───────── Habits ─────────
+  habits: {
+    dashboardTitle: "Habits",
+    checkinTitle: "Check in",
+    galleryCategories: {
+      contentCreative: "Content & Creative",
+      learning: "Learning",
+      healthFitness: "Health & Fitness",
+      networkingCareer: "Networking & Career",
+    },
+    streakLabels: {
+      current: "Current streak",
+      best: "Best streak",
+      days: "days",
+      day: "day",
+      frozen: "Frozen",
+    },
+    completionStatuses: {
+      achieved: "Achieved",
+      unachieved: "Unachieved",
+      skipped: "Skipped",
+      frozen: "Frozen",
+    },
+    unachievedReasons: [
+      "Tired",
+      "Forgot",
+      "No time",
+      "Sick",
+      "Traveling",
+      "Not feeling it",
+    ] as const,
+    creationWizard: {
+      step1Title: "Choose a habit",
+      step1Body: "Pick from the gallery or create your own.",
+      step2Title: "Set your goal",
+      step2Body: "What does success look like?",
+      step3Title: "Set your schedule",
+      step3Body: "When and how often?",
+      step4Title: "Set a reminder",
+      step4Body: "We'll nudge you at the right time.",
+      createCta: "Create habit",
+      customCta: "Create custom habit",
+    },
+    analyticsLabels: {
+      completionRate: "Completion rate",
+      completionRate7d: "Last 7 days",
+      completionRate30d: "Last 30 days",
+      totalCompletions: "Total completions",
+      dayOfWeekBreakdown: "Day of week",
+      weeklyGrid: "Weekly view",
+      overallRate: "Overall rate",
+      longestStreak: "Longest streak",
+      activeHabits: "Active habits",
+    },
+    emptyState: "No habits yet. Create one to get started.",
+    todayEmpty: "No habits due today. Enjoy your free time.",
+  },
+
+  // ───────── Profile ─────────
+  profile: {
+    statisticsTitle: "Statistics",
+    tabs: {
+      overview: "Overview",
+      tasks: "Tasks",
+      focus: "Focus",
+    },
+    statCards: {
+      tasksCompleted: "Tasks completed",
+      habitsTracked: "Habits tracked",
+      currentStreak: "Current streak",
+      bestStreak: "Best streak",
+      completionRate: "Completion rate",
+      focusHours: "Focus hours",
+      productiveDay: "Most productive day",
+      activeDays: "Active days",
+    },
+  },
+
   // ───────── Folders ─────────
   folders: {
     createPlaceholder: "Folder name...",

@@ -5,6 +5,21 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 const TASKS_KEY = ['tasks'] as const
 
+export interface HabitCompletion {
+  date: string
+  status: 'achieved' | 'unachieved' | 'skipped' | 'frozen'
+  value?: number
+  reason?: string
+  loggedAt?: string
+}
+
+export interface HabitFrequency {
+  type: 'daily' | 'weekly' | 'interval'
+  daysOfWeek?: number[]
+  timesPerWeek?: number
+  everyDays?: number
+}
+
 export interface TaskRecord {
   _id: string
   type: string
@@ -35,6 +50,18 @@ export interface TaskRecord {
   createdBy?: string | null
   createdAt?: string
   updatedAt?: string
+  // Habit fields
+  isHabit?: boolean
+  habitGoalType?: 'binary' | 'count' | null
+  habitTarget?: number | null
+  habitUnit?: string | null
+  habitFrequency?: HabitFrequency | null
+  streakCurrent?: number
+  streakBest?: number
+  completions?: HabitCompletion[]
+  habitReminderTime?: string | null
+  habitIcon?: string | null
+  habitColor?: string | null
 }
 
 async function fetchTasks(): Promise<TaskRecord[]> {

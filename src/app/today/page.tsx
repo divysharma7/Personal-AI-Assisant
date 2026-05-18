@@ -9,14 +9,18 @@ import {
   ChevronDown,
   Clock,
   Calendar,
+  Flame,
+  Check,
 } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import { useTasks } from '@/hooks/useTasks'
 import type { TaskRecord } from '@/hooks/useTasks'
 import { useLabels } from '@/hooks/useLabels'
 import { useGoogleCalendar } from '@/hooks/useGoogleCalendar'
+import { useHabits } from '@/hooks/useHabits'
+import type { Habit } from '@/hooks/useHabits'
 import { playCompletionSound } from '@/lib/sounds'
-import { fadeSlideUp, collapse, stagger, ease, buttonPress } from '@/lib/motion'
+import { fadeSlideUp, collapse, stagger, ease, buttonPress, checkBounce } from '@/lib/motion'
 import TaskRow from '@/components/tasks/TaskRow'
 import InfoBanner from '@/components/shared/InfoBanner'
 import TimeBlockPicker from '@/components/tasks/TimeBlockPicker'
@@ -69,6 +73,7 @@ export default function TodayPage() {
   const { tasks, createTask, toggleComplete, updateTask } = useTasks()
   const { labels } = useLabels()
   const { connected: googleConnected, syncTask } = useGoogleCalendar()
+  const { habits, toggleToday, weekCompletions, todayStr: getTodayStr } = useHabits()
   const [tipDismissed, setTipDismissed] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskFocused, setNewTaskFocused] = useState(false)
@@ -78,7 +83,21 @@ export default function TodayPage() {
   const [unscheduledOpen, setUnscheduledOpen] = useState(true)
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null)
   const [timeBlockTaskId, setTimeBlockTaskId] = useState<string | null>(null)
+  const [habitsOpen, setHabitsOpen] = useState(true)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Habit data for today section
+  const activeHabits = habits.filter((h) => !h.archived)
+  const todayDateStr = getTodayStr()
+  const habitsCheckedCount = activeHabits.filter((h) => h.completions.includes(todayDateStr)).length
+  const allHabitsDone = activeHabits.length > 0 && habitsCheckedCount === activeHabits.length
+
+  const handleToggleHabit = useCallback(
+    async (habit: Habit) => {
+      await toggleToday(habit)
+    },
+    [toggleToday]
+  )
 
   // Filter tasks into groups
   const incompleteTasks = tasks.filter((t) => t.status !== 'done' && t.status !== 'dropped' && t.dueDate)
@@ -398,6 +417,139 @@ export default function TodayPage() {
           )}
         </div>
       </div>
+
+      {/* Habits section */}
+      {activeHabits.length > 0 && (
+        <div className="mb-4">
+          <button
+            onClick={() => setHabitsOpen(!habitsOpen)}
+            className="mb-1 flex items-center gap-2 px-1 py-1 cursor-pointer"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            <motion.div
+              animate={{ rotate: habitsOpen ? 0 : -90 }}
+              transition={ease.fast}
+            >
+              <ChevronDown size={14} strokeWidth={1.5} />
+            </motion.div>
+            <Flame size={14} strokeWidth={1.5} style={{ color: 'var(--accent)' }} />
+            <span className="text-sm font-semibold">Habits</span>
+            <span
+              className="rounded-full px-1.5 py-0.5 text-[11px] font-medium"
+              style={{
+                backgroundColor: 'var(--bg-hover)',
+                color: 'var(--text-faint)',
+              }}
+            >
+              {activeHabits.length}
+            </span>
+            {allHabitsDone && (
+              <span
+                className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                style={{
+                  backgroundColor: 'rgba(52, 211, 153, 0.15)',
+                  color: '#34d399',
+                }}
+              >
+                All done
+              </span>
+            )}
+          </button>
+          <AnimatePresence>
+            {habitsOpen && (
+              <motion.div
+                {...collapse}
+                transition={ease.normal}
+                className="flex flex-col gap-0.5 overflow-hidden"
+              >
+                {activeHabits.map((habit) => {
+                  const isChecked = habit.completions.includes(todayDateStr)
+                  const days = weekCompletions(habit)
+                  return (
+                    <div
+                      key={habit._id}
+                      className="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors duration-150"
+                      style={{ backgroundColor: 'transparent' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--bg-hover)' }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                    >
+                      {/* Icon */}
+                      <div
+                        className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-sm"
+                        style={{ backgroundColor: `${habit.color}20` }}
+                      >
+                        {habit.icon}
+                      </div>
+
+                      {/* Title */}
+                      <span
+                        className="flex-1 text-[15px] font-medium truncate"
+                        style={{
+                          color: isChecked ? 'var(--text-faint)' : 'var(--text-primary)',
+                          textDecoration: isChecked ? 'line-through' : 'none',
+                          textDecorationColor: 'var(--accent)',
+                        }}
+                      >
+                        {habit.name}
+                      </span>
+
+                      {/* Weekly mini-grid */}
+                      <div className="flex items-center gap-0.5 flex-shrink-0">
+                        {days.map((d) => (
+                          <div
+                            key={d.date}
+                            className="h-2.5 w-2.5 rounded-[2px]"
+                            style={{
+                              backgroundColor: d.completed ? '#34D399' : 'var(--bg-hover)',
+                              border: d.isToday ? '1px solid var(--text-faint)' : 'none',
+                            }}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Streak chip */}
+                      {habit.currentStreak > 0 && (
+                        <span
+                          className="flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium flex-shrink-0"
+                          style={{
+                            backgroundColor: 'rgba(255, 77, 61, 0.1)',
+                            color: '#FF4D3D',
+                          }}
+                        >
+                          <Flame size={10} strokeWidth={2} />
+                          {habit.currentStreak}
+                        </span>
+                      )}
+
+                      {/* Checkbox */}
+                      <motion.button
+                        {...buttonPress}
+                        onClick={() => handleToggleHabit(habit)}
+                        className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150 cursor-pointer"
+                        style={{
+                          border: isChecked ? 'none' : '1.5px solid var(--accent)',
+                          backgroundColor: isChecked ? 'var(--accent)' : 'transparent',
+                        }}
+                      >
+                        <AnimatePresence>
+                          {isChecked && (
+                            <motion.div
+                              initial={checkBounce.initial}
+                              animate={checkBounce.checked}
+                            >
+                              <Check size={12} strokeWidth={2.5} className="text-white" />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.button>
+                    </div>
+                  )
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
 
       {/* Task groups */}
       {!hasAnyTasks ? (
