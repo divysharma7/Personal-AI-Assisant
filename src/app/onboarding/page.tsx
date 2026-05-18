@@ -1,291 +1,279 @@
 'use client'
+
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
-import { X, Check, Loader2 } from 'lucide-react'
+import { X, Check } from 'lucide-react'
 import { copy } from '@/lib/copy'
 
-// ── Step indicator ───────────────────────────────────────────
-function StepIndicator({ current, total }: { current: number; total: number }) {
-  return (
-    <div className="flex items-center gap-2 justify-center mb-10">
-      {Array.from({ length: total }).map((_, i) => (
-        <motion.div
-          key={i}
-          animate={{
-            width: i === current ? 32 : 8,
-            opacity: i === current ? 1 : 0.3,
-          }}
-          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-          className="h-1 rounded-full"
-          style={{ background: '#FFFFFF' }}
-        />
-      ))}
-    </div>
-  )
-}
+type Step = 1 | 2 | 3
 
-// ── Checkbox row ─────────────────────────────────────────────
-function CheckboxRow({
-  label,
-  checked,
-  onChange,
-  linkify,
-}: {
-  label: string
-  checked: boolean
-  onChange: (v: boolean) => void
-  linkify?: boolean
-}) {
-  // If linkify, make "Terms of Use" and "Privacy Policy" blue links
-  let labelContent: React.ReactNode = label
-  if (linkify) {
-    const parts = label.split(/(Terms of Use|Privacy Policy)/g)
-    labelContent = parts.map((part, i) =>
-      part === 'Terms of Use' || part === 'Privacy Policy' ? (
-        <a key={i} href="#" className="underline" style={{ color: '#5DA8FF' }} onClick={e => e.preventDefault()}>
-          {part}
-        </a>
-      ) : (
-        <span key={i}>{part}</span>
-      ),
-    )
-  }
-
-  return (
-    <button
-      onClick={() => onChange(!checked)}
-      className="flex items-center gap-3 w-full text-left py-3 px-1 rounded-lg transition-colors hover:bg-white/5"
-    >
-      <div
-        className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center transition-colors"
-        style={{
-          background: checked ? '#FF4D3D' : 'transparent',
-          border: checked ? 'none' : '2px solid rgba(255,255,255,0.3)',
-        }}
-      >
-        {checked && <Check size={12} color="#fff" strokeWidth={3} />}
-      </div>
-      <span className="text-[14px]" style={{ color: 'rgba(255,255,255,0.85)' }}>
-        {labelContent}
-      </span>
-    </button>
-  )
-}
-
-// ── Main Onboarding Page ─────────────────────────────────────
 export default function OnboardingPage() {
   const router = useRouter()
-  const [step, setStep] = useState(0)
+  const [step, setStep] = useState<Step>(1)
+
+  // Step 1
   const [name, setName] = useState('')
-  const [intents, setIntents] = useState<boolean[]>([false, false, false])
+
+  // Step 2
+  const [selectedOptions, setSelectedOptions] = useState<boolean[]>([false, false, false])
+
+  // Step 3
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [emailsOptIn, setEmailsOptIn] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  // ── Intent logic ────────────────────────────────────────────
-  const handleIntentChange = useCallback((index: number, value: boolean) => {
-    setIntents(prev => {
-      const next = [...prev]
+  const handleOptionToggle = useCallback(
+    (index: number) => {
+      const next = [...selectedOptions]
       if (index === 2) {
         // "Both" — toggle all
-        return [value, value, value]
-      }
-      next[index] = value
-      // If both 0 and 1 are checked, also check "Both"
-      if (next[0] && next[1]) {
-        next[2] = true
+        const newVal = !next[2]
+        next[0] = newVal
+        next[1] = newVal
+        next[2] = newVal
       } else {
-        next[2] = false
+        next[index] = !next[index]
+        // Auto-check "Both" if both 0 and 1 are checked
+        next[2] = next[0] && next[1]
       }
-      return next
-    })
-  }, [])
+      setSelectedOptions(next)
+    },
+    [selectedOptions]
+  )
 
-  const hasSelectedIntent = intents.some(Boolean)
-
-  // ── Submit ──────────────────────────────────────────────────
-  const handleFinish = useCallback(async () => {
+  const handleComplete = useCallback(async () => {
     setLoading(true)
     try {
-      // Create Getting Started list (simulate — API calls)
-      await new Promise(resolve => setTimeout(resolve, 1200))
+      // Update profile with onboarding data
+      await fetch('/api/auth/me', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          onboarded: true,
+          emailsOptIn,
+        }),
+      }).catch(() => {})
+
       router.push('/')
     } catch {
-      setLoading(false)
+      router.push('/')
     }
-  }, [router])
+  }, [name, emailsOptIn, router])
+
+  const anyOptionSelected = selectedOptions.some(Boolean)
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden flex flex-col">
-      {/* Background: dramatic dusk gradient */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: 'linear-gradient(180deg, #3D2B55 0%, #7C5E91 30%, #C28BA3 60%, #D4A9B0 80%, #2A1F3D 100%)',
-        }}
-      />
-
-      {/* Content layer */}
-      <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-6">
-        {/* Wordmark */}
-        <div className="mb-6">
-          <span className="text-[28px] font-bold tracking-tight" style={{ color: '#FFFFFF' }}>
-            LAIF
-          </span>
-        </div>
-
-        {/* Step indicator */}
-        <StepIndicator current={step} total={3} />
-
-        {/* Card */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={step}
-            initial={{ opacity: 0, y: 16, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -16, scale: 0.98 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full max-w-[480px]"
-            style={{
-              background: 'rgba(28, 24, 38, 0.75)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              borderRadius: 24,
-              padding: 32,
-            }}
-          >
-            {/* Step 1: Name */}
-            {step === 0 && (
-              <div>
-                <h2 className="text-[24px] font-bold mb-2" style={{ color: '#F2F2F5' }}>
-                  {copy.onboarding.step1.title}
-                </h2>
-                <p className="text-[14px] mb-6" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                  {copy.onboarding.step1.body}
-                </p>
-                <div className="relative">
-                  <input
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && name.trim()) setStep(1) }}
-                    placeholder={copy.onboarding.step1.placeholder}
-                    autoFocus
-                    className="w-full py-3 px-4 pr-24 rounded-xl text-[15px] outline-none"
-                    style={{
-                      background: 'rgba(255,255,255,0.08)',
-                      border: '1px solid rgba(255,255,255,0.12)',
-                      color: '#F2F2F5',
-                    }}
-                  />
-                  {name.length > 0 && (
-                    <button
-                      onClick={() => setName('')}
-                      className="absolute right-20 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-white/10"
-                      style={{ color: 'rgba(255,255,255,0.5)' }}
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
-                  <button
-                    onClick={() => { if (name.trim()) setStep(1) }}
-                    disabled={!name.trim()}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-1.5 rounded-lg text-[13px] font-semibold transition-all"
-                    style={{
-                      background: name.trim() ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.06)',
-                      color: name.trim() ? '#FFFFFF' : 'rgba(255,255,255,0.3)',
-                      cursor: name.trim() ? 'pointer' : 'not-allowed',
-                    }}
-                  >
-                    {copy.onboarding.step1.cta}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 2: Intent */}
-            {step === 1 && (
-              <div>
-                <h2 className="text-[24px] font-bold mb-2" style={{ color: '#F2F2F5' }}>
-                  {copy.onboarding.step2.title}
-                </h2>
-                <p className="text-[14px] mb-6" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                  {copy.onboarding.step2.body}
-                </p>
-                <div className="space-y-1 mb-6">
-                  {copy.onboarding.step2.options.map((opt, i) => (
-                    <CheckboxRow
-                      key={i}
-                      label={opt}
-                      checked={intents[i]}
-                      onChange={v => handleIntentChange(i, v)}
-                    />
-                  ))}
-                </div>
-                <button
-                  onClick={() => { if (hasSelectedIntent) setStep(2) }}
-                  disabled={!hasSelectedIntent}
-                  className="w-full py-3 rounded-full text-[14px] font-semibold transition-all"
-                  style={{
-                    background: hasSelectedIntent ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.12)',
-                    color: hasSelectedIntent ? '#1A1A1F' : 'rgba(255,255,255,0.3)',
-                    cursor: hasSelectedIntent ? 'pointer' : 'not-allowed',
-                  }}
-                >
-                  {copy.onboarding.step2.cta}
-                </button>
-              </div>
-            )}
-
-            {/* Step 3: Terms */}
-            {step === 2 && (
-              <div>
-                <h2 className="text-[24px] font-bold mb-6" style={{ color: '#F2F2F5' }}>
-                  {copy.onboarding.step3.title}
-                </h2>
-                <div className="space-y-1 mb-6">
-                  <CheckboxRow
-                    label={copy.onboarding.step3.terms}
-                    checked={termsAccepted}
-                    onChange={setTermsAccepted}
-                    linkify
-                  />
-                  <CheckboxRow
-                    label={copy.onboarding.step3.emails}
-                    checked={emailsOptIn}
-                    onChange={setEmailsOptIn}
-                  />
-                </div>
-                <button
-                  onClick={handleFinish}
-                  disabled={!termsAccepted || loading}
-                  className="w-full py-3 rounded-full text-[14px] font-semibold transition-all flex items-center justify-center gap-2"
-                  style={{
-                    background: termsAccepted && !loading ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.12)',
-                    color: termsAccepted && !loading ? '#1A1A1F' : 'rgba(255,255,255,0.3)',
-                    cursor: termsAccepted && !loading ? 'pointer' : 'not-allowed',
-                  }}
-                >
-                  {loading && <Loader2 size={16} className="animate-spin" />}
-                  {loading ? copy.onboarding.step3.ctaLoading : copy.onboarding.step3.cta}
-                </button>
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
+    <div
+      className="flex min-h-screen flex-col items-center justify-center"
+      style={{
+        background: 'linear-gradient(180deg, #7C5E91 0%, #C28BA3 50%, #2A1F35 100%)',
+      }}
+    >
+      {/* LAIF wordmark */}
+      <div className="mb-8">
+        <span className="text-xl font-bold tracking-tight text-white/90">LAIF</span>
       </div>
 
-      {/* Footer strip */}
+      {/* Progress bars */}
+      <div className="mb-8 flex items-center gap-2">
+        {[1, 2, 3].map((s) => (
+          <div
+            key={s}
+            className="h-[3px] rounded-full transition-all duration-300"
+            style={{
+              width: step >= s ? 32 : 20,
+              backgroundColor: step >= s ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.2)',
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Card */}
       <div
-        className="relative z-10 flex items-center px-6 flex-shrink-0"
+        className="w-full max-w-md rounded-3xl p-8"
         style={{
-          height: 56,
-          background: 'rgba(20, 16, 32, 0.8)',
+          backgroundColor: 'rgba(28, 24, 38, 0.75)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
         }}
       >
-        <span className="text-[14px] font-bold tracking-tight" style={{ color: 'rgba(255,255,255,0.5)' }}>
-          LAIF
-        </span>
+        {/* Step 1: Name */}
+        {step === 1 && (
+          <div className="flex flex-col">
+            <h2 className="mb-2 text-2xl font-bold text-white">
+              {copy.onboarding.step1.title}
+            </h2>
+            <p className="mb-6 text-sm text-white/60">
+              {copy.onboarding.step1.body}
+            </p>
+
+            <div className="relative mb-6">
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={copy.onboarding.step1.placeholder}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && name.trim()) setStep(2)
+                }}
+                className="w-full rounded-xl px-4 py-3 pr-24 text-sm text-white outline-none"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                }}
+                autoFocus
+              />
+              {name && (
+                <button
+                  onClick={() => setName('')}
+                  className="absolute right-20 top-1/2 -translate-y-1/2 cursor-pointer text-white/40 transition-colors duration-150 hover:text-white/70"
+                >
+                  <X size={14} />
+                </button>
+              )}
+              <button
+                onClick={() => name.trim() && setStep(2)}
+                disabled={!name.trim()}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors duration-150 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                style={{
+                  backgroundColor: name.trim() ? 'rgba(255,255,255,0.2)' : 'transparent',
+                  color: 'white',
+                }}
+              >
+                {copy.onboarding.step1.cta}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Intent */}
+        {step === 2 && (
+          <div className="flex flex-col">
+            <h2 className="mb-2 text-2xl font-bold text-white">
+              {copy.onboarding.step2.title}
+            </h2>
+            <p className="mb-6 text-sm text-white/60">
+              {copy.onboarding.step2.body}
+            </p>
+
+            <div className="mb-6 flex flex-col gap-3">
+              {copy.onboarding.step2.options.map((option, i) => (
+                <button
+                  key={option}
+                  onClick={() => handleOptionToggle(i)}
+                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-left text-sm transition-colors duration-150 cursor-pointer"
+                  style={{
+                    backgroundColor: selectedOptions[i]
+                      ? 'rgba(255, 77, 61, 0.15)'
+                      : 'rgba(255,255,255,0.05)',
+                    border: selectedOptions[i]
+                      ? '1px solid rgba(255, 77, 61, 0.3)'
+                      : '1px solid rgba(255,255,255,0.08)',
+                    color: 'white',
+                  }}
+                >
+                  <div
+                    className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150"
+                    style={{
+                      backgroundColor: selectedOptions[i] ? '#FF4D3D' : 'transparent',
+                      border: selectedOptions[i]
+                        ? '2px solid #FF4D3D'
+                        : '2px solid rgba(255,255,255,0.3)',
+                    }}
+                  >
+                    {selectedOptions[i] && (
+                      <Check size={12} strokeWidth={2.5} className="text-white" />
+                    )}
+                  </div>
+                  <span>{option}</span>
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => anyOptionSelected && setStep(3)}
+              disabled={!anyOptionSelected}
+              className="w-full rounded-full py-3 text-sm font-semibold transition-colors duration-150 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+              style={{
+                backgroundColor: anyOptionSelected ? 'white' : 'rgba(255,255,255,0.1)',
+                color: anyOptionSelected ? '#1A1A1F' : 'white',
+              }}
+            >
+              {copy.onboarding.step2.cta}
+            </button>
+          </div>
+        )}
+
+        {/* Step 3: Terms */}
+        {step === 3 && (
+          <div className="flex flex-col">
+            <h2 className="mb-6 text-2xl font-bold text-white">
+              {copy.onboarding.step3.title}
+            </h2>
+
+            <div className="mb-6 flex flex-col gap-3">
+              {/* Terms checkbox */}
+              <button
+                onClick={() => setTermsAccepted(!termsAccepted)}
+                className="flex items-start gap-3 text-left text-sm cursor-pointer"
+              >
+                <div
+                  className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150"
+                  style={{
+                    backgroundColor: termsAccepted ? '#FF4D3D' : 'transparent',
+                    border: termsAccepted
+                      ? '2px solid #FF4D3D'
+                      : '2px solid rgba(255,255,255,0.3)',
+                  }}
+                >
+                  {termsAccepted && (
+                    <Check size={12} strokeWidth={2.5} className="text-white" />
+                  )}
+                </div>
+                <span className="text-white/80">{copy.onboarding.step3.terms}</span>
+              </button>
+
+              {/* Emails checkbox */}
+              <button
+                onClick={() => setEmailsOptIn(!emailsOptIn)}
+                className="flex items-start gap-3 text-left text-sm cursor-pointer"
+              >
+                <div
+                  className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150"
+                  style={{
+                    backgroundColor: emailsOptIn ? '#FF4D3D' : 'transparent',
+                    border: emailsOptIn
+                      ? '2px solid #FF4D3D'
+                      : '2px solid rgba(255,255,255,0.3)',
+                  }}
+                >
+                  {emailsOptIn && (
+                    <Check size={12} strokeWidth={2.5} className="text-white" />
+                  )}
+                </div>
+                <span className="text-white/80">{copy.onboarding.step3.emails}</span>
+              </button>
+            </div>
+
+            <button
+              onClick={handleComplete}
+              disabled={!termsAccepted || loading}
+              className="w-full rounded-full py-3 text-sm font-semibold transition-colors duration-150 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+              style={{
+                backgroundColor: termsAccepted ? 'white' : 'rgba(255,255,255,0.1)',
+                color: termsAccepted ? '#1A1A1F' : 'white',
+              }}
+            >
+              {loading ? copy.onboarding.step3.ctaLoading : copy.onboarding.step3.cta}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="mt-8">
+        <span className="text-xs font-medium tracking-wider text-white/30">LAIF</span>
       </div>
     </div>
   )

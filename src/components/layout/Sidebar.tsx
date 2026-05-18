@@ -1,385 +1,280 @@
 'use client'
-import { useState, useRef, useEffect } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import {
-  Inbox, CalendarDays, CheckCircle2, MessageSquare,
-  ChevronRight, ChevronDown, Plus, SlidersHorizontal,
-  Settings, LogOut, UserPlus, HelpCircle, PanelLeftClose, PanelLeftOpen,
+  Inbox,
+  CalendarDays,
+  CheckCircle2,
+  MessageCircle,
+  ChevronRight,
+  ChevronDown,
+  Plus,
+  SlidersHorizontal,
+  Settings,
+  LogOut,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { copy } from '@/lib/copy'
-import { snappy } from '@/shared/design-system'
 
-// ── Primary nav items ────────────────────────────────────────
-interface NavItem {
-  href: string
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  icon: React.ComponentType<any>
-  label: string
-  match: (p: string) => boolean
-  badgeKey?: 'inbox' | 'today'
-}
+/* ── Primary nav items ── */
+const NAV_ITEMS = [
+  { label: copy.inbox.title, icon: Inbox, href: '/' },
+  { label: copy.today.title, icon: CalendarDays, href: '/today' },
+  { label: copy.tasks.title, icon: CheckCircle2, href: '/tasks' },
+  { label: copy.messages.title, icon: MessageCircle, href: '/messages' },
+] as const
 
-const PRIMARY_NAV: NavItem[] = [
-  { href: '/', icon: Inbox, label: 'Inbox', match: p => p === '/', badgeKey: 'inbox' },
-  { href: '/today', icon: CalendarDays, label: 'Today', match: p => p === '/today', badgeKey: 'today' },
-  { href: '/tasks', icon: CheckCircle2, label: 'Tasks', match: p => p === '/tasks' },
-  { href: '/messages', icon: MessageSquare, label: 'Messages', match: p => p === '/messages' },
+/* ── Demo lists ── */
+const LISTS = [
+  { emoji: '\uD83D\uDC4B', name: 'Getting Started' },
+  { emoji: '\uD83D\uDCC5', name: 'This Week' },
+  { emoji: '\uD83D\uDCDD', name: 'Meeting Notes' },
+  { emoji: '\uD83C\uDF4E', name: 'Groceries' },
+  { emoji: '\uD83D\uDCDA', name: 'Reading List' },
+  { emoji: '\uD83C\uDFAF', name: 'Habits' },
 ]
 
-// ── Collapsed tooltip ────────────────────────────────────────
-function Tooltip({ label }: { label: string }) {
-  return (
-    <div
-      className="absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 pointer-events-none"
-    >
-      <motion.span
-        initial={{ opacity: 0, x: -4 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -4 }}
-        transition={{ duration: 0.12 }}
-        className="block whitespace-nowrap rounded-lg px-2.5 py-1 text-[12px] font-medium"
-        style={{
-          background: 'var(--surface-raised, var(--card))',
-          border: '1px solid var(--border)',
-          color: 'var(--text-1)',
-          boxShadow: 'var(--shadow-popover)',
-        }}
-      >
-        {label}
-      </motion.span>
-    </div>
-  )
-}
-
-// ── Nav Link ─────────────────────────────────────────────────
-function NavLink({
-  item,
-  active,
-  collapsed,
-  badge,
-}: {
-  item: NavItem
-  active: boolean
-  collapsed: boolean
-  badge?: number
-}) {
-  const [hovered, setHovered] = useState(false)
-  const Icon = item.icon
-
-  return (
-    <Link
-      href={item.href}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className={cn(
-        'relative flex items-center gap-3 rounded-lg text-[14px] font-medium transition-colors duration-150 cursor-pointer',
-        collapsed ? 'justify-center px-0 py-2.5 mx-1' : 'px-3 py-2',
-        active ? '' : 'hover:bg-[var(--sidebar-item-hover)]',
-      )}
-      style={{
-        color: active ? 'var(--text-1)' : 'var(--text-2)',
-        background: active ? 'var(--bg-hover)' : undefined,
-      }}
-    >
-      {/* Active indicator — left bar */}
-      {active && (
-        <div
-          className="absolute left-0 top-[6px] bottom-[6px] w-[2px] rounded-full"
-          style={{ background: 'var(--accent)' }}
-        />
-      )}
-
-      <span className="flex-shrink-0"><Icon size={20} strokeWidth={1.5} /></span>
-      {!collapsed && <span className="flex-1">{item.label}</span>}
-
-      {/* Badge */}
-      {!collapsed && badge !== undefined && badge > 0 && (
-        <span
-          className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full"
-          style={{
-            background: 'var(--bg-pane-2, var(--surface-raised))',
-            color: 'var(--text-2)',
-          }}
-        >
-          {badge}
-        </span>
-      )}
-
-      {/* Tooltip when collapsed */}
-      <AnimatePresence>
-        {collapsed && hovered && <Tooltip label={item.label} />}
-      </AnimatePresence>
-    </Link>
-  )
-}
-
-// ── Collapsible section ──────────────────────────────────────
-function CollapsibleSection({
-  label,
-  defaultOpen = true,
-  collapsed: sidebarCollapsed,
-  children,
-  rightContent,
-}: {
-  label: string
-  defaultOpen?: boolean
-  collapsed: boolean
-  children: React.ReactNode
-  rightContent?: React.ReactNode
-}) {
-  const [open, setOpen] = useState(defaultOpen)
-  const [hovered, setHovered] = useState(false)
-
-  if (sidebarCollapsed) return null
-
-  return (
-    <div>
-      <div
-        className="flex items-center px-3 py-1 group"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
-        <button
-          onClick={() => setOpen(o => !o)}
-          className="flex items-center gap-1 flex-1 text-left"
-        >
-          <motion.div animate={{ rotate: open ? 90 : 0 }} transition={snappy}>
-            <ChevronRight size={11} style={{ color: 'var(--text-3)' }} />
-          </motion.div>
-          <span className="text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--text-3)' }}>
-            {label}
-          </span>
-        </button>
-        {hovered && rightContent && (
-          <div className="flex items-center gap-1">
-            {rightContent}
-          </div>
-        )}
-      </div>
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            style={{ overflow: 'hidden' }}
-          >
-            {children}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  )
-}
-
-// ── User avatar menu ─────────────────────────────────────────
-function UserAvatar({ collapsed }: { collapsed: boolean }) {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!menuOpen) return
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setMenuOpen(false)
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [menuOpen])
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setMenuOpen(o => !o)}
-        className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0"
-        style={{ background: 'var(--accent)', color: '#fff', fontSize: 13, fontWeight: 600 }}
-      >
-        L
-      </button>
-
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.12 }}
-            className="popover absolute p-1.5 min-w-[200px]"
-            style={{
-              bottom: 'calc(100% + 8px)',
-              left: collapsed ? 0 : undefined,
-              right: collapsed ? undefined : 0,
-            }}
-          >
-            <Link
-              href="/settings"
-              onClick={() => setMenuOpen(false)}
-              className="popover-item text-[13px]"
-            >
-              <Settings size={14} /> Settings
-            </Link>
-            <button
-              onClick={() => { setMenuOpen(false); window.open('mailto:support@laif.app', '_blank') }}
-              className="popover-item text-[13px] w-full text-left"
-            >
-              <HelpCircle size={14} /> Get support
-            </button>
-            <button
-              onClick={() => setMenuOpen(false)}
-              className="popover-item text-[13px] w-full text-left"
-            >
-              <UserPlus size={14} /> Invite friends
-            </button>
-            <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
-            <button
-              onClick={() => {
-                setMenuOpen(false)
-                fetch('/api/auth/logout', { method: 'POST' }).then(() => window.location.href = '/login')
-              }}
-              className="popover-item text-[13px] w-full text-left"
-            >
-              <LogOut size={14} /> Sign out
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  )
-}
-
-// ── Main Sidebar ─────────────────────────────────────────────
-export default function NewSidebar() {
+export function Sidebar() {
   const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
-  const [hoveringHeader, setHoveringHeader] = useState(false)
+  const router = useRouter()
+  const [recentOpen, setRecentOpen] = useState(true)
+  const [listsHovered, setListsHovered] = useState(false)
+  const [avatarOpen, setAvatarOpen] = useState(false)
+  const popoverRef = useRef<HTMLDivElement>(null)
+  const [userInitial, setUserInitial] = useState('U')
 
-  // Placeholder badge counts
-  const badges: Record<string, number> = {
-    inbox: 0,
-    today: 0,
+  // Fetch user info for avatar
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.name) setUserInitial(data.name.charAt(0).toUpperCase())
+        else if (data?.username) setUserInitial(data.username.charAt(0).toUpperCase())
+      })
+      .catch(() => {})
+  }, [])
+
+  // Close popover on outside click
+  useEffect(() => {
+    if (!avatarOpen) return
+    const handler = (e: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setAvatarOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [avatarOpen])
+
+  const handleSignOut = useCallback(async () => {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    router.push('/login')
+  }, [router])
+
+  const isActive = (href: string) => {
+    if (href === '/') return pathname === '/'
+    return pathname.startsWith(href)
   }
 
   return (
-    <motion.aside
-      animate={{ width: collapsed ? 64 : 260 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-      className="hidden md:flex flex-col h-full flex-shrink-0 relative"
-      style={{
-        background: 'var(--bg-pane, var(--surface))',
-        borderRadius: 'var(--radius-pane, 16px)',
-      }}
+    <aside
+      className="flex w-[260px] flex-shrink-0 flex-col rounded-[16px] p-3"
+      style={{ backgroundColor: 'var(--bg-pane)' }}
     >
-      {/* Collapse toggle — shown on hover of header area */}
-      <div
-        className="relative px-2 pt-3 pb-1"
-        onMouseEnter={() => setHoveringHeader(true)}
-        onMouseLeave={() => setHoveringHeader(false)}
-      >
-        <AnimatePresence>
-          {hoveringHeader && (
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.1 }}
-              onClick={() => setCollapsed(c => !c)}
-              className="btn-icon w-7 h-7 absolute top-3 right-2 z-10"
-              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      {/* ── Primary nav ── */}
+      <nav className="flex flex-col gap-0.5">
+        {NAV_ITEMS.map((item) => {
+          const active = isActive(item.href)
+          return (
+            <button
+              key={item.href}
+              onClick={() => router.push(item.href)}
+              className="group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-150 cursor-pointer"
+              style={{
+                backgroundColor: active ? 'var(--bg-hover)' : 'transparent',
+                color: active ? 'var(--text-primary)' : 'var(--text-muted)',
+              }}
+              onMouseEnter={(e) => {
+                if (!active) e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+              }}
+              onMouseLeave={(e) => {
+                if (!active) e.currentTarget.style.backgroundColor = 'transparent'
+              }}
             >
-              {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-            </motion.button>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Primary nav */}
-      <nav className="px-2 space-y-0.5">
-        {PRIMARY_NAV.map(item => (
-          <NavLink
-            key={item.href}
-            item={item}
-            active={item.match(pathname)}
-            collapsed={collapsed}
-            badge={item.badgeKey ? badges[item.badgeKey] : undefined}
-          />
-        ))}
+              {/* Active left accent bar */}
+              {active && (
+                <span
+                  className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full"
+                  style={{ backgroundColor: 'var(--accent)' }}
+                />
+              )}
+              <item.icon size={20} strokeWidth={1.5} />
+              <span className="flex-1 text-left text-[14px]">{item.label}</span>
+            </button>
+          )
+        })}
       </nav>
 
-      {/* Recent section */}
-      <div className="mt-3 px-1">
-        <CollapsibleSection
-          label={copy.sidebar.sectionRecent}
-          defaultOpen={true}
-          collapsed={collapsed}
-        >
-          <div className="px-3 py-2">
-            <span className="text-[12px]" style={{ color: 'var(--text-3)' }}>
-              No recent items
-            </span>
-          </div>
-        </CollapsibleSection>
-      </div>
+      {/* ── Separator ── */}
+      <div className="my-4 h-px" style={{ backgroundColor: 'var(--border)' }} />
 
-      {/* Divider */}
-      {!collapsed && (
-        <div className="mx-3 my-2" style={{ height: 1, background: 'var(--border)' }} />
+      {/* ── Recent section ── */}
+      <button
+        onClick={() => setRecentOpen(!recentOpen)}
+        className="mb-1 flex items-center gap-1.5 px-3 py-1 cursor-pointer"
+      >
+        {recentOpen ? (
+          <ChevronDown size={12} style={{ color: 'var(--text-faint)' }} />
+        ) : (
+          <ChevronRight size={12} style={{ color: 'var(--text-faint)' }} />
+        )}
+        <span
+          className="text-[11px] font-semibold uppercase tracking-wide"
+          style={{ color: 'var(--text-faint)' }}
+        >
+          {copy.sidebar.sectionRecent}
+        </span>
+      </button>
+      {recentOpen && (
+        <div className="mb-1 flex flex-col gap-0.5 px-3">
+          <span className="py-1.5 text-xs" style={{ color: 'var(--text-faint)' }}>
+            No recent items
+          </span>
+        </div>
       )}
 
-      {/* Lists section */}
-      <div className="flex-1 overflow-auto px-1">
-        <CollapsibleSection
-          label={copy.sidebar.sectionLists}
-          defaultOpen={true}
-          collapsed={collapsed}
-          rightContent={
-            <>
-              <span className="text-[11px] font-medium" style={{ color: 'var(--text-3)' }}>
-                {copy.sidebar.browseAll}
-              </span>
-              <button
-                className="btn-icon w-5 h-5"
-                title={copy.sidebar.newListTooltip}
-              >
-                <Plus size={13} />
-              </button>
-              <button className="btn-icon w-5 h-5">
-                <SlidersHorizontal size={13} />
-              </button>
-            </>
-          }
-        >
-          {/* Placeholder list items */}
-          <div className="space-y-px ml-1">
-            <Link
-              href="/"
-              className={cn(
-                'flex items-center gap-2.5 px-3 py-[6px] text-[13px] rounded-lg transition-colors',
-                pathname === '/getting-started' ? 'bg-[var(--bg-hover)]' : 'hover:bg-[var(--sidebar-item-hover)]'
-              )}
-              style={{ color: 'var(--text-2)' }}
+      {/* ── Separator ── */}
+      <div className="my-4 h-px" style={{ backgroundColor: 'var(--border)' }} />
+
+      {/* ── Lists section ── */}
+      <div
+        className="mb-1 flex items-center justify-between px-3 py-1"
+        onMouseEnter={() => setListsHovered(true)}
+        onMouseLeave={() => setListsHovered(false)}
+      >
+        <div className="flex items-center gap-2">
+          <span
+            className="text-[11px] font-semibold uppercase tracking-wide"
+            style={{ color: 'var(--text-faint)' }}
+          >
+            {copy.sidebar.sectionLists}
+          </span>
+          {listsHovered && (
+            <span className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
+              {copy.sidebar.browseAll}
+            </span>
+          )}
+        </div>
+        {listsHovered && (
+          <div className="flex items-center gap-1">
+            <button
+              className="flex h-6 w-6 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
+              style={{ color: 'var(--text-faint)' }}
+              title={copy.sidebar.newListTooltip}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+              }}
             >
-              <span className="text-sm flex-shrink-0">{'👋'}</span>
-              <span className="truncate">Getting Started</span>
-            </Link>
+              <Plus size={14} strokeWidth={1.5} />
+            </button>
+            <button
+              className="flex h-6 w-6 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
+              style={{ color: 'var(--text-faint)' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+              }}
+            >
+              <SlidersHorizontal size={14} strokeWidth={1.5} />
+            </button>
           </div>
-        </CollapsibleSection>
+        )}
       </div>
 
-      {/* Sticky footer */}
-      <div className="px-3 pb-3 pt-2 flex-shrink-0">
-        {!collapsed && (
-          <div className="mb-2" style={{ height: 1, background: 'var(--border)' }} />
-        )}
-        <div className={cn(
-          'flex items-center',
-          collapsed ? 'justify-center' : 'justify-end',
-        )}>
-          <UserAvatar collapsed={collapsed} />
-        </div>
+      {/* List items */}
+      <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-1">
+        {LISTS.map((list) => (
+          <button
+            key={list.name}
+            className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition-colors duration-150 cursor-pointer"
+            style={{ color: 'var(--text-muted)' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+            }}
+          >
+            <span className="text-base">{list.emoji}</span>
+            <span className="truncate text-[14px]">{list.name}</span>
+          </button>
+        ))}
       </div>
-    </motion.aside>
+
+      {/* ── Separator ── */}
+      <div className="my-4 h-px" style={{ backgroundColor: 'var(--border)' }} />
+
+      {/* ── Sticky footer ── */}
+      <div className="relative flex items-center justify-between px-2 pb-1">
+        <div className="flex-1" />
+        {/* Avatar */}
+        <button
+          onClick={() => setAvatarOpen(!avatarOpen)}
+          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white transition-colors duration-150 cursor-pointer"
+          style={{ backgroundColor: 'var(--accent)' }}
+        >
+          {userInitial}
+        </button>
+
+        {/* Popover */}
+        {avatarOpen && (
+          <div
+            ref={popoverRef}
+            className="absolute bottom-full right-0 mb-2 w-48 rounded-xl p-2 shadow-lg"
+            style={{
+              backgroundColor: 'var(--bg-pane-2)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            <button
+              onClick={() => {
+                setAvatarOpen(false)
+                router.push('/settings')
+              }}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors duration-150 cursor-pointer"
+              style={{ color: 'var(--text-primary)' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+              }}
+            >
+              <Settings size={16} strokeWidth={1.5} />
+              <span>{copy.settings.title}</span>
+            </button>
+            <button
+              onClick={handleSignOut}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors duration-150 cursor-pointer"
+              style={{ color: 'var(--text-primary)' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+              }}
+            >
+              <LogOut size={16} strokeWidth={1.5} />
+              <span>{copy.settings.signOut}</span>
+            </button>
+          </div>
+        )}
+      </div>
+    </aside>
   )
 }

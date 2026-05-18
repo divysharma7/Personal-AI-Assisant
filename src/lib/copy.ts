@@ -45,7 +45,14 @@ export const copy = {
   tasks: {
     title: "Tasks",
     filters: { forMe: "Tasks for me", upcoming: "Upcoming", done: "Done" },
-    viewModes: ["List", "Board", "Matrix"],
+    viewModes: ["List", "Board", "Matrix"] as const,
+  },
+
+  // ───────── Messages ─────────
+  messages: {
+    title: "Messages",
+    tipBanner: "Send and receive messages with your team — keep the conversation going.",
+    emptyState: "No messages yet",
   },
 
   // ───────── Lists ─────────
@@ -155,9 +162,9 @@ export const copy = {
     gettingStartedTitle: "Getting Started",
     welcomeBody:
       "With LAIF, you can manage what matters — from daily tasks to project planning with your team — in one place. It gives you the flexibility to organize tasks, notes, images, and attachments however you want. It's not just a list. It's a LAIF list.",
-    getSetUp: "\u2705 Get set up",
+    getSetUp: "Get set up",
     firstTodoIntro: "Ready to dig in? Here's your very first to-do list.",
-    openTaskHint: "\uD83D\uDCA1 To open this task, click on the task row.",
+    openTaskHint: "To open this task, click on the task row.",
     starterTasks: [
       "Watch Welcome Video",
       "Create your first list",
@@ -167,4 +174,62 @@ export const copy = {
       "Share your feedback with the LAIF team",
     ],
   },
-} as const
+
+  // ───────── Settings ─────────
+  settings: {
+    title: "Settings",
+    signOut: "Sign out",
+    tabs: {
+      profile: "Profile",
+      features: "Features",
+      subscriptions: "Subscriptions",
+      integrations: "Integrations",
+    },
+    profile: {
+      firstName: "First name",
+      lastName: "Last name",
+      email: "Email",
+      deleteAccount: "Delete account",
+      deleteWarning: "This action cannot be undone.",
+    },
+    features: {
+      themeLabel: "Theme",
+      themeOptions: ["Light", "Dark", "Blackout", "System"] as const,
+    },
+  },
+
+  // ───────── Auth ─────────
+  auth: {
+    login: {
+      title: "Welcome to LAIF",
+      subtitle: "Your intelligent life manager",
+      usernamePlaceholder: "Username",
+      passwordPlaceholder: "Password",
+      cta: "Sign in",
+      signupPrompt: "Don't have an account?",
+      signupLink: "Sign up",
+    },
+    signup: {
+      title: "Create your account",
+      subtitle: "Start managing your life with LAIF",
+      namePlaceholder: "Full name",
+      emailPlaceholder: "Email",
+      passwordPlaceholder: "Password",
+      cta: "Create account",
+      loginPrompt: "Already have an account?",
+      loginLink: "Log in",
+    },
+  },
+
+  // ───────── Desktop only ─────────
+  desktopOnly: {
+    title: "LAIF is best on desktop",
+    body: "For the best experience, please use a device with a screen width of 1024px or larger.",
+  },
+
+  // ───────── New task ─────────
+  newTask: {
+    placeholder: "New task",
+    shortcutHint: "^N",
+  },
+};

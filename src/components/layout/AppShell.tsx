@@ -1,61 +1,74 @@
 'use client'
+
 import { usePathname } from 'next/navigation'
-import NewSidebar from './Sidebar'
-import ArtworkPane from './ArtworkPane'
+import { useEffect, useState, type ReactNode } from 'react'
+import { Sidebar } from './Sidebar'
+import { ArtworkPane } from './ArtworkPane'
+import { copy } from '@/lib/copy'
 
-const NO_SHELL = ['/login', '/signup', '/onboarding']
+const SHELL_EXCLUDED = ['/login', '/signup', '/onboarding']
 
-export default function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname() ?? '/'
+function DesktopOnlyNotice() {
+  return (
+    <div
+      className="flex min-h-screen flex-col items-center justify-center px-6 text-center"
+      style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-primary)' }}
+    >
+      <div
+        className="rounded-2xl p-8"
+        style={{ backgroundColor: 'var(--bg-pane)', maxWidth: 400 }}
+      >
+        <h1 className="mb-3 text-2xl font-bold">{copy.desktopOnly.title}</h1>
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          {copy.desktopOnly.body}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+export function AppShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname()
+  const [isDesktop, setIsDesktop] = useState(true)
+
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 1024)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   // No shell for auth/onboarding routes
-  if (NO_SHELL.some(p => pathname.startsWith(p))) {
-    return <>{children}</>
-  }
+  const noShell = SHELL_EXCLUDED.some((p) => pathname.startsWith(p))
+  if (noShell) return <>{children}</>
+
+  // Small viewport notice
+  if (!isDesktop) return <DesktopOnlyNotice />
 
   return (
-    <>
-      {/* Desktop-only notice for viewports < 1024px */}
-      <div className="md:hidden flex items-center justify-center h-screen px-6" style={{ background: 'var(--bg-canvas, var(--bg))' }}>
-        <div className="text-center max-w-sm">
-          <h2 className="text-[20px] font-bold mb-2" style={{ color: 'var(--text-1)' }}>
-            Best on desktop
-          </h2>
-          <p className="text-[14px]" style={{ color: 'var(--text-2)' }}>
-            LAIF is designed for screens 1024px and wider. Please visit on a desktop browser for the best experience.
-          </p>
-        </div>
-      </div>
+    <div
+      className="flex h-screen p-[3px]"
+      style={{ backgroundColor: 'var(--bg-canvas)' }}
+    >
+      {/* Left: Sidebar */}
+      <Sidebar />
 
-      {/* Desktop 3-column layout */}
-      <div
-        className="hidden md:flex h-screen w-screen overflow-hidden p-[3px]"
-        style={{ background: 'var(--bg-canvas, var(--bg))' }}
+      {/* Gap */}
+      <div className="w-[1px] flex-shrink-0" />
+
+      {/* Center: Main content */}
+      <main
+        className="flex min-w-[540px] flex-1 flex-col overflow-y-auto rounded-[16px]"
+        style={{ backgroundColor: 'var(--bg-pane)' }}
       >
-        {/* Sidebar pane */}
-        <NewSidebar />
+        {children}
+      </main>
 
-        {/* 1px gap */}
-        <div style={{ width: 1 }} />
+      {/* Gap */}
+      <div className="w-[1px] flex-shrink-0" />
 
-        {/* Center: Main content pane */}
-        <div
-          className="flex flex-col flex-1 overflow-hidden min-w-0"
-          style={{
-            background: 'var(--bg-pane, var(--card))',
-            borderRadius: 'var(--radius-pane, 16px)',
-            minWidth: 540,
-          }}
-        >
-          {children}
-        </div>
-
-        {/* 1px gap */}
-        <div style={{ width: 1 }} />
-
-        {/* Right pane: artwork by default */}
-        <ArtworkPane />
-      </div>
-    </>
+      {/* Right: Artwork pane */}
+      <ArtworkPane />
+    </div>
   )
 }

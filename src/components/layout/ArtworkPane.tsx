@@ -1,39 +1,61 @@
 'use client'
-import { useState, useEffect } from 'react'
 
-// Curated landscape artwork URLs — warm, ambient, Superlist-style
-const ARTWORKS = [
-  'https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=600&q=80',
-  'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=600&q=80',
-  'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=600&q=80',
-  'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=600&q=80',
-  'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&q=80',
-  'https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=600&q=80',
-]
+import { useMemo } from 'react'
 
-export default function ArtworkPane() {
-  const [artIdx, setArtIdx] = useState(-1)
+/** Get a daily-rotating Unsplash landscape image */
+function getDailyImageUrl(): string {
+  const today = new Date()
+  const dayOfYear =
+    Math.floor(
+      (today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) /
+        (1000 * 60 * 60 * 24)
+    )
+  // Use different curated collection IDs for variety
+  const collections = [
+    '1065976', // landscapes
+    '3330448', // nature
+    '1459961', // minimal
+    '894/900', // travel
+  ]
+  const idx = dayOfYear % collections.length
+  return `https://source.unsplash.com/collection/${collections[idx]}/760x1080?day=${dayOfYear}`
+}
 
-  useEffect(() => {
-    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000)
-    setArtIdx(dayOfYear % ARTWORKS.length)
-  }, [])
+export function ArtworkPane() {
+  const imageUrl = useMemo(() => getDailyImageUrl(), [])
 
   return (
-    <div
-      className="hidden lg:block flex-shrink-0"
-      style={{ width: 380 }}
+    <aside
+      className="relative flex w-[380px] flex-shrink-0 items-end overflow-hidden rounded-[16px]"
+      style={{
+        backgroundColor: 'var(--bg-pane)',
+        backgroundImage: `linear-gradient(180deg, var(--bg-pane) 0%, var(--bg-pane-2) 50%, var(--bg-pane) 100%)`,
+      }}
     >
+      {/* Unsplash image background */}
       <div
-        className="h-full overflow-hidden"
+        className="absolute inset-0 bg-cover bg-center opacity-30 transition-opacity duration-500"
+        style={{ backgroundImage: `url(${imageUrl})` }}
+      />
+
+      {/* Gradient overlay at bottom */}
+      <div
+        className="absolute inset-x-0 bottom-0 h-32"
         style={{
-          borderRadius: 'var(--radius-pane, 16px)',
-          backgroundImage: artIdx >= 0 ? `url(${ARTWORKS[artIdx]})` : undefined,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          background: artIdx < 0 ? 'var(--bg-pane, var(--surface))' : undefined,
+          background:
+            'linear-gradient(to top, var(--bg-pane) 0%, transparent 100%)',
         }}
       />
-    </div>
+
+      {/* Branding footer */}
+      <div className="relative z-10 w-full p-6">
+        <p
+          className="text-xs font-medium tracking-wider opacity-40"
+          style={{ color: 'var(--text-faint)' }}
+        >
+          LAIF
+        </p>
+      </div>
+    </aside>
   )
 }
