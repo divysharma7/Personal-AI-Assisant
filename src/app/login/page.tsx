@@ -2,7 +2,7 @@
 import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Eye, EyeOff, LogIn } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import { smooth } from '@/shared/design-system'
 import Link from 'next/link'
 
@@ -44,99 +44,108 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{ background: 'var(--bg)' }}
+      className="min-h-screen flex flex-col items-center justify-center p-6"
+      style={{ background: '#FAF6F1' }}
     >
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={smooth}
-        className="w-full max-w-sm"
+        className="w-full max-w-md flex flex-col items-center"
       >
         {/* Brand */}
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center mb-10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo_new.png"
-            alt="PIM"
-            width={72}
-            height={72}
-            className="mb-3 object-contain"
-            style={{ filter: 'drop-shadow(0 0 24px rgba(139,92,246,0.5))' }}
+            alt="LAIF"
+            width={56}
+            height={56}
+            className="mb-5 object-contain"
           />
-          <p className="text-slate-500 text-sm mt-1">Your intelligent life manager</p>
+          <h1
+            className="text-[36px] md:text-[42px] font-bold text-center"
+            style={{ color: '#1a1a2e', letterSpacing: '-0.03em', lineHeight: 1.1 }}
+          >
+            Welcome to LAIF
+          </h1>
+          <p className="text-base mt-3 text-center" style={{ color: '#6b7280' }}>
+            Your intelligent life manager
+          </p>
         </div>
 
-        {/* Card */}
-        <div className="glass-card p-6">
-          <h2 className="text-lg font-semibold text-slate-100 mb-5">Sign in</h2>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="label">Username</label>
-              <input
-                type="text"
-                className="input-field"
-                placeholder="your.username"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                autoComplete="username"
-                autoFocus
-                disabled={loading}
-              />
-            </div>
-
-            <div>
-              <label className="label">Password</label>
-              <div className="relative">
-                <input
-                  type={showPw ? 'text' : 'password'}
-                  className="input-field pr-10"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  disabled={loading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPw(s => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
-                >
-                  {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
-              </div>
-            </div>
-
-            {error && (
-              <motion.p
-                initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-                className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2"
-              >
-                {error}
-              </motion.p>
-            )}
-
-            <button
-              type="submit"
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="w-full space-y-4">
+          <div>
+            <input
+              type="text"
+              className="w-full px-4 py-3.5 rounded-2xl text-sm outline-none transition-all"
+              style={{
+                background: '#fff',
+                border: '1.5px solid #e5e2dd',
+                color: '#1a1a2e',
+              }}
+              placeholder="Username"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              autoComplete="username"
+              autoFocus
               disabled={loading}
-              className="btn-primary w-full flex items-center justify-center gap-2 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-              ) : (
-                <>
-                  <LogIn size={15} />
-                  <span>Sign in</span>
-                </>
-              )}
-            </button>
-          </form>
-        </div>
+            />
+          </div>
 
-        <p className="text-center text-slate-500 text-sm mt-6">
+          <div className="relative">
+            <input
+              type={showPw ? 'text' : 'password'}
+              className="w-full px-4 py-3.5 rounded-2xl text-sm outline-none transition-all pr-12"
+              style={{
+                background: '#fff',
+                border: '1.5px solid #e5e2dd',
+                color: '#1a1a2e',
+              }}
+              placeholder="Password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              autoComplete="current-password"
+              disabled={loading}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw(s => !s)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors"
+              style={{ color: '#9ca3af' }}
+            >
+              {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+
+          {error && (
+            <motion.p
+              initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+              className="text-sm rounded-xl px-4 py-3"
+              style={{ color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca' }}
+            >
+              {error}
+            </motion.p>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: '#1a1a2e', color: '#fff' }}
+          >
+            {loading ? (
+              <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+            ) : (
+              <span>Sign in</span>
+            )}
+          </button>
+        </form>
+
+        <p className="text-sm mt-8 text-center" style={{ color: '#9ca3af' }}>
           Don&apos;t have an account?{' '}
-          <Link href="/signup" className="font-medium hover:underline" style={{ color: 'var(--accent)' }}>
+          <Link href="/signup" className="font-semibold transition-colors" style={{ color: '#1a1a2e' }}>
             Sign up
           </Link>
         </p>

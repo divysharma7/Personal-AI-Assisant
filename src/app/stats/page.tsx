@@ -99,20 +99,23 @@ export default function StatsPage() {
   return (
     <>
       <main className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between px-8 py-4 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
-          <h1 className="text-lg font-bold" style={{ color: 'var(--text-1)', letterSpacing: '-0.02em' }}>Statistics</h1>
-          <div className="flex items-center rounded-xl p-0.5 gap-0.5" style={{ background: 'var(--input-bg)', border: '1px solid var(--border)' }}>
-            {(['7d', '30d', '90d'] as Range[]).map(r => (
-              <button key={r} onClick={() => setRange(r)}
-                className="px-3 py-1 rounded-lg text-xs font-medium transition-all"
-                style={range === r ? { background: 'var(--accent)', color: '#fff' } : { color: 'var(--text-2)' }}>
-                {r}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-auto px-8 py-4 space-y-5">
+        <div className="flex-1 overflow-auto">
+          <div className="px-8 md:px-10 py-8 md:py-10 space-y-6">
+            {/* Title + range toggle */}
+            <div className="flex items-center justify-between">
+              <h1 className="text-[32px] md:text-[36px] font-bold" style={{ color: 'var(--text-1)', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+                Statistics
+              </h1>
+              <div className="flex items-center rounded-xl p-0.5 gap-0.5" style={{ background: 'var(--input-bg)' }}>
+                {(['7d', '30d', '90d'] as Range[]).map(r => (
+                  <button key={r} onClick={() => setRange(r)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                    style={range === r ? { background: 'var(--accent)', color: '#fff' } : { color: 'var(--text-2)' }}>
+                    {r}
+                  </button>
+                ))}
+              </div>
+            </div>
           {/* Stat cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <StatCard icon={CheckSquare} label="Tasks Done" value={totalTasksCompleted} sub={`Last ${range}`} color="#22c55e" />
@@ -131,6 +134,7 @@ export default function StatsPage() {
           <div className="rounded-2xl p-4" style={{ background: 'var(--surface)' }}>
             <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-1)' }}>Focus Minutes</h3>
             <BarChart data={focusData} color="#6366f1" maxLabel="min" />
+          </div>
           </div>
         </div>
       </main>

@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Trash2, Flame, Check, X } from 'lucide-react'
+import { Plus, Trash2, Flame, Check } from 'lucide-react'
 import { useHabits, type Habit } from '@/hooks/useHabits'
 import { snappy, smooth } from '@/shared/design-system'
 import FloatingChat from '@/components/chat/FloatingChat'
@@ -46,56 +46,60 @@ export default function HabitsPage() {
   return (
     <>
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-8 py-4 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
-          <h1 className="text-lg font-bold" style={{ color: 'var(--text-1)', letterSpacing: '-0.02em' }}>Habits</h1>
-          <button onClick={() => setShowAdd(s => !s)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
-            style={{ background: 'var(--accent)', color: '#fff' }}>
-            <Plus size={13} /> Add Habit
-          </button>
-        </div>
+        <div className="flex-1 overflow-auto">
+          <div className="px-8 md:px-10 py-8 md:py-10 space-y-6">
+            {/* Title + Add button */}
+            <div className="flex items-center justify-between">
+              <h1 className="text-[32px] md:text-[36px] font-bold" style={{ color: 'var(--text-1)', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+                Habits
+              </h1>
+              <button onClick={() => setShowAdd(s => !s)} className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-medium"
+                style={{ background: 'var(--accent)', color: '#fff' }}>
+                <Plus size={13} /> Add Habit
+              </button>
+            </div>
 
-        {/* Add form */}
-        <AnimatePresence>
-          {showAdd && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={smooth}
-              className="overflow-hidden" style={{ borderBottom: '1px solid var(--border)' }}>
-              <div className="px-8 py-4 space-y-3">
-                <input className="input-field" placeholder="Habit name..." value={newName} onChange={e => setNewName(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleCreate()} autoFocus />
-                <div className="flex items-center gap-2 flex-wrap">
-                  <select className="input-field w-auto text-sm" value={newFreq} onChange={e => setNewFreq(e.target.value as Habit['frequency'])}>
-                    {Object.entries(FREQ_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                  </select>
-                  {newFreq === 'custom' && (
-                    <div className="flex gap-1">
-                      {DAY_LABELS.map((d, i) => (
-                        <button key={i} onClick={() => setNewDays(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])}
-                          className="w-8 h-8 rounded-full text-xs font-medium flex items-center justify-center"
-                          style={newDays.includes(i) ? { background: newColor, color: '#fff' } : { background: 'var(--input-bg)', color: 'var(--text-3)' }}>
-                          {d[0]}
-                        </button>
+            {/* Add form */}
+            <AnimatePresence>
+              {showAdd && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={smooth}
+                  className="overflow-hidden rounded-2xl" style={{ background: 'var(--surface)' }}>
+                  <div className="p-5 space-y-3">
+                    <input className="input-field" placeholder="Habit name..." value={newName} onChange={e => setNewName(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleCreate()} autoFocus />
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <select className="input-field w-auto text-sm" value={newFreq} onChange={e => setNewFreq(e.target.value as Habit['frequency'])}>
+                        {Object.entries(FREQ_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                      </select>
+                      {newFreq === 'custom' && (
+                        <div className="flex gap-1">
+                          {DAY_LABELS.map((d, i) => (
+                            <button key={i} onClick={() => setNewDays(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])}
+                              className="w-8 h-8 rounded-full text-xs font-medium flex items-center justify-center"
+                              style={newDays.includes(i) ? { background: newColor, color: '#fff' } : { background: 'var(--input-bg)', color: 'var(--text-3)' }}>
+                              {d[0]}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {HABIT_COLORS.map(c => (
+                        <button key={c} onClick={() => setNewColor(c)} className="w-6 h-6 rounded-full transition-transform"
+                          style={{ background: c, transform: newColor === c ? 'scale(1.3)' : 'scale(1)', border: newColor === c ? '2px solid #fff' : 'none' }} />
                       ))}
                     </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5">
-                  {HABIT_COLORS.map(c => (
-                    <button key={c} onClick={() => setNewColor(c)} className="w-6 h-6 rounded-full transition-transform"
-                      style={{ background: c, transform: newColor === c ? 'scale(1.3)' : 'scale(1)', border: newColor === c ? '2px solid #fff' : 'none' }} />
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={handleCreate} className="btn-primary text-sm px-4 py-1.5">Create</button>
-                  <button onClick={() => setShowAdd(false)} className="btn-ghost text-sm px-3 py-1.5">Cancel</button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                    <div className="flex gap-2">
+                      <button onClick={handleCreate} className="btn-primary text-sm px-4 py-1.5">Create</button>
+                      <button onClick={() => setShowAdd(false)} className="btn-ghost text-sm px-3 py-1.5">Cancel</button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-        {/* Habit list */}
-        <div className="flex-1 overflow-auto px-8 py-4 space-y-3">
+            {/* Habit list */}
+            <div className="space-y-3">
           {isLoading ? (
             <div className="flex items-center justify-center py-16">
               <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }} />
@@ -154,6 +158,8 @@ export default function HabitsPage() {
               })}
             </AnimatePresence>
           )}
+            </div>
+          </div>
         </div>
       </main>
       <FloatingChat onRefreshItems={silentRefresh} />

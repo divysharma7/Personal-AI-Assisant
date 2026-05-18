@@ -79,19 +79,20 @@ export default function PomodoroPage() {
   const c = 2 * Math.PI * 100
 
   return (
-    <div className="flex flex-col flex-1 overflow-auto min-h-0">
-      {/* Top bar */}
-      <div
-        className="flex items-center gap-2.5 px-8 py-4 flex-shrink-0"
-        style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}
-      >
-        <p className="text-lg font-bold" style={{ color: 'var(--text-1)', letterSpacing: '-0.02em' }}>Pomodoro</p>
-        <span className="text-xs" style={{ color: 'var(--text-3)' }}>
-          {state.todayCompleted > 0 && `${state.todayCompleted} session${state.todayCompleted > 1 ? 's' : ''} today`}
-        </span>
-      </div>
-
-      <div className="flex-1 overflow-auto px-10 py-6">
+    <main className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-auto">
+        <div className="px-8 md:px-10 py-8 md:py-10">
+          {/* Title */}
+          <div className="flex items-center gap-3 mb-8">
+            <h1 className="text-[32px] md:text-[36px] font-bold" style={{ color: 'var(--text-1)', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+              Pomodoro
+            </h1>
+            {state.todayCompleted > 0 && (
+              <span className="text-sm mt-1" style={{ color: 'var(--text-3)' }}>
+                {state.todayCompleted} session{state.todayCompleted > 1 ? 's' : ''} today
+              </span>
+            )}
+          </div>
         <div className="max-w-3xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left: Large timer */}
           <motion.div
@@ -268,7 +269,8 @@ export default function PomodoroPage() {
             </div>
           </motion.div>
         </div>
+        </div>
       </div>
-    </div>
+    </main>
   )
 }
