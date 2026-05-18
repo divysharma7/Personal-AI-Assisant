@@ -1,12 +1,16 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { useEffect, useState, type ReactNode } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useEffect, useState, useCallback, type ReactNode } from 'react'
 import Sidebar from './Sidebar'
 import ArtworkPane from './ArtworkPane'
 import { copy } from '@/lib/copy'
 import { fade, ease } from '@/lib/motion'
+import { useTasks } from '@/hooks/useTasks'
+import { useLabels } from '@/hooks/useLabels'
+import type { TaskRecord } from '@/hooks/useTasks'
+import DetailPanelStack from '@/components/tasks/DetailPanelStack'
 
 const SHELL_EXCLUDED = ['/login', '/signup', '/onboarding']
 
@@ -34,6 +38,11 @@ function DesktopOnlyNotice() {
 export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const [isDesktop, setIsDesktop] = useState(true)
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null)
+  const [panelStack, setPanelStack] = useState<string[]>([])
+
+  const { tasks, updateTask, deleteTask } = useTasks()
+  const { labels, createLabel } = useLabels()
 
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 1024)
@@ -41,6 +50,111 @@ export default function AppShell({ children }: { children: ReactNode }) {
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
   }, [])
+
+  // Listen for detail-task events from InboxPage
+  useEffect(() => {
+    function handleDetailTask(e: Event) {
+      const customEvent = e as CustomEvent<{ taskId: string | null }>
+      const taskId = customEvent.detail?.taskId ?? null
+      if (taskId) {
+        setDetailTaskId(taskId)
+        setPanelStack([taskId])
+      } else {
+        setDetailTaskId(null)
+        setPanelStack([])
+      }
+    }
+    window.addEventListener('laif:detail-task', handleDetailTask)
+    return () => window.removeEventListener('laif:detail-task', handleDetailTask)
+  }, [])
+
+  const handleClose = useCallback(() => {
+    setDetailTaskId(null)
+    setPanelStack([])
+    // Notify the page
+    window.dispatchEvent(
+      new CustomEvent('laif:detail-task', { detail: { taskId: null } })
+    )
+  }, [])
+
+  const handlePushTask = useCallback(
+    (taskId: string) => {
+      setPanelStack((prev) => [...prev, taskId])
+    },
+    []
+  )
+
+  const handlePopTask = useCallback(() => {
+    setPanelStack((prev) => {
+      if (prev.length <= 1) {
+        handleClose()
+        return []
+      }
+      return prev.slice(0, -1)
+    })
+  }, [handleClose])
+
+  const handlePopToIndex = useCallback(
+    (index: number) => {
+      setPanelStack((prev) => {
+        if (index < 0 || index >= prev.length) return prev
+        return prev.slice(0, index + 1)
+      })
+    },
+    []
+  )
+
+  const handleUpdateTask = useCallback(
+    async (id: string, data: Partial<TaskRecord>) => {
+      await updateTask(id, data)
+    },
+    [updateTask]
+  )
+
+  const handleDeleteTask = useCallback(
+    async (id: string) => {
+      await deleteTask(id)
+      handleClose()
+    },
+    [deleteTask, handleClose]
+  )
+
+  const handleAddComment = useCallback(
+    async (taskId: string, text: string) => {
+      const task = tasks.find((t) => t._id === taskId)
+      if (!task) return
+      const newComment = {
+        text,
+        createdAt: new Date().toISOString(),
+        authorName: 'You',
+      }
+      await updateTask(taskId, {
+        comments: [...(task.comments || []), newComment],
+      })
+    },
+    [tasks, updateTask]
+  )
+
+  const handleCreateLabel = useCallback(
+    async (name: string) => {
+      await createLabel(name)
+    },
+    [createLabel]
+  )
+
+  // Build stack entries from task IDs
+  const stackEntries = panelStack
+    .map((taskId) => {
+      const task = tasks.find((t) => t._id === taskId)
+      if (!task) return null
+      return {
+        task,
+        comments: task.comments || [],
+      }
+    })
+    .filter(Boolean) as { task: TaskRecord; comments: TaskRecord['comments'] }[]
+
+  const showDetailPanel = stackEntries.length > 0
 
   // No shell for auth/onboarding routes
   const noShell = SHELL_EXCLUDED.some((p) => pathname.startsWith(p))
@@ -71,8 +185,43 @@ export default function AppShell({ children }: { children: ReactNode }) {
       {/* Gap */}
       <div className="w-[1px] flex-shrink-0" />
 
-      {/* Right: Artwork pane */}
-      <ArtworkPane />
+      {/* Right: Artwork pane OR Detail panel */}
+      <AnimatePresence mode="wait">
+        {showDetailPanel ? (
+          <motion.div
+            key="detail-panel"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={ease.fast}
+            className="flex-shrink-0"
+          >
+            <DetailPanelStack
+              stack={stackEntries}
+              onPushTask={handlePushTask}
+              onPopTask={handlePopTask}
+              onPopToIndex={handlePopToIndex}
+              onClose={handleClose}
+              onUpdate={handleUpdateTask}
+              onDelete={handleDeleteTask}
+              onAddComment={handleAddComment}
+              labels={labels}
+              allLabels={labels}
+              onCreateLabel={handleCreateLabel}
+            />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="artwork"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={ease.fast}
+          >
+            <ArtworkPane />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

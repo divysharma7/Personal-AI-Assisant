@@ -22,7 +22,11 @@ export interface TaskRecord {
   order?: number
   labelIds?: string[]
   assigneeId?: string | null
-  comments?: { text: string; createdAt?: string }[]
+  comments?: { text: string; createdAt?: string; authorName?: string; authorAvatar?: string }[]
+  repeat?: string | null
+  completedAt?: string | null
+  listId?: string | null
+  createdBy?: string | null
   createdAt?: string
   updatedAt?: string
 }

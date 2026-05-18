@@ -11,6 +11,9 @@ interface UseTaskKeyboardOptions {
   onSetPriority: (taskId: string, priority: 'high' | 'medium' | 'low') => void
   onDelete: (taskId: string) => void
   onFocusNewTask: () => void
+  onCloseDetail?: () => void
+  hasOpenPopover?: boolean
+  onClosePopover?: () => void
   enabled?: boolean
 }
 
@@ -23,6 +26,9 @@ export function useTaskKeyboard({
   onSetPriority,
   onDelete,
   onFocusNewTask,
+  onCloseDetail,
+  hasOpenPopover = false,
+  onClosePopover,
   enabled = true,
 }: UseTaskKeyboardOptions) {
   const tasksRef = useRef(tasks)
@@ -48,6 +54,16 @@ export function useTaskKeyboard({
     }
 
     switch (e.key) {
+      case 'Escape':
+        e.preventDefault()
+        // Close one level at a time: popover -> detail -> nothing
+        if (hasOpenPopover && onClosePopover) {
+          onClosePopover()
+        } else if (onCloseDetail) {
+          onCloseDetail()
+        }
+        break
+
       case 'ArrowUp':
         e.preventDefault()
         if (current.length > 0) {
@@ -117,7 +133,7 @@ export function useTaskKeyboard({
       default:
         break
     }
-  }, [enabled, onSelectIndex, onToggleComplete, onOpenDetail, onSetPriority, onDelete, onFocusNewTask])
+  }, [enabled, onSelectIndex, onToggleComplete, onOpenDetail, onSetPriority, onDelete, onFocusNewTask, onCloseDetail, hasOpenPopover, onClosePopover])
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown)

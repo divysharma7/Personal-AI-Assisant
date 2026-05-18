@@ -13,85 +13,132 @@ import {
   Tag,
   ChevronDown,
   ChevronRight,
-  Check,
 } from 'lucide-react'
 import { copy } from '@/lib/copy'
-import { useItems } from '@/hooks/useItems'
-import type { Task } from '@/types'
-import { formatDate } from '@/lib/utils'
+import { useTasks } from '@/hooks/useTasks'
+import type { TaskRecord } from '@/hooks/useTasks'
+import { useLabels } from '@/hooks/useLabels'
+import { useTaskKeyboard } from '@/hooks/useTaskKeyboard'
+import { playCompletionSound } from '@/lib/sounds'
 import { fadeSlideUp, taskComplete, collapse, buttonPress, stagger, ease } from '@/lib/motion'
-
-/* ── Completion sound ── */
-const TONES = [523.25, 587.33, 659.25, 783.99, 880.0]
-
-function playCompletionSound() {
-  try {
-    const ctx = new AudioContext()
-    const freq = TONES[Math.floor(Math.random() * TONES.length)]
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.type = 'sine'
-    osc.frequency.value = freq
-    gain.gain.value = 0.12
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3)
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-    osc.start()
-    osc.stop(ctx.currentTime + 0.3)
-  } catch {
-    // Audio not available
-  }
-}
+import TaskRow from '@/components/tasks/TaskRow'
+import VoiceCapture from '@/components/tasks/VoiceCapture'
 
 export default function InboxPage() {
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
-  const { items, addItem, updateItem } = useItems()
+  const { tasks, isLoading, createTask, updateTask, deleteTask, toggleComplete } = useTasks()
+  const { labels, createLabel } = useLabels()
   const [tipDismissed, setTipDismissed] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskFocused, setNewTaskFocused] = useState(false)
   const [doneOpen, setDoneOpen] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Tasks only
-  const tasks = items.filter((i): i is Task => i.type === 'task')
+  // Filter tasks
   const activeTasks = tasks.filter((t) => t.status !== 'done')
   const doneTasks = tasks.filter((t) => t.status === 'done')
 
-  // ^N shortcut to focus new task row
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-        e.preventDefault()
-        inputRef.current?.focus()
+  // Sub-task counts
+  const getSubTaskCount = useCallback(
+    (taskId: string) => {
+      const subTasks = tasks.filter((t) => t.parentId === taskId)
+      if (subTasks.length === 0) return undefined
+      return {
+        completed: subTasks.filter((t) => t.status === 'done').length,
+        total: subTasks.length,
       }
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [])
+    },
+    [tasks]
+  )
+
+  // Labels for a task
+  const getLabelsForTask = useCallback(
+    (task: TaskRecord) => {
+      if (!task.labelIds || task.labelIds.length === 0) return []
+      return labels.filter((l) => task.labelIds?.includes(l._id))
+    },
+    [labels]
+  )
 
   const handleNewTask = useCallback(async () => {
     const title = newTaskTitle.trim()
     if (!title) return
-    await addItem('task', {
+    await createTask({
       title,
       priority: 'medium',
       status: 'todo',
-      color: '#34d399',
     })
     setNewTaskTitle('')
     inputRef.current?.blur()
-  }, [newTaskTitle, addItem])
+  }, [newTaskTitle, createTask])
 
   const handleToggleTask = useCallback(
-    async (task: Task) => {
-      const newStatus = task.status === 'done' ? 'todo' : 'done'
-      if (newStatus === 'done') playCompletionSound()
-      await updateItem('task', task._id!, { status: newStatus })
+    async (taskId: string) => {
+      const task = tasks.find((t) => t._id === taskId)
+      if (!task) return
+      if (task.status !== 'done') playCompletionSound()
+      await toggleComplete(taskId)
     },
-    [updateItem]
+    [tasks, toggleComplete]
   )
+
+  const handleSetPriority = useCallback(
+    async (taskId: string, priority: 'high' | 'medium' | 'low') => {
+      await updateTask(taskId, { priority })
+    },
+    [updateTask]
+  )
+
+  const handleDeleteTask = useCallback(
+    async (taskId: string) => {
+      await deleteTask(taskId)
+      if (detailTaskId === taskId) setDetailTaskId(null)
+    },
+    [deleteTask, detailTaskId]
+  )
+
+  const handleTitleChange = useCallback(
+    async (taskId: string, title: string) => {
+      await updateTask(taskId, { title })
+    },
+    [updateTask]
+  )
+
+  const handleVoiceTranscript = useCallback(
+    async (text: string) => {
+      await createTask({
+        title: text,
+        priority: 'medium',
+        status: 'todo',
+      })
+    },
+    [createTask]
+  )
+
+  // Keyboard shortcuts
+  useTaskKeyboard({
+    tasks: activeTasks,
+    selectedIndex,
+    onSelectIndex: setSelectedIndex,
+    onToggleComplete: handleToggleTask,
+    onOpenDetail: (id) => setDetailTaskId(id),
+    onSetPriority: handleSetPriority,
+    onDelete: handleDeleteTask,
+    onFocusNewTask: () => inputRef.current?.focus(),
+    onCloseDetail: () => setDetailTaskId(null),
+    enabled: !newTaskFocused,
+  })
+
+  // Expose detailTaskId for AppShell to read
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent('laif:detail-task', { detail: { taskId: detailTaskId } })
+    )
+  }, [detailTaskId])
 
   return (
     <div className="flex flex-col px-6 py-5">
@@ -259,6 +306,7 @@ export default function InboxPage() {
             >
               <Tag size={15} strokeWidth={1.5} />
             </button>
+            <VoiceCapture onTranscript={handleVoiceTranscript} inline />
           </div>
         )}
       </div>
@@ -266,51 +314,21 @@ export default function InboxPage() {
       {/* ── Active tasks ── */}
       <motion.div className="flex flex-col gap-0.5" {...stagger()}>
         <AnimatePresence>
-          {activeTasks.map((task) => (
-            <motion.div
+          {activeTasks.map((task, index) => (
+            <TaskRow
               key={task._id}
-              {...fadeSlideUp}
-              exit={taskComplete.exit}
-              transition={ease.normal}
-              layout
-              className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors duration-150 cursor-pointer"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
-            >
-              {/* Checkbox */}
-              <button
-                onClick={() => handleToggleTask(task)}
-                className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150 cursor-pointer"
-                style={{
-                  border: '1.5px solid var(--border)',
-                  backgroundColor: 'transparent',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--accent)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border)'
-                }}
-              />
-              {/* Content */}
-              <div className="flex flex-1 flex-col gap-0.5">
-                <span className="text-[15px] font-medium" style={{ color: 'var(--text-primary)' }}>
-                  {task.title}
-                </span>
-                {task.dueDate && (
-                  <span className="text-xs" style={{ color: 'var(--text-faint)' }}>
-                    {formatDate(task.dueDate, 'MMM d')}
-                  </span>
-                )}
-              </div>
-            </motion.div>
+              task={task}
+              onToggle={handleToggleTask}
+              onOpenDetail={(id) => setDetailTaskId(id)}
+              isSelected={selectedIndex === index}
+              isDetailOpen={detailTaskId === task._id}
+              subTaskCount={getSubTaskCount(task._id)}
+              labels={getLabelsForTask(task)}
+              onTitleChange={handleTitleChange}
+            />
           ))}
         </AnimatePresence>
-        {activeTasks.length === 0 && (
+        {activeTasks.length === 0 && !isLoading && (
           <p className="py-8 text-center text-sm" style={{ color: 'var(--text-faint)' }}>
             {copy.list.emptyBlockPlaceholder}
           </p>
@@ -342,33 +360,17 @@ export default function InboxPage() {
                 className="flex flex-col gap-0.5 overflow-hidden"
               >
                 {doneTasks.map((task) => (
-                  <div
+                  <TaskRow
                     key={task._id}
-                    className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors duration-150 cursor-pointer"
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent'
-                    }}
-                  >
-                    <button
-                      onClick={() => handleToggleTask(task)}
-                      className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150 cursor-pointer"
-                      style={{
-                        backgroundColor: 'var(--accent)',
-                        border: 'none',
-                      }}
-                    >
-                      <Check size={12} strokeWidth={2.5} className="text-white" />
-                    </button>
-                    <span
-                      className="text-[15px] line-through"
-                      style={{ color: 'var(--text-faint)' }}
-                    >
-                      {task.title}
-                    </span>
-                  </div>
+                    task={task}
+                    onToggle={handleToggleTask}
+                    onOpenDetail={(id) => setDetailTaskId(id)}
+                    isSelected={false}
+                    isDetailOpen={detailTaskId === task._id}
+                    subTaskCount={getSubTaskCount(task._id)}
+                    labels={getLabelsForTask(task)}
+                    onTitleChange={handleTitleChange}
+                  />
                 ))}
               </motion.div>
             )}
