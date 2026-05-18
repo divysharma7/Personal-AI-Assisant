@@ -353,6 +353,7 @@ export default function InboxPage() {
               onTitleChange={handleTitleChange}
               onSchedule={() => setTimeBlockTaskId(task._id)}
               showScheduleIcon
+              draggable
             />
           ))}
         </AnimatePresence>

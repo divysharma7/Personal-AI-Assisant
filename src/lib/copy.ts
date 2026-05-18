@@ -389,4 +389,19 @@ export const copy = {
     placeholder: "New task",
     shortcutHint: "^N",
   },
+
+  // ───────── Folders ─────────
+  folders: {
+    createPlaceholder: "Folder name...",
+    contextMenu: {
+      rename: "Rename",
+      changeIcon: "Change icon",
+      moveToGroup: "Move to group...",
+      delete: "Delete",
+      newGroup: "New group...",
+    },
+    deleted: "Folder deleted",
+    undo: "Undo",
+    taskMoved: (folderName: string) => `Task moved to ${folderName}`,
+  },
 };

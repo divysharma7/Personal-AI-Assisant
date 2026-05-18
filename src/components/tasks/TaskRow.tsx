@@ -27,6 +27,7 @@ interface TaskRowProps {
   onTitleChange?: (id: string, title: string) => void
   onSchedule?: () => void
   showScheduleIcon?: boolean
+  draggable?: boolean
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -61,8 +62,10 @@ export default function TaskRow({
   onTitleChange,
   onSchedule,
   showScheduleIcon = false,
+  draggable = false,
 }: TaskRowProps) {
   const [isHovered, setIsHovered] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [editTitle, setEditTitle] = useState(task.title)
   const titleRef = useRef<HTMLInputElement>(null)
@@ -98,8 +101,20 @@ export default function TaskRow({
       {...fadeSlideUp}
       transition={ease.normal}
       layout
+      data-task-id={task._id}
+      draggable={draggable}
+      onDragStart={(e) => {
+        if (!draggable) return
+        const de = e as unknown as React.DragEvent
+        de.dataTransfer?.setData('text/plain', task._id)
+        de.dataTransfer?.setData('application/x-laif-task', task._id)
+        if (de.dataTransfer) de.dataTransfer.effectAllowed = 'move'
+        setIsDragging(true)
+      }}
+      onDragEnd={() => setIsDragging(false)}
       className="group flex items-center gap-2 rounded-lg px-3 py-2.5 transition-colors duration-150 cursor-pointer"
       style={{
+        opacity: isDragging ? 0.5 : 1,
         backgroundColor: isSelected
           ? 'var(--bg-selected)'
           : isHovered
