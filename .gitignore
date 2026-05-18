@@ -47,3 +47,9 @@ logo.zip
 logo/
 
 laifx-979bb-firebase-adminsdk-fbsvc-4ee3d80eca.json.claude/
+
+# Google OAuth credentials
+client_secret*.json
+*credentials*.json
+*.pem
+*.key
