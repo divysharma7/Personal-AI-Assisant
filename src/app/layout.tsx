@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import ThemeProvider from '@/contexts/ThemeContext'
-import QueryProvider from '@/shared/providers/QueryProvider'
+import Providers from './providers'
 import AppShell from '@/components/layout/AppShell'
 
 const inter = Inter({
@@ -24,11 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="dark" className={inter.variable}>
       <body>
-        <ThemeProvider>
-          <QueryProvider>
-            <AppShell>{children}</AppShell>
-          </QueryProvider>
-        </ThemeProvider>
+        <Providers>
+          <AppShell>{children}</AppShell>
+        </Providers>
       </body>
     </html>
   )
