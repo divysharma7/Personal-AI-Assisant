@@ -7,7 +7,7 @@ const TaskSchema = new Schema({
   notes: { type: mongoose.Schema.Types.Mixed, default: null },
   dueDate: Date,
   priority: { type: String, enum: ['low', 'medium', 'high', null], default: 'medium' },
-  status: { type: String, enum: ['todo', 'in-progress', 'done'], default: 'todo' },
+  status: { type: String, enum: ['backlog', 'todo', 'in-progress', 'done', 'dropped'], default: 'backlog' },
   color: { type: String, default: '#34d399' },
   umbrellas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Umbrella' }],
   comments: [{ text: { type: String, required: true }, createdAt: { type: Date, default: Date.now }, authorName: String, authorAvatar: String }],
@@ -19,6 +19,13 @@ const TaskSchema = new Schema({
   completedAt: { type: Date, default: null },
   listId: { type: String, default: null },
   createdBy: { type: String, default: null },
+  // Calendar & scheduling fields
+  scheduledStart: { type: Date, default: null },
+  scheduledEnd: { type: Date, default: null },
+  estimatedEffort: { type: Number, default: null },
+  actualEffort: { type: Number, default: 0 },
+  googleEventId: { type: String, default: null },
+  calendarSynced: { type: Boolean, default: false },
   // Nested task fields
   parentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Task', default: null },
   depth: { type: Number, default: 0 },

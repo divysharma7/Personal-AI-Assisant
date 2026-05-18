@@ -27,6 +27,7 @@
     "date-fns": "^3.3.1",
     "firebase-admin": "^13.7.0",
     "framer-motion": "^11.0.8",
+    "googleapis": "^171.4.0",
     "jose": "^5.2.3",
     "lucide-react": "^0.363.0",
     "mermaid": "^11.14.0",

@@ -25,6 +25,12 @@ export interface TaskRecord {
   comments?: { text: string; createdAt?: string; authorName?: string; authorAvatar?: string }[]
   repeat?: string | null
   completedAt?: string | null
+  scheduledStart?: string | null
+  scheduledEnd?: string | null
+  estimatedEffort?: number | null
+  actualEffort?: number
+  googleEventId?: string | null
+  calendarSynced?: boolean
   listId?: string | null
   createdBy?: string | null
   createdAt?: string

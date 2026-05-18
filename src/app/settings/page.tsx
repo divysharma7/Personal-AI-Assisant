@@ -19,7 +19,9 @@ import {
 import { copy } from '@/lib/copy'
 import { useTheme, type Theme } from '@/contexts/ThemeContext'
 import { useLabels } from '@/hooks/useLabels'
+import { useGoogleCalendar } from '@/hooks/useGoogleCalendar'
 import { fade, buttonPress, fadeSlideUp, ease } from '@/lib/motion'
+import GoogleCalendarSetup from '@/components/integrations/GoogleCalendarSetup'
 
 type SettingsTab = 'profile' | 'features' | 'subscriptions' | 'integrations' | 'notifications' | 'labels' | 'collaborators'
 
@@ -66,6 +68,7 @@ export default function SettingsPage() {
   const router = useRouter()
   const { theme, setTheme } = useTheme()
   const { labels, createLabel } = useLabels()
+  const { connected: googleConnected } = useGoogleCalendar()
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -75,6 +78,7 @@ export default function SettingsPage() {
   const [soundsEnabled, setSoundsEnabled] = useState(true)
   const [meetingNotesEnabled, setMeetingNotesEnabled] = useState(false)
   const [newLabelName, setNewLabelName] = useState('')
+  const [gcalSetupOpen, setGcalSetupOpen] = useState(false)
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -406,13 +410,17 @@ export default function SettingsPage() {
               <div className="grid grid-cols-2 gap-3">
                 {copy.settings.integrations.free.map((integration) => {
                   const Icon = INTEGRATION_ICONS[integration.name] || Layers
+                  const isGoogleCalendar = integration.name === 'Google Calendar'
+                  const isConnected = isGoogleCalendar && googleConnected
                   return (
                     <div
                       key={integration.name}
                       className="flex flex-col gap-2 rounded-xl p-4"
                       style={{
                         backgroundColor: 'var(--bg-pane-2)',
-                        border: '1px solid var(--border)',
+                        border: isConnected
+                          ? '1px solid rgba(52, 211, 153, 0.4)'
+                          : '1px solid var(--border)',
                       }}
                     >
                       <div className="flex items-center gap-2">
@@ -420,26 +428,50 @@ export default function SettingsPage() {
                         <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                           {integration.name}
                         </span>
+                        {isConnected && (
+                          <span
+                            className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
+                            style={{
+                              backgroundColor: 'rgba(52, 211, 153, 0.15)',
+                              color: '#34d399',
+                            }}
+                          >
+                            {copy.calendar.connectedBadge}
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
                         {integration.description}
                       </p>
                       <button
+                        onClick={() => {
+                          if (isGoogleCalendar) {
+                            setGcalSetupOpen(true)
+                          }
+                        }}
                         className="mt-1 self-start rounded-full px-3 py-1 text-xs font-medium transition-colors duration-150 cursor-pointer"
                         style={{
-                          backgroundColor: 'var(--bg-hover)',
-                          color: 'var(--text-muted)',
+                          backgroundColor: isConnected
+                            ? 'rgba(52, 211, 153, 0.15)'
+                            : 'var(--bg-hover)',
+                          color: isConnected ? '#34d399' : 'var(--text-muted)',
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = 'var(--accent)'
-                          e.currentTarget.style.color = '#FFFFFF'
+                          if (!isConnected) {
+                            e.currentTarget.style.backgroundColor = 'var(--accent)'
+                            e.currentTarget.style.color = '#FFFFFF'
+                          }
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-                          e.currentTarget.style.color = 'var(--text-muted)'
+                          if (!isConnected) {
+                            e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+                            e.currentTarget.style.color = 'var(--text-muted)'
+                          }
                         }}
                       >
-                        {copy.settings.integrations.connectCta}
+                        {isConnected
+                          ? copy.calendar.connectedBadge
+                          : copy.settings.integrations.connectCta}
                       </button>
                     </div>
                   )
@@ -656,6 +688,12 @@ export default function SettingsPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Google Calendar Setup Panel */}
+      <GoogleCalendarSetup
+        open={gcalSetupOpen}
+        onClose={() => setGcalSetupOpen(false)}
+      />
     </div>
   )
 }

@@ -13,6 +13,7 @@ import {
   Tag,
   ChevronDown,
   ChevronRight,
+  Clock,
 } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import { useTasks } from '@/hooks/useTasks'
@@ -23,6 +24,8 @@ import { playCompletionSound } from '@/lib/sounds'
 import { fadeSlideUp, taskComplete, collapse, buttonPress, stagger, ease } from '@/lib/motion'
 import TaskRow from '@/components/tasks/TaskRow'
 import VoiceCapture from '@/components/tasks/VoiceCapture'
+import TimeBlockPicker from '@/components/tasks/TimeBlockPicker'
+import { useGoogleCalendar } from '@/hooks/useGoogleCalendar'
 
 export default function InboxPage() {
   const [mounted, setMounted] = useState(false)
@@ -30,12 +33,14 @@ export default function InboxPage() {
 
   const { tasks, isLoading, createTask, updateTask, deleteTask, toggleComplete } = useTasks()
   const { labels, createLabel } = useLabels()
+  const { connected: googleConnected, syncTask } = useGoogleCalendar()
   const [tipDismissed, setTipDismissed] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskFocused, setNewTaskFocused] = useState(false)
   const [doneOpen, setDoneOpen] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null)
+  const [timeBlockTaskId, setTimeBlockTaskId] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Filter tasks
@@ -70,7 +75,7 @@ export default function InboxPage() {
     await createTask({
       title,
       priority: 'medium',
-      status: 'todo',
+      status: 'backlog',
     })
     setNewTaskTitle('')
     inputRef.current?.blur()
@@ -113,10 +118,31 @@ export default function InboxPage() {
       await createTask({
         title: text,
         priority: 'medium',
-        status: 'todo',
+        status: 'backlog',
       })
     },
     [createTask]
+  )
+
+  const handleTimeBlockSave = useCallback(
+    async (data: {
+      scheduledStart: string
+      scheduledEnd: string
+      estimatedEffort: number
+      syncToGoogle: boolean
+    }) => {
+      if (!timeBlockTaskId) return
+      await updateTask(timeBlockTaskId, {
+        scheduledStart: data.scheduledStart,
+        scheduledEnd: data.scheduledEnd,
+        estimatedEffort: data.estimatedEffort,
+      })
+      if (data.syncToGoogle && googleConnected) {
+        await syncTask(timeBlockTaskId)
+      }
+      setTimeBlockTaskId(null)
+    },
+    [timeBlockTaskId, updateTask, googleConnected, syncTask]
   )
 
   // Keyboard shortcuts
@@ -325,6 +351,8 @@ export default function InboxPage() {
               subTaskCount={getSubTaskCount(task._id)}
               labels={getLabelsForTask(task)}
               onTitleChange={handleTitleChange}
+              onSchedule={() => setTimeBlockTaskId(task._id)}
+              showScheduleIcon
             />
           ))}
         </AnimatePresence>
@@ -375,6 +403,20 @@ export default function InboxPage() {
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
+      )}
+
+      {/* Time Block Picker */}
+      {timeBlockTaskId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }} onClick={() => setTimeBlockTaskId(null)}>
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
+            <TimeBlockPicker
+              open={!!timeBlockTaskId}
+              onClose={() => setTimeBlockTaskId(null)}
+              onSave={handleTimeBlockSave}
+              googleConnected={googleConnected}
+            />
+          </div>
         </div>
       )}
     </div>

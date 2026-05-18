@@ -44,13 +44,14 @@ export default function TasksPage() {
   const filteredTasks = (() => {
     switch (activeFilter) {
       case 'forMe':
-        return tasks.filter((t) => t.status !== 'done')
+        return tasks.filter((t) => t.status !== 'done' && t.status !== 'dropped')
       case 'upcoming': {
         const now = new Date()
         const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
         return tasks.filter(
           (t) =>
             t.status !== 'done' &&
+            t.status !== 'dropped' &&
             t.dueDate &&
             new Date(t.dueDate) > now &&
             new Date(t.dueDate) <= thirtyDays
@@ -97,7 +98,7 @@ export default function TasksPage() {
     await createTask({
       title,
       priority: 'medium',
-      status: 'todo',
+      status: 'backlog',
     })
     setNewTaskTitle('')
   }, [newTaskTitle, createTask])
@@ -144,24 +145,32 @@ export default function TasksPage() {
     }
   })()
 
-  // Board columns
+  // 5-column Board
   const boardColumns = [
+    {
+      key: 'backlog',
+      label: copy.tasks.board.backlog,
+      tasks: tasks.filter((t) => t.status === 'backlog'),
+    },
     {
       key: 'todo',
       label: copy.tasks.board.todo,
-      tasks: filteredTasks.filter((t) => t.status === 'todo'),
+      tasks: tasks.filter((t) => t.status === 'todo'),
     },
     {
       key: 'in-progress',
       label: copy.tasks.board.inProgress,
-      tasks: filteredTasks.filter(
-        (t) => t.status === 'in-progress' || (t.labelIds && t.labelIds.some((l) => l === 'in-progress'))
-      ),
+      tasks: tasks.filter((t) => t.status === 'in-progress'),
     },
     {
       key: 'done',
       label: copy.tasks.board.done,
-      tasks: filteredTasks.filter((t) => t.status === 'done'),
+      tasks: tasks.filter((t) => t.status === 'done'),
+    },
+    {
+      key: 'dropped',
+      label: copy.tasks.board.dropped,
+      tasks: tasks.filter((t) => t.status === 'dropped'),
     },
   ]
 
@@ -347,12 +356,13 @@ export default function TasksPage() {
         </motion.div>
       )}
 
-      {/* ─── Board view ─── */}
+      {/* ─── Board view (5 columns) ─── */}
       {viewMode === 'Board' && (
         <motion.div
           {...fadeSlideUp}
           transition={ease.normal}
-          className="grid grid-cols-3 gap-4"
+          className="grid gap-3"
+          style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}
         >
           {boardColumns.map((col) => (
             <div
@@ -398,12 +408,20 @@ export default function TasksPage() {
                     <span
                       className="text-[13px] font-medium"
                       style={{
-                        color: task.status === 'done' ? 'var(--text-faint)' : 'var(--text-primary)',
+                        color: task.status === 'done' || task.status === 'dropped'
+                          ? 'var(--text-faint)'
+                          : 'var(--text-primary)',
                         textDecoration: task.status === 'done' ? 'line-through' : 'none',
                       }}
                     >
                       {task.title || 'Untitled'}
                     </span>
+                    {task.calendarSynced && (
+                      <span
+                        className="ml-1 inline-block h-1.5 w-1.5 rounded-full align-middle"
+                        style={{ backgroundColor: '#34d399' }}
+                      />
+                    )}
                   </div>
                 ))}
                 {col.tasks.length === 0 && (

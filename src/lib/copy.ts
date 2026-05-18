@@ -62,9 +62,11 @@ export const copy = {
     sortDefault: "Creation date",
     newTaskCta: "+ New task",
     board: {
+      backlog: "Backlog",
       todo: "To Do",
       inProgress: "In Progress",
       done: "Done",
+      dropped: "Dropped",
     },
     matrix: {
       urgentImportant: "Urgent + Important",
@@ -307,6 +309,50 @@ export const copy = {
     collaborators: {
       comingSoon: "Manage collaborators from individual lists",
     },
+  },
+
+  // ───────── Calendar Integration ─────────
+  calendar: {
+    setupTitle: "Google Calendar",
+    setupSteps: [
+      "Connect your Google account",
+      "Sign in and allow calendar access",
+      "Choose which calendar to use",
+      "Tasks will appear as events",
+    ],
+    connectCta: "Connect Google Calendar",
+    connectedLabel: "Connected to Google Calendar",
+    calendarLabel: "Calendar",
+    primaryCalendar: "Primary",
+    autoSyncLabel: "Auto-sync",
+    disconnectCta: "Disconnect",
+    disconnectWarning: "This will remove calendar sync for all tasks.",
+    syncSuccess: "Task synced to Google Calendar",
+    syncRemoved: "Task removed from Google Calendar",
+    syncError: "Failed to sync with Google Calendar",
+    connectedBadge: "Connected",
+  },
+  timeBlock: {
+    title: "Schedule time block",
+    dateLabel: "Date",
+    today: "Today",
+    tomorrow: "Tomorrow",
+    pickDate: "Pick date",
+    startTimeLabel: "Start time",
+    durationLabel: "Duration",
+    durations: ["15m", "30m", "45m", "1h", "1.5h", "2h", "3h", "4h"] as const,
+    syncCheckbox: "Sync to Google Calendar",
+    saveCta: "Save",
+    estimatedLabel: "Est",
+    unscheduledSection: "Unscheduled",
+    scheduledSection: "Scheduled",
+  },
+  status: {
+    backlog: "Backlog",
+    todo: "To Do",
+    inProgress: "In Progress",
+    done: "Done",
+    dropped: "Dropped",
   },
 
   // ───────── Auth ─────────

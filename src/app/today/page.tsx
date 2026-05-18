@@ -7,15 +7,19 @@ import {
   MoreVertical,
   Plus,
   ChevronDown,
+  Clock,
+  Calendar,
 } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import { useTasks } from '@/hooks/useTasks'
 import type { TaskRecord } from '@/hooks/useTasks'
 import { useLabels } from '@/hooks/useLabels'
+import { useGoogleCalendar } from '@/hooks/useGoogleCalendar'
 import { playCompletionSound } from '@/lib/sounds'
 import { fadeSlideUp, collapse, stagger, ease, buttonPress } from '@/lib/motion'
 import TaskRow from '@/components/tasks/TaskRow'
 import InfoBanner from '@/components/shared/InfoBanner'
+import TimeBlockPicker from '@/components/tasks/TimeBlockPicker'
 
 function startOfToday(): Date {
   const d = new Date()
@@ -55,34 +59,45 @@ function isTomorrow(dateStr: string): boolean {
   return d >= startOfTomorrow() && d <= endOfTomorrow()
 }
 
+function formatTimeSlot(start: string, end: string): string {
+  const fmt = (d: Date) =>
+    d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+  return `${fmt(new Date(start))} - ${fmt(new Date(end))}`
+}
+
 export default function TodayPage() {
   const { tasks, createTask, toggleComplete, updateTask } = useTasks()
   const { labels } = useLabels()
+  const { connected: googleConnected, syncTask } = useGoogleCalendar()
   const [tipDismissed, setTipDismissed] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskFocused, setNewTaskFocused] = useState(false)
   const [overdueOpen, setOverdueOpen] = useState(true)
   const [todayOpen, setTodayOpen] = useState(true)
   const [tomorrowOpen, setTomorrowOpen] = useState(true)
+  const [unscheduledOpen, setUnscheduledOpen] = useState(true)
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null)
+  const [timeBlockTaskId, setTimeBlockTaskId] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Filter tasks into groups
-  const incompleteTasks = tasks.filter((t) => t.status !== 'done' && t.dueDate)
+  const incompleteTasks = tasks.filter((t) => t.status !== 'done' && t.status !== 'dropped' && t.dueDate)
 
   const overdueTasks = incompleteTasks
     .filter((t) => isOverdue(t.dueDate!))
     .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
 
-  const todayTasks = incompleteTasks
-    .filter((t) => isToday(t.dueDate!))
-    .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
+  const todayTasksAll = incompleteTasks.filter((t) => isToday(t.dueDate!))
+  const scheduledToday = todayTasksAll
+    .filter((t) => t.scheduledStart)
+    .sort((a, b) => new Date(a.scheduledStart!).getTime() - new Date(b.scheduledStart!).getTime())
+  const unscheduledToday = todayTasksAll.filter((t) => !t.scheduledStart)
 
   const tomorrowTasks = incompleteTasks
     .filter((t) => isTomorrow(t.dueDate!))
     .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
 
-  const hasAnyTasks = overdueTasks.length > 0 || todayTasks.length > 0 || tomorrowTasks.length > 0
+  const hasAnyTasks = overdueTasks.length > 0 || todayTasksAll.length > 0 || tomorrowTasks.length > 0
 
   // Sub-task counts
   const getSubTaskCount = useCallback(
@@ -140,6 +155,27 @@ export default function TodayPage() {
     [updateTask]
   )
 
+  const handleTimeBlockSave = useCallback(
+    async (data: {
+      scheduledStart: string
+      scheduledEnd: string
+      estimatedEffort: number
+      syncToGoogle: boolean
+    }) => {
+      if (!timeBlockTaskId) return
+      await updateTask(timeBlockTaskId, {
+        scheduledStart: data.scheduledStart,
+        scheduledEnd: data.scheduledEnd,
+        estimatedEffort: data.estimatedEffort,
+      })
+      if (data.syncToGoogle && googleConnected) {
+        await syncTask(timeBlockTaskId)
+      }
+      setTimeBlockTaskId(null)
+    },
+    [timeBlockTaskId, updateTask, googleConnected, syncTask]
+  )
+
   // Expose detailTaskId for AppShell
   useEffect(() => {
     window.dispatchEvent(
@@ -147,12 +183,58 @@ export default function TodayPage() {
     )
   }, [detailTaskId])
 
+  const renderTaskWithSchedule = (task: TaskRecord) => (
+    <div key={task._id} className="relative">
+      {/* Schedule info */}
+      {task.scheduledStart && task.scheduledEnd && (
+        <div className="mb-0.5 flex items-center gap-2 pl-12">
+          <Clock size={10} strokeWidth={1.5} style={{ color: 'var(--accent)' }} />
+          <span className="text-[11px] font-medium" style={{ color: 'var(--accent)' }}>
+            {formatTimeSlot(task.scheduledStart, task.scheduledEnd)}
+          </span>
+          {task.estimatedEffort && (
+            <span
+              className="rounded px-1 py-0.5 text-[10px] font-medium"
+              style={{ backgroundColor: 'var(--bg-hover)', color: 'var(--text-faint)' }}
+            >
+              {copy.timeBlock.estimatedLabel}: {task.estimatedEffort}h
+            </span>
+          )}
+          {task.calendarSynced && (
+            <span
+              className="h-2 w-2 rounded-full"
+              style={{ backgroundColor: '#34d399' }}
+              title={copy.calendar.connectedLabel}
+            />
+          )}
+        </div>
+      )}
+      <div className="flex items-center">
+        <div className="flex-1">
+          <TaskRow
+            task={task}
+            onToggle={handleToggleTask}
+            onOpenDetail={handleOpenDetail}
+            isSelected={false}
+            isDetailOpen={detailTaskId === task._id}
+            subTaskCount={getSubTaskCount(task._id)}
+            labels={getLabelsForTask(task)}
+            onTitleChange={handleTitleChange}
+            onSchedule={() => setTimeBlockTaskId(task._id)}
+            showScheduleIcon
+          />
+        </div>
+      </div>
+    </div>
+  )
+
   const renderGroup = (
     label: string,
     groupTasks: TaskRecord[],
     open: boolean,
     setOpen: (v: boolean) => void,
-    accentColor?: string
+    accentColor?: string,
+    withScheduleInfo = false
   ) => (
     <div className="mb-4">
       <button
@@ -187,19 +269,25 @@ export default function TodayPage() {
             className="flex flex-col gap-0.5 overflow-hidden"
           >
             <motion.div {...stagger()}>
-              {groupTasks.map((task) => (
-                <TaskRow
-                  key={task._id}
-                  task={task}
-                  onToggle={handleToggleTask}
-                  onOpenDetail={handleOpenDetail}
-                  isSelected={false}
-                  isDetailOpen={detailTaskId === task._id}
-                  subTaskCount={getSubTaskCount(task._id)}
-                  labels={getLabelsForTask(task)}
-                  onTitleChange={handleTitleChange}
-                />
-              ))}
+              {groupTasks.map((task) =>
+                withScheduleInfo ? (
+                  renderTaskWithSchedule(task)
+                ) : (
+                  <TaskRow
+                    key={task._id}
+                    task={task}
+                    onToggle={handleToggleTask}
+                    onOpenDetail={handleOpenDetail}
+                    isSelected={false}
+                    isDetailOpen={detailTaskId === task._id}
+                    subTaskCount={getSubTaskCount(task._id)}
+                    labels={getLabelsForTask(task)}
+                    onTitleChange={handleTitleChange}
+                    onSchedule={() => setTimeBlockTaskId(task._id)}
+                    showScheduleIcon
+                  />
+                )
+              )}
               {groupTasks.length === 0 && (
                 <p className="px-4 py-2 text-xs" style={{ color: 'var(--text-faint)' }}>
                   No tasks
@@ -330,17 +418,56 @@ export default function TodayPage() {
               overdueTasks,
               overdueOpen,
               setOverdueOpen,
-              'var(--priority-high)'
+              'var(--priority-high)',
+              true
             )}
-          {renderGroup(copy.today.groups.today, todayTasks, todayOpen, setTodayOpen)}
+          {scheduledToday.length > 0 &&
+            renderGroup(
+              copy.timeBlock.scheduledSection,
+              scheduledToday,
+              todayOpen,
+              setTodayOpen,
+              undefined,
+              true
+            )}
+          {unscheduledToday.length > 0 &&
+            renderGroup(
+              copy.timeBlock.unscheduledSection,
+              unscheduledToday,
+              unscheduledOpen,
+              setUnscheduledOpen
+            )}
+          {scheduledToday.length === 0 && unscheduledToday.length === 0 && (
+            renderGroup(copy.today.groups.today, [], todayOpen, setTodayOpen)
+          )}
+          {scheduledToday.length === 0 && unscheduledToday.length === 0 ||
+            (todayTasksAll.length > 0 && scheduledToday.length === 0 && unscheduledToday.length === 0 &&
+              renderGroup(copy.today.groups.today, todayTasksAll, todayOpen, setTodayOpen, undefined, true)
+            )}
           {tomorrowTasks.length > 0 &&
             renderGroup(
               copy.today.groups.tomorrow,
               tomorrowTasks,
               tomorrowOpen,
-              setTomorrowOpen
+              setTomorrowOpen,
+              undefined,
+              true
             )}
         </>
+      )}
+
+      {/* Time Block Picker */}
+      {timeBlockTaskId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }} onClick={() => setTimeBlockTaskId(null)}>
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
+            <TimeBlockPicker
+              open={!!timeBlockTaskId}
+              onClose={() => setTimeBlockTaskId(null)}
+              onSave={handleTimeBlockSave}
+              googleConnected={googleConnected}
+            />
+          </div>
+        </div>
       )}
     </div>
   )

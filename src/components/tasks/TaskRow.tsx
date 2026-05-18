@@ -10,6 +10,7 @@ import {
   AlignJustify,
   Calendar,
   Tag,
+  Clock,
 } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import { buttonPress, checkBounce, fadeSlideUp, ease } from '@/lib/motion'
@@ -24,6 +25,8 @@ interface TaskRowProps {
   subTaskCount?: { completed: number; total: number }
   labels?: { _id: string; name: string }[]
   onTitleChange?: (id: string, title: string) => void
+  onSchedule?: () => void
+  showScheduleIcon?: boolean
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -56,6 +59,8 @@ export default function TaskRow({
   subTaskCount,
   labels = [],
   onTitleChange,
+  onSchedule,
+  showScheduleIcon = false,
 }: TaskRowProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [isEditingTitle, setIsEditingTitle] = useState(false)
@@ -249,6 +254,41 @@ export default function TaskRow({
 
       {/* Right cluster */}
       <div className="flex flex-shrink-0 items-center gap-2">
+        {/* Calendar sync indicator */}
+        {task.calendarSynced && (
+          <span
+            className="h-2 w-2 rounded-full flex-shrink-0"
+            style={{ backgroundColor: '#34d399' }}
+            title="Synced to Google Calendar"
+          />
+        )}
+
+        {/* Schedule icon */}
+        {showScheduleIcon && onSchedule && (
+          <motion.button
+            {...buttonPress}
+            onClick={(e) => {
+              e.stopPropagation()
+              onSchedule()
+            }}
+            className="flex h-6 w-6 items-center justify-center rounded-md transition-all duration-150 cursor-pointer"
+            style={{
+              color: isHovered ? 'var(--text-muted)' : 'transparent',
+              backgroundColor: 'transparent',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+              e.currentTarget.style.color = 'var(--accent)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+              e.currentTarget.style.color = isHovered ? 'var(--text-muted)' : 'transparent'
+            }}
+          >
+            <Clock size={14} strokeWidth={1.5} />
+          </motion.button>
+        )}
+
         {/* Assignee avatar placeholder */}
         {task.assigneeId && (
           <div
