@@ -134,12 +134,13 @@ export default function BlockContextMenu({
           ref={menuRef}
           {...fadeSlideDown}
           transition={ease.fast}
-          className="fixed z-[100] w-52 rounded-xl p-1.5 shadow-lg"
+          className="fixed z-[100] w-52 rounded-xl p-1.5"
           style={{
             left: data.x,
             top: data.y,
             backgroundColor: 'var(--bg-pane-2)',
             border: '1px solid var(--border)',
+            boxShadow: 'var(--shadow-elevated)',
           }}
         >
           {MENU_ITEMS.map((item, i) => {

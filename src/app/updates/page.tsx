@@ -39,7 +39,7 @@ export default function UpdatesPage() {
     <div className="flex flex-col px-6 py-5">
       {/* Title */}
       <h1
-        className="mb-5 text-[32px] font-bold"
+        className="mb-5 text-[32px]"
         style={{ color: 'var(--text-primary)' }}
       >
         {copy.updates.title}

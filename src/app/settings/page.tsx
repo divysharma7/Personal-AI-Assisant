@@ -177,7 +177,7 @@ export default function SettingsPage() {
 
       {/* Title */}
       <h1
-        className="mb-6 text-[32px] font-bold"
+        className="mb-6 text-[32px]"
         style={{ color: 'var(--text-primary)' }}
       >
         {copy.settings.title}
@@ -239,6 +239,7 @@ export default function SettingsPage() {
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
+                    autoComplete="given-name"
                     className="input-field"
                   />
                 </div>
@@ -250,6 +251,7 @@ export default function SettingsPage() {
                     type="text"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
+                    autoComplete="family-name"
                     className="input-field"
                   />
                 </div>
@@ -343,6 +345,9 @@ export default function SettingsPage() {
                 </h2>
                 <label className="flex items-center gap-3 cursor-pointer">
                   <button
+                    role="switch"
+                    aria-checked={soundsEnabled}
+                    aria-label="Completion sounds"
                     onClick={() => setSoundsEnabled(!soundsEnabled)}
                     className="relative h-5 w-9 rounded-full transition-colors duration-200"
                     style={{
@@ -390,6 +395,9 @@ export default function SettingsPage() {
                 </h2>
                 <label className="flex items-center gap-3 cursor-pointer">
                   <button
+                    role="switch"
+                    aria-checked={meetingNotesEnabled}
+                    aria-label="Meeting notes"
                     onClick={() => setMeetingNotesEnabled(!meetingNotesEnabled)}
                     className="relative h-5 w-9 rounded-full transition-colors duration-200"
                     style={{
@@ -416,6 +424,7 @@ export default function SettingsPage() {
                 </h2>
 
                 {/* Toast notification */}
+                <div aria-live="polite" aria-atomic="true">
                 <AnimatePresence>
                   {focusSettingsToast && (
                     <motion.div
@@ -433,6 +442,7 @@ export default function SettingsPage() {
                     </motion.div>
                   )}
                 </AnimatePresence>
+                </div>
 
                 {/* Default durations */}
                 <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>
@@ -460,7 +470,8 @@ export default function SettingsPage() {
                               showFocusToast()
                             }
                           }}
-                          className="w-16 rounded-lg px-2 py-1.5 text-center text-sm outline-none"
+                          aria-label={item.label}
+                          className="w-16 rounded-lg px-2 py-1.5 text-center text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
                           style={{
                             backgroundColor: 'var(--bg-pane-2)',
                             border: '1px solid var(--border)',
@@ -505,6 +516,9 @@ export default function SettingsPage() {
                 <div className="mb-5 flex items-center justify-between">
                   <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Sound on complete</span>
                   <button
+                    role="switch"
+                    aria-checked={focusSoundOnComplete}
+                    aria-label="Sound on complete"
                     onClick={() => { setFocusSoundOnComplete(!focusSoundOnComplete); showFocusToast() }}
                     className="relative h-5 w-9 rounded-full transition-colors duration-200 cursor-pointer"
                     style={{
@@ -527,6 +541,9 @@ export default function SettingsPage() {
                 <div className="mb-5 flex items-center justify-between">
                   <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Keyboard shortcuts</span>
                   <button
+                    role="switch"
+                    aria-checked={focusKeyboardShortcuts}
+                    aria-label="Keyboard shortcuts"
                     onClick={() => { setFocusKeyboardShortcuts(!focusKeyboardShortcuts); showFocusToast() }}
                     className="relative h-5 w-9 rounded-full transition-colors duration-200 cursor-pointer"
                     style={{
@@ -549,6 +566,9 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Show active session</span>
                   <button
+                    role="switch"
+                    aria-checked={focusShowActiveSession}
+                    aria-label="Show active session in sidebar"
                     onClick={() => { setFocusShowActiveSession(!focusShowActiveSession); showFocusToast() }}
                     className="relative h-5 w-9 rounded-full transition-colors duration-200 cursor-pointer"
                     style={{
@@ -572,6 +592,7 @@ export default function SettingsPage() {
                 </h2>
 
                 {/* Toast notification */}
+                <div aria-live="polite" aria-atomic="true">
                 <AnimatePresence>
                   {calSettingsToast && (
                     <motion.div
@@ -589,6 +610,7 @@ export default function SettingsPage() {
                     </motion.div>
                   )}
                 </AnimatePresence>
+                </div>
 
                 {/* View Preferences */}
                 <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>
@@ -601,7 +623,7 @@ export default function SettingsPage() {
                     <select
                       value={calDefaultView}
                       onChange={(e) => { setCalDefaultView(e.target.value as 'day' | 'week' | 'month'); showCalToast() }}
-                      className="rounded-lg px-2 py-1.5 text-sm outline-none cursor-pointer"
+                      className="rounded-lg px-2 py-1.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 cursor-pointer"
                       style={{
                         backgroundColor: 'var(--bg-pane-2)',
                         border: '1px solid var(--border)',
@@ -620,7 +642,7 @@ export default function SettingsPage() {
                     <select
                       value={calWeekStartsOn}
                       onChange={(e) => { setCalWeekStartsOn(e.target.value as 'monday' | 'sunday' | 'saturday'); showCalToast() }}
-                      className="rounded-lg px-2 py-1.5 text-sm outline-none cursor-pointer"
+                      className="rounded-lg px-2 py-1.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 cursor-pointer"
                       style={{
                         backgroundColor: 'var(--bg-pane-2)',
                         border: '1px solid var(--border)',
@@ -657,6 +679,9 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Show current time</span>
                     <button
+                      role="switch"
+                      aria-checked={calShowCurrentTime}
+                      aria-label="Show current time"
                       onClick={() => { setCalShowCurrentTime(!calShowCurrentTime); showCalToast() }}
                       className="relative h-5 w-9 rounded-full transition-colors duration-200 cursor-pointer"
                       style={{ backgroundColor: calShowCurrentTime ? 'var(--accent)' : 'var(--border)' }}
@@ -685,7 +710,8 @@ export default function SettingsPage() {
                         const v = parseInt(e.target.value, 10)
                         if (!isNaN(v) && v >= 0 && v <= 23) { setCalHideHoursFrom(v); showCalToast() }
                       }}
-                      className="w-16 rounded-lg px-2 py-1.5 text-center text-sm outline-none"
+                      aria-label="Hide hours from"
+                      className="w-16 rounded-lg px-2 py-1.5 text-center text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
                       style={{
                         backgroundColor: 'var(--bg-pane-2)',
                         border: '1px solid var(--border)',
@@ -702,7 +728,8 @@ export default function SettingsPage() {
                         const v = parseInt(e.target.value, 10)
                         if (!isNaN(v) && v >= 0 && v <= 23) { setCalHideHoursTo(v); showCalToast() }
                       }}
-                      className="w-16 rounded-lg px-2 py-1.5 text-center text-sm outline-none"
+                      aria-label="Hide hours to"
+                      className="w-16 rounded-lg px-2 py-1.5 text-center text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
                       style={{
                         backgroundColor: 'var(--bg-pane-2)',
                         border: '1px solid var(--border)',
@@ -752,7 +779,8 @@ export default function SettingsPage() {
                           const v = parseInt(e.target.value, 10)
                           if (!isNaN(v) && v > 0 && v <= 24) { setCalDailyCapacity(v); showCalToast() }
                         }}
-                        className="w-16 rounded-lg px-2 py-1.5 text-center text-sm outline-none"
+                        aria-label="Daily capacity"
+                        className="w-16 rounded-lg px-2 py-1.5 text-center text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
                         style={{
                           backgroundColor: 'var(--bg-pane-2)',
                           border: '1px solid var(--border)',
@@ -766,6 +794,9 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Show capacity bar</span>
                     <button
+                      role="switch"
+                      aria-checked={calShowCapacityBar}
+                      aria-label="Show capacity bar"
                       onClick={() => { setCalShowCapacityBar(!calShowCapacityBar); showCalToast() }}
                       className="relative h-5 w-9 rounded-full transition-colors duration-200 cursor-pointer"
                       style={{ backgroundColor: calShowCapacityBar ? 'var(--accent)' : 'var(--border)' }}
@@ -780,6 +811,9 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Show warnings</span>
                     <button
+                      role="switch"
+                      aria-checked={calShowWarnings}
+                      aria-label="Show warnings"
                       onClick={() => { setCalShowWarnings(!calShowWarnings); showCalToast() }}
                       className="relative h-5 w-9 rounded-full transition-colors duration-200 cursor-pointer"
                       style={{ backgroundColor: calShowWarnings ? 'var(--accent)' : 'var(--border)' }}
@@ -800,6 +834,9 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Google Calendar</span>
                     <button
+                      role="switch"
+                      aria-checked={calShowGoogleOverlay}
+                      aria-label="Google Calendar overlay"
                       onClick={() => { setCalShowGoogleOverlay(!calShowGoogleOverlay); showCalToast() }}
                       className="relative h-5 w-9 rounded-full transition-colors duration-200 cursor-pointer"
                       style={{ backgroundColor: calShowGoogleOverlay ? 'var(--accent)' : 'var(--border)' }}
@@ -814,6 +851,9 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Habits</span>
                     <button
+                      role="switch"
+                      aria-checked={calShowHabitsOverlay}
+                      aria-label="Habits overlay"
                       onClick={() => { setCalShowHabitsOverlay(!calShowHabitsOverlay); showCalToast() }}
                       className="relative h-5 w-9 rounded-full transition-colors duration-200 cursor-pointer"
                       style={{ backgroundColor: calShowHabitsOverlay ? 'var(--accent)' : 'var(--border)' }}
@@ -828,6 +868,9 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Focus sessions</span>
                     <button
+                      role="switch"
+                      aria-checked={calShowFocusOverlay}
+                      aria-label="Focus sessions overlay"
                       onClick={() => { setCalShowFocusOverlay(!calShowFocusOverlay); showCalToast() }}
                       className="relative h-5 w-9 rounded-full transition-colors duration-200 cursor-pointer"
                       style={{ backgroundColor: calShowFocusOverlay ? 'var(--accent)' : 'var(--border)' }}
@@ -1059,6 +1102,7 @@ export default function SettingsPage() {
                     if (e.key === 'Enter') handleCreateLabel()
                   }}
                   placeholder={copy.settings.labels.createPlaceholder}
+                  aria-label="New label name"
                   className="input-field flex-1"
                 />
                 <motion.button
@@ -1085,6 +1129,7 @@ export default function SettingsPage() {
                     </span>
                     <button
                       onClick={() => handleDeleteLabel(label._id)}
+                      aria-label={`Delete ${label.name}`}
                       className="flex h-6 w-6 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
                       style={{ color: 'var(--text-faint)' }}
                       onMouseEnter={(e) => {
@@ -1126,13 +1171,18 @@ export default function SettingsPage() {
           <motion.div
             {...fade}
             transition={ease.fast}
+            role="presentation"
             className="fixed inset-0 z-50 flex items-center justify-center"
             style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
             onClick={() => setShowDeleteModal(false)}
+            onKeyDown={(e) => { if (e.key === 'Escape') setShowDeleteModal(false) }}
           >
             <motion.div
               {...fadeSlideUp}
               transition={ease.normal}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Delete account confirmation"
               className="w-full max-w-md rounded-2xl p-6"
               style={{
                 backgroundColor: 'var(--bg-pane)',
@@ -1145,6 +1195,7 @@ export default function SettingsPage() {
                   {copy.settings.profile.deleteAccount}
                 </h3>
                 <button
+                  aria-label="Close"
                   onClick={() => setShowDeleteModal(false)}
                   className="flex h-7 w-7 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
                   style={{ color: 'var(--text-faint)' }}

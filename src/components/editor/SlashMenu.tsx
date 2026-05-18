@@ -108,12 +108,13 @@ export default function SlashMenu({
       {...fadeSlideDown}
       transition={ease.fast}
       ref={menuRef}
-      className="fixed z-50 w-60 max-h-80 overflow-y-auto rounded-xl p-1.5 shadow-lg"
+      className="fixed z-50 w-60 max-h-80 overflow-y-auto rounded-xl p-1.5"
       style={{
         top: position.top,
         left: position.left,
         backgroundColor: 'var(--bg-pane-2)',
         border: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-elevated)',
       }}
     >
       {filtered.map((item, index) => (

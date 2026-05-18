@@ -76,10 +76,11 @@ export default function ListOverflowMenu({
           {...fadeSlideDown}
           transition={ease.fast}
           ref={ref}
-          className="absolute right-0 top-full z-20 mt-2 w-56 rounded-xl p-1.5 shadow-lg"
+          className="absolute right-0 top-full z-20 mt-2 w-56 rounded-xl p-1.5"
           style={{
             backgroundColor: 'var(--bg-pane-2)',
             border: '1px solid var(--border)',
+            boxShadow: 'var(--shadow-elevated)',
           }}
         >
           {menuItems.map((item) => (

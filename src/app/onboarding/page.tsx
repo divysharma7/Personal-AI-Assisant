@@ -122,7 +122,8 @@ export default function OnboardingPage() {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && name.trim()) setStep(2)
                   }}
-                  className="w-full rounded-xl px-4 py-3 pr-24 text-sm text-white outline-none"
+                  aria-label="Your name"
+                  className="w-full rounded-xl px-4 py-3 pr-24 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
                   style={{
                     backgroundColor: 'rgba(255,255,255,0.08)',
                     border: '1px solid rgba(255,255,255,0.12)',
@@ -132,6 +133,7 @@ export default function OnboardingPage() {
                 {name && (
                   <button
                     onClick={() => setName('')}
+                    aria-label="Clear name"
                     className="absolute right-20 top-1/2 -translate-y-1/2 cursor-pointer text-white/40 transition-colors duration-150 hover:text-white/70"
                   >
                     <X size={14} />

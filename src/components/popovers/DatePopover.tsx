@@ -153,10 +153,11 @@ export default function DatePopover({
       {...fadeSlideDown}
       transition={ease.fast}
       ref={popoverRef}
-      className="w-[280px] rounded-xl p-3 shadow-lg"
+      className="w-[280px] rounded-xl p-3"
       style={{
         backgroundColor: 'var(--bg-pane-2)',
         border: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-elevated)',
       }}
     >
       {/* Quick options */}

@@ -336,6 +336,7 @@ export default function TodayPage() {
         <div className="flex items-center gap-2">
           <motion.button
             {...buttonPress}
+            aria-label="Filter"
             className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
             onMouseEnter={(e) => {
@@ -349,6 +350,7 @@ export default function TodayPage() {
           </motion.button>
           <motion.button
             {...buttonPress}
+            aria-label="More options"
             className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
             onMouseEnter={(e) => {
@@ -366,7 +368,7 @@ export default function TodayPage() {
       {/* Title + View on calendar link */}
       <div className="mb-5 flex items-baseline gap-3">
         <h1
-          className="text-[32px] font-bold"
+          className="text-[32px]"
           style={{ color: 'var(--text-primary)' }}
         >
           {copy.today.title}
@@ -438,6 +440,7 @@ export default function TodayPage() {
         style={{
           backgroundColor: 'var(--bg-pane-2)',
           border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-card)',
         }}
       >
         <div className="flex items-center gap-3">
@@ -462,7 +465,8 @@ export default function TodayPage() {
               }
             }}
             placeholder={copy.newTask.placeholder}
-            className="flex-1 bg-transparent text-sm outline-none"
+            aria-label="New task title"
+            className="flex-1 bg-transparent text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
             style={{ color: 'var(--text-primary)' }}
           />
           {!newTaskFocused && !newTaskTitle && (
@@ -586,6 +590,7 @@ export default function TodayPage() {
                       <motion.button
                         {...buttonPress}
                         onClick={() => handleToggleHabit(habit)}
+                        aria-label={`Toggle ${habit.name}`}
                         className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150 cursor-pointer"
                         style={{
                           border: isChecked ? 'none' : '1.5px solid var(--accent)',
@@ -671,8 +676,8 @@ export default function TodayPage() {
 
       {/* Time Block Picker */}
       {timeBlockTaskId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }} onClick={() => setTimeBlockTaskId(null)}>
-          <div className="relative" onClick={(e) => e.stopPropagation()}>
+        <div role="presentation" className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }} onClick={() => setTimeBlockTaskId(null)} onKeyDown={(e) => { if (e.key === 'Escape') setTimeBlockTaskId(null) }}>
+          <div role="dialog" aria-modal="true" aria-label="Schedule time block" className="relative" onClick={(e) => e.stopPropagation()}>
             <TimeBlockPicker
               open={!!timeBlockTaskId}
               onClose={() => setTimeBlockTaskId(null)}

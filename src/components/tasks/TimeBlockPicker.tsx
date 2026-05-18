@@ -102,10 +102,11 @@ export default function TimeBlockPicker({
           ref={popoverRef}
           {...fadeSlideDown}
           transition={ease.normal}
-          className="absolute right-0 top-full z-50 mt-1 w-72 rounded-xl p-4 shadow-lg"
+          className="absolute right-0 top-full z-50 mt-1 w-72 rounded-xl p-4"
           style={{
             backgroundColor: 'var(--bg-pane)',
             border: '1px solid var(--border)',
+            boxShadow: 'var(--shadow-modal)',
           }}
           onClick={(e) => e.stopPropagation()}
         >

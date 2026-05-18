@@ -161,7 +161,7 @@ export default function MatrixPage() {
         className="flex items-center justify-between"
       >
         <h1
-          className="text-[32px] font-bold leading-tight"
+          className="text-[32px] leading-tight"
           style={{ color: 'var(--text-primary)' }}
         >
           {copy.matrix.title}
@@ -169,6 +169,7 @@ export default function MatrixPage() {
         <div className="flex items-center gap-2">
           <motion.button
             {...buttonPress}
+            aria-label="Filter"
             className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
             onMouseEnter={(e) => {
@@ -182,6 +183,7 @@ export default function MatrixPage() {
           </motion.button>
           <motion.button
             {...buttonPress}
+            aria-label="More options"
             className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
             onMouseEnter={(e) => {

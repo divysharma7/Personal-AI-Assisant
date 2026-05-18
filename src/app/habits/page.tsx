@@ -102,6 +102,7 @@ export default function HabitsPage() {
         <div className="flex items-center gap-2">
           <motion.button
             {...buttonPress}
+            aria-label="Filter"
             className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--bg-hover)' }}
@@ -111,6 +112,7 @@ export default function HabitsPage() {
           </motion.button>
           <motion.button
             {...buttonPress}
+            aria-label="More options"
             className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--bg-hover)' }}
@@ -123,7 +125,7 @@ export default function HabitsPage() {
 
       {/* Title */}
       <h1
-        className="mb-5 text-[32px] font-bold"
+        className="mb-5 text-[32px]"
         style={{ color: 'var(--text-primary)' }}
       >
         {HABITS_COPY.title}
@@ -196,6 +198,7 @@ export default function HabitsPage() {
               style={{
                 backgroundColor: 'var(--bg-pane-2)',
                 border: '1px solid var(--border)',
+                boxShadow: 'var(--shadow-card)',
               }}
             >
               {/* Icon */}

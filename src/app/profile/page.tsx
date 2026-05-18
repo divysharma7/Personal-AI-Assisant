@@ -171,7 +171,7 @@ export default function ProfilePage() {
     <div className="flex flex-col px-6 py-5">
       {/* Title */}
       <h1
-        className="mb-6 text-[32px] font-bold"
+        className="mb-6 text-[32px]"
         style={{ color: 'var(--text-primary)' }}
       >
         {COPY.title}
@@ -221,9 +221,10 @@ export default function ProfilePage() {
                     style={{
                       backgroundColor: 'var(--bg-pane-2)',
                       border: '1px solid var(--border)',
+                      boxShadow: 'var(--shadow-card)',
                     }}
                   >
-                    <p className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>
+                    <p className="stat-number text-2xl font-bold" data-stat style={{ color: 'var(--accent)' }}>
                       {stat.value}
                     </p>
                     <p className="mt-1 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>

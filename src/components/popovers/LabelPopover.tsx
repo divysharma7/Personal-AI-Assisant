@@ -76,10 +76,11 @@ export default function LabelPopover({
       {...fadeSlideDown}
       transition={ease.fast}
       ref={popoverRef}
-      className="w-[240px] rounded-xl shadow-lg"
+      className="w-[240px] rounded-xl"
       style={{
         backgroundColor: 'var(--bg-pane-2)',
         border: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-elevated)',
       }}
     >
       {/* Search input */}

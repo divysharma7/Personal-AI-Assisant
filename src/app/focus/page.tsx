@@ -418,11 +418,15 @@ export default function FocusPage() {
           <motion.div
             {...fade}
             transition={ease.fast}
+            role="presentation"
             className="fixed inset-0 z-50 flex items-center justify-center"
             style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
             onClick={() => setShowShortcuts(false)}
           >
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Keyboard shortcuts"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -442,6 +446,7 @@ export default function FocusPage() {
                 </h3>
                 <button
                   onClick={() => setShowShortcuts(false)}
+                  aria-label="Close"
                   className="cursor-pointer"
                   style={{ color: 'rgba(255, 255, 255, 0.4)' }}
                 >

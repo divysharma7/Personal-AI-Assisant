@@ -75,13 +75,14 @@ export default function SelectionToolbar({ editor }: SelectionToolbarProps) {
   return (
     <div
       ref={toolbarRef}
-      className="fixed z-50 flex items-center rounded-lg shadow-lg"
+      className="fixed z-50 flex items-center rounded-lg"
       style={{
         top: position.top,
         left: position.left,
         transform: 'translateX(-50%)',
         backgroundColor: 'var(--bg-pane-2)',
         border: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-elevated)',
       }}
     >
       {linkMode ? (

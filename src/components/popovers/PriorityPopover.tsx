@@ -60,10 +60,11 @@ export default function PriorityPopover({
       {...fadeSlideDown}
       transition={ease.fast}
       ref={popoverRef}
-      className="w-[160px] rounded-xl p-1.5 shadow-lg"
+      className="w-[160px] rounded-xl p-1.5"
       style={{
         backgroundColor: 'var(--bg-pane-2)',
         border: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-elevated)',
       }}
     >
       {PRIORITIES.map((p) => (

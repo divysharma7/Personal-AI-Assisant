@@ -79,10 +79,11 @@ export default function TaskOverflowMenu({
       {...fadeSlideDown}
       transition={ease.fast}
       ref={menuRef}
-      className="absolute right-0 top-full z-50 mt-1 w-[200px] rounded-xl p-1.5 shadow-lg"
+      className="absolute right-0 top-full z-50 mt-1 w-[200px] rounded-xl p-1.5"
       style={{
         backgroundColor: 'var(--bg-pane-2)',
         border: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-elevated)',
       }}
     >
       {items.map((item) => (

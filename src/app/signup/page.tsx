@@ -90,6 +90,8 @@ export default function SignupPage() {
             <motion.div
               {...fadeSlideUp}
               transition={ease.fast}
+              role="alert"
+              aria-live="assertive"
               className="mb-4 rounded-xl px-4 py-3 text-sm"
               style={{
                 backgroundColor: 'rgba(255, 77, 61, 0.1)',
@@ -109,7 +111,8 @@ export default function SignupPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={copy.auth.signup.namePlaceholder}
-            className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-colors duration-150"
+            aria-label="Full name"
+            className="w-full rounded-xl px-4 py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 transition-colors duration-150"
             style={{
               backgroundColor: '#1E1E26',
               border: '1px solid #2A2A33',
@@ -123,7 +126,8 @@ export default function SignupPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder={copy.auth.signup.emailPlaceholder}
-            className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-colors duration-150"
+            aria-label="Email"
+            className="w-full rounded-xl px-4 py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 transition-colors duration-150"
             style={{
               backgroundColor: '#1E1E26',
               border: '1px solid #2A2A33',
@@ -138,7 +142,8 @@ export default function SignupPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder={copy.auth.signup.passwordPlaceholder}
-              className="w-full rounded-xl px-4 py-3 pr-11 text-sm outline-none transition-colors duration-150"
+              aria-label="Password"
+              className="w-full rounded-xl px-4 py-3 pr-11 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 transition-colors duration-150"
               style={{
                 backgroundColor: '#1E1E26',
                 border: '1px solid #2A2A33',
@@ -149,6 +154,7 @@ export default function SignupPage() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
               className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
               style={{ color: '#6B6B75' }}
             >

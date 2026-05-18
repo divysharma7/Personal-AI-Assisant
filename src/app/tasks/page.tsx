@@ -214,7 +214,7 @@ export default function TasksPage() {
       {/* Header */}
       <div className="mb-5 flex items-center justify-between">
         <h1
-          className="text-[32px] font-bold"
+          className="text-[32px]"
           style={{ color: 'var(--text-primary)' }}
         >
           {copy.tasks.title}
@@ -236,6 +236,7 @@ export default function TasksPage() {
           <motion.button
             {...buttonPress}
             onClick={() => inputRef.current?.focus()}
+            aria-label="Add new task"
             className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-white transition-colors duration-150 cursor-pointer"
             style={{ backgroundColor: 'var(--accent)' }}
           >
@@ -304,6 +305,7 @@ export default function TasksPage() {
         style={{
           backgroundColor: 'var(--bg-pane-2)',
           border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-card)',
         }}
       >
         <Plus size={20} strokeWidth={1.5} style={{ color: 'var(--text-faint)' }} />
@@ -320,7 +322,8 @@ export default function TasksPage() {
             }
           }}
           placeholder={copy.newTask.placeholder}
-          className="flex-1 bg-transparent text-sm outline-none"
+          aria-label="New task title"
+          className="flex-1 bg-transparent text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
           style={{ color: 'var(--text-primary)' }}
         />
       </div>

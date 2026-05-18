@@ -174,6 +174,7 @@ export default function InboxPage() {
         <div className="flex items-center gap-2">
           <motion.button
             {...buttonPress}
+            aria-label="Filter"
             className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
             onMouseEnter={(e) => {
@@ -187,6 +188,7 @@ export default function InboxPage() {
           </motion.button>
           <motion.button
             {...buttonPress}
+            aria-label="More options"
             className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
             onMouseEnter={(e) => {
@@ -203,7 +205,7 @@ export default function InboxPage() {
 
       {/* ── Title ── */}
       <h1
-        className="mb-5 text-[32px] font-bold"
+        className="mb-5 text-[32px]"
         style={{ color: 'var(--text-primary)' }}
       >
         {copy.inbox.title}
@@ -227,6 +229,7 @@ export default function InboxPage() {
             </p>
             <button
               onClick={() => setTipDismissed(true)}
+              aria-label="Dismiss"
               className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
               style={{ color: '#635BFF' }}
               onMouseEnter={(e) => {
@@ -248,6 +251,7 @@ export default function InboxPage() {
         style={{
           backgroundColor: 'var(--bg-pane-2)',
           border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-card)',
         }}
       >
         <div className="flex items-center gap-3">
@@ -272,7 +276,8 @@ export default function InboxPage() {
               }
             }}
             placeholder={copy.newTask.placeholder}
-            className="flex-1 bg-transparent text-sm outline-none"
+            aria-label="New task title"
+            className="flex-1 bg-transparent text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
             style={{
               color: 'var(--text-primary)',
             }}
@@ -294,6 +299,7 @@ export default function InboxPage() {
         {newTaskFocused && (
           <div className="mt-2 flex items-center gap-2 pl-8">
             <button
+              aria-label="Set due date"
               className="flex h-7 w-7 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
               style={{ color: 'var(--text-faint)' }}
               onMouseDown={(e) => e.preventDefault()}
@@ -307,6 +313,7 @@ export default function InboxPage() {
               <Calendar size={15} strokeWidth={1.5} />
             </button>
             <button
+              aria-label="Set priority"
               className="flex h-7 w-7 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
               style={{ color: 'var(--text-faint)' }}
               onMouseDown={(e) => e.preventDefault()}
@@ -320,6 +327,7 @@ export default function InboxPage() {
               <BarChart3 size={15} strokeWidth={1.5} />
             </button>
             <button
+              aria-label="Add label"
               className="flex h-7 w-7 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
               style={{ color: 'var(--text-faint)' }}
               onMouseDown={(e) => e.preventDefault()}
@@ -409,8 +417,8 @@ export default function InboxPage() {
 
       {/* Time Block Picker */}
       {timeBlockTaskId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }} onClick={() => setTimeBlockTaskId(null)}>
-          <div className="relative" onClick={(e) => e.stopPropagation()}>
+        <div role="presentation" className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }} onClick={() => setTimeBlockTaskId(null)} onKeyDown={(e) => { if (e.key === 'Escape') setTimeBlockTaskId(null) }}>
+          <div role="dialog" aria-modal="true" aria-label="Schedule time block" className="relative" onClick={(e) => e.stopPropagation()}>
             <TimeBlockPicker
               open={!!timeBlockTaskId}
               onClose={() => setTimeBlockTaskId(null)}

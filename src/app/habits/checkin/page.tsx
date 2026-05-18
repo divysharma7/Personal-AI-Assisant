@@ -110,7 +110,7 @@ export default function CheckinPage() {
     <div className="flex flex-col px-6 py-5">
       {/* Title */}
       <h1
-        className="mb-2 text-[32px] font-bold"
+        className="mb-2 text-[32px]"
         style={{ color: 'var(--text-primary)' }}
       >
         {COPY.title}
@@ -122,6 +122,7 @@ export default function CheckinPage() {
           {...buttonPress}
           onClick={handleNavigateBack}
           disabled={!canGoBack}
+          aria-label="Previous day"
           className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
           style={{ color: 'var(--text-muted)' }}
           onMouseEnter={(e) => { if (canGoBack) e.currentTarget.style.backgroundColor = 'var(--bg-hover)' }}
@@ -142,6 +143,7 @@ export default function CheckinPage() {
           {...buttonPress}
           onClick={handleNavigateForward}
           disabled={!canGoForward}
+          aria-label="Next day"
           className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
           style={{ color: 'var(--text-muted)' }}
           onMouseEnter={(e) => { if (canGoForward) e.currentTarget.style.backgroundColor = 'var(--bg-hover)' }}
@@ -234,6 +236,7 @@ export default function CheckinPage() {
                     e.preventDefault()
                     if (!isChecked) setContextHabitId(habit._id)
                   }}
+                  aria-label={`Toggle ${habit.name}`}
                   className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-colors duration-150 cursor-pointer"
                   style={{
                     border: isChecked ? 'none' : '2px solid var(--border)',
@@ -260,10 +263,11 @@ export default function CheckinPage() {
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={ease.fast}
-                      className="absolute right-12 z-50 w-52 rounded-xl p-2 shadow-lg"
+                      className="absolute right-12 z-50 w-52 rounded-xl p-2"
                       style={{
                         backgroundColor: 'var(--bg-pane-2)',
                         border: '1px solid var(--border)',
+                        boxShadow: 'var(--shadow-elevated)',
                       }}
                     >
                       <p className="mb-2 px-2 text-xs font-semibold" style={{ color: 'var(--text-faint)' }}>

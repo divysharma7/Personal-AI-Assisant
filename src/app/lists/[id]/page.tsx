@@ -150,6 +150,7 @@ export default function ListPage() {
           <motion.button
             {...buttonPress}
             onClick={handleToggleStar}
+            aria-label="Toggle favorite"
             className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
             style={{ color: list?.pinnedToFavorites ? 'var(--accent)' : 'var(--text-muted)' }}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--bg-hover)' }}
@@ -163,6 +164,7 @@ export default function ListPage() {
           </motion.button>
           <motion.button
             {...buttonPress}
+            aria-label="Filter"
             className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--bg-hover)' }}
@@ -172,6 +174,7 @@ export default function ListPage() {
           </motion.button>
           <motion.button
             {...buttonPress}
+            aria-label="More options"
             className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--bg-hover)' }}
@@ -186,8 +189,8 @@ export default function ListPage() {
       <div className="mb-5 flex items-center gap-3">
         <span className="text-4xl">{listIcon}</span>
         <h1
-          className="text-[32px] font-bold"
-          style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}
+          className="text-[32px]"
+          style={{ color: 'var(--text-primary)' }}
         >
           {isLoading ? '...' : listTitle}
         </h1>
@@ -208,6 +211,7 @@ export default function ListPage() {
         style={{
           backgroundColor: 'var(--bg-pane-2)',
           border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-card)',
         }}
       >
         <div className="flex items-center gap-3">
@@ -232,7 +236,8 @@ export default function ListPage() {
               }
             }}
             placeholder={copy.newTask.placeholder}
-            className="flex-1 bg-transparent text-sm outline-none"
+            aria-label="New task title"
+            className="flex-1 bg-transparent text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
             style={{ color: 'var(--text-primary)' }}
           />
           {!newTaskFocused && !newTaskTitle && (

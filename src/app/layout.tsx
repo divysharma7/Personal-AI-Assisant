@@ -1,12 +1,19 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Instrument_Serif } from 'next/font/google'
 import './globals.css'
 import Providers from './providers'
 import AppShell from '@/components/layout/AppShell'
 
 const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-body',
+  display: 'swap',
+})
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-display',
   display: 'swap',
 })
 
@@ -21,8 +28,9 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" data-theme="dark" className={inter.variable} suppressHydrationWarning>
+    <html lang="en" data-theme="dark" className={`${inter.variable} ${instrumentSerif.variable}`} suppressHydrationWarning>
       <head>
+        <meta name="theme-color" content="#0E0E12" />
         {/* Prevent theme flash: set data-theme before React hydrates */}
         <script dangerouslySetInnerHTML={{ __html: `
           (function(){

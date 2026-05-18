@@ -27,7 +27,7 @@ function DesktopOnlyNotice() {
         className="rounded-2xl p-8"
         style={{ backgroundColor: 'var(--bg-pane)', maxWidth: 400 }}
       >
-        <h1 className="mb-3 text-2xl font-bold">{copy.desktopOnly.title}</h1>
+        <h1 className="mb-3 text-2xl">{copy.desktopOnly.title}</h1>
         <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
           {copy.desktopOnly.body}
         </p>
@@ -175,6 +175,12 @@ export default function AppShell({ children }: { children: ReactNode }) {
       className="relative flex h-screen p-[3px]"
       style={{ backgroundColor: 'var(--bg-canvas)' }}
     >
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[99999] focus:rounded-lg focus:bg-[var(--accent)] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+      >
+        Skip to content
+      </a>
       {/* Top progress hairline — visible during active focus */}
       {focus.isActive && (
         <div
@@ -197,10 +203,22 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
       {/* Center: Main content */}
       <main
+        id="main-content"
         className="flex min-w-[540px] flex-1 flex-col overflow-y-auto rounded-[16px]"
-        style={{ backgroundColor: 'var(--bg-pane)' }}
+        style={{ backgroundColor: 'var(--bg-pane)', backgroundImage: 'var(--bg-atmosphere)' }}
       >
-        {children}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={pathname}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
+            className="flex flex-1 flex-col"
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       {/* Gap */}

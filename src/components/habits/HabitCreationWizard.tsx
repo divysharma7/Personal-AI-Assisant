@@ -446,6 +446,7 @@ export default function HabitCreationWizard({
             style={{
               backgroundColor: 'var(--bg-pane)',
               border: '1px solid var(--border)',
+              boxShadow: 'var(--shadow-modal)',
             }}
             onClick={(e) => e.stopPropagation()}
           >

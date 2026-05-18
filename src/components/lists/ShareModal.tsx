@@ -75,6 +75,7 @@ export default function ShareModal({
             style={{
               backgroundColor: 'var(--bg-pane-2)',
               border: '1px solid var(--border)',
+              boxShadow: 'var(--shadow-modal)',
             }}
           >
             {/* Search/invite row */}

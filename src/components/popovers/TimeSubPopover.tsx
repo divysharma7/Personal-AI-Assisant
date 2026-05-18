@@ -90,10 +90,11 @@ export default function TimeSubPopover({
       {...fadeSlideDown}
       transition={ease.fast}
       ref={popoverRef}
-      className="flex w-[220px] flex-col rounded-xl shadow-lg"
+      className="flex w-[220px] flex-col rounded-xl"
       style={{
         backgroundColor: 'var(--bg-pane-2)',
         border: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-elevated)',
       }}
     >
       {/* No due time */}

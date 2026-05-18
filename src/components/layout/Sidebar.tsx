@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Inbox,
@@ -353,6 +354,11 @@ export default function Sidebar() {
       className="flex w-[260px] flex-shrink-0 flex-col rounded-[16px] p-3"
       style={{ backgroundColor: 'var(--bg-pane)' }}
     >
+      {/* ── LAIF wordmark ── */}
+      <div className="mb-3 px-3 pt-1">
+        <span style={{ fontFamily: 'var(--font-display)', fontSize: 18, letterSpacing: '0.1em', color: 'var(--accent)' }}>LAIF</span>
+      </div>
+
       {/* ── Primary nav ── */}
       <nav className="flex flex-col gap-0.5">
         {NAV_ITEMS.map((item) => {
@@ -362,10 +368,10 @@ export default function Sidebar() {
           const isCalendarItem = item.href === '/calendar'
           const showCalendarDot = isCalendarItem && hasActiveScheduledTask
           return (
-            <button
+            <Link
               key={item.href}
-              onClick={() => router.push(item.href)}
-              className="group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-150 cursor-pointer"
+              href={item.href}
+              className="group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-150 no-underline"
               style={{
                 backgroundColor: active ? 'var(--bg-hover)' : 'transparent',
                 color: active ? 'var(--text-primary)' : 'var(--text-muted)',
@@ -379,8 +385,8 @@ export default function Sidebar() {
             >
               {active && (
                 <span
-                  className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full"
-                  style={{ backgroundColor: 'var(--accent)' }}
+                  className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full"
+                  style={{ backgroundColor: 'var(--accent)', boxShadow: '2px 0 8px var(--accent-soft)' }}
                 />
               )}
               <item.icon size={20} strokeWidth={1.5} />
@@ -403,7 +409,7 @@ export default function Sidebar() {
                   </span>
                 )}
               </div>
-            </button>
+            </Link>
           )
         })}
       </nav>
@@ -437,10 +443,10 @@ export default function Sidebar() {
             {favoriteLists.map((list) => {
               const active = pathname === `/lists/${list._id}`
               return (
-                <button
+                <Link
                   key={list._id}
-                  onClick={() => router.push(`/lists/${list._id}`)}
-                  className="group relative flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition-colors duration-150 cursor-pointer"
+                  href={`/lists/${list._id}`}
+                  className="group relative flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition-colors duration-150 no-underline"
                   style={{
                     backgroundColor: active ? 'var(--bg-hover)' : 'transparent',
                     color: active ? 'var(--text-primary)' : 'var(--text-muted)',
@@ -456,7 +462,7 @@ export default function Sidebar() {
                   <span className="truncate text-[14px]">
                     {list.title || copy.list.untitled}
                   </span>
-                </button>
+                </Link>
               )
             })}
           </motion.div>
@@ -512,15 +518,15 @@ export default function Sidebar() {
             {copy.sidebar.sectionLists}
           </span>
           {listsHovered && (
-            <button
-              onClick={() => router.push('/lists')}
-              className="text-[11px] cursor-pointer"
+            <Link
+              href="/lists"
+              className="text-[11px] no-underline"
               style={{ color: 'var(--text-faint)' }}
               onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent)' }}
               onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-faint)' }}
             >
               {copy.sidebar.browseAll}
-            </button>
+            </Link>
           )}
         </div>
         {listsHovered && (
@@ -528,6 +534,7 @@ export default function Sidebar() {
             <button
               onClick={handleStartInlineCreate}
               disabled={isCreating}
+              aria-label="Add new list"
               className="relative flex h-6 w-6 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
               style={{ color: 'var(--text-faint)' }}
               title={copy.sidebar.newListTooltip}
@@ -545,6 +552,7 @@ export default function Sidebar() {
               )}
             </button>
             <button
+              aria-label="Filter lists"
               className="flex h-6 w-6 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
               style={{ color: 'var(--text-faint)' }}
               onMouseEnter={(e) => {
@@ -581,7 +589,8 @@ export default function Sidebar() {
                 }}
                 onBlur={handleInlineCreateSubmit}
                 placeholder={copy.folders.createPlaceholder}
-                className="flex-1 bg-transparent text-[14px] outline-none"
+                aria-label="New list name"
+                className="flex-1 bg-transparent text-[14px] outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
                 style={{ color: 'var(--text-primary)' }}
               />
             </motion.div>
@@ -608,9 +617,10 @@ export default function Sidebar() {
                   scale: isBeingDeleted ? 0.95 : 1,
                 }}
               >
-                <button
-                  onClick={() => {
-                    if (!isRenaming) router.push(`/lists/${list._id}`)
+                <Link
+                  href={`/lists/${list._id}`}
+                  onClick={(e) => {
+                    if (isRenaming) e.preventDefault()
                   }}
                   onDoubleClick={(e) => {
                     e.preventDefault()
@@ -620,7 +630,7 @@ export default function Sidebar() {
                   onDragOver={(e) => handleDragOver(e, list._id)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, list)}
-                  className="group relative flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition-all duration-150 cursor-pointer"
+                  className="group relative flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition-all duration-150 no-underline"
                   style={{
                     backgroundColor: isFlashing
                       ? 'rgba(99, 91, 255, 0.12)'
@@ -659,15 +669,16 @@ export default function Sidebar() {
                       }}
                       onBlur={handleRenameSubmit}
                       onClick={(e) => e.stopPropagation()}
-                      className="flex-1 bg-transparent text-[14px] outline-none"
+                      className="flex-1 bg-transparent text-[14px] outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
                       style={{ color: 'var(--text-primary)' }}
+                      aria-label="Rename list"
                     />
                   ) : (
                     <span className="truncate text-[14px]">
                       {list.title || copy.list.untitled}
                     </span>
                   )}
-                </button>
+                </Link>
               </motion.div>
             )
           })}
@@ -681,12 +692,13 @@ export default function Sidebar() {
             ref={contextMenuRef}
             {...fadeSlideDown}
             transition={ease.fast}
-            className="fixed z-50 w-52 rounded-xl p-1.5 shadow-lg"
+            className="fixed z-50 w-52 rounded-xl p-1.5"
             style={{
               left: contextMenu.x,
               top: contextMenu.y,
               backgroundColor: 'var(--bg-pane-2)',
               border: '1px solid var(--border)',
+              boxShadow: 'var(--shadow-elevated)',
             }}
           >
             {/* Rename */}
@@ -718,10 +730,11 @@ export default function Sidebar() {
                   <motion.div
                     {...fadeSlideDown}
                     transition={ease.fast}
-                    className="absolute left-full top-0 ml-1 rounded-xl p-2 shadow-lg"
+                    className="absolute left-full top-0 ml-1 rounded-xl p-2"
                     style={{
                       backgroundColor: 'var(--bg-pane-2)',
                       border: '1px solid var(--border)',
+                      boxShadow: 'var(--shadow-elevated)',
                     }}
                   >
                     <div className="flex gap-1 mb-1.5">
@@ -748,7 +761,8 @@ export default function Sidebar() {
                           }
                         }}
                         placeholder="Custom"
-                        className="w-20 rounded-md bg-transparent px-2 py-1 text-xs outline-none"
+                        aria-label="Custom emoji"
+                        className="w-20 rounded-md bg-transparent px-2 py-1 text-xs outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
                         style={{
                           border: '1px solid var(--border)',
                           color: 'var(--text-primary)',
@@ -779,10 +793,11 @@ export default function Sidebar() {
                   <motion.div
                     {...fadeSlideDown}
                     transition={ease.fast}
-                    className="absolute left-full top-0 ml-1 w-44 rounded-xl p-1.5 shadow-lg"
+                    className="absolute left-full top-0 ml-1 w-44 rounded-xl p-1.5"
                     style={{
                       backgroundColor: 'var(--bg-pane-2)',
                       border: '1px solid var(--border)',
+                      boxShadow: 'var(--shadow-elevated)',
                     }}
                   >
                     {groupTitles.length === 0 && (
@@ -851,7 +866,8 @@ export default function Sidebar() {
           <motion.button
             {...buttonPress}
             onClick={() => setFabOpen(!fabOpen)}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-white transition-colors duration-150 cursor-pointer"
+            aria-label="Create new"
+            className={`flex h-8 w-8 items-center justify-center rounded-full text-white transition-colors duration-150 cursor-pointer${fabOpen ? '' : ' fab-glow'}`}
             style={{ backgroundColor: 'var(--accent)' }}
           >
             <Plus size={18} strokeWidth={2} />
@@ -863,10 +879,11 @@ export default function Sidebar() {
               <motion.div
                 {...fadeSlideDown}
                 transition={ease.fast}
-                className="absolute bottom-full left-0 mb-2 w-56 rounded-xl p-2 shadow-lg"
+                className="absolute bottom-full left-0 mb-2 w-56 rounded-xl p-2"
                 style={{
                   backgroundColor: 'var(--bg-pane-2)',
                   border: '1px solid var(--border)',
+                  boxShadow: 'var(--shadow-elevated)',
                 }}
               >
                 {/* New task */}
@@ -949,6 +966,7 @@ export default function Sidebar() {
         <div className="relative" ref={popoverRef}>
           <button
             onClick={() => setAvatarOpen(!avatarOpen)}
+            aria-label="User menu"
             className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white transition-colors duration-150 cursor-pointer"
             style={{ backgroundColor: 'var(--accent)' }}
           >
@@ -961,10 +979,11 @@ export default function Sidebar() {
               <motion.div
                 {...fadeSlideDown}
                 transition={ease.fast}
-                className="absolute bottom-full right-0 mb-2 w-48 rounded-xl p-2 shadow-lg"
+                className="absolute bottom-full right-0 mb-2 w-48 rounded-xl p-2"
                 style={{
                   backgroundColor: 'var(--bg-pane-2)',
                   border: '1px solid var(--border)',
+                  boxShadow: 'var(--shadow-elevated)',
                 }}
               >
                 <button
@@ -1022,16 +1041,18 @@ export default function Sidebar() {
       </div>
 
       {/* ── Toast notification ── */}
+      <div aria-live="polite" aria-atomic="true">
       <AnimatePresence>
         {toastMsg && (
           <motion.div
             {...fadeSlideUp}
             transition={ease.fast}
-            className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-xl px-4 py-2.5 shadow-lg"
+            className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-xl px-4 py-2.5"
             style={{
               backgroundColor: 'var(--bg-pane-2)',
               border: '1px solid var(--border)',
               color: 'var(--text-primary)',
+              boxShadow: 'var(--shadow-elevated)',
             }}
           >
             <span className="text-sm">{toastMsg}</span>
@@ -1051,6 +1072,7 @@ export default function Sidebar() {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </aside>
   )
 }

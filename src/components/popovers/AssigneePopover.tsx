@@ -79,10 +79,11 @@ export default function AssigneePopover({
       {...fadeSlideDown}
       transition={ease.fast}
       ref={popoverRef}
-      className="w-[260px] rounded-xl shadow-lg"
+      className="w-[260px] rounded-xl"
       style={{
         backgroundColor: 'var(--bg-pane-2)',
         border: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-elevated)',
       }}
     >
       {/* Search input */}
