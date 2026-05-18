@@ -5,7 +5,11 @@ import { COOKIE_NAME } from '@/lib/auth'
 
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? '')
 
-/** Paths that don't require authentication */
+/**
+ * Paths that don't require authentication.
+ * Phase 4 routes: /updates (replaces /messages), /lists (directory view)
+ * are authenticated routes — they work during dev because auth is bypassed.
+ */
 const PUBLIC_PREFIXES = [
   '/login',
   '/signup',

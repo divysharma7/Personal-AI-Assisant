@@ -9,8 +9,27 @@ import {
   type ReactNode,
 } from 'react'
 
-export type Theme = 'light' | 'dark' | 'blackout' | 'system'
-type ResolvedTheme = 'light' | 'dark' | 'blackout'
+export type Theme =
+  | 'system'
+  | 'light'
+  | 'dark'
+  | 'blackout'
+  | 'ocean'
+  | 'berry'
+  | 'forest'
+  | 'sunset'
+  | 'blossom'
+  | 'blue-white'
+  | 'black-yellow'
+  | 'blue-red'
+  | 'red-white'
+
+type ResolvedTheme = Exclude<Theme, 'system'>
+
+const ALL_THEMES: Theme[] = [
+  'system', 'light', 'dark', 'blackout', 'ocean', 'berry', 'forest',
+  'sunset', 'blossom', 'blue-white', 'black-yellow', 'blue-red', 'red-white',
+]
 
 interface ThemeContextValue {
   theme: Theme
@@ -38,7 +57,7 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
   // On mount, read saved theme
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY) as Theme | null
-    if (saved && ['light', 'dark', 'blackout', 'system'].includes(saved)) {
+    if (saved && ALL_THEMES.includes(saved)) {
       setThemeState(saved)
       const resolved = saved === 'system' ? resolveSystem() : saved
       setResolvedTheme(resolved)

@@ -60,6 +60,177 @@
   --priority-low: #5DA8FF;
 }
 
+/* ─── Theme: Ocean ─── */
+[data-theme="ocean"] {
+  --bg-canvas: #0B1628;
+  --bg-pane: #0F1F35;
+  --bg-pane-2: #152A42;
+  --bg-hover: #1B3350;
+  --bg-selected: rgba(56, 189, 248, 0.12);
+  --border: #1E3A5F;
+  --text-primary: #E8F4FC;
+  --text-muted: #8BB8D8;
+  --text-faint: #4A7A9B;
+  --accent: #38BDF8;
+  --accent-soft: rgba(56, 189, 248, 0.12);
+  --info: #38BDF8;
+  --priority-high: #F87171;
+  --priority-medium: #FBBF24;
+  --priority-low: #38BDF8;
+}
+
+/* ─── Theme: Berry ─── */
+[data-theme="berry"] {
+  --bg-canvas: #1A0B24;
+  --bg-pane: #221133;
+  --bg-pane-2: #2C1640;
+  --bg-hover: #371D50;
+  --bg-selected: rgba(192, 132, 252, 0.12);
+  --border: #3D2260;
+  --text-primary: #F3E8FF;
+  --text-muted: #C4A0E8;
+  --text-faint: #7C5A9E;
+  --accent: #C084FC;
+  --accent-soft: rgba(192, 132, 252, 0.12);
+  --info: #A78BFA;
+  --priority-high: #FB7185;
+  --priority-medium: #FBBF24;
+  --priority-low: #A78BFA;
+}
+
+/* ─── Theme: Forest ─── */
+[data-theme="forest"] {
+  --bg-canvas: #0A1A12;
+  --bg-pane: #0F241A;
+  --bg-pane-2: #152E22;
+  --bg-hover: #1B3A2C;
+  --bg-selected: rgba(52, 211, 153, 0.12);
+  --border: #1E4D35;
+  --text-primary: #E8FCF1;
+  --text-muted: #8BD8B0;
+  --text-faint: #4A9B70;
+  --accent: #34D399;
+  --accent-soft: rgba(52, 211, 153, 0.12);
+  --info: #34D399;
+  --priority-high: #F87171;
+  --priority-medium: #FBBF24;
+  --priority-low: #34D399;
+}
+
+/* ─── Theme: Sunset ─── */
+[data-theme="sunset"] {
+  --bg-canvas: #1C1008;
+  --bg-pane: #28180C;
+  --bg-pane-2: #332010;
+  --bg-hover: #3F2815;
+  --bg-selected: rgba(251, 146, 60, 0.12);
+  --border: #5C3A1E;
+  --text-primary: #FFF5E8;
+  --text-muted: #D8A878;
+  --text-faint: #9B7048;
+  --accent: #FB923C;
+  --accent-soft: rgba(251, 146, 60, 0.12);
+  --info: #FBBF24;
+  --priority-high: #EF4444;
+  --priority-medium: #FBBF24;
+  --priority-low: #FB923C;
+}
+
+/* ─── Theme: Blossom ─── */
+[data-theme="blossom"] {
+  --bg-canvas: #FFF0F3;
+  --bg-pane: #FFF5F7;
+  --bg-pane-2: #FFFFFF;
+  --bg-hover: #FFE4EA;
+  --bg-selected: rgba(244, 114, 182, 0.12);
+  --border: #FFD1DA;
+  --text-primary: #1A1A1F;
+  --text-muted: #6B6B75;
+  --text-faint: #A0A0AA;
+  --accent: #F472B6;
+  --accent-soft: rgba(244, 114, 182, 0.12);
+  --info: #EC4899;
+  --priority-high: #EF4444;
+  --priority-medium: #F59E0B;
+  --priority-low: #3B82F6;
+}
+
+/* ─── Theme: Blue & White ─── */
+[data-theme="blue-white"] {
+  --bg-canvas: #EEF2FF;
+  --bg-pane: #F5F7FF;
+  --bg-pane-2: #FFFFFF;
+  --bg-hover: #E0E7FF;
+  --bg-selected: rgba(99, 102, 241, 0.12);
+  --border: #C7D2FE;
+  --text-primary: #1E1B4B;
+  --text-muted: #6366F1;
+  --text-faint: #A5B4FC;
+  --accent: #6366F1;
+  --accent-soft: rgba(99, 102, 241, 0.10);
+  --info: #6366F1;
+  --priority-high: #EF4444;
+  --priority-medium: #F59E0B;
+  --priority-low: #6366F1;
+}
+
+/* ─── Theme: Black & Yellow ─── */
+[data-theme="black-yellow"] {
+  --bg-canvas: #0A0A0A;
+  --bg-pane: #111111;
+  --bg-pane-2: #1A1A1A;
+  --bg-hover: #222222;
+  --bg-selected: rgba(250, 204, 21, 0.12);
+  --border: #2A2A2A;
+  --text-primary: #FAFAFA;
+  --text-muted: #A0A0A0;
+  --text-faint: #666666;
+  --accent: #FACC15;
+  --accent-soft: rgba(250, 204, 21, 0.10);
+  --info: #FACC15;
+  --priority-high: #EF4444;
+  --priority-medium: #FACC15;
+  --priority-low: #38BDF8;
+}
+
+/* ─── Theme: Blue & Red ─── */
+[data-theme="blue-red"] {
+  --bg-canvas: #0B1628;
+  --bg-pane: #0F1F35;
+  --bg-pane-2: #152A42;
+  --bg-hover: #1B3350;
+  --bg-selected: rgba(239, 68, 68, 0.12);
+  --border: #1E3A5F;
+  --text-primary: #E8F4FC;
+  --text-muted: #8BB8D8;
+  --text-faint: #4A7A9B;
+  --accent: #EF4444;
+  --accent-soft: rgba(239, 68, 68, 0.12);
+  --info: #38BDF8;
+  --priority-high: #EF4444;
+  --priority-medium: #FBBF24;
+  --priority-low: #38BDF8;
+}
+
+/* ─── Theme: Red & White ─── */
+[data-theme="red-white"] {
+  --bg-canvas: #FFF1F0;
+  --bg-pane: #FFF5F5;
+  --bg-pane-2: #FFFFFF;
+  --bg-hover: #FFE4E4;
+  --bg-selected: rgba(239, 68, 68, 0.12);
+  --border: #FECACA;
+  --text-primary: #1A1A1F;
+  --text-muted: #6B6B75;
+  --text-faint: #A0A0AA;
+  --accent: #EF4444;
+  --accent-soft: rgba(239, 68, 68, 0.10);
+  --info: #EF4444;
+  --priority-high: #EF4444;
+  --priority-medium: #F59E0B;
+  --priority-low: #3B82F6;
+}
+
 /* ─── Base styles ─── */
 body {
   font-family: var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif;

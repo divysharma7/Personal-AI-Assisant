@@ -1,21 +1,20 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  SlidersHorizontal,
-  MoreVertical,
   Plus,
   List,
   LayoutGrid,
   Grid3X3,
-  Check,
 } from 'lucide-react'
 import { copy } from '@/lib/copy'
-import { useItems } from '@/hooks/useItems'
-import type { Task } from '@/types'
-import { formatDate } from '@/lib/utils'
+import { useTasks } from '@/hooks/useTasks'
+import type { TaskRecord } from '@/hooks/useTasks'
+import { useLabels } from '@/hooks/useLabels'
+import { playCompletionSound } from '@/lib/sounds'
 import { fadeSlideUp, buttonPress, stagger, ease } from '@/lib/motion'
+import TaskRow from '@/components/tasks/TaskRow'
 
 type FilterTab = 'forMe' | 'upcoming' | 'done'
 type ViewMode = 'List' | 'Board' | 'Matrix'
@@ -26,83 +25,184 @@ const VIEW_ICONS = {
   Matrix: Grid3X3,
 } as const
 
+function startOfToday(): Date {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
 export default function TasksPage() {
-  const { items, addItem, updateItem } = useItems()
+  const { tasks, createTask, toggleComplete, updateTask, isLoading } = useTasks()
+  const { labels } = useLabels()
   const [activeFilter, setActiveFilter] = useState<FilterTab>('forMe')
   const [viewMode, setViewMode] = useState<ViewMode>('List')
   const [newTaskTitle, setNewTaskTitle] = useState('')
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const tasks = items.filter((i): i is Task => i.type === 'task')
-
+  // Filter tasks per active filter
   const filteredTasks = (() => {
     switch (activeFilter) {
       case 'forMe':
         return tasks.filter((t) => t.status !== 'done')
-      case 'upcoming':
-        return tasks.filter((t) => t.status !== 'done' && t.dueDate)
+      case 'upcoming': {
+        const now = new Date()
+        const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+        return tasks.filter(
+          (t) =>
+            t.status !== 'done' &&
+            t.dueDate &&
+            new Date(t.dueDate) > now &&
+            new Date(t.dueDate) <= thirtyDays
+        ).sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
+      }
       case 'done':
-        return tasks.filter((t) => t.status === 'done')
+        return tasks
+          .filter((t) => t.status === 'done')
+          .sort((a, b) => {
+            const aDate = a.completedAt || a.updatedAt || a.createdAt || ''
+            const bDate = b.completedAt || b.updatedAt || b.createdAt || ''
+            return new Date(bDate).getTime() - new Date(aDate).getTime()
+          })
       default:
         return tasks
     }
   })()
 
+  // Sub-task counts
+  const getSubTaskCount = useCallback(
+    (taskId: string) => {
+      const subTasks = tasks.filter((t) => t.parentId === taskId)
+      if (subTasks.length === 0) return undefined
+      return {
+        completed: subTasks.filter((t) => t.status === 'done').length,
+        total: subTasks.length,
+      }
+    },
+    [tasks]
+  )
+
+  // Labels for a task
+  const getLabelsForTask = useCallback(
+    (task: TaskRecord) => {
+      if (!task.labelIds || task.labelIds.length === 0) return []
+      return labels.filter((l) => task.labelIds?.includes(l._id))
+    },
+    [labels]
+  )
+
   const handleNewTask = useCallback(async () => {
     const title = newTaskTitle.trim()
     if (!title) return
-    await addItem('task', {
+    await createTask({
       title,
       priority: 'medium',
       status: 'todo',
-      color: '#34d399',
     })
     setNewTaskTitle('')
-  }, [newTaskTitle, addItem])
+  }, [newTaskTitle, createTask])
 
-  const handleToggle = useCallback(
-    async (task: Task) => {
-      await updateItem('task', task._id!, {
-        status: task.status === 'done' ? 'todo' : 'done',
-      })
+  const handleToggleTask = useCallback(
+    async (taskId: string) => {
+      const task = tasks.find((t) => t._id === taskId)
+      if (!task) return
+      if (task.status !== 'done') playCompletionSound()
+      await toggleComplete(taskId)
     },
-    [updateItem]
+    [tasks, toggleComplete]
   )
+
+  const handleOpenDetail = useCallback((taskId: string) => {
+    setDetailTaskId(taskId)
+  }, [])
+
+  const handleTitleChange = useCallback(
+    async (taskId: string, title: string) => {
+      await updateTask(taskId, { title })
+    },
+    [updateTask]
+  )
+
+  // Expose detailTaskId for AppShell
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent('laif:detail-task', { detail: { taskId: detailTaskId } })
+    )
+  }, [detailTaskId])
+
+  // Empty state text per filter
+  const emptyText = (() => {
+    switch (activeFilter) {
+      case 'forMe':
+        return copy.tasks.emptyStates.forMe
+      case 'upcoming':
+        return copy.tasks.emptyStates.upcoming
+      case 'done':
+        return copy.tasks.emptyStates.done
+      default:
+        return ''
+    }
+  })()
+
+  // Board columns
+  const boardColumns = [
+    {
+      key: 'todo',
+      label: copy.tasks.board.todo,
+      tasks: filteredTasks.filter((t) => t.status === 'todo'),
+    },
+    {
+      key: 'in-progress',
+      label: copy.tasks.board.inProgress,
+      tasks: filteredTasks.filter(
+        (t) => t.status === 'in-progress' || (t.labelIds && t.labelIds.some((l) => l === 'in-progress'))
+      ),
+    },
+    {
+      key: 'done',
+      label: copy.tasks.board.done,
+      tasks: filteredTasks.filter((t) => t.status === 'done'),
+    },
+  ]
+
+  // Matrix quadrants
+  const today = startOfToday()
+  const matrixQuadrants = [
+    {
+      key: 'urgent-important',
+      label: copy.tasks.matrix.urgentImportant,
+      tasks: filteredTasks.filter(
+        (t) => t.priority === 'high' && t.dueDate && new Date(t.dueDate) <= today
+      ),
+    },
+    {
+      key: 'not-urgent-important',
+      label: copy.tasks.matrix.notUrgentImportant,
+      tasks: filteredTasks.filter(
+        (t) => t.priority === 'high' && (!t.dueDate || new Date(t.dueDate) > today)
+      ),
+    },
+    {
+      key: 'urgent-not-important',
+      label: copy.tasks.matrix.urgentNotImportant,
+      tasks: filteredTasks.filter(
+        (t) =>
+          t.priority !== 'high' && t.dueDate && new Date(t.dueDate) <= today
+      ),
+    },
+    {
+      key: 'neither',
+      label: copy.tasks.matrix.neither,
+      tasks: filteredTasks.filter(
+        (t) =>
+          t.priority !== 'high' && (!t.dueDate || new Date(t.dueDate) > today)
+      ),
+    },
+  ]
 
   return (
     <div className="flex flex-col px-6 py-5">
       {/* Header */}
-      <div className="mb-1 flex items-start justify-between">
-        <div />
-        <div className="flex items-center gap-2">
-          <button
-            className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
-            style={{ color: 'var(--text-muted)' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-            }}
-          >
-            <SlidersHorizontal size={18} strokeWidth={1.5} />
-          </button>
-          <button
-            className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
-            style={{ color: 'var(--text-muted)' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-            }}
-          >
-            <MoreVertical size={18} strokeWidth={1.5} />
-          </button>
-        </div>
-      </div>
-
-      {/* Title + actions */}
       <div className="mb-5 flex items-center justify-between">
         <h1
           className="text-[32px] font-bold"
@@ -111,6 +211,29 @@ export default function TasksPage() {
           {copy.tasks.title}
         </h1>
         <div className="flex items-center gap-3">
+          {/* Sort dropdown */}
+          <span
+            className="rounded-lg px-3 py-1.5 text-xs font-medium"
+            style={{
+              backgroundColor: 'var(--bg-pane-2)',
+              color: 'var(--text-muted)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            {copy.tasks.sortDefault}
+          </span>
+
+          {/* New task button */}
+          <motion.button
+            {...buttonPress}
+            onClick={() => inputRef.current?.focus()}
+            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-white transition-colors duration-150 cursor-pointer"
+            style={{ backgroundColor: 'var(--accent)' }}
+          >
+            <Plus size={14} strokeWidth={2} />
+            <span>{copy.tasks.newTaskCta}</span>
+          </motion.button>
+
           {/* View switcher */}
           <div
             className="flex items-center gap-0.5 rounded-lg p-0.5"
@@ -135,16 +258,6 @@ export default function TasksPage() {
               )
             })}
           </div>
-
-          {/* New task button */}
-          <button
-            onClick={() => inputRef.current?.focus()}
-            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-white transition-colors duration-150 cursor-pointer"
-            style={{ backgroundColor: 'var(--accent)' }}
-          >
-            <Plus size={14} strokeWidth={2} />
-            <span>{copy.newTask.placeholder}</span>
-          </button>
         </div>
       </div>
 
@@ -156,24 +269,24 @@ export default function TasksPage() {
             { key: 'upcoming', label: copy.tasks.filters.upcoming },
             { key: 'done', label: copy.tasks.filters.done },
           ] as const
-        ).map((tab) => (
-          <motion.button
-            key={tab.key}
-            {...buttonPress}
-            onClick={() => setActiveFilter(tab.key)}
-            className="rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors duration-150 cursor-pointer"
-            style={{
-              backgroundColor:
-                activeFilter === tab.key ? 'var(--bg-hover)' : 'transparent',
-              color:
-                activeFilter === tab.key
-                  ? 'var(--text-primary)'
-                  : 'var(--text-muted)',
-            }}
-          >
-            {tab.label}
-          </motion.button>
-        ))}
+        ).map((tab) => {
+          const active = activeFilter === tab.key
+          return (
+            <motion.button
+              key={tab.key}
+              {...buttonPress}
+              onClick={() => setActiveFilter(tab.key)}
+              className="rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors duration-150 cursor-pointer"
+              style={{
+                backgroundColor: active ? 'var(--accent)' : 'transparent',
+                color: active ? '#FFFFFF' : 'var(--text-muted)',
+                border: active ? 'none' : '1px solid var(--border)',
+              }}
+            >
+              {tab.label}
+            </motion.button>
+          )
+        })}
       </div>
 
       {/* New task inline */}
@@ -203,67 +316,163 @@ export default function TasksPage() {
         />
       </div>
 
-      {/* Task list */}
-      <motion.div className="flex flex-col gap-0.5" {...stagger()}>
-        <AnimatePresence mode="popLayout">
-          {filteredTasks.map((task) => (
-            <motion.div
-              key={task._id}
+      {/* ─── List view ─── */}
+      {viewMode === 'List' && (
+        <motion.div className="flex flex-col gap-0.5" {...stagger()}>
+          <AnimatePresence mode="popLayout">
+            {filteredTasks.map((task) => (
+              <TaskRow
+                key={task._id}
+                task={task}
+                onToggle={handleToggleTask}
+                onOpenDetail={handleOpenDetail}
+                isSelected={false}
+                isDetailOpen={detailTaskId === task._id}
+                subTaskCount={getSubTaskCount(task._id)}
+                labels={getLabelsForTask(task)}
+                onTitleChange={handleTitleChange}
+              />
+            ))}
+          </AnimatePresence>
+          {filteredTasks.length === 0 && !isLoading && (
+            <motion.p
               {...fadeSlideUp}
               transition={ease.normal}
-              layout
-              className="flex items-center gap-3 rounded-lg px-4 py-3 transition-colors duration-150 cursor-pointer"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
+              className="py-8 text-center text-sm"
+              style={{ color: 'var(--text-faint)' }}
+            >
+              {emptyText}
+            </motion.p>
+          )}
+        </motion.div>
+      )}
+
+      {/* ─── Board view ─── */}
+      {viewMode === 'Board' && (
+        <motion.div
+          {...fadeSlideUp}
+          transition={ease.normal}
+          className="grid grid-cols-3 gap-4"
+        >
+          {boardColumns.map((col) => (
+            <div
+              key={col.key}
+              className="flex flex-col rounded-xl p-3"
+              style={{
+                backgroundColor: 'var(--bg-pane-2)',
+                border: '1px solid var(--border)',
+                minHeight: 200,
               }}
             >
-              <button
-                onClick={() => handleToggle(task)}
-                className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full transition-colors duration-150 cursor-pointer"
-                style={{
-                  border:
-                    task.status === 'done'
-                      ? 'none'
-                      : '1.5px solid var(--border)',
-                  backgroundColor:
-                    task.status === 'done' ? 'var(--accent)' : 'transparent',
-                }}
-              >
-                {task.status === 'done' && (
-                  <Check size={12} strokeWidth={2.5} className="text-white" />
-                )}
-              </button>
-              <div className="flex flex-1 flex-col gap-0.5">
+              <div className="mb-3 flex items-center justify-between">
                 <span
-                  className="text-[15px] font-medium"
+                  className="text-xs font-semibold uppercase tracking-wide"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  {col.label}
+                </span>
+                <span
+                  className="rounded-full px-1.5 py-0.5 text-[10px] font-medium"
                   style={{
-                    color:
-                      task.status === 'done'
-                        ? 'var(--text-faint)'
-                        : 'var(--text-primary)',
-                    textDecoration: task.status === 'done' ? 'line-through' : 'none',
+                    backgroundColor: 'var(--bg-hover)',
+                    color: 'var(--text-faint)',
                   }}
                 >
-                  {task.title}
+                  {col.tasks.length}
                 </span>
-                {task.dueDate && (
-                  <span className="text-xs" style={{ color: 'var(--text-faint)' }}>
-                    {formatDate(task.dueDate, 'MMM d')}
-                  </span>
+              </div>
+              <div className="flex flex-1 flex-col gap-1">
+                {col.tasks.map((task) => (
+                  <div
+                    key={task._id}
+                    onClick={() => handleOpenDetail(task._id)}
+                    className="cursor-pointer rounded-lg px-3 py-2 transition-colors duration-150"
+                    style={{ backgroundColor: 'var(--bg-hover)' }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--bg-selected)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+                    }}
+                  >
+                    <span
+                      className="text-[13px] font-medium"
+                      style={{
+                        color: task.status === 'done' ? 'var(--text-faint)' : 'var(--text-primary)',
+                        textDecoration: task.status === 'done' ? 'line-through' : 'none',
+                      }}
+                    >
+                      {task.title || 'Untitled'}
+                    </span>
+                  </div>
+                ))}
+                {col.tasks.length === 0 && (
+                  <p className="py-4 text-center text-xs" style={{ color: 'var(--text-faint)' }}>
+                    No tasks
+                  </p>
                 )}
               </div>
-            </motion.div>
+            </div>
           ))}
-        </AnimatePresence>
-        {filteredTasks.length === 0 && (
-          <p className="py-8 text-center text-sm" style={{ color: 'var(--text-faint)' }}>
-            No tasks to show
-          </p>
-        )}
-      </motion.div>
+        </motion.div>
+      )}
+
+      {/* ─── Matrix view ─── */}
+      {viewMode === 'Matrix' && (
+        <motion.div
+          {...fadeSlideUp}
+          transition={ease.normal}
+          className="grid grid-cols-2 grid-rows-2 gap-4"
+          style={{ minHeight: 400 }}
+        >
+          {matrixQuadrants.map((q) => (
+            <div
+              key={q.key}
+              className="flex flex-col rounded-xl p-3 overflow-y-auto"
+              style={{
+                backgroundColor: 'var(--bg-pane-2)',
+                border: '1px solid var(--border)',
+                maxHeight: 300,
+              }}
+            >
+              <span
+                className="mb-2 text-[11px] font-semibold uppercase tracking-wide"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                {q.label}
+              </span>
+              <div className="flex flex-col gap-1">
+                {q.tasks.map((task) => (
+                  <div
+                    key={task._id}
+                    onClick={() => handleOpenDetail(task._id)}
+                    className="cursor-pointer rounded-lg px-3 py-2 transition-colors duration-150"
+                    style={{ backgroundColor: 'var(--bg-hover)' }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--bg-selected)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+                    }}
+                  >
+                    <span
+                      className="text-[13px] font-medium"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      {task.title || 'Untitled'}
+                    </span>
+                  </div>
+                ))}
+                {q.tasks.length === 0 && (
+                  <p className="py-4 text-center text-xs" style={{ color: 'var(--text-faint)' }}>
+                    No tasks
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+        </motion.div>
+      )}
     </div>
   )
 }
