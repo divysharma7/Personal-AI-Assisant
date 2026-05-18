@@ -16,8 +16,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "PIM — Personal Intelligent Manager",
-  description: "Manage events, tasks, reminders and notes — all in one premium workspace.",
+  title: "LAIF — Your intelligent life manager",
+  description: "Tasks, calendar, habits, journal — all in one premium workspace with AI.",
   icons: {
     icon: '/logo_new.png',
     apple: '/logo_new.png',
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'PIM',
+    title: 'LAIF',
   },
 };
 

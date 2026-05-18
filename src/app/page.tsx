@@ -1,69 +1,30 @@
 'use client'
 import { useState, useMemo, useEffect } from 'react'
-import { CalendarPlus, CheckSquare, Bell } from 'lucide-react'
-import Image from 'next/image'
+import { Plus, Sparkles, Calendar as CalIcon, CheckCircle2, Clock, AlertCircle } from 'lucide-react'
+import Link from 'next/link'
 import AddItemModal from '@/components/modals/AddItemModal'
 import FloatingChat from '@/components/chat/FloatingChat'
 import QuickAddBar from '@/components/tasks/QuickAddBar'
-import ClockWidget from '@/components/dashboard/ClockWidget'
-import MiniCalendarWidget from '@/components/dashboard/MiniCalendarWidget'
-import WeatherWidget from '@/components/dashboard/WeatherWidget'
-import AllItemsWidget from '@/components/dashboard/AllItemsWidget'
-import PomodoroWidget from '@/components/dashboard/PomodoroWidget'
-import DailyJournalWidget from '@/components/dashboard/DailyJournalWidget'
 import AIBriefWidget from '@/components/dashboard/AIBriefWidget'
-import PWAInstallButton from '@/components/PWAInstallButton'
-import TopBarActions from '@/components/layout/TopBarActions'
+import HabitsWidget from '@/components/dashboard/HabitsWidget'
 import { useItems } from '@/hooks/useItems'
-import { isToday as dfIsToday, isPast as dfIsPast } from 'date-fns'
-import type { AnyItem, Task, CalendarEvent } from '@/types'
+import { isToday as dfIsToday, isPast as dfIsPast, format } from 'date-fns'
+import type { AnyItem, Task, CalendarEvent, Reminder } from '@/types'
 
-function BentoCard({ children, className = '', style = {} }: {
-  children: React.ReactNode; className?: string; style?: React.CSSProperties
-}) {
-  return (
-    <div
-      className={`rounded-2xl p-4 overflow-hidden ${className}`}
-      style={{
-        background: 'var(--card)',
-        border: '1px solid var(--border)',
-        boxShadow: 'var(--card-shadow, none)',
-        ...style,
-      }}
-    >
-      {children}
-    </div>
-  )
-}
-
-function useAmbientGreeting(items: AnyItem[]): string {
-  return useMemo(() => {
-    const h = new Date().getHours()
-    const todayEvents  = items.filter(i => i.type === 'event' && dfIsToday(new Date((i as CalendarEvent).startDate)))
-    const pendingTasks = items.filter(i => i.type === 'task' && (i as Task).status !== 'done' && dfIsToday(new Date((i as Task).dueDate ?? '')))
-    const overdue      = items.filter(i => i.type === 'task' && (i as Task).status !== 'done' && (i as Task).dueDate && dfIsPast(new Date((i as Task).dueDate!)) && !dfIsToday(new Date((i as Task).dueDate!)))
-    const total        = todayEvents.length + pendingTasks.length
-
-    if (h >= 22 || h < 5)  return 'burning the midnight oil'
-    if (h >= 18) {
-      if (overdue.length)  return `${overdue.length} thing${overdue.length > 1 ? 's' : ''} still need attention`
-      if (total === 0)     return 'all clear — nice work today'
-      return 'winding down'
-    }
-    if (overdue.length)    return `${overdue.length} overdue task${overdue.length > 1 ? 's' : ''} need your attention`
-    if (total === 0)       return 'looks like a clear day'
-    if (total >= 5)        return `busy one — ${total} things lined up`
-    if (total >= 3)        return 'a few things on the plate today'
-    return 'your day, at a glance'
-  }, [items])
+function useGreeting(): string {
+  const h = new Date().getHours()
+  if (h < 5)  return 'Good night'
+  if (h < 12) return 'Good morning'
+  if (h < 17) return 'Good afternoon'
+  if (h < 21) return 'Good evening'
+  return 'Good night'
 }
 
 export default function DashboardPage() {
   const { items, loading, silentRefresh, addItem, updateItem } = useItems()
   const [modalOpen, setModalOpen] = useState(false)
-  const [modalType, setModalType] = useState<'event' | 'task' | 'reminder'>('task')
   const [userName, setUserName] = useState('')
-  const subtitle = useAmbientGreeting(items)
+  const greeting = useGreeting()
 
   useEffect(() => {
     fetch('/api/auth/me').then(r => r.ok ? r.json() : null).then(data => {
@@ -71,115 +32,218 @@ export default function DashboardPage() {
     }).catch(() => {})
   }, [])
 
-  function openAddModal(type: 'event' | 'task' | 'reminder') {
-    setModalType(type)
-    setModalOpen(true)
-  }
+  // Split items into sections
+  const { overdue, todayTasks, todayEvents, upcoming } = useMemo(() => {
+    const overdue: Task[] = []
+    const todayTasks: Task[] = []
+    const todayEvents: CalendarEvent[] = []
+    const upcoming: AnyItem[] = []
+
+    for (const item of items) {
+      if (item.type === 'task') {
+        const t = item as Task
+        if (t.status === 'done') continue
+        if (t.dueDate && dfIsPast(new Date(t.dueDate)) && !dfIsToday(new Date(t.dueDate))) {
+          overdue.push(t)
+        } else if (t.dueDate && dfIsToday(new Date(t.dueDate))) {
+          todayTasks.push(t)
+        } else if (!t.dueDate) {
+          todayTasks.push(t) // no due date = inbox
+        }
+      } else if (item.type === 'event') {
+        const e = item as CalendarEvent
+        if (dfIsToday(new Date(e.startDate))) todayEvents.push(e)
+      }
+    }
+
+    return { overdue, todayTasks, todayEvents, upcoming }
+  }, [items])
 
   async function handleAddItem(type: AnyItem['type'], data: Record<string, unknown>) {
     await addItem(type, data as Parameters<typeof addItem>[1])
   }
 
+  const handleToggleTask = async (task: Task) => {
+    const newStatus = task.status === 'done' ? 'todo' : 'done'
+    await updateItem('task', task._id!, { status: newStatus } as Partial<AnyItem>)
+  }
+
   return (
     <div className="flex flex-col flex-1 overflow-hidden min-h-0">
-      {/* ── Top bar ─────────────────────────────────────────────────────── */}
-      <div
-        className="flex items-center gap-2.5 px-6 py-3 flex-shrink-0"
-        style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}
-      >
-        <Image src="/logo_new.png" alt="LAIF" width={26} height={26} unoptimized className="object-contain flex-shrink-0" />
-        <span className="text-sm font-bold" style={{ color: 'var(--text-1)' }}>{userName ? `Hi, ${userName}` : 'LAIF'}</span>
-        <span className="text-xs" style={{ color: 'var(--text-3)' }}>— {subtitle}</span>
-        {loading && (
-          <div
-            className="w-3 h-3 rounded-full border-2 border-t-transparent animate-spin ml-1"
-            style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }}
-          />
-        )}
-
-        {/* Quick-add buttons */}
-        <div className="flex items-center gap-1 ml-4">
-          {([
-            { type: 'task'     as const, icon: CheckSquare,  label: 'Task'     },
-            { type: 'event'    as const, icon: CalendarPlus, label: 'Event'    },
-            { type: 'reminder' as const, icon: Bell,         label: 'Reminder' },
-          ]).map(({ type, icon: Icon, label }) => (
-            <button
-              key={type}
-              onClick={() => openAddModal(type)}
-              className="btn-ghost flex items-center gap-1 px-2 py-1"
-              style={{ fontSize: 11 }}
-              title={`Add ${label}`}
-            >
-              <Icon size={11} />
-              <span>{label}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="ml-auto flex items-center gap-2">
-          <PWAInstallButton />
-          <TopBarActions />
-        </div>
+      {/* Clean header */}
+      <div className="px-8 pt-8 pb-2 flex-shrink-0">
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-1)' }}>
+          {greeting}{userName ? `, ${userName}` : ''}
+        </h1>
+        <p className="text-sm mt-1" style={{ color: 'var(--text-3)' }}>
+          {format(new Date(), 'EEEE, MMMM d')}
+        </p>
       </div>
 
-      {/* ── Quick Add ──────────────────────────────────────────────────── */}
-      <div className="px-6 pt-3 flex-shrink-0">
+      {/* Quick Add */}
+      <div className="px-8 py-3 flex-shrink-0">
         <QuickAddBar />
       </div>
 
-      {/* ── Bento grid ───────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-auto p-4" style={{ minHeight: 0 }}>
-          {/* 4 columns × 2 rows */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '0.8fr 1fr 0.95fr 1.05fr',
-              gridTemplateRows: '1fr 1.15fr',
-              gap: 12,
-              height: '100%',
-              minHeight: 480,
-              maxHeight: 820,
-            }}
-          >
-            <BentoCard style={{ gridColumn: '1', gridRow: '1' }}>
-              <ClockWidget items={items} />
-            </BentoCard>
+      {/* Scrollable content — Today view */}
+      <div className="flex-1 overflow-auto px-8 pb-8">
+        <div className="max-w-3xl space-y-6">
 
-            <BentoCard style={{ gridColumn: '2', gridRow: '1' }}>
-              <AIBriefWidget items={items} />
-            </BentoCard>
-
-            <BentoCard style={{ gridColumn: '3', gridRow: '1' }}>
-              <MiniCalendarWidget items={items} />
-            </BentoCard>
-
-            <BentoCard style={{ gridColumn: '4', gridRow: '1 / 3', display: 'flex', flexDirection: 'column' }}>
-              <DailyJournalWidget />
-            </BentoCard>
-
-            <BentoCard style={{ gridColumn: '1', gridRow: '2' }}>
-              <PomodoroWidget items={items} />
-            </BentoCard>
-
-            <BentoCard style={{ gridColumn: '2', gridRow: '2', display: 'flex', flexDirection: 'column' }}>
-              <AllItemsWidget items={items} onUpdateItem={updateItem} />
-            </BentoCard>
-
-            <BentoCard style={{ gridColumn: '3', gridRow: '2' }}>
-              <WeatherWidget />
-            </BentoCard>
+          {/* AI Brief */}
+          <div className="rounded-xl p-4" style={{ background: 'var(--surface, var(--card))' }}>
+            <AIBriefWidget items={items} />
           </div>
+
+          {/* Overdue section */}
+          {overdue.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle size={14} style={{ color: '#ef4444' }} />
+                <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#ef4444' }}>
+                  Overdue ({overdue.length})
+                </h2>
+              </div>
+              <div className="space-y-px">
+                {overdue.map(task => (
+                  <TaskRow key={task._id} task={task} onToggle={() => handleToggleTask(task)} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Today's events */}
+          {todayEvents.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-2">
+                <CalIcon size={14} style={{ color: 'var(--text-3)' }} />
+                <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-3)' }}>
+                  Schedule
+                </h2>
+              </div>
+              <div className="space-y-px">
+                {todayEvents.map(event => (
+                  <div
+                    key={event._id}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
+                    style={{ background: 'var(--surface, var(--card))' }}
+                  >
+                    <div className="w-1 h-8 rounded-full flex-shrink-0" style={{ background: 'var(--accent)' }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate" style={{ color: 'var(--text-1)' }}>{event.title}</p>
+                      <p className="text-xs" style={{ color: 'var(--text-3)' }}>
+                        {format(new Date(event.startDate), 'h:mm a')}
+                        {event.endDate && ` – ${format(new Date(event.endDate), 'h:mm a')}`}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Today's tasks */}
+          <section>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={14} style={{ color: 'var(--text-3)' }} />
+                <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-3)' }}>
+                  Tasks ({todayTasks.length})
+                </h2>
+              </div>
+              <button
+                onClick={() => setModalOpen(true)}
+                className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md transition-colors"
+                style={{ color: 'var(--accent)' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--accent-soft)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                <Plus size={12} /> Add
+              </button>
+            </div>
+            {todayTasks.length > 0 ? (
+              <div className="space-y-px">
+                {todayTasks.map(task => (
+                  <TaskRow key={task._id} task={task} onToggle={() => handleToggleTask(task)} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm py-8 text-center" style={{ color: 'var(--text-3)' }}>
+                Nothing for today. Enjoy the calm.
+              </p>
+            )}
+          </section>
+
+          {/* Habits strip */}
+          <section>
+            <div className="rounded-xl p-4" style={{ background: 'var(--surface, var(--card))' }}>
+              <HabitsWidget />
+            </div>
+          </section>
+
+          {/* Quick links */}
+          <div className="flex gap-2 pb-4">
+            {[
+              { href: '/calendar', label: 'Calendar' },
+              { href: '/journal', label: 'Journal' },
+              { href: '/stats', label: 'Stats' },
+            ].map(link => (
+              <Link key={link.href} href={link.href}
+                className="px-4 py-2 rounded-lg text-xs font-medium transition-colors"
+                style={{ background: 'var(--surface, var(--card))', color: 'var(--text-2)', border: '1px solid var(--border)' }}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <AddItemModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onAdd={handleAddItem}
-        defaultType={modalType}
-      />
-
+      <AddItemModal open={modalOpen} onClose={() => setModalOpen(false)} onAdd={handleAddItem} defaultType="task" />
       <FloatingChat onRefreshItems={silentRefresh} />
+    </div>
+  )
+}
+
+// Minimal task row — Superlist style
+function TaskRow({ task, onToggle }: { task: Task; onToggle: () => void }) {
+  const done = task.status === 'done'
+  const priorityColor = task.priority === 'high' ? '#ef4444' : task.priority === 'medium' ? '#f59e0b' : 'var(--border)'
+
+  return (
+    <div
+      className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors group"
+      style={{ minHeight: 44 }}
+      onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface, var(--card))')}
+      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+    >
+      <button
+        onClick={e => { e.stopPropagation(); onToggle() }}
+        className="w-[18px] h-[18px] rounded-full flex items-center justify-center flex-shrink-0 transition-all"
+        style={{
+          border: `2px solid ${done ? 'var(--accent)' : priorityColor}`,
+          background: done ? 'var(--accent)' : 'transparent',
+        }}
+      >
+        {done && (
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <path d="M2 5L4.5 7.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </button>
+      <span
+        className="text-sm flex-1 min-w-0 truncate"
+        style={{
+          color: done ? 'var(--text-3)' : 'var(--text-1)',
+          textDecoration: done ? 'line-through' : undefined,
+        }}
+      >
+        {task.title}
+      </span>
+      {task.dueDate && (
+        <span className="text-xs flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-3)' }}>
+          {format(new Date(task.dueDate), 'MMM d')}
+        </span>
+      )}
     </div>
   )
 }
