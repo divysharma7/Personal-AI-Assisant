@@ -49,6 +49,10 @@ function resolveToken(request: NextRequest): string | undefined {
 }
 
 export async function middleware(request: NextRequest) {
+  // TEMPORARY: auth bypassed for frontend-only development
+  return NextResponse.next()
+
+  /* Re-enable when backend is connected:
   const { pathname } = request.nextUrl
 
   if (isPublic(pathname)) return NextResponse.next()
@@ -71,6 +75,7 @@ export async function middleware(request: NextRequest) {
     res.cookies.delete(COOKIE_NAME)
     return res
   }
+  */
 }
 
 export const config = {

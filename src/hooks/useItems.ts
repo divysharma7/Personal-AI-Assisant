@@ -6,12 +6,15 @@ import type { AnyItem, CalendarEvent, Task, Reminder } from '@/types'
 const ITEMS_KEY = ['items'] as const
 
 async function fetchItems(): Promise<AnyItem[]> {
-  const [events, tasks, reminders] = await Promise.all([
-    fetch('/api/events').then(r => r.json()),
-    fetch('/api/tasks').then(r => r.json()),
-    fetch('/api/reminders').then(r => r.json()),
-  ])
-  return [...events, ...tasks, ...reminders] as AnyItem[]
+  // Backend disabled for frontend development — return empty array
+  // Uncomment below when backend is ready:
+  // const [events, tasks, reminders] = await Promise.all([
+  //   fetch('/api/events').then(r => r.json()),
+  //   fetch('/api/tasks').then(r => r.json()),
+  //   fetch('/api/reminders').then(r => r.json()),
+  // ])
+  // return [...events, ...tasks, ...reminders] as AnyItem[]
+  return []
 }
 
 export function useItems() {
