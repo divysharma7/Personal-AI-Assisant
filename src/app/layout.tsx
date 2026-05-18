@@ -21,7 +21,23 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" data-theme="dark" className={inter.variable}>
+    <html lang="en" data-theme="dark" className={inter.variable} suppressHydrationWarning>
+      <head>
+        {/* Prevent theme flash: set data-theme before React hydrates */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function(){
+            try {
+              var t = localStorage.getItem('laif-theme');
+              if (t === 'system' || !t) {
+                t = window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light';
+              }
+              if (['light','dark','blackout'].includes(t)) {
+                document.documentElement.setAttribute('data-theme', t);
+              }
+            } catch(e) {}
+          })();
+        `}} />
+      </head>
       <body>
         <Providers>
           <AppShell>{children}</AppShell>
