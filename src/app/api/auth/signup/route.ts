@@ -33,11 +33,11 @@ export async function POST(req: Request) {
   }
 
   const passwordHash = await hash(password, 12)
-  const user = await UserModel.create({ username, passwordHash })
+  const user = await UserModel.create({ username, passwordHash, name: name || undefined })
 
-  const token = await signToken({ userId: String(user._id), username: user.username })
+  const token = await signToken({ userId: String(user._id), username: user.username, name: user.name || '' })
 
-  const res = NextResponse.json({ ok: true, username: user.username })
+  const res = NextResponse.json({ ok: true, username: user.username, name: user.name || '' })
   res.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',

@@ -9,9 +9,10 @@ const TOKEN_EXPIRY = '24h'
 export interface TokenPayload extends JWTPayload {
   userId: string
   username: string
+  name?: string
 }
 
-export async function signToken(payload: { userId: string; username: string }): Promise<string> {
+export async function signToken(payload: { userId: string; username: string; name?: string }): Promise<string> {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()

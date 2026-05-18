@@ -4,7 +4,7 @@ import { connectDB } from '@/lib/mongodb'
 import UserModel from '@/lib/models/User'
 import { signToken, COOKIE_NAME } from '@/lib/auth'
 
-type LeanUser = { _id: unknown; username: string; passwordHash: string }
+type LeanUser = { _id: unknown; username: string; name?: string; passwordHash: string }
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null)
@@ -37,9 +37,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
   }
 
-  const token = await signToken({ userId: String(user._id), username: user.username })
+  const token = await signToken({ userId: String(user._id), username: user.username, name: user.name || '' })
 
-  const res = NextResponse.json({ ok: true, username: user.username })
+  const res = NextResponse.json({ ok: true, username: user.username, name: user.name || '' })
   res.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',

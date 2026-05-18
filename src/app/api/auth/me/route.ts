@@ -7,7 +7,7 @@ export async function GET() {
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   try {
     const payload = await verifyToken(token)
-    return NextResponse.json({ username: payload.username })
+    return NextResponse.json({ username: payload.username, name: payload.name || '' })
   } catch {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

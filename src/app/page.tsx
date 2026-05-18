@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { CalendarPlus, CheckSquare, Bell } from 'lucide-react'
 import Image from 'next/image'
 import AddItemModal from '@/components/modals/AddItemModal'
@@ -62,7 +62,14 @@ export default function DashboardPage() {
   const { items, loading, silentRefresh, addItem, updateItem } = useItems()
   const [modalOpen, setModalOpen] = useState(false)
   const [modalType, setModalType] = useState<'event' | 'task' | 'reminder'>('task')
+  const [userName, setUserName] = useState('')
   const subtitle = useAmbientGreeting(items)
+
+  useEffect(() => {
+    fetch('/api/auth/me').then(r => r.ok ? r.json() : null).then(data => {
+      if (data?.name) setUserName(data.name)
+    }).catch(() => {})
+  }, [])
 
   function openAddModal(type: 'event' | 'task' | 'reminder') {
     setModalType(type)
@@ -80,8 +87,8 @@ export default function DashboardPage() {
         className="flex items-center gap-2.5 px-6 py-3 flex-shrink-0"
         style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}
       >
-        <Image src="/logo_new.png" alt="PIM" width={26} height={26} unoptimized className="object-contain flex-shrink-0" />
-        <span className="text-sm font-bold" style={{ color: 'var(--text-1)' }}>PIM</span>
+        <Image src="/logo_new.png" alt="LAIF" width={26} height={26} unoptimized className="object-contain flex-shrink-0" />
+        <span className="text-sm font-bold" style={{ color: 'var(--text-1)' }}>{userName ? `Hi, ${userName}` : 'LAIF'}</span>
         <span className="text-xs" style={{ color: 'var(--text-3)' }}>— {subtitle}</span>
         {loading && (
           <div
