@@ -192,10 +192,62 @@ export default function InboxPage() {
   )
 }
 
+// ─── Completion sound — varies each time like Superlist ─────────────────────
+const COMPLETION_TONES = [
+  { freq: 880, freq2: 1320 },  // A5 + E6
+  { freq: 784, freq2: 1175 },  // G5 + D6
+  { freq: 660, freq2: 990 },   // E5 + B5
+  { freq: 740, freq2: 1109 },  // F#5 + C#6
+  { freq: 830, freq2: 1245 },  // Ab5 + Eb6
+]
+
+function playCompletionSound() {
+  if (typeof window === 'undefined') return
+  try {
+    const ctx = new AudioContext()
+    const tone = COMPLETION_TONES[Math.floor(Math.random() * COMPLETION_TONES.length)]
+    const t = ctx.currentTime
+
+    // Two-note chime with quick decay
+    const osc1 = ctx.createOscillator()
+    const osc2 = ctx.createOscillator()
+    const gain = ctx.createGain()
+
+    osc1.type = 'sine'
+    osc1.frequency.value = tone.freq
+    osc2.type = 'sine'
+    osc2.frequency.value = tone.freq2
+
+    osc1.connect(gain)
+    osc2.connect(gain)
+    gain.connect(ctx.destination)
+
+    gain.gain.setValueAtTime(0.12, t)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4)
+
+    osc1.start(t)
+    osc2.start(t + 0.05)
+    osc1.stop(t + 0.4)
+    osc2.stop(t + 0.45)
+  } catch {}
+}
+
 // ─── Task Row — Superlist style ──────────────────────────────────────────────
 function TaskRow({ task, onToggle }: { task: Task; onToggle: () => void }) {
+  const [justCompleted, setJustCompleted] = useState(false)
   const done = task.status === 'done'
   const isOverdue = task.dueDate && dfIsPast(new Date(task.dueDate)) && !dfIsToday(new Date(task.dueDate))
+
+  const handleToggle = () => {
+    if (!done) {
+      setJustCompleted(true)
+      playCompletionSound()
+      setTimeout(() => setJustCompleted(false), 600)
+    }
+    onToggle()
+  }
+
+  const showStrike = done || justCompleted
 
   return (
     <div
@@ -204,35 +256,45 @@ function TaskRow({ task, onToggle }: { task: Task; onToggle: () => void }) {
       onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-overlay, rgba(0,0,0,0.02))')}
       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
     >
-      {/* Checkbox — Superlist style: round, 20px, fills on complete */}
+      {/* Checkbox — Superlist style: round, fills red-orange on complete */}
       <button
-        onClick={e => { e.stopPropagation(); onToggle() }}
-        className="w-[20px] h-[20px] rounded-full flex items-center justify-center flex-shrink-0 mt-[2px] transition-all"
+        onClick={e => { e.stopPropagation(); handleToggle() }}
+        className="w-[22px] h-[22px] rounded-full flex items-center justify-center flex-shrink-0 mt-[1px]"
         style={{
-          border: done ? 'none' : '2px solid var(--text-3)',
-          background: done ? '#E85D40' : 'transparent',
+          border: showStrike ? 'none' : '2px solid var(--text-3)',
+          background: showStrike ? '#E85D40' : 'transparent',
+          transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          transform: justCompleted ? 'scale(1.15)' : 'scale(1)',
         }}
       >
-        {done && (
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M2 5L4.5 7.5L8 3" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        {showStrike && (
+          <svg width="11" height="11" viewBox="0 0 10 10" fill="none"
+            style={{ opacity: justCompleted ? 0 : 1, transition: 'opacity 0.15s', animationDelay: '0.1s' }}>
+            <path d="M2 5L4.5 7.5L8 3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         )}
       </button>
 
       <div className="flex-1 min-w-0">
-        {/* Title */}
+        {/* Title with animated strikethrough */}
         <p
-          className="text-[14px] leading-snug"
+          className="text-[14px] leading-snug relative"
           style={{
-            color: done ? 'var(--text-3)' : 'var(--text-1)',
-            textDecoration: done ? 'line-through' : undefined,
+            color: showStrike ? 'var(--text-3)' : 'var(--text-1)',
+            transition: 'color 0.3s ease',
           }}
         >
-          {task.title}
+          <span style={{
+            textDecoration: showStrike ? 'line-through' : 'none',
+            textDecorationColor: showStrike ? '#E85D40' : 'transparent',
+            textDecorationThickness: '2px',
+            transition: 'text-decoration-color 0.3s ease',
+          }}>
+            {task.title}
+          </span>
         </p>
         {/* Metadata line */}
-        {(task.dueDate || task.priority === 'high') && (
+        {(task.dueDate || task.priority === 'high') && !showStrike && (
           <div className="flex items-center gap-2 mt-1">
             {task.dueDate && (
               <span className="text-[11px] flex items-center gap-1" style={{ color: isOverdue ? '#FF3B30' : 'var(--text-3)' }}>

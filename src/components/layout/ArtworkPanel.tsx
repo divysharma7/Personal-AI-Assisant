@@ -12,10 +12,9 @@ const ARTWORKS = [
 ]
 
 export default function ArtworkPanel() {
-  const [artIdx, setArtIdx] = useState(0)
+  const [artIdx, setArtIdx] = useState(-1)
 
   useEffect(() => {
-    // Pick artwork based on day of year so it changes daily
     const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000)
     setArtIdx(dayOfYear % ARTWORKS.length)
   }, [])
@@ -28,9 +27,10 @@ export default function ArtworkPanel() {
       <div
         className="h-full rounded-2xl md:rounded-[20px] overflow-hidden"
         style={{
-          backgroundImage: `url(${ARTWORKS[artIdx]})`,
+          backgroundImage: artIdx >= 0 ? `url(${ARTWORKS[artIdx]})` : undefined,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
+          background: artIdx < 0 ? 'var(--surface)' : undefined,
         }}
       />
     </div>

@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+/* eslint-disable @next/next/no-img-element */
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -11,6 +11,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { snappy } from '@/shared/design-system'
+// snappy used in CollapsibleGroup chevron animation
 
 interface NavItem {
   href: string
@@ -69,11 +70,9 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
       <span>{item.label}</span>
       {/* Active indicator — right bar like Superlist */}
       {active && (
-        <motion.div
-          layoutId="sidebar-active"
+        <div
           className="absolute right-0 top-[6px] bottom-[6px] w-[3px] rounded-full"
           style={{ background: item.color }}
-          transition={snappy}
         />
       )}
     </Link>
@@ -93,11 +92,9 @@ function ListLink({ item, active }: { item: ListItem; active: boolean }) {
       <span className="text-sm flex-shrink-0">{item.emoji}</span>
       <span className="truncate">{item.label}</span>
       {active && (
-        <motion.div
-          layoutId="sidebar-list-active"
+        <div
           className="absolute right-0 top-[5px] bottom-[5px] w-[3px] rounded-full"
           style={{ background: '#E85D40' }}
-          transition={snappy}
         />
       )}
     </Link>
