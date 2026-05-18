@@ -105,12 +105,12 @@ export default function TasksPage() {
       <div className="flex-1 flex overflow-hidden">
         {/* Task list panel */}
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-          {/* Header */}
+          {/* Header — Superlist style */}
           <div
-            className="flex items-center justify-between px-5 py-3 flex-shrink-0"
+            className="flex items-center justify-between px-8 py-4 flex-shrink-0"
             style={{ borderBottom: '1px solid var(--border)' }}
           >
-            <h1 className="text-base font-bold" style={{ color: 'var(--text-1)' }}>
+            <h1 className="text-lg font-bold" style={{ color: 'var(--text-1)', letterSpacing: '-0.02em' }}>
               Tasks
             </h1>
 
@@ -177,7 +177,7 @@ export default function TasksPage() {
           </div>
 
           {/* Quick Add */}
-          <div className="px-5 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
+          <div className="px-8 py-4 flex-shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
             <QuickAddBar />
           </div>
 

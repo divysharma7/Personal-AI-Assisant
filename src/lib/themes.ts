@@ -13,49 +13,50 @@ export interface ThemeDef {
   text3: string
 }
 
+// Superlist-inspired themes — flat, minimal, no shadows
 export const THEMES: ThemeDef[] = [
   {
     id: 'midnight', name: 'Midnight', mode: 'dark',
-    accent: '#6366f1', accentHover: '#4f46e5',
-    bg: '#070b14', surface: '#0c1220', card: '#111827', border: '#1a2744',
-    text1: '#e2e8f0', text2: '#7b91ad', text3: '#3d5068',
+    accent: '#6366f1', accentHover: '#5558e8',
+    bg: '#0D0D0D', surface: '#141414', card: '#141414', border: 'rgba(255,255,255,0.06)',
+    text1: '#F0F0F0', text2: '#888888', text3: '#555555',
   },
   {
     id: 'daylight', name: 'Daylight', mode: 'light',
-    accent: '#6366f1', accentHover: '#4f46e5',
-    bg: '#f4f6fb', surface: '#f9fafc', card: '#ffffff', border: '#e4e9f5',
-    text1: '#0f172a', text2: '#4a5880', text3: '#9aa5c4',
+    accent: '#6366f1', accentHover: '#5558e8',
+    bg: '#FAFAFA', surface: '#F5F5F5', card: '#FFFFFF', border: 'rgba(0,0,0,0.06)',
+    text1: '#1A1A1A', text2: '#777777', text3: '#AAAAAA',
   },
   {
     id: 'ocean', name: 'Ocean', mode: 'dark',
-    accent: '#06b6d4', accentHover: '#0891b2',
-    bg: '#0a1520', surface: '#0e1c2a', card: '#132635', border: '#1a3548',
-    text1: '#e0f2fe', text2: '#7baacc', text3: '#3a6280',
+    accent: '#22d3ee', accentHover: '#06b6d4',
+    bg: '#0A0F14', surface: '#101820', card: '#101820', border: 'rgba(255,255,255,0.06)',
+    text1: '#E8F4F8', text2: '#6B9DB5', text3: '#3A6070',
   },
   {
     id: 'forest', name: 'Forest', mode: 'dark',
-    accent: '#10b981', accentHover: '#059669',
-    bg: '#0a1410', surface: '#0e1c15', card: '#132b1f', border: '#1a3d2a',
-    text1: '#d1fae5', text2: '#6dba96', text3: '#325e47',
+    accent: '#34d399', accentHover: '#10b981',
+    bg: '#0A0F0A', surface: '#101810', card: '#101810', border: 'rgba(255,255,255,0.06)',
+    text1: '#E8F5E8', text2: '#6BB580', text3: '#3A6048',
   },
   {
     id: 'sunset', name: 'Sunset', mode: 'light',
-    accent: '#f59e0b', accentHover: '#d97706',
-    bg: '#fefbf4', surface: '#fef7e8', card: '#ffffff', border: '#f0e0c0',
-    text1: '#1c1208', text2: '#7a6530', text3: '#bba870',
+    accent: '#F59E0B', accentHover: '#D97706',
+    bg: '#FDFAF5', surface: '#F8F3EA', card: '#FFFFFF', border: 'rgba(0,0,0,0.06)',
+    text1: '#1A1408', text2: '#8A7550', text3: '#BBA880',
   },
   {
     id: 'nord', name: 'Nord', mode: 'dark',
-    accent: '#88c0d0', accentHover: '#5e81ac',
-    bg: '#2e3440', surface: '#3b4252', card: '#434c5e', border: '#4c566a',
-    text1: '#eceff4', text2: '#d8dee9', text3: '#81899c',
+    accent: '#88C0D0', accentHover: '#81A1C1',
+    bg: '#242933', surface: '#2E3440', card: '#2E3440', border: 'rgba(255,255,255,0.06)',
+    text1: '#ECEFF4', text2: '#8893A5', text3: '#5C6678',
   },
 ]
 
 export type DensityLevel = 'compact' | 'comfortable' | 'spacious'
 
 export const DENSITY_SCALES: Record<DensityLevel, { padding: number; fontSize: number; gap: number }> = {
-  compact:     { padding: 0.85, fontSize: 0.92, gap: 0.75 },
+  compact:     { padding: 0.85, fontSize: 0.93, gap: 0.75 },
   comfortable: { padding: 1,    fontSize: 1,    gap: 1 },
   spacious:    { padding: 1.2,  fontSize: 1.05, gap: 1.3 },
 }

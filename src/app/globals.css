@@ -3,201 +3,180 @@
 @tailwind utilities;
 
 @layer base {
-  /* ── Typography — Inter variable font features ─────────── */
+  /* ── Typography — Inter with Superlist-style features ───── */
   html {
     font-feature-settings: 'cv11', 'ss01', 'ss03';
+    font-variant-numeric: tabular-nums;
     font-optical-sizing: auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
 
-  /* ── Item type colors — update per theme ────────────────── */
+  /* ── Item type colors ──────────────────────────────────── */
   :root, [data-theme="dark"] {
     --color-event:    #818cf8;
-    --color-task:     #2DD4BF;
-    --color-reminder: #fb8f67;
-    --bg-event:       #0f1235;
-    --bg-task:        #0a2928;
-    --bg-reminder:    #271408;
+    --color-task:     #34d399;
+    --color-reminder: #fbbf24;
+    --bg-event:       rgba(129,140,248,0.08);
+    --bg-task:        rgba(52,211,153,0.08);
+    --bg-reminder:    rgba(251,191,36,0.08);
   }
   [data-theme="light"] {
-    --color-event:    #4f52c8;
-    --color-task:     #0f766e;
-    --color-reminder: #c2410c;
-    --bg-event:       #e8e9f8;
-    --bg-task:        #ccfbf1;
-    --bg-reminder:    #ffedd5;
+    --color-event:    #6366f1;
+    --color-task:     #059669;
+    --color-reminder: #d97706;
+    --bg-event:       rgba(99,102,241,0.06);
+    --bg-task:        rgba(5,150,105,0.06);
+    --bg-reminder:    rgba(217,119,6,0.06);
   }
 
-  /* ── Dark theme (default) — deep ocean midnight ──────────── */
+  /* ── Priority colors (Superlist: Red/Yellow/Blue/Gray) ─── */
+  :root {
+    --priority-high:   #FF3B30;
+    --priority-medium: #FFCC00;
+    --priority-low:    #007AFF;
+    --priority-none:   var(--text-3);
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     DARK THEME — Superlist-style deep black
+     ══════════════════════════════════════════════════════════ */
   :root, [data-theme="dark"] {
-    --bg: #070b14;
-    --surface: #0c1220;
-    --card: #111827;
-    --border: #1a2744;
-    --border-hover: #243656;
-    --text-1: #e2e8f0;
-    --text-2: #7b91ad;
-    --text-3: #3d5068;
+    --bg: #0D0D0D;
+    --surface: #141414;
+    --surface-1: #1A1A1A;
+    --card: #141414;
+    --border: rgba(255,255,255,0.06);
+    --border-hover: rgba(255,255,255,0.12);
+    --text-1: #F0F0F0;
+    --text-2: #888888;
+    --text-3: #555555;
     --accent: #6366f1;
-    --accent-hover: #4F46E5;
-    --accent-soft: rgba(99,102,241,0.1);
+    --accent-hover: #5558e8;
+    --accent-soft: rgba(99,102,241,0.08);
     --accent-foreground: #FFFFFF;
     --accent-light: #818cf8;
-    --accent-dim: #0f1235;
-    --accent-glow: #6366f140;
+    --accent-dim: rgba(99,102,241,0.06);
+    --accent-glow: rgba(99,102,241,0.15);
     --btn-primary-bg: var(--accent);
     --btn-primary-hover: var(--accent-hover);
+    --bg-overlay: rgba(255,255,255,0.03);
 
-    /* Calendar-specific */
-    --cal-header-bg: #070b14;
-    --cal-today-bg: #0f1535;
-    --cal-row-border: #141f35;
-    --cal-row-border-half: #0e1628;
-    --cal-col-border: #141f35;
-    --cal-cell-bg: #0a1020;
-    --cal-weekend-bg: #080e1b;
-    --cal-out-of-month-bg: transparent;
-    --cal-hover-bg: #121c30;
-
-    /* Glass → flat solid */
-    --glass-bg: #0e1828;
-    --glass-card-bg: #0c1525;
-    --glass-border: #1a2744;
-
-    /* Scrollbar */
-    --scrollbar-thumb: #1e3050;
-    --scrollbar-thumb-hover: #2a4268;
-
-    /* Input */
-    --input-bg: #0f1a2e;
-    --input-border: #1e3050;
-
-    /* Sidebar */
-    --sidebar-border: #131f35;
-    --sidebar-item-hover: #111e33;
-    --sidebar-active-bg: #0f1535;
-    --sidebar-active-color: var(--accent-light);
-
-    /* Card shadow (dark — very subtle) */
-    --card-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2);
-    --card-shadow-hover: 0 2px 8px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.3);
-
-    /* Dock */
-    --dock-bg:         rgba(15, 22, 40, 0.88);
-    --dock-border:     rgba(255, 255, 255, 0.10);
-    --dock-shadow:     0 4px 20px rgba(0, 0, 0, 0.35), 0 1px 4px rgba(0, 0, 0, 0.15);
-    --dock-btn-bg:     rgba(255, 255, 255, 0.08);
-    --dock-btn-border: rgba(255, 255, 255, 0.13);
-  }
-
-  /* ── Light theme — paper-white, minimal ─────────────────── */
-  [data-theme="light"] {
-    --bg: #f4f6fb;
-    --surface: #f9fafе;
-    --card: #ffffff;
-    --border: #e4e9f5;
-    --border-hover: #c8d0eb;
-    --text-1: #0f172a;
-    --text-2: #4a5880;
-    --text-3: #9aa5c4;
-    --accent: #6366f1;
-    --accent-hover: #4F46E5;
-    --accent-soft: #EEF2FF;
-    --accent-foreground: #FFFFFF;
-    --accent-light: #818cf8;
-    --accent-dim: #eef0ff;
-    --accent-glow: #6366f125;
-    --btn-primary-bg: var(--accent);
-    --btn-primary-hover: var(--accent-hover);
-
-    /* Card shadow used instead of borders */
-    --card-shadow: 0 1px 3px rgba(15,23,62,0.07), 0 4px 12px rgba(15,23,62,0.05);
-    --card-shadow-hover: 0 2px 8px rgba(15,23,62,0.10), 0 8px 24px rgba(15,23,62,0.07);
-
-    /* Dock */
-    --dock-bg:         rgba(255, 255, 255, 0.92);
-    --dock-border:     rgba(15, 23, 62, 0.11);
-    --dock-shadow:     0 4px 20px rgba(15, 23, 62, 0.13), 0 1px 4px rgba(15, 23, 62, 0.08);
-    --dock-btn-bg:     rgba(15, 23, 62, 0.06);
-    --dock-btn-border: rgba(15, 23, 62, 0.12);
+    /* No shadows — Superlist is flat */
+    --card-shadow: none;
+    --card-shadow-hover: none;
 
     /* Calendar */
-    --cal-header-bg: #f4f6fb;
-    --cal-today-bg: #eef0ff;
-    --cal-row-border: #e4e9f5;
-    --cal-row-border-half: #edf0f8;
-    --cal-col-border: #e4e9f5;
-    --cal-cell-bg: #f9fafc;
-    --cal-weekend-bg: #f6f7fc;
-    --cal-out-of-month-bg: #f0f2f8;
-    --cal-hover-bg: #eef0fb;
+    --cal-header-bg: #0D0D0D;
+    --cal-today-bg: rgba(99,102,241,0.06);
+    --cal-row-border: rgba(255,255,255,0.04);
+    --cal-row-border-half: rgba(255,255,255,0.02);
+    --cal-col-border: rgba(255,255,255,0.04);
+    --cal-cell-bg: transparent;
+    --cal-weekend-bg: rgba(255,255,255,0.01);
+    --cal-out-of-month-bg: transparent;
+    --cal-hover-bg: rgba(255,255,255,0.03);
 
-    /* Glass */
-    --glass-bg: #f9fafc;
-    --glass-card-bg: #ffffff;
-    --glass-border: #e4e9f5;
+    /* Glass → flat */
+    --glass-bg: #141414;
+    --glass-card-bg: #141414;
+    --glass-border: rgba(255,255,255,0.06);
 
     /* Scrollbar */
-    --scrollbar-thumb: #d0d6ee;
-    --scrollbar-thumb-hover: #b0bad8;
+    --scrollbar-thumb: rgba(255,255,255,0.08);
+    --scrollbar-thumb-hover: rgba(255,255,255,0.15);
 
     /* Input */
-    --input-bg: #f0f2fb;
-    --input-border: #dde2f4;
+    --input-bg: rgba(255,255,255,0.04);
+    --input-border: rgba(255,255,255,0.08);
 
     /* Sidebar */
-    --sidebar-border: #e4e9f5;
-    --sidebar-item-hover: #edf0fb;
-    --sidebar-active-bg: #eef0ff;
-    --sidebar-active-color: var(--accent);
+    --sidebar-border: rgba(255,255,255,0.06);
+    --sidebar-item-hover: rgba(255,255,255,0.04);
+    --sidebar-active-bg: rgba(99,102,241,0.08);
+    --sidebar-active-color: var(--text-1);
+
+    /* Dock (mobile bottom) */
+    --dock-bg: rgba(13,13,13,0.92);
+    --dock-border: rgba(255,255,255,0.06);
+    --dock-shadow: 0 -1px 0 rgba(255,255,255,0.04);
+    --dock-btn-bg: transparent;
+    --dock-btn-border: transparent;
+
+    --bg-scenery: none;
   }
 
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
-
-  html {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-
-  body {
-    background-color: var(--bg);
-    /* Subtle horizon gradient — light: pale sky fading down; dark: deep space */
-    background-image: var(--bg-scenery);
-    background-attachment: fixed;
-    color: var(--text-1);
-    font-family: var(--font-inter), system-ui, sans-serif;
-    overflow: hidden;
-    height: 100dvh;
-  }
-
-  /* Light scenery: a soft sky-wash, brighter at top, grounding at bottom */
+  /* ══════════════════════════════════════════════════════════
+     LIGHT THEME — Superlist-style clean white
+     ══════════════════════════════════════════════════════════ */
   [data-theme="light"] {
-    --bg-scenery: linear-gradient(
-      180deg,
-      #eef1ff 0%,      /* pale sky */
-      #f4f6fb 35%,     /* neutral mid */
-      #f4f6fb 100%
-    );
+    --bg: #FAFAFA;
+    --surface: #F5F5F5;
+    --surface-1: #EEEEEE;
+    --card: #FFFFFF;
+    --border: rgba(0,0,0,0.06);
+    --border-hover: rgba(0,0,0,0.12);
+    --text-1: #1A1A1A;
+    --text-2: #777777;
+    --text-3: #AAAAAA;
+    --accent: #6366f1;
+    --accent-hover: #5558e8;
+    --accent-soft: rgba(99,102,241,0.06);
+    --accent-foreground: #FFFFFF;
+    --accent-light: #6366f1;
+    --accent-dim: rgba(99,102,241,0.04);
+    --accent-glow: rgba(99,102,241,0.10);
+    --btn-primary-bg: var(--accent);
+    --btn-primary-hover: var(--accent-hover);
+    --bg-overlay: rgba(0,0,0,0.02);
+
+    --card-shadow: none;
+    --card-shadow-hover: none;
+
+    /* Dock */
+    --dock-bg: rgba(255,255,255,0.95);
+    --dock-border: rgba(0,0,0,0.06);
+    --dock-shadow: 0 -1px 0 rgba(0,0,0,0.04);
+    --dock-btn-bg: transparent;
+    --dock-btn-border: transparent;
+
+    /* Calendar */
+    --cal-header-bg: #FAFAFA;
+    --cal-today-bg: rgba(99,102,241,0.04);
+    --cal-row-border: rgba(0,0,0,0.04);
+    --cal-row-border-half: rgba(0,0,0,0.02);
+    --cal-col-border: rgba(0,0,0,0.04);
+    --cal-cell-bg: transparent;
+    --cal-weekend-bg: rgba(0,0,0,0.01);
+    --cal-out-of-month-bg: rgba(0,0,0,0.02);
+    --cal-hover-bg: rgba(0,0,0,0.02);
+
+    /* Glass → flat */
+    --glass-bg: #FFFFFF;
+    --glass-card-bg: #FFFFFF;
+    --glass-border: rgba(0,0,0,0.06);
+
+    /* Scrollbar */
+    --scrollbar-thumb: rgba(0,0,0,0.08);
+    --scrollbar-thumb-hover: rgba(0,0,0,0.15);
+
+    /* Input */
+    --input-bg: rgba(0,0,0,0.03);
+    --input-border: rgba(0,0,0,0.08);
+
+    /* Sidebar */
+    --sidebar-border: rgba(0,0,0,0.06);
+    --sidebar-item-hover: rgba(0,0,0,0.03);
+    --sidebar-active-bg: rgba(99,102,241,0.06);
+    --sidebar-active-color: var(--accent);
+
+    --bg-scenery: none;
   }
 
-  /* Dark scenery: deep cosmos, faint nebula glow top-right */
-  [data-theme="dark"] {
-    --bg-scenery: radial-gradient(
-      ellipse 80% 50% at 75% -10%,
-      rgba(99,102,241,0.08) 0%,
-      transparent 60%
-    ),
-    linear-gradient(180deg, #070b14 0%, #070b14 100%);
-  }
-
-  /* ── Density scaling ──────────────────────────────────── */
+  /* ── Content max-width ─────────────────────────────────── */
   :root {
+    --content-max-width: 720px;
     --density-padding: 1;
     --density-font: 1;
     --density-gap: 1;
@@ -224,145 +203,130 @@
     }
   }
 
-  ::selection {
-    background: var(--accent-dim);
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
   }
 
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+  body {
+    background-color: var(--bg);
+    color: var(--text-1);
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    overflow: hidden;
+    height: 100dvh;
   }
-  ::-webkit-scrollbar-track {
-    background: transparent;
+
+  ::selection {
+    background: var(--accent-soft);
   }
-  ::-webkit-scrollbar-thumb {
-    background: var(--scrollbar-thumb);
-    border-radius: 99px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--scrollbar-thumb-hover);
-  }
+
+  /* Minimal scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
 }
 
 @layer components {
-  .glass {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-  }
-
-  .glass-card {
-    background: var(--glass-card-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    box-shadow: var(--card-shadow, none);
-  }
-
+  /* ── Buttons — Superlist style: minimal, round ─────────── */
   .btn-primary {
-    @apply px-4 py-2 rounded-xl text-white font-medium text-sm transition-colors duration-150 active:scale-95;
+    @apply px-5 py-2.5 rounded-full text-white font-medium text-sm transition-all duration-150;
     background: var(--btn-primary-bg);
+    letter-spacing: -0.01em;
   }
-  .btn-primary:hover {
-    background: var(--btn-primary-hover);
-  }
+  .btn-primary:hover { background: var(--btn-primary-hover); }
+  .btn-primary:active { transform: scale(0.97); }
 
   .btn-ghost {
-    @apply px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-150 active:scale-95;
+    @apply px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150;
     color: var(--text-2);
   }
   .btn-ghost:hover {
     color: var(--text-1);
-    background: var(--sidebar-item-hover);
+    background: var(--bg-overlay);
   }
 
+  /* ── Inputs — clean, barely bordered ───────────────────── */
   .input-field {
-    @apply w-full px-3 py-2 rounded-xl text-sm outline-none transition-colors duration-150;
+    @apply w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all duration-150;
     color: var(--text-1);
     background: var(--input-bg);
     border: 1px solid var(--input-border);
   }
-  .input-field::placeholder {
-    color: var(--text-3);
-  }
+  .input-field::placeholder { color: var(--text-3); }
   .input-field:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 2px var(--accent-dim);
+    box-shadow: 0 0 0 3px var(--accent-dim);
   }
 
   .label {
     @apply block text-xs font-medium mb-1.5;
     color: var(--text-2);
+    letter-spacing: 0.01em;
   }
 
-  /* Month grid cell backgrounds */
-  .cal-day-cell {
-    background: var(--cal-cell-bg);
-    transition: background 0.1s;
+  /* ── Glass card — flat now, no frosted glass ───────────── */
+  .glass { background: var(--glass-bg); border: 1px solid var(--glass-border); }
+  .glass-card {
+    background: var(--glass-card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
   }
+
+  /* ── Calendar cells ────────────────────────────────────── */
+  .cal-day-cell { background: var(--cal-cell-bg); transition: background 0.1s; }
   .cal-day-cell:hover { background: var(--cal-hover-bg); }
-  .cal-day-today      { background: var(--cal-today-bg) !important; }
-  .cal-day-weekend    { background: var(--cal-weekend-bg); }
-  .cal-day-out        { background: var(--cal-out-of-month-bg); }
+  .cal-day-today { background: var(--cal-today-bg) !important; }
+  .cal-day-weekend { background: var(--cal-weekend-bg); }
+  .cal-day-out { background: var(--cal-out-of-month-bg); }
 
+  /* ── Item pill ─────────────────────────────────────────── */
   .item-pill {
-    @apply flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium truncate cursor-pointer
-      transition-colors duration-150 hover:opacity-80 active:scale-95;
+    @apply flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium truncate cursor-pointer transition-colors duration-150;
   }
-
-  /* Light mode: events use outline style instead of filled background */
   [data-theme="light"] .item-pill {
     background: transparent !important;
     border: 1.5px solid currentColor;
   }
 
+  /* ── Agenda item ───────────────────────────────────────── */
   .agenda-item {
-    background: var(--card);
+    background: transparent;
     border: 1px solid var(--border);
-    transition: background 0.12s, border-color 0.12s;
+    border-radius: 12px;
+    transition: background 0.12s;
   }
-  .agenda-item:hover {
-    background: var(--cal-hover-bg);
-    border-color: var(--border-hover);
-  }
-  .agenda-item.selected {
-    background: var(--accent-dim) !important;
-    border-color: var(--accent) !important;
-  }
+  .agenda-item:hover { background: var(--bg-overlay); }
+  .agenda-item.selected { background: var(--accent-soft) !important; border-color: var(--accent) !important; }
 
+  /* ── Sidebar item ──────────────────────────────────────── */
   .sidebar-item {
-    @apply flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-150 cursor-pointer;
+    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors duration-150 cursor-pointer;
     color: var(--text-2);
   }
-  .sidebar-item:hover {
-    color: var(--text-1);
-    background: var(--sidebar-item-hover);
-  }
-  .sidebar-item.active {
-    background: var(--sidebar-active-bg);
-    color: var(--sidebar-active-color);
-  }
+  .sidebar-item:hover { color: var(--text-1); background: var(--sidebar-item-hover); }
+  .sidebar-item.active { background: var(--sidebar-active-bg); color: var(--sidebar-active-color); }
 
-  /* ── Paper-feel dot grid — apply to the editor surface container ────── */
-  .paper-bg {
-    background-image: radial-gradient(circle, rgba(255,255,255,0.1) 1.5px, transparent 1.5px);
-    background-size: 22px 22px;
-    background-position: 11px 11px;
-  }
-  [data-theme="light"] .paper-bg {
-    background-image: radial-gradient(circle, rgba(80,90,120,0.13) 1.5px, transparent 1.5px);
+  /* ── Section header — Superlist style ───────────────────── */
+  .section-header {
+    @apply text-[11px] font-semibold uppercase tracking-widest;
+    color: var(--text-3);
+    letter-spacing: 0.08em;
   }
 }
 
 @layer utilities {
-  .gradient-text {
-    color: var(--accent-light);
-  }
+  .gradient-text { color: var(--accent-light); }
+  .content-width { max-width: var(--content-max-width); }
 }
 
-/* ── Focus mode breathing ring ───────────────────────────── */
+/* ── Breathing ring (pomodoro) ────────────────────────────── */
 @keyframes breathe {
-  0%, 100% { transform: scale(1);    opacity: 0.18; }
-  50%       { transform: scale(1.10); opacity: 0.06; }
+  0%, 100% { transform: scale(1); opacity: 0.15; }
+  50% { transform: scale(1.08); opacity: 0.04; }
 }
 .breathing-ring {
   animation: breathe 4s ease-in-out infinite;
@@ -371,18 +335,23 @@
   pointer-events: none;
 }
 
-/* ── Skeleton shimmer animation ─────────────────────────── */
+/* ── Skeleton shimmer ────────────────────────────────────── */
 @keyframes shimmer {
-  0%   { transform: translateX(-100%); }
+  0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
 }
-.skeleton-shimmer {
-  position: relative;
-  overflow: hidden;
-}
+.skeleton-shimmer { position: relative; overflow: hidden; }
 .skeleton-shimmer .skeleton-shine {
-  position: absolute;
-  inset: 0;
+  position: absolute; inset: 0;
   background: linear-gradient(90deg, transparent 0%, var(--border) 50%, transparent 100%);
   animation: shimmer 1.5s infinite;
+}
+
+/* ── Paper dot grid ──────────────────────────────────────── */
+.paper-bg {
+  background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+[data-theme="light"] .paper-bg {
+  background-image: radial-gradient(circle, rgba(0,0,0,0.04) 1px, transparent 1px);
 }

@@ -61,8 +61,8 @@ export default function SuperlistSidebar() {
     <aside
       className="hidden md:flex flex-col h-full flex-shrink-0"
       style={{
-        width: 220,
-        background: 'var(--bg)',
+        width: 240,
+        background: 'var(--surface)',
         borderRight: '1px solid var(--border)',
       }}
     >

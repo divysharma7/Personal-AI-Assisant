@@ -70,36 +70,36 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden min-h-0">
-      {/* Clean header */}
-      <div className="px-8 pt-8 pb-2 flex-shrink-0">
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-1)' }}>
+      {/* Clean header — Superlist style */}
+      <div className="px-10 pt-10 pb-1 flex-shrink-0">
+        <h1 className="text-[28px] font-bold" style={{ color: 'var(--text-1)', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
           {greeting}{userName ? `, ${userName}` : ''}
         </h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--text-3)' }}>
+        <p className="text-[13px] mt-1.5 font-medium" style={{ color: 'var(--text-3)' }}>
           {format(new Date(), 'EEEE, MMMM d')}
         </p>
       </div>
 
       {/* Quick Add */}
-      <div className="px-8 py-3 flex-shrink-0">
+      <div className="px-10 py-4 flex-shrink-0">
         <QuickAddBar />
       </div>
 
       {/* Scrollable content — Today view */}
-      <div className="flex-1 overflow-auto px-8 pb-8">
-        <div className="max-w-3xl space-y-6">
+      <div className="flex-1 overflow-auto px-10 pb-10">
+        <div className="content-width space-y-8">
 
           {/* AI Brief */}
-          <div className="rounded-xl p-4" style={{ background: 'var(--surface, var(--card))' }}>
+          <div className="rounded-2xl p-5" style={{ background: 'var(--surface)' }}>
             <AIBriefWidget items={items} />
           </div>
 
           {/* Overdue section */}
           {overdue.length > 0 && (
             <section>
-              <div className="flex items-center gap-2 mb-2">
-                <AlertCircle size={14} style={{ color: '#ef4444' }} />
-                <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#ef4444' }}>
+              <div className="flex items-center gap-2 mb-3">
+                <AlertCircle size={13} style={{ color: '#FF3B30' }} />
+                <h2 className="section-header" style={{ color: '#FF3B30' }}>
                   Overdue ({overdue.length})
                 </h2>
               </div>
@@ -114,18 +114,16 @@ export default function DashboardPage() {
           {/* Today's events */}
           {todayEvents.length > 0 && (
             <section>
-              <div className="flex items-center gap-2 mb-2">
-                <CalIcon size={14} style={{ color: 'var(--text-3)' }} />
-                <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-3)' }}>
-                  Schedule
-                </h2>
+              <div className="flex items-center gap-2 mb-3">
+                <CalIcon size={13} style={{ color: 'var(--text-3)' }} />
+                <h2 className="section-header">Schedule</h2>
               </div>
               <div className="space-y-px">
                 {todayEvents.map(event => (
                   <div
                     key={event._id}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
-                    style={{ background: 'var(--surface, var(--card))' }}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl"
+                    style={{ background: 'var(--surface)' }}
                   >
                     <div className="w-1 h-8 rounded-full flex-shrink-0" style={{ background: 'var(--accent)' }} />
                     <div className="flex-1 min-w-0">
@@ -143,12 +141,10 @@ export default function DashboardPage() {
 
           {/* Today's tasks */}
           <section>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <CheckCircle2 size={14} style={{ color: 'var(--text-3)' }} />
-                <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-3)' }}>
-                  Tasks ({todayTasks.length})
-                </h2>
+                <CheckCircle2 size={13} style={{ color: 'var(--text-3)' }} />
+                <h2 className="section-header">Tasks ({todayTasks.length})</h2>
               </div>
               <button
                 onClick={() => setModalOpen(true)}
@@ -175,21 +171,21 @@ export default function DashboardPage() {
 
           {/* Habits strip */}
           <section>
-            <div className="rounded-xl p-4" style={{ background: 'var(--surface, var(--card))' }}>
+            <div className="rounded-2xl p-5" style={{ background: 'var(--surface)' }}>
               <HabitsWidget />
             </div>
           </section>
 
           {/* Quick links */}
-          <div className="flex gap-2 pb-4">
+          <div className="flex gap-2 pb-6">
             {[
               { href: '/calendar', label: 'Calendar' },
               { href: '/journal', label: 'Journal' },
               { href: '/stats', label: 'Stats' },
             ].map(link => (
               <Link key={link.href} href={link.href}
-                className="px-4 py-2 rounded-lg text-xs font-medium transition-colors"
-                style={{ background: 'var(--surface, var(--card))', color: 'var(--text-2)', border: '1px solid var(--border)' }}
+                className="px-5 py-2.5 rounded-full text-[13px] font-medium transition-all"
+                style={{ background: 'var(--surface)', color: 'var(--text-2)' }}
               >
                 {link.label}
               </Link>
