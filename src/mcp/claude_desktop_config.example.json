@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "laif": {
+      "command": "npx",
+      "args": ["tsx", "REPLACE_WITH_ABSOLUTE_PATH/src/mcp/server.ts"],
+      "env": {
+        "MONGODB_URI": "REPLACE_WITH_YOUR_MONGODB_URI"
+      }
+    }
+  }
+}

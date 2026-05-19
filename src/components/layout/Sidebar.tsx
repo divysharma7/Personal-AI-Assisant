@@ -23,6 +23,7 @@ import {
   Flame,
   BarChart3,
   Target,
+  MessageCircle,
 } from 'lucide-react'
 import { useFocusState } from '@/contexts/FocusContext'
 import { copy } from '@/lib/copy'
@@ -48,6 +49,7 @@ const NAV_ITEMS = [
   { label: CALENDAR_NAV_LABEL, icon: Calendar, href: '/calendar' },
   { label: FOCUS_NAV_LABEL, icon: Target, href: '/focus' },
   { label: copy.updates.title, icon: Bell, href: '/updates' },
+  { label: copy.chat.title, icon: MessageCircle, href: '/chat' },
 ] as const
 
 /* ── Emoji presets for icon picker ── */

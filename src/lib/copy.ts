@@ -586,6 +586,21 @@ export const copy = {
     },
   },
 
+  // ───────── Chat ─────────
+  chat: {
+    title: "AI Chat",
+    subtitle: "Your intelligent assistant",
+    inputPlaceholder: "Ask LAIF anything...",
+    thinking: "AI is thinking...",
+    welcome: "Hi! I'm LAIF, your intelligent life assistant. I can help you manage tasks, check your schedule, track habits, and more. What would you like to do?",
+    suggestions: [
+      "What's on my schedule today?",
+      "Create a task to write a blog post",
+      "How are my habits going?",
+      "Start a focus session",
+    ],
+  },
+
   // ───────── Folders ─────────
   folders: {
     createPlaceholder: "Folder name...",
