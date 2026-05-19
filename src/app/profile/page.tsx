@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { fade, fadeSlideUp, stagger, ease } from '@/lib/motion'
+import { CheckCircle2, BarChart3 as BarChart3Icon, Target } from 'lucide-react'
 import { useHabits } from '@/hooks/useHabits'
 import { useTasks } from '@/hooks/useTasks'
 import { format, subDays, eachDayOfInterval, isToday, startOfWeek, endOfWeek } from 'date-fns'
@@ -86,6 +87,16 @@ export default function ProfilePage() {
   const { habits, weekCompletions, todayCompletionRate } = useHabits()
   const { tasks } = useTasks()
   const activeHabits = useMemo(() => habits.filter((h) => !h.archived), [habits])
+
+  // Check if all data is empty (all stats zero)
+  const hasNoOverviewData = useMemo(() => {
+    const doneTasks = tasks.filter((t) => t.status === 'done')
+    return doneTasks.length === 0 && activeHabits.length === 0
+  }, [tasks, activeHabits])
+
+  const hasNoTaskData = useMemo(() => {
+    return tasks.filter((t) => t.status === 'done').length === 0
+  }, [tasks])
 
   // Tasks completed this week
   const tasksCompletedThisWeek = useMemo(() => {
@@ -205,6 +216,22 @@ export default function ProfilePage() {
           {/* ─── Overview ─── */}
           {activeTab === 'Overview' && (
             <motion.div key="overview" {...fade} transition={ease.normal} className="flex flex-col gap-6">
+              {/* Empty state for overview */}
+              {hasNoOverviewData && (
+                <motion.div
+                  {...fadeSlideUp}
+                  transition={ease.normal}
+                  className="flex flex-col items-center justify-center py-12 text-center"
+                >
+                  <CheckCircle2 size={48} strokeWidth={1} style={{ color: 'var(--text-faint)', opacity: 0.3 }} />
+                  <h3 className="mt-4 text-lg font-medium" style={{ color: 'var(--text-primary)' }}>
+                    No activity yet
+                  </h3>
+                  <p className="mt-1 max-w-xs text-sm" style={{ color: 'var(--text-muted)' }}>
+                    Start completing tasks and habits to see your stats here.
+                  </p>
+                </motion.div>
+              )}
               {/* Stat cards */}
               <div className="grid grid-cols-4 gap-3">
                 {[
@@ -351,6 +378,22 @@ export default function ProfilePage() {
           {/* ─── Task tab ─── */}
           {activeTab === 'Task' && (
             <motion.div key="task" {...fade} transition={ease.normal} className="flex flex-col gap-6">
+              {/* Empty state for task tab */}
+              {hasNoTaskData && (
+                <motion.div
+                  {...fadeSlideUp}
+                  transition={ease.normal}
+                  className="flex flex-col items-center justify-center py-12 text-center"
+                >
+                  <BarChart3Icon size={48} strokeWidth={1} style={{ color: 'var(--text-faint)', opacity: 0.3 }} />
+                  <h3 className="mt-4 text-lg font-medium" style={{ color: 'var(--text-primary)' }}>
+                    No task data yet
+                  </h3>
+                  <p className="mt-1 max-w-xs text-sm" style={{ color: 'var(--text-muted)' }}>
+                    Complete some tasks to see trends.
+                  </p>
+                </motion.div>
+              )}
               {/* Daily bar chart */}
               <div>
                 <h3 className="mb-3 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
@@ -475,6 +518,22 @@ export default function ProfilePage() {
           {/* ─── Focus tab ─── */}
           {activeTab === 'Focus' && (
             <motion.div key="focus" {...fade} transition={ease.normal} className="flex flex-col gap-6">
+              {/* Empty state hint for focus tab */}
+              {PLACEHOLDER_FOCUS_EXTENDED.totalSessions === 0 && (
+                <motion.div
+                  {...fadeSlideUp}
+                  transition={ease.normal}
+                  className="flex flex-col items-center justify-center py-12 text-center"
+                >
+                  <Target size={48} strokeWidth={1} style={{ color: 'var(--text-faint)', opacity: 0.3 }} />
+                  <h3 className="mt-4 text-lg font-medium" style={{ color: 'var(--text-primary)' }}>
+                    No focus sessions yet
+                  </h3>
+                  <p className="mt-1 max-w-xs text-sm" style={{ color: 'var(--text-muted)' }}>
+                    Start one from any task.
+                  </p>
+                </motion.div>
+              )}
               {/* Session count cards */}
               <div className="grid grid-cols-3 gap-3">
                 {[

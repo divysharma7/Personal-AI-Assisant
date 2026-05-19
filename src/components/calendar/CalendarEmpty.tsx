@@ -1,44 +1,27 @@
 'use client'
 
+import { motion } from 'framer-motion'
+import { Calendar } from 'lucide-react'
+import { fadeSlideUp, ease } from '@/lib/motion'
+
 /**
  * CalendarEmpty — shown when a day has no scheduled tasks.
- * Subtle fading calendar lines illustration with breathing pulse.
+ * Centered icon with helpful text and breathing animation.
  */
 export default function CalendarEmpty() {
   return (
-    <div
-      className="flex flex-col items-center justify-center gap-4 py-16"
-      style={{ animation: 'cal-empty-breathe 4s ease-in-out infinite' }}
+    <motion.div
+      {...fadeSlideUp}
+      transition={ease.normal}
+      className="flex flex-col items-center justify-center py-20 text-center"
     >
-      {/* Illustration: fading calendar lines */}
-      <div className="flex flex-col gap-2 w-32 opacity-30">
-        <div
-          className="h-px w-full"
-          style={{ backgroundColor: 'var(--border)' }}
-        />
-        <div
-          className="h-px w-3/4"
-          style={{ backgroundColor: 'var(--border)' }}
-        />
-        <div
-          className="h-px w-full"
-          style={{ backgroundColor: 'var(--border)' }}
-        />
-        <div
-          className="h-px w-1/2"
-          style={{ backgroundColor: 'var(--border)' }}
-        />
-        <div
-          className="h-px w-full"
-          style={{ backgroundColor: 'var(--border)' }}
-        />
-      </div>
-      <p
-        className="text-sm text-center max-w-[240px]"
-        style={{ color: 'var(--text-faint)' }}
-      >
-        This day is open. Drag a task from the right to plan it.
+      <Calendar size={48} strokeWidth={1} style={{ color: 'var(--text-faint)', opacity: 0.3 }} />
+      <h3 className="mt-4 text-lg font-medium" style={{ color: 'var(--text-primary)' }}>
+        This day is open
+      </h3>
+      <p className="mt-1 max-w-xs text-sm" style={{ color: 'var(--text-muted)' }}>
+        Drag a task from the right to plan it.
       </p>
-    </div>
+    </motion.div>
   )
 }

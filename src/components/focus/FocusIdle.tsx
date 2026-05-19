@@ -123,7 +123,7 @@ export default function FocusIdle({ onStartSession, theme }: FocusIdleProps) {
         </div>
 
         <AnimatePresence>
-          {dropdownOpen && filteredTasks.length > 0 && (
+          {dropdownOpen && (
             <motion.div
               {...fade}
               transition={ease.fast}
@@ -136,37 +136,45 @@ export default function FocusIdle({ onStartSession, theme }: FocusIdleProps) {
                 overflowY: 'auto',
               }}
             >
-              {filteredTasks.map((task) => (
-                <button
-                  key={task._id}
-                  onClick={() => {
-                    setSelectedTask(task)
-                    setSearch('')
-                    setDropdownOpen(false)
-                  }}
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors duration-150 cursor-pointer"
-                  style={{ color: 'rgba(255, 255, 255, 0.8)' }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.06)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                  }}
-                >
-                  <div
-                    className="h-2 w-2 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: colors.text }}
-                  />
-                  <div className="flex flex-col">
-                    <span className="text-sm">{task.title}</span>
-                    {task.listName && (
-                      <span className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.4)' }}>
-                        {task.listName}
-                      </span>
-                    )}
-                  </div>
-                </button>
-              ))}
+              {filteredTasks.length === 0 ? (
+                <div className="flex flex-col items-center gap-1 px-4 py-4">
+                  <p className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.4)' }}>
+                    No tasks yet — start a free session
+                  </p>
+                </div>
+              ) : (
+                filteredTasks.map((task) => (
+                  <button
+                    key={task._id}
+                    onClick={() => {
+                      setSelectedTask(task)
+                      setSearch('')
+                      setDropdownOpen(false)
+                    }}
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors duration-150 cursor-pointer"
+                    style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.06)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent'
+                    }}
+                  >
+                    <div
+                      className="h-2 w-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: colors.text }}
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-sm">{task.title}</span>
+                      {task.listName && (
+                        <span className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.4)' }}>
+                          {task.listName}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))
+              )}
             </motion.div>
           )}
         </AnimatePresence>

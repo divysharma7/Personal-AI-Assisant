@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
+  Inbox,
 } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import { useTasks } from '@/hooks/useTasks'
@@ -366,9 +367,19 @@ export default function InboxPage() {
           ))}
         </AnimatePresence>
         {activeTasks.length === 0 && !isLoading && (
-          <p className="py-8 text-center text-sm" style={{ color: 'var(--text-faint)' }}>
-            {copy.list.emptyBlockPlaceholder}
-          </p>
+          <motion.div
+            {...fadeSlideUp}
+            transition={ease.normal}
+            className="flex flex-col items-center justify-center py-20 text-center"
+          >
+            <Inbox size={48} strokeWidth={1} style={{ color: 'var(--text-faint)', opacity: 0.3 }} />
+            <h3 className="mt-4 text-lg font-medium" style={{ color: 'var(--text-primary)' }}>
+              Your inbox is empty
+            </h3>
+            <p className="mt-1 max-w-xs text-sm" style={{ color: 'var(--text-muted)' }}>
+              Tasks you create will appear here. Press {copy.newTask.shortcutHint} to add your first task.
+            </p>
+          </motion.div>
         )}
       </motion.div>
 

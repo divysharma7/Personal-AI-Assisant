@@ -622,10 +622,14 @@ export default function TodayPage() {
         <motion.div
           {...fadeSlideUp}
           transition={ease.normal}
-          className="flex flex-1 flex-col items-center justify-center py-20"
+          className="flex flex-col items-center justify-center py-20 text-center"
         >
-          <p className="text-sm" style={{ color: 'var(--text-faint)' }}>
-            {copy.today.emptyState}
+          <CalendarDays size={48} strokeWidth={1} style={{ color: 'var(--text-faint)', opacity: 0.3 }} />
+          <h3 className="mt-4 text-lg font-medium" style={{ color: 'var(--text-primary)' }}>
+            Nothing scheduled for today
+          </h3>
+          <p className="mt-1 max-w-xs text-sm" style={{ color: 'var(--text-muted)' }}>
+            Add tasks with due dates or drag them from your inbox.
           </p>
         </motion.div>
       ) : (

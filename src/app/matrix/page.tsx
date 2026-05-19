@@ -2,7 +2,7 @@
 
 import { useMemo, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { SlidersHorizontal, MoreVertical } from 'lucide-react'
+import { SlidersHorizontal, MoreVertical, LayoutGrid } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import { fadeSlideUp, ease, buttonPress } from '@/lib/motion'
 import { useTasks } from '@/hooks/useTasks'
@@ -199,60 +199,89 @@ export default function MatrixPage() {
       </motion.div>
 
       {/* 2x2 Grid */}
-      <motion.div
-        {...fadeSlideUp}
-        transition={{ ...ease.normal, delay: 0.05 }}
-        className="grid flex-1 gap-3"
-        style={{
-          gridTemplateColumns: '1fr 1fr',
-          gridTemplateRows: '1fr 1fr',
-          minHeight: 0,
-        }}
-      >
-        {/* Do First (top-left) */}
-        <MatrixQuadrant
-          title={copy.matrix.quadrants.doFirst.title}
-          subtitle={copy.matrix.quadrants.doFirst.subtitle}
-          color={QUADRANT_COLORS.doFirst}
-          tasks={quadrants.doFirst}
-          onToggleTask={handleToggle}
-          onOpenDetail={handleOpenDetail}
-          onAddTask={handleAddDoFirst}
-        />
+      <div className="relative flex-1" style={{ minHeight: 0 }}>
+        <motion.div
+          {...fadeSlideUp}
+          transition={{ ...ease.normal, delay: 0.05 }}
+          className="grid h-full gap-3"
+          style={{
+            gridTemplateColumns: '1fr 1fr',
+            gridTemplateRows: '1fr 1fr',
+            minHeight: 0,
+          }}
+        >
+          {/* Do First (top-left) */}
+          <MatrixQuadrant
+            title={copy.matrix.quadrants.doFirst.title}
+            subtitle={copy.matrix.quadrants.doFirst.subtitle}
+            color={QUADRANT_COLORS.doFirst}
+            tasks={quadrants.doFirst}
+            onToggleTask={handleToggle}
+            onOpenDetail={handleOpenDetail}
+            onAddTask={handleAddDoFirst}
+          />
 
-        {/* Schedule (top-right) */}
-        <MatrixQuadrant
-          title={copy.matrix.quadrants.schedule.title}
-          subtitle={copy.matrix.quadrants.schedule.subtitle}
-          color={QUADRANT_COLORS.schedule}
-          tasks={quadrants.schedule}
-          onToggleTask={handleToggle}
-          onOpenDetail={handleOpenDetail}
-          onAddTask={handleAddSchedule}
-        />
+          {/* Schedule (top-right) */}
+          <MatrixQuadrant
+            title={copy.matrix.quadrants.schedule.title}
+            subtitle={copy.matrix.quadrants.schedule.subtitle}
+            color={QUADRANT_COLORS.schedule}
+            tasks={quadrants.schedule}
+            onToggleTask={handleToggle}
+            onOpenDetail={handleOpenDetail}
+            onAddTask={handleAddSchedule}
+          />
 
-        {/* Delegate (bottom-left) */}
-        <MatrixQuadrant
-          title={copy.matrix.quadrants.delegate.title}
-          subtitle={copy.matrix.quadrants.delegate.subtitle}
-          color={QUADRANT_COLORS.delegate}
-          tasks={quadrants.delegate}
-          onToggleTask={handleToggle}
-          onOpenDetail={handleOpenDetail}
-          onAddTask={handleAddDelegate}
-        />
+          {/* Delegate (bottom-left) */}
+          <MatrixQuadrant
+            title={copy.matrix.quadrants.delegate.title}
+            subtitle={copy.matrix.quadrants.delegate.subtitle}
+            color={QUADRANT_COLORS.delegate}
+            tasks={quadrants.delegate}
+            onToggleTask={handleToggle}
+            onOpenDetail={handleOpenDetail}
+            onAddTask={handleAddDelegate}
+          />
 
-        {/* Eliminate (bottom-right) */}
-        <MatrixQuadrant
-          title={copy.matrix.quadrants.eliminate.title}
-          subtitle={copy.matrix.quadrants.eliminate.subtitle}
-          color={QUADRANT_COLORS.eliminate}
-          tasks={quadrants.eliminate}
-          onToggleTask={handleToggle}
-          onOpenDetail={handleOpenDetail}
-          onAddTask={handleAddEliminate}
-        />
-      </motion.div>
+          {/* Eliminate (bottom-right) */}
+          <MatrixQuadrant
+            title={copy.matrix.quadrants.eliminate.title}
+            subtitle={copy.matrix.quadrants.eliminate.subtitle}
+            color={QUADRANT_COLORS.eliminate}
+            tasks={quadrants.eliminate}
+            onToggleTask={handleToggle}
+            onOpenDetail={handleOpenDetail}
+            onAddTask={handleAddEliminate}
+          />
+        </motion.div>
+
+        {/* All-empty overlay */}
+        {eligibleTasks.length === 0 && (
+          <motion.div
+            {...fadeSlideUp}
+            transition={ease.normal}
+            className="absolute inset-0 flex flex-col items-center justify-center text-center rounded-xl"
+            style={{ backgroundColor: 'color-mix(in srgb, var(--bg-pane) 85%, transparent)' }}
+          >
+            <LayoutGrid size={48} strokeWidth={1} style={{ color: 'var(--text-faint)', opacity: 0.3 }} />
+            <h3 className="mt-4 text-lg font-medium" style={{ color: 'var(--text-primary)' }}>
+              Add priority and effort to your tasks to see them here
+            </h3>
+            <p className="mt-1 max-w-sm text-sm" style={{ color: 'var(--text-muted)' }}>
+              The matrix shows tasks that have both a priority level and estimated effort.
+            </p>
+            <a
+              href="/"
+              className="mt-4 inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-medium no-underline transition-opacity duration-150"
+              style={{ backgroundColor: 'var(--accent)', color: '#FFFFFF' }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
+            >
+              Go to Inbox
+            </a>
+          </motion.div>
+        )}
+      </div>
 
       {/* Summary Bar */}
       <MatrixSummary

@@ -177,11 +177,41 @@ export default function HabitsPage() {
         <motion.div
           {...fadeSlideUp}
           transition={ease.normal}
-          className="flex flex-1 flex-col items-center justify-center py-20"
+          className="flex flex-col items-center justify-center py-20 text-center"
         >
-          <p className="text-sm" style={{ color: 'var(--text-faint)' }}>
-            {HABITS_COPY.emptyState}
+          <Flame size={48} strokeWidth={1} style={{ color: 'var(--text-faint)', opacity: 0.3 }} />
+          <h3 className="mt-4 text-lg font-medium" style={{ color: 'var(--text-primary)' }}>
+            No habits yet
+          </h3>
+          <p className="mt-1 max-w-xs text-sm" style={{ color: 'var(--text-muted)' }}>
+            Start building your routine. Browse the gallery or create a custom habit.
           </p>
+          <div className="mt-5 flex items-center gap-3">
+            <motion.button
+              {...buttonPress}
+              onClick={() => setGalleryOpen(true)}
+              className="rounded-full px-5 py-2.5 text-sm font-semibold text-white transition-opacity duration-150 cursor-pointer"
+              style={{ backgroundColor: 'var(--accent)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
+            >
+              Browse Gallery
+            </motion.button>
+            <motion.button
+              {...buttonPress}
+              onClick={handleCreateCustom}
+              className="rounded-full px-5 py-2.5 text-sm font-semibold transition-colors duration-150 cursor-pointer"
+              style={{
+                color: 'var(--text-muted)',
+                border: '1px solid var(--border)',
+                backgroundColor: 'transparent',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--bg-hover)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+            >
+              Create Custom
+            </motion.button>
+          </div>
         </motion.div>
       ) : (
         <motion.div

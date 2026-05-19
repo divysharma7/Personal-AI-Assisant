@@ -5,16 +5,24 @@ import type { AnyItem, CalendarEvent, Task, Reminder } from '@/types'
 
 const ITEMS_KEY = ['items'] as const
 
+// Mock data for frontend development — inline to avoid webpack dynamic import issues
+const MOCK_ITEMS: AnyItem[] = [
+  { _id: 'mock-1', type: 'task', title: 'Write LinkedIn post', status: 'todo', priority: 'high', dueDate: new Date().toISOString(), color: '#34d399' } as unknown as Task,
+  { _id: 'mock-2', type: 'task', title: 'Review PRs', status: 'todo', priority: 'medium', dueDate: new Date().toISOString(), color: '#34d399' } as unknown as Task,
+  { _id: 'mock-3', type: 'task', title: 'Gym workout', status: 'todo', priority: 'low', color: '#34d399' } as unknown as Task,
+  { _id: 'mock-4', type: 'task', title: 'Plan Q3 roadmap', status: 'backlog', priority: 'high', color: '#34d399' } as unknown as Task,
+  { _id: 'mock-5', type: 'task', title: 'Read 30 pages', status: 'todo', priority: 'medium', color: '#34d399' } as unknown as Task,
+] as AnyItem[]
+
 async function fetchItems(): Promise<AnyItem[]> {
-  // Backend disabled for frontend development — return empty array
-  // Uncomment below when backend is ready:
+  // TODO: Switch back to API calls when backend is connected:
   // const [events, tasks, reminders] = await Promise.all([
   //   fetch('/api/events').then(r => r.json()),
   //   fetch('/api/tasks').then(r => r.json()),
   //   fetch('/api/reminders').then(r => r.json()),
   // ])
   // return [...events, ...tasks, ...reminders] as AnyItem[]
-  return []
+  return MOCK_ITEMS
 }
 
 export function useItems() {
