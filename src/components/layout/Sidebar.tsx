@@ -8,149 +8,84 @@ import {
   Inbox,
   CalendarDays,
   CheckCircle2,
-  LayoutGrid,
   Bell,
-  ChevronRight,
+  List,
+  ChevronDown,
   Plus,
-  SlidersHorizontal,
+  Search,
+  PanelLeft,
   Settings,
   LogOut,
-  Star,
   ListChecks,
   Mic,
   Calendar,
-  Loader2,
   Flame,
   BarChart3,
   Target,
   MessageCircle,
+  LayoutGrid,
+  SlidersHorizontal,
+  FolderPlus,
+  X,
 } from 'lucide-react'
-import { useFocusState } from '@/contexts/FocusContext'
-import { copy } from '@/lib/copy'
-import { collapse, fadeSlideDown, fadeSlideUp, fade, buttonPress, spring, ease } from '@/lib/motion'
+import { collapse, fadeSlideDown, buttonPress, ease } from '@/lib/motion'
 import { useLists } from '@/hooks/useLists'
-import { useFolders } from '@/hooks/useFolders'
 import { useTasks } from '@/hooks/useTasks'
-import type { ListDoc } from '@/hooks/useLists'
 
-/* ── Primary nav items ── */
-// TODO: move to copy.ts
-const HABITS_NAV_LABEL = 'Habits'
-
-const FOCUS_NAV_LABEL = 'Focus'
-const CALENDAR_NAV_LABEL = 'Calendar'
-
+/* ── Primary nav — 5 items matching Superlist screenshot ── */
 const NAV_ITEMS = [
-  { label: copy.inbox.title, icon: Inbox, href: '/' },
-  { label: copy.today.title, icon: CalendarDays, href: '/today' },
-  { label: copy.tasks.title, icon: CheckCircle2, href: '/tasks' },
-  { label: HABITS_NAV_LABEL, icon: Flame, href: '/habits' },
-  { label: copy.matrix.title, icon: LayoutGrid, href: '/matrix' },
-  { label: CALENDAR_NAV_LABEL, icon: Calendar, href: '/calendar' },
-  { label: FOCUS_NAV_LABEL, icon: Target, href: '/focus' },
-  { label: copy.updates.title, icon: Bell, href: '/updates' },
-  { label: copy.chat.title, icon: MessageCircle, href: '/chat' },
+  { label: 'Inbox', icon: Inbox, href: '/', badge: true },
+  { label: 'Today', icon: CalendarDays, href: '/today', badge: true },
+  { label: 'Tasks', icon: CheckCircle2, href: '/tasks' },
+  { label: 'Updates', icon: Bell, href: '/updates' },
+  { label: 'Lists', icon: List, href: '/lists' },
 ] as const
 
-/* ── Emoji presets for icon picker ── */
-const EMOJI_PRESETS = ['\uD83D\uDCC1', '\uD83D\uDCCB', '\uD83D\uDCDD', '\uD83C\uDFAF', '\uD83D\uDD25', '\u2B50']
+/* ── Profile menu items — features moved from sidebar ── */
+const PROFILE_NAV = [
+  { label: 'Habits', icon: Flame, href: '/habits' },
+  { label: 'Calendar', icon: Calendar, href: '/calendar' },
+  { label: 'Focus', icon: Target, href: '/focus' },
+  { label: 'Matrix', icon: LayoutGrid, href: '/matrix' },
+  { label: 'Statistics', icon: BarChart3, href: '/statistics' },
+  { label: 'Chat', icon: MessageCircle, href: '/chat' },
+] as const
 
-function FocusPulsingDot() {
-  const [, setTick] = useState(0)
-
-  useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 100)
-    return () => clearInterval(id)
-  }, [])
-
-  // Derive opacity from 4s heartbeat cycle
-  const phase = (Date.now() % 4000) / 4000
-  const opacity = 0.4 + 0.6 * Math.sin(phase * Math.PI * 2)
-
-  return (
-    <span
-      className="inline-block h-2 w-2 rounded-full flex-shrink-0"
-      style={{
-        backgroundColor: 'var(--accent)',
-        opacity,
-      }}
-    />
-  )
+interface SidebarProps {
+  collapsed?: boolean
+  onToggleCollapse?: () => void
 }
 
-export default function Sidebar() {
+export default function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const { focus } = useFocusState()
+  const { tasks } = useTasks()
+  const { lists, createList } = useLists()
+
+  const [isHovered, setIsHovered] = useState(false)
   const [favoritesOpen, setFavoritesOpen] = useState(true)
-  const [meetingsOpen, setMeetingsOpen] = useState(true)
-  const [listsHovered, setListsHovered] = useState(false)
   const [avatarOpen, setAvatarOpen] = useState(false)
   const [fabOpen, setFabOpen] = useState(false)
+  const [userInitial, setUserInitial] = useState('U')
   const popoverRef = useRef<HTMLDivElement>(null)
   const fabPopoverRef = useRef<HTMLDivElement>(null)
-  const [userInitial, setUserInitial] = useState('U')
-  const { lists } = useLists()
-  const { createFolder, updateFolder, deleteFolder, moveTaskToFolder, isCreating } = useFolders()
-  const { tasks } = useTasks()
 
-  // Check if current time falls within any scheduled task (for Calendar pulsing dot)
-  const hasActiveScheduledTask = tasks.some((t) => {
-    if (!t.scheduledStart || !t.scheduledEnd || t.status === 'done') return false
-    const now = Date.now()
-    return new Date(t.scheduledStart).getTime() <= now && new Date(t.scheduledEnd).getTime() >= now
-  })
+  // Inline list creation inside favorites
+  const [isCreatingFav, setIsCreatingFav] = useState(false)
+  const [newFavTitle, setNewFavTitle] = useState('')
+  const favInputRef = useRef<HTMLInputElement>(null)
 
-  // ── Inline creation state ──
-  const [isInlineCreating, setIsInlineCreating] = useState(false)
-  const [inlineTitle, setInlineTitle] = useState('')
-  const inlineInputRef = useRef<HTMLInputElement>(null)
+  // Badge counts
+  const inboxCount = tasks.filter((t) => t.status !== 'done' && t.status !== 'dropped' && !t.listId).length
+  const todayCount = tasks.filter((t) => {
+    if (t.status === 'done' || t.status === 'dropped' || !t.dueDate) return false
+    const d = new Date(t.dueDate)
+    const now = new Date()
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()
+  }).length
 
-  // ── Inline rename state ──
-  const [renamingId, setRenamingId] = useState<string | null>(null)
-  const [renameTitle, setRenameTitle] = useState('')
-  const renameInputRef = useRef<HTMLInputElement>(null)
-
-  // ── Context menu state ──
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; list: ListDoc } | null>(null)
-  const contextMenuRef = useRef<HTMLDivElement>(null)
-
-  // ── Icon picker state ──
-  const [iconPickerFor, setIconPickerFor] = useState<string | null>(null)
-  const [customEmoji, setCustomEmoji] = useState('')
-
-  // ── Group move sub-menu state ──
-  const [groupMenuFor, setGroupMenuFor] = useState<string | null>(null)
-
-  // ── Delete animation state ──
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-
-  // ── Drag-over state ──
-  const [dragOverId, setDragOverId] = useState<string | null>(null)
-
-  // ── Toast state ──
-  const [toastMsg, setToastMsg] = useState<string | null>(null)
-  const [toastUndo, setToastUndo] = useState<(() => void) | null>(null)
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // ── Flash highlight state ──
-  const [flashId, setFlashId] = useState<string | null>(null)
-
-  // Favorites = lists pinned to favorites
   const favoriteLists = lists.filter((l) => l.pinnedToFavorites)
 
-  // Show toast helper
-  const showToast = useCallback((msg: string, undoFn?: () => void) => {
-    if (toastTimer.current) clearTimeout(toastTimer.current)
-    setToastMsg(msg)
-    setToastUndo(undoFn ? () => undoFn : null)
-    toastTimer.current = setTimeout(() => {
-      setToastMsg(null)
-      setToastUndo(null)
-    }, 4000)
-  }, [])
-
-  // Fetch user info for avatar
   useEffect(() => {
     fetch('/api/auth/me')
       .then((r) => (r.ok ? r.json() : null))
@@ -161,919 +96,357 @@ export default function Sidebar() {
       .catch(() => {})
   }, [])
 
-  // Close popovers on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (avatarOpen && popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-        setAvatarOpen(false)
-      }
-      if (fabOpen && fabPopoverRef.current && !fabPopoverRef.current.contains(e.target as Node)) {
-        setFabOpen(false)
-      }
-      if (contextMenu && contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
-        setContextMenu(null)
-        setIconPickerFor(null)
-        setGroupMenuFor(null)
-      }
+      if (avatarOpen && popoverRef.current && !popoverRef.current.contains(e.target as Node)) setAvatarOpen(false)
+      if (fabOpen && fabPopoverRef.current && !fabPopoverRef.current.contains(e.target as Node)) setFabOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
-  }, [avatarOpen, fabOpen, contextMenu])
+  }, [avatarOpen, fabOpen])
 
   // Auto-focus inline input
   useEffect(() => {
-    if (isInlineCreating) {
-      inlineInputRef.current?.focus()
-    }
-  }, [isInlineCreating])
+    if (isCreatingFav) favInputRef.current?.focus()
+  }, [isCreatingFav])
 
-  // Auto-focus rename input
-  useEffect(() => {
-    if (renamingId) {
-      renameInputRef.current?.focus()
-      renameInputRef.current?.select()
+  const handleCreateFavoriteList = useCallback(async () => {
+    const title = newFavTitle.trim()
+    if (!title) { setIsCreatingFav(false); return }
+    try {
+      const newList = await createList({ title, icon: '📁', pinnedToFavorites: true })
+      setIsCreatingFav(false)
+      setNewFavTitle('')
+      router.push(`/lists/${newList._id}`)
+    } catch {
+      setIsCreatingFav(false)
     }
-  }, [renamingId])
+  }, [newFavTitle, createList, router])
 
   const handleSignOut = useCallback(async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
     router.push('/login')
   }, [router])
 
-  // ── Inline folder creation ──
-  const handleStartInlineCreate = useCallback(() => {
-    setIsInlineCreating(true)
-    setInlineTitle('')
-  }, [])
-
-  const handleInlineCreateSubmit = useCallback(async () => {
-    const title = inlineTitle.trim()
-    if (!title) {
-      setIsInlineCreating(false)
-      return
-    }
-    try {
-      const result = await createFolder({ title, icon: '\uD83D\uDCC1' })
-      setIsInlineCreating(false)
-      setInlineTitle('')
-      router.push(`/lists/${result.list._id}`)
-    } catch {
-      setIsInlineCreating(false)
-    }
-  }, [inlineTitle, createFolder, router])
-
-  const handleInlineCreateCancel = useCallback(() => {
-    setIsInlineCreating(false)
-    setInlineTitle('')
-  }, [])
-
-  // ── Inline rename ──
-  const handleStartRename = useCallback((list: ListDoc) => {
-    setRenamingId(list._id)
-    setRenameTitle(list.title)
-    setContextMenu(null)
-  }, [])
-
-  const handleRenameSubmit = useCallback(async () => {
-    if (!renamingId) return
-    const trimmed = renameTitle.trim()
-    if (trimmed) {
-      try {
-        await updateFolder({ id: renamingId, title: trimmed })
-        setFlashId(renamingId)
-        setTimeout(() => setFlashId(null), 600)
-      } catch {
-        // silently fail
-      }
-    }
-    setRenamingId(null)
-    setRenameTitle('')
-  }, [renamingId, renameTitle, updateFolder])
-
-  const handleRenameCancel = useCallback(() => {
-    setRenamingId(null)
-    setRenameTitle('')
-  }, [])
-
-  // ── Context menu actions ──
-  const handleContextMenu = useCallback((e: React.MouseEvent, list: ListDoc) => {
-    e.preventDefault()
-    setContextMenu({ x: e.clientX, y: e.clientY, list })
-    setIconPickerFor(null)
-    setGroupMenuFor(null)
-  }, [])
-
-  const handleDeleteFolder = useCallback(async (list: ListDoc) => {
-    setContextMenu(null)
-    setDeletingId(list._id)
-
-    // Wait for fade animation
-    setTimeout(async () => {
-      try {
-        await deleteFolder(list._id)
-        showToast(copy.folders.deleted)
-      } catch {
-        // silently fail
-      }
-      setDeletingId(null)
-    }, 300)
-  }, [deleteFolder, showToast])
-
-  const handleChangeIcon = useCallback(async (listId: string, icon: string) => {
-    try {
-      await updateFolder({ id: listId, icon })
-      setFlashId(listId)
-      setTimeout(() => setFlashId(null), 600)
-    } catch {
-      // silently fail
-    }
-    setIconPickerFor(null)
-    setContextMenu(null)
-  }, [updateFolder])
-
-  const handleMoveToGroup = useCallback(async (listId: string, groupTitle: string) => {
-    try {
-      await updateFolder({ id: listId, groupTitle })
-    } catch {
-      // silently fail
-    }
-    setGroupMenuFor(null)
-    setContextMenu(null)
-  }, [updateFolder])
-
-  // ── Drag-and-drop handlers for sidebar list items ──
-  const handleDragOver = useCallback((e: React.DragEvent, listId: string) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-    setDragOverId(listId)
-  }, [])
-
-  const handleDragLeave = useCallback(() => {
-    setDragOverId(null)
-  }, [])
-
-  const handleDrop = useCallback(async (e: React.DragEvent, list: ListDoc) => {
-    e.preventDefault()
-    setDragOverId(null)
-    const taskId = e.dataTransfer.getData('application/x-laif-task') || e.dataTransfer.getData('text/plain')
-    if (!taskId) return
-    try {
-      await moveTaskToFolder({ taskId, folderId: list._id })
-      showToast(copy.folders.taskMoved(list.title || copy.list.untitled))
-    } catch {
-      // silently fail
-    }
-  }, [moveTaskToFolder, showToast])
-
-  // ── FAB actions ──
-  const handleFabAction = useCallback(
-    async (action: string) => {
-      setFabOpen(false)
-      switch (action) {
-        case 'task':
-          window.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', ctrlKey: true }))
-          break
-        case 'list':
-          handleStartInlineCreate()
-          break
-      }
-    },
-    [handleStartInlineCreate]
-  )
-
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/'
     return pathname.startsWith(href)
   }
 
-  // Get unique group titles from lists
-  const groupTitles = Array.from(
-    new Set(lists.filter((l) => l.groupId).map((l) => l.groupId as string))
-  )
+  const getBadgeCount = (href: string) => {
+    if (href === '/') return inboxCount
+    if (href === '/today') return todayCount
+    return 0
+  }
+
+  if (collapsed) return null
 
   return (
     <aside
-      className="flex w-[260px] flex-shrink-0 flex-col rounded-[16px] p-3"
-      style={{ backgroundColor: 'var(--bg-pane)' }}
+      className="flex w-[260px] flex-shrink-0 flex-col h-full"
+      style={{ padding: '8px 8px 12px' }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* ── LAIF wordmark ── */}
-      <div className="mb-3 px-3 pt-1">
-        <span style={{ fontFamily: 'var(--font-display)', fontSize: 18, letterSpacing: '0.1em', color: 'var(--accent)' }}>LAIF</span>
+      {/* ── Top icons (search + toggle) — visible on hover ── */}
+      <div className="flex items-center justify-end gap-1 mb-3 px-1" style={{ minHeight: 28 }}>
+        <AnimatePresence>
+          {isHovered && (
+            <>
+              <motion.button
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                {...buttonPress}
+                className="flex h-7 w-7 items-center justify-center rounded-md cursor-pointer transition-sl"
+                style={{ color: 'var(--text-faint)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+              >
+                <Search size={16} strokeWidth={1.5} />
+              </motion.button>
+              <motion.button
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                {...buttonPress}
+                onClick={onToggleCollapse}
+                className="flex h-7 w-7 items-center justify-center rounded-md cursor-pointer transition-sl"
+                style={{ color: 'var(--text-faint)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+              >
+                <PanelLeft size={16} strokeWidth={1.5} />
+              </motion.button>
+            </>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* ── Primary nav ── */}
+      {/* ── Primary nav — 5 items ── */}
       <nav className="flex flex-col gap-0.5">
         {NAV_ITEMS.map((item) => {
           const active = isActive(item.href)
-          const isFocusItem = item.href === '/focus'
-          const showFocusDot = isFocusItem && focus.isActive
-          const isCalendarItem = item.href === '/calendar'
-          const showCalendarDot = isCalendarItem && hasActiveScheduledTask
+          const count = 'badge' in item && item.badge ? getBadgeCount(item.href) : 0
           return (
             <Link
               key={item.href}
               href={item.href}
-              className="group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors duration-150 no-underline"
+              className="group relative flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[14px] font-semibold transition-sl no-underline"
               style={{
-                backgroundColor: active ? 'var(--bg-hover)' : 'transparent',
-                color: active ? 'var(--text-primary)' : 'var(--text-muted)',
+                backgroundColor: active ? 'var(--overlay-2, var(--bg-hover))' : 'transparent',
+                color: 'var(--text-primary)',
+                boxShadow: active ? 'inset -3px 0 0 var(--accent)' : 'none',
               }}
               onMouseEnter={(e) => {
-                if (!active) e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+                if (!active) e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))'
               }}
               onMouseLeave={(e) => {
-                if (!active) e.currentTarget.style.backgroundColor = 'transparent'
+                e.currentTarget.style.backgroundColor = active ? 'var(--overlay-2, var(--bg-hover))' : 'transparent'
               }}
             >
-              {active && (
+              <item.icon size={18} strokeWidth={1.5} style={{ color: active ? 'var(--accent)' : 'var(--text-muted)' }} />
+              <span className="flex-1">{item.label}</span>
+              {count > 0 && (
                 <span
-                  className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full"
-                  style={{ backgroundColor: 'var(--accent)', boxShadow: '2px 0 8px var(--accent-soft)' }}
-                />
+                  className="flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-medium"
+                  style={{ backgroundColor: 'var(--overlay-2, var(--bg-hover))', color: 'var(--text-muted)' }}
+                >
+                  {count}
+                </span>
               )}
-              <item.icon size={20} strokeWidth={1.5} />
-              <div className="flex flex-1 flex-col text-left">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[14px]">{item.label}</span>
-                  {showFocusDot && (
-                    <FocusPulsingDot />
-                  )}
-                  {showCalendarDot && (
-                    <FocusPulsingDot />
-                  )}
-                </div>
-                {showFocusDot && focus.taskTitle && (
-                  <span
-                    className="truncate text-[11px]"
-                    style={{ color: 'var(--text-faint)' }}
-                  >
-                    {focus.taskTitle}
-                  </span>
-                )}
-              </div>
             </Link>
           )
         })}
       </nav>
 
-      {/* ── Separator ── */}
-      <div className="my-4 h-px" style={{ backgroundColor: 'var(--border)' }} />
-
       {/* ── Favorites section ── */}
-      <button
-        onClick={() => setFavoritesOpen(!favoritesOpen)}
-        className="mb-1 flex items-center gap-1.5 px-3 py-1 cursor-pointer"
-      >
-        <motion.div animate={{ rotate: favoritesOpen ? 90 : 0 }} transition={ease.fast}>
-          <ChevronRight size={12} style={{ color: 'var(--text-faint)' }} />
-        </motion.div>
-        <span
-          className="text-[11px] font-semibold uppercase tracking-wide"
-          style={{ color: 'var(--text-faint)' }}
-        >
-          {copy.sidebar.sectionFavorites}
-        </span>
-      </button>
-      <AnimatePresence>
-        {favoritesOpen && (
-          <motion.div {...collapse} transition={ease.normal} className="mb-1 flex flex-col gap-0.5 px-1 overflow-hidden">
-            {favoriteLists.length === 0 && (
-              <span className="px-2 py-1.5 text-xs" style={{ color: 'var(--text-faint)' }}>
-                No starred lists
-              </span>
-            )}
-            {favoriteLists.map((list) => {
-              const active = pathname === `/lists/${list._id}`
-              return (
-                <Link
-                  key={list._id}
-                  href={`/lists/${list._id}`}
-                  className="group relative flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition-colors duration-150 no-underline"
-                  style={{
-                    backgroundColor: active ? 'var(--bg-hover)' : 'transparent',
-                    color: active ? 'var(--text-primary)' : 'var(--text-muted)',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!active) e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!active) e.currentTarget.style.backgroundColor = 'transparent'
-                  }}
-                >
-                  <Star size={14} strokeWidth={1.5} style={{ color: 'var(--accent)' }} />
-                  <span className="truncate text-[14px]">
-                    {list.title || copy.list.untitled}
-                  </span>
-                </Link>
-              )
-            })}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Separator ── */}
-      <div className="my-4 h-px" style={{ backgroundColor: 'var(--border)' }} />
-
-      {/* ── Meetings section ── */}
-      <button
-        onClick={() => setMeetingsOpen(!meetingsOpen)}
-        className="mb-1 flex items-center gap-1.5 px-3 py-1 cursor-pointer"
-      >
-        <motion.div animate={{ rotate: meetingsOpen ? 90 : 0 }} transition={ease.fast}>
-          <ChevronRight size={12} style={{ color: 'var(--text-faint)' }} />
-        </motion.div>
-        <span
-          className="text-[11px] font-semibold uppercase tracking-wide"
-          style={{ color: 'var(--text-faint)' }}
-        >
-          {copy.sidebar.sectionMeetings}
-        </span>
-      </button>
-      <AnimatePresence>
-        {meetingsOpen && (
-          <motion.div {...collapse} transition={ease.normal} className="mb-1 flex flex-col gap-0.5 px-1 overflow-hidden">
-            <div
-              className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm opacity-50"
-              style={{ color: 'var(--text-muted)' }}
-            >
-              <Calendar size={14} strokeWidth={1.5} />
-              <span className="truncate text-[14px]">Meeting: May 17</span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Separator ── */}
-      <div className="my-4 h-px" style={{ backgroundColor: 'var(--border)' }} />
-
-      {/* ── Lists section ── */}
-      <div
-        className="mb-1 flex items-center justify-between px-3 py-1"
-        onMouseEnter={() => setListsHovered(true)}
-        onMouseLeave={() => setListsHovered(false)}
-      >
-        <div className="flex items-center gap-2">
-          <span
-            className="text-[11px] font-semibold uppercase tracking-wide"
+      <div className="mt-5">
+        <div className="group mb-1 flex items-center justify-between px-2.5">
+          <button
+            onClick={() => setFavoritesOpen(!favoritesOpen)}
+            className="flex items-center gap-1 cursor-pointer"
             style={{ color: 'var(--text-faint)' }}
           >
-            {copy.sidebar.sectionLists}
-          </span>
-          {listsHovered && (
-            <Link
-              href="/lists"
-              className="text-[11px] no-underline"
+            <span className="text-[12px] font-medium">Favorites</span>
+            <motion.div animate={{ rotate: favoritesOpen ? 0 : -90 }} transition={{ duration: 0.15 }}>
+              <ChevronDown size={12} strokeWidth={1.5} />
+            </motion.div>
+          </button>
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ transitionDuration: '150ms' }}>
+            <button
+              onClick={() => { setIsCreatingFav(true); setNewFavTitle(''); setFavoritesOpen(true) }}
+              className="flex h-5 w-5 items-center justify-center rounded cursor-pointer transition-sl"
               style={{ color: 'var(--text-faint)' }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)' }}
               onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-faint)' }}
             >
-              {copy.sidebar.browseAll}
-            </Link>
-          )}
-        </div>
-        {listsHovered && (
-          <div className="flex items-center gap-1">
-            <button
-              onClick={handleStartInlineCreate}
-              disabled={isCreating}
-              aria-label="Add new list"
-              className="relative flex h-6 w-6 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
-              style={{ color: 'var(--text-faint)' }}
-              title={copy.sidebar.newListTooltip}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
-            >
-              {isCreating ? (
-                <Loader2 size={14} strokeWidth={1.5} className="animate-spin" />
-              ) : (
-                <Plus size={14} strokeWidth={1.5} />
-              )}
+              <FolderPlus size={12} strokeWidth={1.5} />
             </button>
-            <button
-              aria-label="Filter lists"
-              className="flex h-6 w-6 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
-              style={{ color: 'var(--text-faint)' }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
-            >
-              <SlidersHorizontal size={14} strokeWidth={1.5} />
+            <button className="flex h-5 w-5 items-center justify-center rounded cursor-pointer" style={{ color: 'var(--text-faint)' }}>
+              <SlidersHorizontal size={12} strokeWidth={1.5} />
             </button>
           </div>
-        )}
-      </div>
-
-      {/* List items */}
-      <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-1">
-        {/* Inline creation input */}
+        </div>
         <AnimatePresence>
-          {isInlineCreating && (
-            <motion.div
-              {...fadeSlideUp}
-              transition={ease.fast}
-              className="flex items-center gap-2.5 rounded-lg px-2 py-1.5"
-            >
-              <span className="flex-shrink-0 text-base">{'\uD83D\uDCC1'}</span>
-              <input
-                ref={inlineInputRef}
-                value={inlineTitle}
-                onChange={(e) => setInlineTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleInlineCreateSubmit()
-                  if (e.key === 'Escape') handleInlineCreateCancel()
-                }}
-                onBlur={handleInlineCreateSubmit}
-                placeholder={copy.folders.createPlaceholder}
-                aria-label="New list name"
-                className="flex-1 bg-transparent text-[14px] outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
-                style={{ color: 'var(--text-primary)' }}
-              />
+          {favoritesOpen && (
+            <motion.div {...collapse} transition={ease.normal} className="flex flex-col gap-0.5 overflow-hidden">
+              {/* Inline creation input */}
+              {isCreatingFav && (
+                <div className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5">
+                  <span className="text-base">📁</span>
+                  <input
+                    ref={favInputRef}
+                    value={newFavTitle}
+                    onChange={(e) => setNewFavTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleCreateFavoriteList()
+                      if (e.key === 'Escape') { setIsCreatingFav(false); setNewFavTitle('') }
+                    }}
+                    onBlur={handleCreateFavoriteList}
+                    placeholder="List name..."
+                    className="flex-1 bg-transparent text-[14px] font-medium outline-none"
+                    style={{ color: 'var(--text-primary)' }}
+                  />
+                </div>
+              )}
+              {favoriteLists.map((list) => {
+                const active = pathname === `/lists/${list._id}`
+                return (
+                  <Link
+                    key={list._id}
+                    href={`/lists/${list._id}`}
+                    className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[14px] font-medium no-underline transition-sl"
+                    style={{
+                      color: 'var(--text-primary)',
+                      backgroundColor: active ? 'var(--overlay-2, var(--bg-hover))' : 'transparent',
+                      boxShadow: active ? 'inset -3px 0 0 var(--accent)' : 'none',
+                    }}
+                    onMouseEnter={(e) => { if (!active) e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = active ? 'var(--overlay-2, var(--bg-hover))' : 'transparent' }}
+                  >
+                    <span className="text-base">{list.icon || '📋'}</span>
+                    <span className="truncate">{list.title || 'Untitled'}</span>
+                  </Link>
+                )
+              })}
+              {/* Ghost placeholder / Getting Started */}
+              {favoriteLists.length === 0 && (
+                <Link
+                  href="/getting-started"
+                  className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[14px] font-medium no-underline transition-sl"
+                  style={{ color: 'var(--text-primary)' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                >
+                  <span className="text-base">👋</span>
+                  <span>Getting Started</span>
+                </Link>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Existing lists */}
-        <AnimatePresence>
-          {lists.map((list) => {
-            const active = pathname === `/lists/${list._id}`
-            const isBeingDeleted = deletingId === list._id
-            const isDragTarget = dragOverId === list._id
-            const isFlashing = flashId === list._id
-            const isRenaming = renamingId === list._id
-
-            return (
-              <motion.div
-                key={list._id}
-                {...fade}
-                transition={ease.normal}
-                layout
-                animate={{
-                  opacity: isBeingDeleted ? 0 : 1,
-                  scale: isBeingDeleted ? 0.95 : 1,
-                }}
-              >
-                <Link
-                  href={`/lists/${list._id}`}
-                  onClick={(e) => {
-                    if (isRenaming) e.preventDefault()
-                  }}
-                  onDoubleClick={(e) => {
-                    e.preventDefault()
-                    handleStartRename(list)
-                  }}
-                  onContextMenu={(e) => handleContextMenu(e, list)}
-                  onDragOver={(e) => handleDragOver(e, list._id)}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, list)}
-                  className="group relative flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition-all duration-150 no-underline"
-                  style={{
-                    backgroundColor: isFlashing
-                      ? 'rgba(99, 91, 255, 0.12)'
-                      : active
-                      ? 'var(--bg-hover)'
-                      : 'transparent',
-                    color: active ? 'var(--text-primary)' : 'var(--text-muted)',
-                    border: isDragTarget ? '1.5px solid var(--accent)' : '1.5px solid transparent',
-                    borderRadius: '8px',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!active && !isDragTarget) e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!active && !isFlashing) e.currentTarget.style.backgroundColor = 'transparent'
-                  }}
-                >
-                  {active && (
-                    <span
-                      className="absolute left-0 top-1/2 h-5 w-[2px] -translate-y-1/2 rounded-full"
-                      style={{ backgroundColor: 'var(--accent)' }}
-                    />
-                  )}
-                  <span className="flex-shrink-0 text-base">
-                    {list.icon || '\uD83D\uDCCB'}
-                  </span>
-
-                  {isRenaming ? (
-                    <input
-                      ref={renameInputRef}
-                      value={renameTitle}
-                      onChange={(e) => setRenameTitle(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleRenameSubmit()
-                        if (e.key === 'Escape') handleRenameCancel()
-                      }}
-                      onBlur={handleRenameSubmit}
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex-1 bg-transparent text-[14px] outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
-                      style={{ color: 'var(--text-primary)' }}
-                      aria-label="Rename list"
-                    />
-                  ) : (
-                    <span className="truncate text-[14px]">
-                      {list.title || copy.list.untitled}
-                    </span>
-                  )}
-                </Link>
-              </motion.div>
-            )
-          })}
-        </AnimatePresence>
       </div>
 
-      {/* ── Context menu (portal-like, fixed position) ── */}
-      <AnimatePresence>
-        {contextMenu && (
-          <motion.div
-            ref={contextMenuRef}
-            {...fadeSlideDown}
-            transition={ease.fast}
-            className="fixed z-50 w-52 rounded-xl p-1.5"
-            style={{
-              left: contextMenu.x,
-              top: contextMenu.y,
-              backgroundColor: 'var(--bg-pane-2)',
-              border: '1px solid var(--border)',
-              boxShadow: 'var(--shadow-elevated)',
-            }}
-          >
-            {/* Rename */}
-            <button
-              onClick={() => handleStartRename(contextMenu.list)}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors duration-150 cursor-pointer"
-              style={{ color: 'var(--text-primary)' }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--bg-hover)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-            >
-              {copy.folders.contextMenu.rename}
-            </button>
+      {/* ── Spacer ── */}
+      <div className="flex-1 min-h-[24px]" />
 
-            {/* Change icon */}
-            <div className="relative">
-              <button
-                onClick={() => setIconPickerFor(iconPickerFor ? null : contextMenu.list._id)}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors duration-150 cursor-pointer"
-                style={{ color: 'var(--text-primary)' }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--bg-hover)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-              >
-                {copy.folders.contextMenu.changeIcon}
-              </button>
-
-              {/* Emoji picker */}
-              <AnimatePresence>
-                {iconPickerFor === contextMenu.list._id && (
-                  <motion.div
-                    {...fadeSlideDown}
-                    transition={ease.fast}
-                    className="absolute left-full top-0 ml-1 rounded-xl p-2"
-                    style={{
-                      backgroundColor: 'var(--bg-pane-2)',
-                      border: '1px solid var(--border)',
-                      boxShadow: 'var(--shadow-elevated)',
-                    }}
-                  >
-                    <div className="flex gap-1 mb-1.5">
-                      {EMOJI_PRESETS.map((emoji) => (
-                        <button
-                          key={emoji}
-                          onClick={() => handleChangeIcon(contextMenu.list._id, emoji)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg text-lg transition-colors duration-150 cursor-pointer"
-                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--bg-hover)' }}
-                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <input
-                        value={customEmoji}
-                        onChange={(e) => setCustomEmoji(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && customEmoji.trim()) {
-                            handleChangeIcon(contextMenu.list._id, customEmoji.trim())
-                            setCustomEmoji('')
-                          }
-                        }}
-                        placeholder="Custom"
-                        aria-label="Custom emoji"
-                        className="w-20 rounded-md bg-transparent px-2 py-1 text-xs outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
-                        style={{
-                          border: '1px solid var(--border)',
-                          color: 'var(--text-primary)',
-                        }}
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Move to group */}
-            <div className="relative">
-              <button
-                onClick={() => setGroupMenuFor(groupMenuFor ? null : contextMenu.list._id)}
-                className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors duration-150 cursor-pointer"
-                style={{ color: 'var(--text-primary)' }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--bg-hover)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-              >
-                <span>{copy.folders.contextMenu.moveToGroup}</span>
-                <ChevronRight size={12} style={{ color: 'var(--text-faint)' }} />
-              </button>
-
-              {/* Group sub-menu */}
-              <AnimatePresence>
-                {groupMenuFor === contextMenu.list._id && (
-                  <motion.div
-                    {...fadeSlideDown}
-                    transition={ease.fast}
-                    className="absolute left-full top-0 ml-1 w-44 rounded-xl p-1.5"
-                    style={{
-                      backgroundColor: 'var(--bg-pane-2)',
-                      border: '1px solid var(--border)',
-                      boxShadow: 'var(--shadow-elevated)',
-                    }}
-                  >
-                    {groupTitles.length === 0 && (
-                      <span className="block px-3 py-1.5 text-xs" style={{ color: 'var(--text-faint)' }}>
-                        No groups yet
-                      </span>
-                    )}
-                    {/* Existing groups - show list titles that have groupIds as a proxy */}
-                    {groupTitles.map((gId) => (
-                      <button
-                        key={gId}
-                        onClick={() => handleMoveToGroup(contextMenu.list._id, gId)}
-                        className="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors duration-150 cursor-pointer"
-                        style={{ color: 'var(--text-primary)' }}
-                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--bg-hover)' }}
-                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                      >
-                        {gId}
-                      </button>
-                    ))}
-                    {/* New group option */}
-                    <button
-                      onClick={() => {
-                        const name = window.prompt('Group name:')
-                        if (name?.trim()) {
-                          handleMoveToGroup(contextMenu.list._id, name.trim())
-                        }
-                      }}
-                      className="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors duration-150 cursor-pointer"
-                      style={{ color: 'var(--accent)' }}
-                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--bg-hover)' }}
-                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                    >
-                      <Plus size={12} strokeWidth={1.5} />
-                      {copy.folders.contextMenu.newGroup}
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Separator */}
-            <div className="my-1 h-px" style={{ backgroundColor: 'var(--border)' }} />
-
-            {/* Delete */}
-            <button
-              onClick={() => handleDeleteFolder(contextMenu.list)}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors duration-150 cursor-pointer"
-              style={{ color: '#ef4444' }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.08)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-            >
-              {copy.folders.contextMenu.delete}
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Separator ── */}
-      <div className="my-4 h-px" style={{ backgroundColor: 'var(--border)' }} />
-
-      {/* ── Sticky footer with + FAB and Avatar ── */}
-      <div className="relative flex items-center justify-between px-2 pb-1">
+      {/* ── Footer: + button (left) and avatar (right) ── */}
+      <div className="flex items-center justify-between px-2">
         {/* + FAB */}
         <div className="relative" ref={fabPopoverRef}>
           <motion.button
             {...buttonPress}
             onClick={() => setFabOpen(!fabOpen)}
             aria-label="Create new"
-            className={`flex h-8 w-8 items-center justify-center rounded-full text-white transition-colors duration-150 cursor-pointer${fabOpen ? '' : ' fab-glow'}`}
-            style={{ backgroundColor: 'var(--accent)' }}
+            className="flex h-11 items-center justify-center rounded-xl cursor-pointer transition-sl"
+            style={{
+              width: fabOpen ? 48 : 44,
+              border: '1px solid var(--overlay-3, var(--border))',
+              color: 'var(--text-primary)',
+              backgroundColor: fabOpen ? 'var(--overlay-2, var(--bg-hover))' : 'transparent',
+            }}
+            onMouseEnter={(e) => { if (!fabOpen) e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
+            onMouseLeave={(e) => { if (!fabOpen) e.currentTarget.style.backgroundColor = fabOpen ? 'var(--overlay-2, var(--bg-hover))' : 'transparent' }}
           >
-            <Plus size={18} strokeWidth={2} />
+            <motion.div animate={{ rotate: fabOpen ? 45 : 0 }} transition={{ duration: 0.15 }}>
+              <Plus size={22} strokeWidth={1.5} />
+            </motion.div>
           </motion.button>
-
-          {/* FAB Popover */}
           <AnimatePresence>
             {fabOpen && (
               <motion.div
-                {...fadeSlideDown}
-                transition={ease.fast}
-                className="absolute bottom-full left-0 mb-2 w-56 rounded-xl p-2"
-                style={{
-                  backgroundColor: 'var(--bg-pane-2)',
-                  border: '1px solid var(--border)',
-                  boxShadow: 'var(--shadow-elevated)',
-                }}
+                initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                transition={ease.normal}
+                className="absolute bottom-full left-0 mb-3 rounded-2xl p-2"
+                style={{ minWidth: 240, backgroundColor: 'var(--bg-pane-2, var(--bg-pane))', border: '1px solid var(--overlay-2, var(--border))', boxShadow: 'var(--shadow-elevated)' }}
               >
-                {/* New task */}
                 <button
-                  onClick={() => handleFabAction('task')}
-                  className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors duration-150 cursor-pointer"
+                  onClick={() => { setFabOpen(false); window.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', ctrlKey: true })) }}
+                  className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-[15px] font-medium transition-sl cursor-pointer"
                   style={{ color: 'var(--text-primary)' }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                  <div className="flex items-center gap-2">
-                    <ListChecks size={16} strokeWidth={1.5} />
-                    <span>{copy.sidebar.fab.newTask}</span>
-                  </div>
-                  <span className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
-                    {copy.sidebar.fab.newTaskShortcut}
-                  </span>
+                  <div className="flex items-center gap-3"><CheckCircle2 size={18} strokeWidth={1.5} style={{ color: 'var(--text-muted)' }} /><span>New task</span></div>
+                  <span className="text-[12px]" style={{ color: 'var(--text-faint)' }}>⌃N</span>
                 </button>
-
-                {/* New list */}
                 <button
-                  onClick={() => handleFabAction('list')}
-                  className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors duration-150 cursor-pointer"
+                  onClick={() => { setFabOpen(false); router.push('/lists') }}
+                  className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-[15px] font-medium transition-sl cursor-pointer"
                   style={{ color: 'var(--text-primary)' }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                  <div className="flex items-center gap-2">
-                    <Plus size={16} strokeWidth={1.5} />
-                    <span>{copy.sidebar.fab.newList}</span>
-                  </div>
-                  <span className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
-                    {copy.sidebar.fab.newListShortcut}
-                  </span>
+                  <div className="flex items-center gap-3"><List size={18} strokeWidth={1.5} style={{ color: 'var(--text-muted)' }} /><span>New list</span></div>
+                  <span className="text-[12px]" style={{ color: 'var(--text-faint)' }}>⇧⌘N</span>
                 </button>
-
-                {/* Talk mode — disabled */}
                 <button
-                  disabled
-                  className="flex w-full cursor-not-allowed items-center justify-between rounded-lg px-3 py-2 text-sm opacity-40"
+                  onClick={() => { setFabOpen(false) }}
+                  className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-[15px] font-medium transition-sl cursor-pointer"
                   style={{ color: 'var(--text-muted)' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                  <div className="flex items-center gap-2">
-                    <Mic size={16} strokeWidth={1.5} />
-                    <span>{copy.sidebar.fab.talkMode}</span>
-                  </div>
-                  <span className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
-                    {copy.sidebar.fab.talkModeShortcut}
-                  </span>
+                  <div className="flex items-center gap-3"><BarChart3 size={18} strokeWidth={1.5} style={{ color: 'var(--text-faint)' }} /><span>Talk mode</span></div>
+                  <span className="text-[12px]" style={{ color: 'var(--text-faint)' }}>⌃T</span>
                 </button>
-
-                {/* New meeting — disabled */}
                 <button
-                  disabled
-                  className="flex w-full cursor-not-allowed items-center justify-between rounded-lg px-3 py-2 text-sm opacity-40"
+                  onClick={() => { setFabOpen(false) }}
+                  className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-[15px] font-medium transition-sl cursor-pointer"
                   style={{ color: 'var(--text-muted)' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                  <div className="flex items-center gap-2">
-                    <Calendar size={16} strokeWidth={1.5} />
-                    <span>{copy.sidebar.fab.newMeeting}</span>
-                  </div>
-                  <span className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
-                    {copy.sidebar.fab.newMeetingShortcut}
-                  </span>
+                  <div className="flex items-center gap-3"><Mic size={18} strokeWidth={1.5} style={{ color: 'var(--text-faint)' }} /><span>New meeting note</span></div>
+                  <span className="text-[12px]" style={{ color: 'var(--text-faint)' }}>⇧⌘M</span>
                 </button>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* Avatar */}
+        {/* Avatar — profile menu with feature links */}
         <div className="relative" ref={popoverRef}>
           <button
             onClick={() => setAvatarOpen(!avatarOpen)}
             aria-label="User menu"
-            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white transition-colors duration-150 cursor-pointer"
-            style={{ backgroundColor: 'var(--accent)' }}
+            className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-semibold text-white cursor-pointer overflow-hidden"
+            style={{ backgroundColor: 'var(--avatar-bg, #6b7280)' }}
           >
             {userInitial}
           </button>
-
-          {/* Avatar Popover */}
           <AnimatePresence>
             {avatarOpen && (
               <motion.div
-                {...fadeSlideDown}
-                transition={ease.fast}
-                className="absolute bottom-full right-0 mb-2 w-48 rounded-xl p-2"
-                style={{
-                  backgroundColor: 'var(--bg-pane-2)',
-                  border: '1px solid var(--border)',
-                  boxShadow: 'var(--shadow-elevated)',
-                }}
+                initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                transition={ease.normal}
+                className="absolute bottom-full right-0 mb-3 w-52 rounded-2xl p-2"
+                style={{ backgroundColor: 'var(--bg-pane-2, var(--bg-pane))', border: '1px solid var(--overlay-2, var(--border))', boxShadow: 'var(--shadow-elevated)' }}
               >
+                {/* Feature links */}
+                {PROFILE_NAV.map((item) => (
+                  <button
+                    key={item.href}
+                    onClick={() => { setAvatarOpen(false); router.push(item.href) }}
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] font-medium transition-sl cursor-pointer"
+                    style={{ color: pathname.startsWith(item.href) ? 'var(--accent)' : 'var(--text-primary)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                  >
+                    <item.icon size={16} strokeWidth={1.5} style={{ color: 'var(--text-muted)' }} />
+                    {item.label}
+                  </button>
+                ))}
+
+                <div className="mx-2 my-1.5 h-px" style={{ backgroundColor: 'var(--border)' }} />
+
                 <button
-                  onClick={() => {
-                    setAvatarOpen(false)
-                    router.push('/profile')
-                  }}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors duration-150 cursor-pointer"
+                  onClick={() => { setAvatarOpen(false); router.push('/settings') }}
+                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] font-medium transition-sl cursor-pointer"
                   style={{ color: 'var(--text-primary)' }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                  <BarChart3 size={16} strokeWidth={1.5} />
-                  <span>Statistics</span>
+                  <Settings size={16} strokeWidth={1.5} style={{ color: 'var(--text-muted)' }} />
+                  Settings
                 </button>
                 <button
                   onClick={handleSignOut}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors duration-150 cursor-pointer"
+                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] font-medium transition-sl cursor-pointer"
                   style={{ color: 'var(--text-primary)' }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                  <LogOut size={16} strokeWidth={1.5} />
-                  <span>{copy.settings.signOut}</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setAvatarOpen(false)
-                    router.push('/settings')
-                  }}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors duration-150 cursor-pointer"
-                  style={{ color: 'var(--text-primary)' }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                  }}
-                >
-                  <Settings size={16} strokeWidth={1.5} />
-                  <span>{copy.settings.title}</span>
+                  <LogOut size={16} strokeWidth={1.5} style={{ color: 'var(--text-muted)' }} />
+                  Sign out
                 </button>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
-      </div>
-
-      {/* ── Toast notification ── */}
-      <div aria-live="polite" aria-atomic="true">
-      <AnimatePresence>
-        {toastMsg && (
-          <motion.div
-            {...fadeSlideUp}
-            transition={ease.fast}
-            className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-xl px-4 py-2.5"
-            style={{
-              backgroundColor: 'var(--bg-pane-2)',
-              border: '1px solid var(--border)',
-              color: 'var(--text-primary)',
-              boxShadow: 'var(--shadow-elevated)',
-            }}
-          >
-            <span className="text-sm">{toastMsg}</span>
-            {toastUndo && (
-              <button
-                onClick={() => {
-                  toastUndo()
-                  setToastMsg(null)
-                  setToastUndo(null)
-                }}
-                className="text-sm font-medium cursor-pointer"
-                style={{ color: 'var(--accent)' }}
-              >
-                {copy.folders.undo}
-              </button>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
       </div>
     </aside>
   )

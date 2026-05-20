@@ -24,6 +24,8 @@ interface DetailPanelStackProps {
   labels?: { _id: string; name: string }[]
   allLabels?: { _id: string; name: string }[]
   onCreateLabel?: (name: string) => void
+  allTasks?: TaskRecord[]
+  onCreateSubTask?: (data: Partial<TaskRecord>) => void
 }
 
 const MAX_VISIBLE = 3
@@ -41,6 +43,8 @@ export default function DetailPanelStack({
   labels = [],
   allLabels = [],
   onCreateLabel,
+  allTasks = [],
+  onCreateSubTask,
 }: DetailPanelStackProps) {
   // How many visible strips + the active panel
   const activeIndex = stack.length - 1
@@ -150,6 +154,8 @@ export default function DetailPanelStack({
         breadcrumb={activeIndex > 0 ? stack[activeIndex - 1].task.title : null}
         onBreadcrumbClick={activeIndex > 0 ? onPopTask : undefined}
         onOpenSubTask={onPushTask}
+        allTasks={allTasks}
+        onCreateSubTask={onCreateSubTask}
       />
     </div>
   )

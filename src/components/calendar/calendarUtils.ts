@@ -93,7 +93,7 @@ export function getMonthGrid(date: Date): Date[] {
 /**
  * Format a date for the header label depending on the view.
  */
-export function formatHeaderLabel(date: Date, view: 'day' | 'week' | 'month'): string {
+export function formatHeaderLabel(date: Date, view: 'day' | 'week' | 'month' | 'year' | 'agenda'): string {
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December',
@@ -116,6 +116,14 @@ export function formatHeaderLabel(date: Date, view: 'day' | 'week' | 'month'): s
       return `${startMonth} ${weekStart.getDate()}\u2013${weekEnd.getDate()}`
     }
     return `${startMonth} ${weekStart.getDate()} \u2013 ${endMonth} ${weekEnd.getDate()}`
+  }
+
+  if (view === 'year') {
+    return `${date.getFullYear()}`
+  }
+
+  if (view === 'agenda') {
+    return `${months[date.getMonth()]} ${date.getFullYear()}`
   }
 
   // month

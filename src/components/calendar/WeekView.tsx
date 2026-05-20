@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import {
   startOfWeek,
   isSameDay,
@@ -9,6 +10,8 @@ import {
   getHourLabels,
 } from './calendarUtils'
 import CalendarBlock from './CalendarBlock'
+import DraggableBlock from './DraggableBlock'
+import DroppableSlot from './DroppableSlot'
 import CapacityBar from './CapacityBar'
 import type { CalendarEvent } from './types'
 import { MOCK_CAPACITY } from './mockData'
@@ -21,31 +24,47 @@ interface WeekViewProps {
 const HOUR_LABELS = getHourLabels()
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-/** Visible range: 7 AM - 9 PM (rows 29-84) */
 const FIRST_VISIBLE_ROW = 29
 const LAST_VISIBLE_ROW = 84
 const VISIBLE_ROW_COUNT = LAST_VISIBLE_ROW - FIRST_VISIBLE_ROW + 1
 
-/**
- * WeekView — 7-column layout with compressed time grids.
- * Header row with day names + date numbers, today highlighted.
- * Per-column mini capacity bar at top.
- */
 export default function WeekView({ date, events }: WeekViewProps) {
   const weekStart = startOfWeek(date)
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekStart)
-    d.setDate(weekStart.getDate() + i)
-    return d
-  })
-
-  // Group events by day
-  const eventsByDay = weekDays.map((day) =>
-    events.filter(
-      (ev) =>
-        ev.start && isSameDay(new Date(ev.start), day) && !ev.isHabit
-    )
+  const weekDays = useMemo(() =>
+    Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(weekStart)
+      d.setDate(weekStart.getDate() + i)
+      return d
+    }),
+    [weekStart]
   )
+
+  const eventsByDay = useMemo(() =>
+    weekDays.map((day) =>
+      events.filter(
+        (ev) => ev.start && isSameDay(new Date(ev.start), day) && !ev.isHabit
+      )
+    ),
+    [weekDays, events]
+  )
+
+  // Build slot occupancy per day for overlap detection
+  const slotOccupancyByDay = useMemo(() => {
+    return weekDays.map((_, dayIdx) => {
+      const map = new Map<number, string[]>()
+      for (const ev of eventsByDay[dayIdx]) {
+        const start = new Date(ev.start)
+        const end = new Date(ev.end)
+        const startSlot = start.getHours() * 4 + Math.floor(start.getMinutes() / 15)
+        const endSlot = end.getHours() * 4 + Math.floor(end.getMinutes() / 15)
+        for (let s = startSlot; s < endSlot; s++) {
+          if (!map.has(s)) map.set(s, [])
+          map.get(s)!.push(ev.id)
+        }
+      }
+      return map
+    })
+  }, [weekDays, eventsByDay])
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -57,10 +76,7 @@ export default function WeekView({ date, events }: WeekViewProps) {
           borderBottom: '1px solid var(--border)',
         }}
       >
-        {/* Empty corner cell */}
         <div style={{ borderRight: '1px solid var(--border)' }} />
-
-        {/* Day headers */}
         {weekDays.map((day, i) => {
           const today = isToday(day)
           return (
@@ -74,9 +90,7 @@ export default function WeekView({ date, events }: WeekViewProps) {
             >
               <span
                 className="text-[10px] font-medium"
-                style={{
-                  color: today ? 'var(--accent)' : 'var(--text-faint)',
-                }}
+                style={{ color: today ? 'var(--accent)' : 'var(--text-faint)' }}
               >
                 {DAY_NAMES[i]}
               </span>
@@ -91,7 +105,6 @@ export default function WeekView({ date, events }: WeekViewProps) {
               >
                 {day.getDate()}
               </span>
-              {/* Mini capacity bar */}
               <div className="w-full px-1">
                 <CapacityBar
                   scheduledHours={
@@ -138,20 +151,24 @@ export default function WeekView({ date, events }: WeekViewProps) {
                   paddingTop: isHourStart ? 1 : 0,
                 }}
               >
-                {isHourStart && (
-                  <span style={{ fontSize: 9 }}>{HOUR_LABELS[hour]}</span>
-                )}
+                {isHourStart && <span style={{ fontSize: 9 }}>{HOUR_LABELS[hour]}</span>}
               </div>
             )
           })}
 
-          {/* Day columns: grid lines */}
+          {/* Day columns: droppable time slots */}
           {weekDays.map((day, colIndex) => {
             const today = isToday(day)
+            const dayISO = day.toISOString().split('T')[0]
+            const occupancy = slotOccupancyByDay[colIndex]
+
             return Array.from({ length: VISIBLE_ROW_COUNT }, (_, i) => {
               const actualRow = FIRST_VISIBLE_ROW + i
+              const slotIndex = actualRow - 1
               const isHourStart = (actualRow - 1) % 4 === 0
               const gridRowIndex = i + 1
+              const slotId = `slot-${dayISO}-${slotIndex}`
+              const occupied = occupancy.get(slotIndex) || []
 
               return (
                 <div
@@ -160,30 +177,36 @@ export default function WeekView({ date, events }: WeekViewProps) {
                     gridColumn: `${colIndex + 2} / ${colIndex + 3}`,
                     gridRow: `${gridRowIndex} / ${gridRowIndex + 1}`,
                     borderTop: isHourStart ? '1px solid var(--border)' : 'none',
-                    borderRight:
-                      colIndex < 6 ? '1px solid var(--border)' : 'none',
-                    backgroundColor: today
-                      ? 'var(--accent-soft)'
-                      : 'transparent',
-                    minHeight: 12,
+                    borderRight: colIndex < 6 ? '1px solid var(--border)' : 'none',
+                    backgroundColor: today ? 'var(--accent-soft)' : 'transparent',
                   }}
-                />
+                >
+                  <DroppableSlot
+                    id={slotId}
+                    slotIndex={slotIndex}
+                    day={dayISO}
+                    occupiedBy={occupied}
+                  >
+                    <div style={{ minHeight: 12 }} />
+                  </DroppableSlot>
+                </div>
               )
             })
           })}
 
-          {/* Event blocks */}
+          {/* Event blocks — wrapped in DraggableBlock */}
           {weekDays.map((day, colIndex) =>
             eventsByDay[colIndex].map((ev) => {
               const start = new Date(ev.start)
               const end = new Date(ev.end)
               const startRow = timeToGridRow(start)
               const span = gridRowSpan(start, end)
-
               const visibleStart = startRow - FIRST_VISIBLE_ROW + 1
               const visibleEnd = visibleStart + span
 
               if (visibleStart > VISIBLE_ROW_COUNT || visibleEnd < 1) return null
+
+              const isReadOnly = !!(ev.isExternal || ev.isFocusSession || ev.isReadOnly)
 
               return (
                 <div
@@ -193,26 +216,35 @@ export default function WeekView({ date, events }: WeekViewProps) {
                     gridRow: `${Math.max(1, visibleStart)} / ${Math.min(VISIBLE_ROW_COUNT + 1, visibleEnd)}`,
                     padding: '0 2px',
                     zIndex: 5,
+                    pointerEvents: 'auto',
                   }}
                 >
-                  <CalendarBlock
-                    event={ev}
-                    compact
-                    style={{ height: '100%' }}
-                    onClick={() => {
-                      window.dispatchEvent(
-                        new CustomEvent('laif:open-task-detail', {
-                          detail: { taskId: ev.id },
-                        })
-                      )
-                    }}
-                  />
+                  <DraggableBlock
+                    id={ev.id}
+                    scheduledStart={ev.start}
+                    scheduledEnd={ev.end}
+                    isReadOnly={isReadOnly}
+                  >
+                    <CalendarBlock
+                      event={ev}
+                      compact
+                      isReadOnly={isReadOnly}
+                      style={{ height: '100%' }}
+                      onClick={() => {
+                        window.dispatchEvent(
+                          new CustomEvent('laif:detail-task', {
+                            detail: { taskId: ev.id },
+                          })
+                        )
+                      }}
+                    />
+                  </DraggableBlock>
                 </div>
               )
             })
           )}
 
-          {/* Current time indicator for today's column */}
+          {/* Current time indicator */}
           {weekDays.map((day, colIndex) => {
             if (!isToday(day)) return null
             const now = new Date()
@@ -255,13 +287,7 @@ export default function WeekView({ date, events }: WeekViewProps) {
                       animation: 'cal-dot-pulse 4s ease-in-out infinite',
                     }}
                   />
-                  <div
-                    style={{
-                      flex: 1,
-                      height: 2,
-                      backgroundColor: 'var(--accent)',
-                    }}
-                  />
+                  <div style={{ flex: 1, height: 2, backgroundColor: 'var(--accent)' }} />
                 </div>
               </div>
             )

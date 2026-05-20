@@ -2,51 +2,122 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Theme: Dark (default / :root) ─── */
+/* ─── Theme: Dark (default / :root) — Superlist design system ─── */
 :root,
 [data-theme="dark"] {
-  --bg-canvas: #0E0E12;
-  --bg-pane: #17171E;
-  --bg-pane-2: #1E1E26;
-  --bg-hover: #23232B;
-  --bg-selected: rgba(255, 77, 61, 0.12);
-  --border: #2A2A33;
-  --text-primary: #F2F2F5;
-  --text-muted: #A0A0AA;
-  --text-faint: #6B6B75;
-  --accent: #FF4D3D;
-  --accent-soft: rgba(255, 77, 61, 0.12);
-  --info: #5DA8FF;
-  --priority-high: #FF4D3D;
-  --priority-medium: #FFB23D;
-  --priority-low: #5DA8FF;
-  --bg-atmosphere: radial-gradient(ellipse at 80% -20%, rgba(255,77,61,0.03) 0%, transparent 60%);
-  --shadow-card: 0 2px 8px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.15);
-  --shadow-elevated: 0 8px 24px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2);
-  --shadow-modal: 0 16px 48px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.3);
+  /* Superlist brand accents */
+  --accent-default:  #f84f39;
+  --accent-purple:   #8f89fa;
+  --accent-blue:     #2281d9;
+  --accent-positive: #33b887;
+  --accent-negative: #f84f39;
+  --accent-neutral:  #fff;
+  --accent-custom-1: #bcdb71;
+  --accent-custom-2: #7ae1ec;
+
+  /* Surfaces — Superlist dark */
+  --bg-canvas: #181824;
+  --bg-pane: #232233;
+  --bg-pane-2: #2a293b;
+  --bg-hover: #3a394a;
+  --bg-selected: rgba(248, 79, 57, 0.14);
+  --border: rgba(222, 221, 249, 0.07);
+
+  /* Text */
+  --text-primary: #f7f7ff;
+  --text-muted: #8e8da0;
+  --text-faint: #605f6a;
+
+  /* Mapped aliases */
+  --accent: var(--accent-default);
+  --accent-soft: rgba(248, 79, 57, 0.12);
+  --info: var(--accent-blue);
+  --priority-high: #ef4444;
+  --priority-medium: #f59e0b;
+  --priority-low: #6b66da;
+  --success: #34d399;
+  --avatar-bg: #6b7280;
+
+  /* Overlays (Superlist) */
+  --overlay-1: #d3d1f90a;
+  --overlay-2: #deddf912;
+  --overlay-3: #deddf93d;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --outer-radius: 20px;
+  --inner-radius: 12px;
+  --radius-pill: 9999px;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  /* Atmosphere */
+  --bg-atmosphere: radial-gradient(ellipse at 80% -20%, rgba(248,79,57,0.03) 0%, transparent 60%);
+
+  /* Shadows — Superlist scale */
+  --shadow-sm: 0 1px 2px 0 #0000000d;
+  --shadow-card: 0 1px 3px 0 #0000001a, 0 1px 2px -1px #0000001a;
+  --shadow-elevated: 0 4px 6px -1px #0000001a, 0 2px 4px -2px #0000001a;
+  --shadow-modal: 0 20px 25px -5px #0000001a, 0 8px 10px -6px #0000001a;
+
+  /* Motion */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --dur-fast: 125ms;
+  --dur: 150ms;
+  --dur-med: 200ms;
+  --dur-slow: 300ms;
+  --dur-slower: 500ms;
 }
 
-/* ─── Theme: Light ─── */
+/* ─── Theme: Light — Superlist design system ─── */
 [data-theme="light"] {
-  --bg-canvas: #EDEAE6;
-  --bg-pane: #F8F6F2;
-  --bg-pane-2: #FFFFFF;
-  --bg-hover: #EDEAE6;
-  --bg-selected: #FFE9E5;
-  --border: #E2DDD5;
-  --text-primary: #1A1A1F;
-  --text-muted: #6B6B75;
-  --text-faint: #A0A0AA;
-  --accent: #FF4D3D;
-  --accent-soft: #FFE9E5;
-  --info: #3B82F6;
-  --priority-high: #FF4D3D;
-  --priority-medium: #FFB23D;
-  --priority-low: #5DA8FF;
-  --bg-atmosphere: radial-gradient(ellipse at 20% 0%, rgba(255,77,61,0.02) 0%, transparent 50%);
-  --shadow-card: 0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
-  --shadow-elevated: 0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.06);
-  --shadow-modal: 0 16px 48px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.08);
+  --accent-default:  #f84f39;
+  --accent-purple:   #6b66da;
+  --accent-blue:     #2590f2;
+  --accent-positive: #2a966f;
+  --accent-negative: #f84f39;
+  --accent-neutral:  #000;
+
+  --bg-canvas: #e7e6f0;
+  --bg-pane: #fafafc;
+  --bg-pane-2: #f4f3f7;
+  --bg-hover: rgba(108, 108, 158, 0.08);
+  --bg-selected: rgba(248, 79, 57, 0.10);
+  --border: rgba(108, 108, 158, 0.12);
+
+  --text-primary: #232233;
+  --text-muted: #6b6a86;
+  --text-faint: #9e9dae;
+
+  --accent: var(--accent-default);
+  --accent-soft: rgba(248, 79, 57, 0.10);
+  --info: var(--accent-blue);
+  --priority-high: #ef4444;
+  --priority-medium: #f59e0b;
+  --priority-low: #6b66da;
+  --success: #2a966f;
+  --avatar-bg: #9ca3af;
+
+  --overlay-1: #6c6c9e14;
+  --overlay-2: #6c6c9e1f;
+  --overlay-3: #6c6c9e57;
+
+  --bg-atmosphere: radial-gradient(ellipse at 20% 0%, rgba(248,79,57,0.02) 0%, transparent 50%);
+  --shadow-sm: 0 1px 2px 0 #0000000d;
+  --shadow-card: 0 1px 3px 0 #0000001a, 0 1px 2px -1px #0000001a;
+  --shadow-elevated: 0 4px 6px -1px #0000001a, 0 2px 4px -2px #0000001a;
+  --shadow-modal: 0 20px 25px -5px #0000001a, 0 8px 10px -6px #0000001a;
 }
 
 /* ─── Theme: Blackout ─── */
@@ -279,21 +350,29 @@
   --shadow-modal: 0 16px 48px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.08);
 }
 
-/* ─── Base styles ─── */
+/* ─── Base styles — Superlist typography ─── */
 body {
-  font-family: var(--font-body), 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.63rem;
+  letter-spacing: 0;
   background-color: var(--bg-canvas);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Display font for headings ─── */
-h1, .heading-display {
-  font-family: var(--font-display), serif;
-  letter-spacing: -0.03em;
-  font-weight: 400;
+/* ─── All headings use Inter ─── */
+h1, h2, h3, h4, h5, .heading-display {
+  font-family: 'Inter', system-ui, sans-serif;
+  letter-spacing: -0.025em;
 }
+h1 { font-size: 42px; line-height: 48px; font-weight: 700; }
+h2 { font-size: 26px; line-height: 30px; font-weight: 700; }
+h3 { font-size: 20px; line-height: 28px; font-weight: 600; }
+h4 { font-size: 16px; line-height: 22px; font-weight: 600; }
+h5 { font-size: 14px; line-height: 20px; font-weight: 600; }
 
 /* ─── Text wrap balance ─── */
 h1, h2, h3 { text-wrap: balance; }
@@ -336,6 +415,23 @@ h1, h2, h3 { text-wrap: balance; }
 ::selection {
   background-color: var(--accent-soft);
   color: var(--text-primary);
+}
+
+/* ─── Superlist animations ─── */
+@keyframes emoji_back {
+  0% { transform: rotate(-20deg); }
+  100% { transform: rotate(0); }
+}
+.animate-emoji-back { animation: emoji_back 125ms ease-out forwards; }
+.emoji-ani { transform: rotate(0deg); transition: transform 125ms ease-out; }
+
+/* ─── Superlist transition default ─── */
+.transition-sl {
+  transition-property: color, background-color, border-color,
+                       text-decoration-color, fill, stroke, opacity,
+                       box-shadow, transform, filter, backdrop-filter;
+  transition-duration: var(--dur, 150ms);
+  transition-timing-function: var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 /* ─── Component classes ─── */

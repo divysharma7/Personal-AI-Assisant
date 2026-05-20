@@ -14,7 +14,7 @@ interface PriorityPopoverProps {
 const PRIORITIES = [
   { value: 'high', label: 'High', color: '#ef4444', key: '1' },
   { value: 'medium', label: 'Medium', color: '#f59e0b', key: '2' },
-  { value: 'low', label: 'Low', color: '#3b82f6', key: '3' },
+  { value: 'low', label: 'Low', color: '#6b66da', key: '3' },
 ]
 
 export default function PriorityPopover({

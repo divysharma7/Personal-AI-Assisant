@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import {
   timeToGridRow,
   gridRowSpan,
@@ -9,6 +9,8 @@ import {
   isToday,
 } from './calendarUtils'
 import CalendarBlock from './CalendarBlock'
+import DraggableBlock from './DraggableBlock'
+import DroppableSlot from './DroppableSlot'
 import CurrentTimeLine from './CurrentTimeLine'
 import CalendarEmpty from './CalendarEmpty'
 import CapacityBar from './CapacityBar'
@@ -21,38 +23,46 @@ interface DayViewProps {
 }
 
 const HOUR_LABELS = getHourLabels()
-
-/** Default hidden range: 21:00 (row 85) to 07:00 (row 29) */
 const COLLAPSE_START_HOUR = 21
 const COLLAPSE_END_HOUR = 7
 
-/**
- * DayView — vertical time grid with 96 rows (15-min slots).
- * Left column: hour labels. Right column: task blocks via grid row placement.
- * Current time indicator shown when viewing today.
- */
 export default function DayView({ date, events }: DayViewProps) {
   const [showEarlyHours, setShowEarlyHours] = useState(false)
   const [showLateHours, setShowLateHours] = useState(false)
   const [newTaskSlot, setNewTaskSlot] = useState<number | null>(null)
 
-  // Filter events for this day (exclude habits — they go in a chip row above)
-  const dayEvents = events.filter((ev) => {
-    if (!ev.start) return false
-    return isSameDay(new Date(ev.start), date) && !ev.isHabit
-  })
+  const dayEvents = useMemo(
+    () => events.filter((ev) => ev.start && isSameDay(new Date(ev.start), date) && !ev.isHabit),
+    [events, date]
+  )
 
-  const habitEvents = events.filter((ev) => {
-    if (!ev.start) return false
-    return isSameDay(new Date(ev.start), date) && ev.isHabit
-  })
+  const habitEvents = useMemo(
+    () => events.filter((ev) => ev.start && isSameDay(new Date(ev.start), date) && ev.isHabit),
+    [events, date]
+  )
 
   const showToday = isToday(date)
+  const dayISO = date.toISOString().split('T')[0]
 
-  // Determine visible row range
-  const firstVisibleRow = showEarlyHours ? 1 : COLLAPSE_END_HOUR * 4 + 1  // row 29 = 07:00
-  const lastVisibleRow = showLateHours ? 96 : COLLAPSE_START_HOUR * 4     // row 84 = 21:00
+  const firstVisibleRow = showEarlyHours ? 1 : COLLAPSE_END_HOUR * 4 + 1
+  const lastVisibleRow = showLateHours ? 96 : COLLAPSE_START_HOUR * 4
   const visibleRowCount = lastVisibleRow - firstVisibleRow + 1
+
+  // Build a map of which slots are occupied by which events
+  const slotOccupancy = useMemo(() => {
+    const map = new Map<number, string[]>()
+    for (const ev of dayEvents) {
+      const start = new Date(ev.start)
+      const end = new Date(ev.end)
+      const startSlot = (start.getHours() * 4 + Math.floor(start.getMinutes() / 15))
+      const endSlot = (end.getHours() * 4 + Math.floor(end.getMinutes() / 15))
+      for (let s = startSlot; s < endSlot; s++) {
+        if (!map.has(s)) map.set(s, [])
+        map.get(s)!.push(ev.id)
+      }
+    }
+    return map
+  }, [dayEvents])
 
   const handleSlotClick = useCallback((row: number) => {
     setNewTaskSlot(row)
@@ -106,14 +116,14 @@ export default function DayView({ date, events }: DayViewProps) {
           <CalendarEmpty />
         ) : (
           <div
-            className="cal-grid"
+            className="cal-grid relative"
             style={{
               gridTemplateColumns: '60px 1fr',
-              gridTemplateRows: `repeat(${visibleRowCount}, minmax(15px, 1fr))`,
-              minHeight: visibleRowCount * 15,
+              gridTemplateRows: `repeat(${visibleRowCount}, minmax(16px, 1fr))`,
+              minHeight: visibleRowCount * 16,
             }}
           >
-            {/* Hour labels + grid lines */}
+            {/* Hour labels */}
             {Array.from({ length: visibleRowCount }, (_, i) => {
               const actualRow = firstVisibleRow + i
               const hour = Math.floor((actualRow - 1) / 4)
@@ -131,18 +141,19 @@ export default function DayView({ date, events }: DayViewProps) {
                     paddingTop: isHourStart ? 2 : 0,
                   }}
                 >
-                  {isHourStart && (
-                    <span>{HOUR_LABELS[hour]}</span>
-                  )}
+                  {isHourStart && <span>{HOUR_LABELS[hour]}</span>}
                 </div>
               )
             })}
 
-            {/* Clickable empty slots */}
+            {/* Droppable time slots */}
             {Array.from({ length: visibleRowCount }, (_, i) => {
               const actualRow = firstVisibleRow + i
+              const slotIndex = actualRow - 1 // 0-indexed
               const gridRowIndex = i + 1
               const isHourStart = (actualRow - 1) % 4 === 0
+              const slotId = `slot-${dayISO}-${slotIndex}`
+              const occupied = slotOccupancy.get(slotIndex) || []
 
               return (
                 <div
@@ -151,26 +162,36 @@ export default function DayView({ date, events }: DayViewProps) {
                     gridColumn: '2 / 3',
                     gridRow: `${gridRowIndex} / ${gridRowIndex + 1}`,
                     borderTop: isHourStart ? '1px solid var(--border)' : 'none',
-                    minHeight: 15,
                   }}
-                  onClick={() => handleSlotClick(actualRow)}
-                />
+                >
+                  <DroppableSlot
+                    id={slotId}
+                    slotIndex={slotIndex}
+                    day={dayISO}
+                    occupiedBy={occupied}
+                  >
+                    <div
+                      className="h-full w-full"
+                      style={{ minHeight: 16 }}
+                      onClick={() => handleSlotClick(actualRow)}
+                    />
+                  </DroppableSlot>
+                </div>
               )
             })}
 
-            {/* Event blocks */}
+            {/* Event blocks — wrapped in DraggableBlock */}
             {dayEvents.map((ev) => {
               const start = new Date(ev.start)
               const end = new Date(ev.end)
               const startRow = timeToGridRow(start)
               const span = gridRowSpan(start, end)
-
-              // Convert to visible grid coordinates
               const visibleStart = startRow - firstVisibleRow + 1
               const visibleEnd = visibleStart + span
 
-              // Skip if entirely outside visible range
               if (visibleStart > visibleRowCount || visibleEnd < 1) return null
+
+              const isReadOnly = !!(ev.isExternal || ev.isFocusSession || ev.isReadOnly)
 
               return (
                 <div
@@ -180,19 +201,28 @@ export default function DayView({ date, events }: DayViewProps) {
                     gridRow: `${Math.max(1, visibleStart)} / ${Math.min(visibleRowCount + 1, visibleEnd)}`,
                     padding: '0 4px',
                     zIndex: 5,
+                    pointerEvents: 'auto',
                   }}
                 >
-                  <CalendarBlock
-                    event={ev}
-                    style={{ height: '100%' }}
-                    onClick={() => {
-                      window.dispatchEvent(
-                        new CustomEvent('laif:open-task-detail', {
-                          detail: { taskId: ev.id },
-                        })
-                      )
-                    }}
-                  />
+                  <DraggableBlock
+                    id={ev.id}
+                    scheduledStart={ev.start}
+                    scheduledEnd={ev.end}
+                    isReadOnly={isReadOnly}
+                  >
+                    <CalendarBlock
+                      event={ev}
+                      style={{ height: '100%' }}
+                      isReadOnly={isReadOnly}
+                      onClick={() => {
+                        window.dispatchEvent(
+                          new CustomEvent('laif:detail-task', {
+                            detail: { taskId: ev.id },
+                          })
+                        )
+                      }}
+                    />
+                  </DraggableBlock>
                 </div>
               )
             })}
@@ -257,10 +287,6 @@ export default function DayView({ date, events }: DayViewProps) {
   )
 }
 
-/**
- * Positioned current time indicator within the grid.
- * Uses percentage-based positioning instead of grid rows to get sub-row accuracy.
- */
 function CurrentTimeLinePositioned({
   firstVisibleRow,
   rowCount,
@@ -270,7 +296,7 @@ function CurrentTimeLinePositioned({
 }) {
   const now = new Date()
   const totalMinutes = now.getHours() * 60 + now.getMinutes()
-  const currentRow = totalMinutes / 15 + 1 // fractional row
+  const currentRow = totalMinutes / 15 + 1
   const visiblePosition = currentRow - firstVisibleRow
   const percent = (visiblePosition / rowCount) * 100
 
@@ -300,13 +326,7 @@ function CurrentTimeLinePositioned({
           animation: 'cal-dot-pulse 4s ease-in-out infinite',
         }}
       />
-      <div
-        style={{
-          flex: 1,
-          height: 2,
-          backgroundColor: 'var(--accent)',
-        }}
-      />
+      <div style={{ flex: 1, height: 2, backgroundColor: 'var(--accent)' }} />
     </div>
   )
 }

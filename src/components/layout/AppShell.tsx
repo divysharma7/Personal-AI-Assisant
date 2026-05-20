@@ -6,7 +6,7 @@ import { useEffect, useState, useCallback, type ReactNode } from 'react'
 import Sidebar from './Sidebar'
 import ArtworkPane from './ArtworkPane'
 import { copy } from '@/lib/copy'
-import { fade, ease } from '@/lib/motion'
+import { fade, ease, motionTokens } from '@/lib/motion'
 import { useFocusState } from '@/contexts/FocusContext'
 import { useTasks } from '@/hooks/useTasks'
 import { useLabels } from '@/hooks/useLabels'
@@ -39,11 +39,12 @@ function DesktopOnlyNotice() {
 export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const [isDesktop, setIsDesktop] = useState(true)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null)
   const [panelStack, setPanelStack] = useState<string[]>([])
 
   const { focus } = useFocusState()
-  const { tasks, updateTask, deleteTask } = useTasks()
+  const { tasks, updateTask, deleteTask, createTask } = useTasks()
   const { labels, createLabel } = useLabels()
 
   useEffect(() => {
@@ -144,6 +145,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
     [createLabel]
   )
 
+  const handleCreateSubTask = useCallback(
+    async (data: Partial<TaskRecord>) => {
+      await createTask(data)
+    },
+    [createTask]
+  )
+
   // Build stack entries from task IDs
   const stackEntries = panelStack
     .map((taskId) => {
@@ -172,7 +180,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div
-      className="relative flex h-screen p-[3px]"
+      className="relative flex h-screen p-[6px] gap-[6px]"
       style={{ backgroundColor: 'var(--bg-canvas)' }}
     >
       <a
@@ -195,25 +203,53 @@ export default function AppShell({ children }: { children: ReactNode }) {
         />
       )}
 
-      {/* Left: Sidebar */}
-      <Sidebar />
-
-      {/* Gap */}
-      <div className="w-[1px] flex-shrink-0" />
+      {/* Left: Sidebar — collapsible */}
+      <AnimatePresence>
+        {!sidebarCollapsed && (
+          <motion.div
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 260, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ duration: motionTokens.duration.fast, ease: motionTokens.easing.sharp }}
+            className="flex-shrink-0 overflow-hidden"
+          >
+            <Sidebar onToggleCollapse={() => setSidebarCollapsed(true)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Center: Main content */}
       <main
         id="main-content"
-        className="flex min-w-[540px] flex-1 flex-col overflow-y-auto rounded-[16px]"
-        style={{ backgroundColor: 'var(--bg-pane)', backgroundImage: 'var(--bg-atmosphere)' }}
+        className="relative flex min-w-[540px] flex-1 flex-col overflow-y-auto rounded-[var(--outer-radius,20px)]"
+        style={{
+          backgroundColor: 'var(--bg-pane)',
+          backgroundImage: 'var(--bg-atmosphere)',
+          transition: 'flex 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
       >
+        {/* Sidebar expand button when collapsed */}
+        {sidebarCollapsed && (
+          <button
+            onClick={() => setSidebarCollapsed(false)}
+            className="absolute left-3 top-3 z-30 flex h-7 w-7 items-center justify-center rounded-md cursor-pointer transition-sl"
+            style={{ color: 'var(--text-faint)', backgroundColor: 'var(--overlay-1, transparent)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-2, var(--bg-hover))' }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, transparent)' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M9 3v18" />
+            </svg>
+          </button>
+        )}
         <AnimatePresence mode="wait">
           <motion.div
             key={pathname}
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
+            transition={{ duration: motionTokens.duration.fast, ease: motionTokens.easing.sharp }}
             className="flex flex-1 flex-col"
           >
             {children}
@@ -221,19 +257,16 @@ export default function AppShell({ children }: { children: ReactNode }) {
         </AnimatePresence>
       </main>
 
-      {/* Gap */}
-      <div className="w-[1px] flex-shrink-0" />
-
       {/* Right: Artwork pane OR Detail panel */}
       <AnimatePresence mode="wait">
         {showDetailPanel ? (
           <motion.div
             key="detail-panel"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={ease.fast}
-            className="flex-shrink-0"
+            initial={{ flex: '0 0 30%', opacity: 0 }}
+            animate={{ flex: '0 0 40%', opacity: 1 }}
+            exit={{ flex: '0 0 30%', opacity: 0 }}
+            transition={{ duration: motionTokens.duration.normal, ease: motionTokens.easing.sharp }}
+            className="h-full overflow-hidden"
           >
             <DetailPanelStack
               stack={stackEntries}
@@ -247,6 +280,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
               labels={labels}
               allLabels={labels}
               onCreateLabel={handleCreateLabel}
+              allTasks={tasks}
+              onCreateSubTask={handleCreateSubTask}
             />
           </motion.div>
         ) : (
@@ -256,6 +291,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={ease.fast}
+            className="h-full"
           >
             <ArtworkPane />
           </motion.div>

@@ -2,8 +2,16 @@
 
 import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowRight, Link2, CircleDot, Trash2 } from 'lucide-react'
-import { copy } from '@/lib/copy'
+import {
+  BellOff,
+  Printer,
+  Link2,
+  Copy,
+  EyeOff,
+  CircleDot,
+  Trash2,
+  Target,
+} from 'lucide-react'
 import { fadeSlideDown, ease } from '@/lib/motion'
 
 interface TaskOverflowMenuProps {
@@ -12,6 +20,10 @@ interface TaskOverflowMenuProps {
   onMarkAllIncomplete: () => void
   onUnsubscribe?: () => void
   onCopyLink?: () => void
+  onDuplicate?: () => void
+  onPrint?: () => void
+  onHideCompleted?: () => void
+  onStartFocus?: () => void
 }
 
 export default function TaskOverflowMenu({
@@ -20,57 +32,67 @@ export default function TaskOverflowMenu({
   onMarkAllIncomplete,
   onUnsubscribe,
   onCopyLink,
+  onDuplicate,
+  onPrint,
+  onHideCompleted,
+  onStartFocus,
 }: TaskOverflowMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        onClose()
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose()
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [onClose])
-
-  useEffect(() => {
     function handleEsc(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose()
     }
+    document.addEventListener('mousedown', handleClickOutside)
     document.addEventListener('keydown', handleEsc)
-    return () => document.removeEventListener('keydown', handleEsc)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEsc)
+    }
   }, [onClose])
 
   const items = [
     {
-      label: copy.task.overflowMenu.unsubscribe,
-      icon: <ArrowRight size={14} strokeWidth={1.5} />,
-      onClick: onUnsubscribe || onClose,
-      isDestructive: false,
+      label: 'Unsubscribe',
+      icon: <BellOff size={15} strokeWidth={1.5} />,
+      onClick: () => { onUnsubscribe?.(); onClose() },
     },
     {
-      label: copy.task.overflowMenu.copyLink,
-      icon: <Link2 size={14} strokeWidth={1.5} />,
+      label: 'Print task',
+      icon: <Printer size={15} strokeWidth={1.5} />,
+      onClick: () => { onPrint?.(); window.print(); onClose() },
+    },
+    {
+      label: 'Copy link',
+      icon: <Link2 size={15} strokeWidth={1.5} />,
       onClick: () => {
-        if (onCopyLink) onCopyLink()
-        else {
-          navigator.clipboard?.writeText(window.location.href)
-        }
+        navigator.clipboard?.writeText(window.location.href)
+        onCopyLink?.()
         onClose()
       },
-      isDestructive: false,
     },
     {
-      label: copy.task.overflowMenu.markAllIncomplete,
-      icon: <CircleDot size={14} strokeWidth={1.5} />,
-      onClick: onMarkAllIncomplete,
-      isDestructive: false,
+      label: 'Duplicate task',
+      icon: <Copy size={15} strokeWidth={1.5} />,
+      onClick: () => { onDuplicate?.(); onClose() },
     },
     {
-      label: copy.task.overflowMenu.deleteTask,
-      icon: <Trash2 size={14} strokeWidth={1.5} />,
-      onClick: onDelete,
-      isDestructive: true,
+      label: 'Hide completed tasks',
+      icon: <EyeOff size={15} strokeWidth={1.5} />,
+      onClick: () => { onHideCompleted?.(); onClose() },
+    },
+    {
+      label: 'Mark all incomplete',
+      icon: <CircleDot size={15} strokeWidth={1.5} />,
+      onClick: () => { onMarkAllIncomplete(); onClose() },
+    },
+    {
+      label: 'Start Focus',
+      icon: <Target size={15} strokeWidth={1.5} />,
+      onClick: () => { onStartFocus?.(); onClose() },
     },
   ]
 
@@ -79,10 +101,10 @@ export default function TaskOverflowMenu({
       {...fadeSlideDown}
       transition={ease.fast}
       ref={menuRef}
-      className="absolute right-0 top-full z-50 mt-1 w-[200px] rounded-xl p-1.5"
+      className="absolute right-0 top-full z-50 mt-1 w-[220px] rounded-[var(--radius-lg,16px)] py-1.5"
       style={{
-        backgroundColor: 'var(--bg-pane-2)',
-        border: '1px solid var(--border)',
+        backgroundColor: 'var(--bg-pane-2, var(--bg-pane))',
+        border: '1px solid var(--overlay-2, var(--border))',
         boxShadow: 'var(--shadow-elevated)',
       }}
     >
@@ -90,23 +112,30 @@ export default function TaskOverflowMenu({
         <button
           key={item.label}
           onClick={item.onClick}
-          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors duration-100 cursor-pointer"
-          style={{
-            color: item.isDestructive ? '#ef4444' : 'var(--text-primary)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent'
-          }}
+          className="flex w-full items-center gap-3 px-4 py-2 text-[14px] font-medium transition-sl cursor-pointer"
+          style={{ color: 'var(--text-primary)' }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
         >
-          <span style={{ color: item.isDestructive ? '#ef4444' : 'var(--text-muted)' }}>
-            {item.icon}
-          </span>
+          <span style={{ color: 'var(--text-muted)' }}>{item.icon}</span>
           {item.label}
         </button>
       ))}
+
+      {/* Separator */}
+      <div className="mx-3 my-1.5 h-px" style={{ backgroundColor: 'var(--border)' }} />
+
+      {/* Delete — destructive */}
+      <button
+        onClick={() => { onDelete(); onClose() }}
+        className="flex w-full items-center gap-3 px-4 py-2 text-[14px] font-medium transition-sl cursor-pointer"
+        style={{ color: '#ef4444' }}
+        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.06)' }}
+        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+      >
+        <Trash2 size={15} strokeWidth={1.5} />
+        Delete task
+      </button>
     </motion.div>
   )
 }

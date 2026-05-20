@@ -1,6 +1,6 @@
 /** Shared types for the Calendar view components. */
 
-export type CalendarViewMode = 'day' | 'week' | 'month'
+export type CalendarViewMode = 'day' | 'week' | 'month' | 'year' | 'agenda'
 
 export interface CalendarEvent {
   id: string

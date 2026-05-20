@@ -64,21 +64,10 @@ export interface TaskRecord {
   habitColor?: string | null
 }
 
-// Mock tasks inline — avoids webpack dynamic import resolution issues
-const MOCK_TASK_DATA: TaskRecord[] = [
-  { _id: 'mock-1', type: 'task', title: 'Write LinkedIn post', status: 'todo', priority: 'high', dueDate: new Date().toISOString(), estimatedEffort: 2, actualEffort: 0 },
-  { _id: 'mock-2', type: 'task', title: 'Review PRs', status: 'todo', priority: 'medium', dueDate: new Date().toISOString(), estimatedEffort: 1, actualEffort: 0 },
-  { _id: 'mock-3', type: 'task', title: 'Gym workout', status: 'todo', priority: 'low', isHabit: true, streakCurrent: 5, habitGoalType: 'binary' },
-  { _id: 'mock-4', type: 'task', title: 'Plan Q3 roadmap', status: 'backlog', priority: 'high', estimatedEffort: 4, actualEffort: 0 },
-  { _id: 'mock-5', type: 'task', title: 'Read 30 pages', status: 'todo', priority: 'medium', isHabit: true, habitGoalType: 'count', habitTarget: 30, streakCurrent: 12 },
-] as TaskRecord[]
-
 async function fetchTasks(): Promise<TaskRecord[]> {
-  // TODO: Switch back to API calls when backend is connected:
-  // const res = await fetch('/api/tasks')
-  // if (!res.ok) throw new Error('Failed')
-  // return res.json()
-  return MOCK_TASK_DATA
+  const res = await fetch('/api/tasks')
+  if (!res.ok) throw new Error('Failed to fetch tasks')
+  return res.json()
 }
 
 export function useTasks() {

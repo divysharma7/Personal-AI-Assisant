@@ -13,9 +13,13 @@ import {
   BarChart3,
   Target,
   Play,
+  Plus,
+  ChevronRight,
+  ArrowRight,
 } from 'lucide-react'
 import { copy } from '@/lib/copy'
-import { slideFromRight, buttonPress, spring, ease } from '@/lib/motion'
+import { AnimatePresence } from 'framer-motion'
+import { slideFromRight, buttonPress, checkBounce, spring, ease } from '@/lib/motion'
 import { playCompletionSound } from '@/lib/sounds'
 import type { TaskRecord } from '@/hooks/useTasks'
 import BlockEditor from '@/components/editor/BlockEditor'
@@ -47,6 +51,8 @@ interface TaskDetailPanelProps {
   breadcrumb?: string | null
   onBreadcrumbClick?: () => void
   onOpenSubTask?: (taskId: string) => void
+  allTasks?: TaskRecord[]
+  onCreateSubTask?: (data: Partial<TaskRecord>) => void
 }
 
 function formatRelativeTime(dateStr?: string): string {
@@ -171,6 +177,194 @@ function FocusSection({ taskId, taskTitle }: { taskId: string; taskTitle: string
   )
 }
 
+/** Priority bars SVG — filled rectangles */
+function PriorityBars({ color, size = 16 }: { color: string; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      <rect x="2" y="10" width="3" height="5" rx="0.8" fill={color} />
+      <rect x="6.5" y="6.5" width="3" height="8.5" rx="0.8" fill={color} />
+      <rect x="11" y="3" width="3" height="12" rx="0.8" fill={color} />
+    </svg>
+  )
+}
+
+/** Subtask row with same UX as main TaskRow */
+function SubTaskRow({ sub, subDone, subDateStr, subOverdue, subPriorityColor, onToggle, onOpen, onUpdate }: {
+  sub: TaskRecord; subDone: boolean; subDateStr: string | null; subOverdue: boolean; subPriorityColor: string
+  onToggle: () => void; onOpen: () => void
+  onUpdate: (id: string, data: Partial<TaskRecord>) => void
+}) {
+  const [hovered, setHovered] = useState(false)
+  const [dateHovered, setDateHovered] = useState(false)
+  const [datePopoverOpen, setDatePopoverOpen] = useState(false)
+  const [priHovered, setPriHovered] = useState(false)
+  const [priPopoverOpen, setPriPopoverOpen] = useState(false)
+  const priLabel = sub.priority === 'high' ? 'High' : sub.priority === 'low' ? 'Low' : 'Medium'
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() => { if (!datePopoverOpen && !priPopoverOpen) onOpen() }}
+      style={{
+        display: 'flex', alignItems: 'flex-start', gap: 10,
+        padding: '10px 8px', cursor: 'pointer',
+        borderBottom: '1px solid var(--overlay-1, rgba(108,108,158,0.06))',
+        backgroundColor: hovered ? 'var(--overlay-1, rgba(108,108,158,0.05))' : 'transparent',
+        transition: 'background-color 150ms ease',
+      }}
+    >
+      {/* Checkbox — rectangle */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onToggle() }}
+        style={{
+          flexShrink: 0, width: 22, height: 22, borderRadius: 6,
+          border: subDone ? 'none' : '2px solid var(--overlay-3, #3a394a)',
+          backgroundColor: subDone ? 'var(--accent)' : 'transparent',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', transition: 'all 150ms ease',
+        }}
+      >
+        {subDone && <Check size={13} strokeWidth={2.5} color="#fff" />}
+      </button>
+
+      {/* Priority bars */}
+      <div style={{ flexShrink: 0, marginTop: 3 }}>
+        <PriorityBars color={subPriorityColor} size={16} />
+      </div>
+
+      {/* Title + meta */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: 14, fontWeight: 600, lineHeight: 1.4,
+          fontFamily: 'Inter, system-ui, sans-serif',
+          color: subDone ? 'var(--text-faint)' : 'var(--text-primary)',
+          textDecoration: subDone ? 'line-through' : 'none',
+          textDecorationColor: 'var(--accent)',
+        }}>
+          {sub.title}
+        </div>
+
+        {(subDateStr || sub.priority) && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
+            {/* Date chip — clickable pill hover + tooltip */}
+            {subDateStr && (
+              <div style={{ position: 'relative' }}
+                onMouseEnter={() => setDateHovered(true)} onMouseLeave={() => setDateHovered(false)}
+              >
+                <button
+                  onClick={(e) => { e.stopPropagation(); setDatePopoverOpen(!datePopoverOpen) }}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    fontSize: 12, color: subOverdue ? 'var(--accent)' : 'var(--text-faint)',
+                    background: dateHovered ? 'var(--overlay-2, rgba(108,108,158,0.15))' : 'none',
+                    border: 'none', cursor: 'pointer',
+                    padding: dateHovered ? '2px 7px' : '2px 3px',
+                    borderRadius: 999, fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 500,
+                    transition: 'all 150ms ease',
+                  }}
+                >
+                  <Calendar size={12} strokeWidth={1.5} />
+                  {subDateStr}
+                </button>
+                {dateHovered && !datePopoverOpen && (
+                  <div style={{
+                    position: 'absolute', left: '50%', bottom: '100%', transform: 'translateX(-50%)',
+                    marginBottom: 5, padding: '3px 8px', borderRadius: 6,
+                    backgroundColor: 'var(--bg-pane-2, #2a293b)',
+                    border: '1px solid var(--overlay-2, var(--border))', boxShadow: 'var(--shadow-elevated)',
+                    fontSize: 11, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap',
+                    fontFamily: 'Inter, system-ui, sans-serif', zIndex: 40,
+                  }}>
+                    Edit due date
+                  </div>
+                )}
+                {datePopoverOpen && (
+                  <div style={{ position: 'absolute', left: 0, top: '100%', zIndex: 50, marginTop: 4 }} onClick={(e) => e.stopPropagation()}>
+                    <DatePopover
+                      selected={sub.dueDate ? new Date(sub.dueDate) : null}
+                      onSelect={(date) => { onUpdate(sub._id, { dueDate: date ? date.toISOString() : null }); setDatePopoverOpen(false) }}
+                      onClose={() => setDatePopoverOpen(false)}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Priority chip — clickable pill hover + tooltip */}
+            {sub.priority && (
+              <div style={{ position: 'relative' }}
+                onMouseEnter={() => setPriHovered(true)} onMouseLeave={() => setPriHovered(false)}
+              >
+                <button
+                  onClick={(e) => { e.stopPropagation(); setPriPopoverOpen(!priPopoverOpen) }}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    fontSize: 12, color: 'var(--text-faint)',
+                    background: priHovered ? 'var(--overlay-2, rgba(108,108,158,0.15))' : 'none',
+                    border: 'none', cursor: 'pointer',
+                    padding: priHovered ? '2px 7px' : '2px 3px',
+                    borderRadius: 999, fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 500,
+                    transition: 'all 150ms ease',
+                  }}
+                >
+                  <PriorityBars color={subPriorityColor} size={11} />
+                  {priLabel}
+                </button>
+                {priHovered && !priPopoverOpen && (
+                  <div style={{
+                    position: 'absolute', left: '50%', bottom: '100%', transform: 'translateX(-50%)',
+                    marginBottom: 5, padding: '3px 8px', borderRadius: 6,
+                    backgroundColor: 'var(--bg-pane-2, #2a293b)',
+                    border: '1px solid var(--overlay-2, var(--border))', boxShadow: 'var(--shadow-elevated)',
+                    fontSize: 11, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap',
+                    fontFamily: 'Inter, system-ui, sans-serif', zIndex: 40,
+                  }}>
+                    Edit priority
+                  </div>
+                )}
+                {priPopoverOpen && (
+                  <div style={{ position: 'absolute', left: 0, top: '100%', zIndex: 50, marginTop: 4 }} onClick={(e) => e.stopPropagation()}>
+                    <PriorityPopover
+                      selected={sub.priority}
+                      onSelect={(p) => { onUpdate(sub._id, { priority: p || 'medium' }); setPriPopoverOpen(false) }}
+                      onClose={() => setPriPopoverOpen(false)}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Right: avatar + arrow on hover */}
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: '50%', backgroundColor: 'var(--avatar-bg, #6b7280)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 11, fontWeight: 700, color: '#fff', fontFamily: 'Inter, system-ui, sans-serif',
+        }}>
+          {sub.createdBy ? sub.createdBy.charAt(0).toUpperCase() : 'U'}
+        </div>
+        {hovered && (
+          <div
+            onClick={(e) => { e.stopPropagation(); onOpen() }}
+            style={{
+              width: 24, height: 24, borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              backgroundColor: 'var(--overlay-2, rgba(108,108,158,0.12))',
+              color: 'var(--accent)', cursor: 'pointer',
+            }}
+          >
+            <ArrowRight size={14} strokeWidth={2} />
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function TaskDetailPanel({
   task,
   onClose,
@@ -184,10 +378,15 @@ export default function TaskDetailPanel({
   breadcrumb,
   onBreadcrumbClick,
   onOpenSubTask,
+  allTasks = [],
+  onCreateSubTask,
 }: TaskDetailPanelProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [editTitle, setEditTitle] = useState(task.title)
   const [commentText, setCommentText] = useState('')
+  const [newSubTaskTitle, setNewSubTaskTitle] = useState('')
+  const [isAddingSubTask, setIsAddingSubTask] = useState(false)
+  const subTaskInputRef = useRef<HTMLInputElement>(null)
   const [showDatePopover, setShowDatePopover] = useState(false)
   const [showLabelPopover, setShowLabelPopover] = useState(false)
   const [showPriorityPopover, setShowPriorityPopover] = useState(false)
@@ -232,6 +431,34 @@ export default function TaskDetailPanel({
     [onUpdate, task._id]
   )
 
+  // Subtask data
+  const subTasks = allTasks.filter((t) => t.parentId === task._id)
+
+  const handleToggleSubTask = useCallback(
+    (subTaskId: string) => {
+      const subTask = allTasks.find((t) => t._id === subTaskId)
+      if (!subTask) return
+      const newStatus = subTask.status === 'done' ? 'todo' : 'done'
+      if (newStatus === 'done') playCompletionSound()
+      onUpdate(subTaskId, { status: newStatus })
+    },
+    [allTasks, onUpdate]
+  )
+
+  const handleCreateSubTask = useCallback(async () => {
+    const title = newSubTaskTitle.trim()
+    if (!title || !onCreateSubTask) return
+    await onCreateSubTask({
+      title,
+      parentId: task._id,
+      depth: (task.depth || 0) + 1,
+      priority: 'medium',
+      status: 'todo',
+      dueDate: task.dueDate,
+    })
+    setNewSubTaskTitle('')
+  }, [newSubTaskTitle, onCreateSubTask, task._id, task.depth, task.dueDate])
+
   const handleDateSelect = useCallback(
     (date: Date | null) => {
       onUpdate(task._id, { dueDate: date ? date.toISOString() : null })
@@ -271,71 +498,46 @@ export default function TaskDetailPanel({
     <motion.div
       {...slideFromRight}
       transition={spring.snappy}
-      className="flex h-full w-[420px] flex-shrink-0 flex-col overflow-hidden rounded-[16px]"
+      className="flex h-full w-full flex-col overflow-hidden rounded-[var(--outer-radius,20px)]"
       style={{ backgroundColor: 'var(--bg-pane)' }}
     >
-      {/* ── Header (sticky) ── */}
+      {/* ── Header — × left, status dot + ⋮ right ── */}
       <div
-        className="sticky top-0 z-10 flex items-center justify-between px-5 py-4"
-        style={{
-          backgroundColor: 'var(--bg-pane)',
-          borderBottom: '1px solid var(--border)',
-        }}
+        className="sticky top-0 z-10 flex items-center justify-between px-5 py-3"
+        style={{ backgroundColor: 'var(--bg-pane)' }}
       >
-        <div className="flex items-center gap-3">
-          {/* Close */}
-          <motion.button
-            {...buttonPress}
-            onClick={onClose}
-            className="flex h-7 w-7 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
-            style={{ color: 'var(--text-muted)' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-            }}
-          >
-            <X size={16} strokeWidth={1.5} />
-          </motion.button>
+        {/* Close × */}
+        <motion.button
+          {...buttonPress}
+          onClick={onClose}
+          className="flex h-8 w-8 items-center justify-center rounded-full transition-sl cursor-pointer"
+          style={{ color: 'var(--text-muted)', backgroundColor: 'var(--overlay-1, transparent)' }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-2, var(--bg-hover))' }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, transparent)' }}
+        >
+          <X size={16} strokeWidth={1.5} />
+        </motion.button>
 
-          {/* Complete pill */}
-          <motion.button
-            {...buttonPress}
-            onClick={handleToggleComplete}
-            className="flex h-8 items-center gap-1.5 rounded-full px-3 text-sm font-medium transition-colors duration-150 cursor-pointer"
-            style={{
-              border: isCompleted ? 'none' : '1px solid var(--border)',
-              backgroundColor: isCompleted ? 'var(--accent)' : 'transparent',
-              color: isCompleted ? '#fff' : 'var(--text-primary)',
-            }}
-          >
-            <Check size={14} strokeWidth={2} />
-            {isCompleted ? copy.task.completedCta : copy.task.completeCta}
-          </motion.button>
-        </div>
-
+        {/* Right: status dot + overflow */}
         <div className="flex items-center gap-2">
-          {/* Color swatch */}
+          {/* Color status dot */}
           <div
-            className="h-4 w-4 rounded-full"
-            style={{ backgroundColor: task.color || 'var(--accent)' }}
+            className="h-6 w-6 rounded-full"
+            style={{
+              background: 'linear-gradient(135deg, #f84f39 50%, #8b5cf6 50%)',
+            }}
           />
 
-          {/* Overflow menu */}
+          {/* Three-dot overflow menu */}
           <div className="relative">
             <motion.button
               {...buttonPress}
               ref={overflowRef}
               onClick={() => setShowOverflow(!showOverflow)}
-              className="flex h-7 w-7 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
-              style={{ color: 'var(--text-muted)' }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
+              className="flex h-8 w-8 items-center justify-center rounded-full transition-sl cursor-pointer"
+              style={{ color: 'var(--text-muted)', backgroundColor: 'var(--overlay-1, transparent)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-2, var(--bg-hover))' }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, transparent)' }}
             >
               <MoreVertical size={16} strokeWidth={1.5} />
             </motion.button>
@@ -348,6 +550,26 @@ export default function TaskDetailPanel({
                 }}
                 onMarkAllIncomplete={() => {
                   onUpdate(task._id, { status: 'todo' })
+                  setShowOverflow(false)
+                }}
+                onStartFocus={() => {
+                  window.dispatchEvent(
+                    new CustomEvent('laif:start-focus', {
+                      detail: { taskId: task._id, taskTitle: task.title },
+                    })
+                  )
+                  setShowOverflow(false)
+                }}
+                onDuplicate={() => {
+                  if (onCreateSubTask) {
+                    onCreateSubTask({
+                      title: `${task.title} (copy)`,
+                      priority: task.priority,
+                      status: 'todo',
+                      dueDate: task.dueDate,
+                      labelIds: task.labelIds,
+                    })
+                  }
                   setShowOverflow(false)
                 }}
               />
@@ -500,10 +722,10 @@ export default function TaskDetailPanel({
                   backgroundColor: 'var(--bg-hover)',
                   color:
                     task.priority === 'high'
-                      ? '#ef4444'
+                      ? 'var(--priority-high, #ef4444)'
                       : task.priority === 'low'
-                      ? '#3b82f6'
-                      : 'var(--text-faint)',
+                      ? 'var(--priority-low, #6b66da)'
+                      : 'var(--priority-medium, #f59e0b)',
                 }}
               >
                 <BarChart3 size={12} strokeWidth={1.5} />
@@ -579,6 +801,91 @@ export default function TaskDetailPanel({
                 <AlignJustify size={12} strokeWidth={1.5} />
                 {task.listId}
               </span>
+            )}
+          </div>
+
+          {/* ── Subtasks section ── */}
+          <div className="mb-4">
+            {subTasks.map((sub) => {
+              const subDone = sub.status === 'done'
+              const subDateStr = sub.dueDate
+                ? (() => {
+                    const d = new Date(sub.dueDate!)
+                    const now = new Date(); now.setHours(0,0,0,0)
+                    const t = new Date(d); t.setHours(0,0,0,0)
+                    const days = Math.round((t.getTime() - now.getTime()) / 86400000)
+                    if (days === 0) return 'Today'
+                    if (days === 1) return 'Tomorrow'
+                    if (days === -1) return 'Yesterday'
+                    if (days < -1) return `${Math.abs(days)} days ago`
+                    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                  })()
+                : null
+              const subOverdue = sub.dueDate ? new Date(sub.dueDate) < new Date(new Date().toDateString()) : false
+              const subPriorityColor = sub.priority === 'high' ? '#ef4444' : sub.priority === 'low' ? '#6b66da' : '#f59e0b'
+              return (
+                <SubTaskRow
+                  key={sub._id}
+                  sub={sub}
+                  subDone={subDone}
+                  subDateStr={subDateStr}
+                  subOverdue={subOverdue}
+                  subPriorityColor={subPriorityColor}
+                  onToggle={() => handleToggleSubTask(sub._id)}
+                  onOpen={() => onOpenSubTask?.(sub._id)}
+                  onUpdate={onUpdate}
+                />
+              )
+            })}
+
+            {/* Add subtask — "New task" bar matching Today page */}
+            {isAddingSubTask ? (
+              <div
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '10px 14px', borderRadius: 10,
+                  backgroundColor: 'var(--overlay-1, rgba(108,108,158,0.06))',
+                  borderBottom: '1px solid var(--overlay-1, rgba(108,108,158,0.06))',
+                }}
+              >
+                <Plus size={16} strokeWidth={1.5} style={{ flexShrink: 0, color: 'var(--text-faint)' }} />
+                <input
+                  ref={subTaskInputRef}
+                  type="text"
+                  value={newSubTaskTitle}
+                  onChange={(e) => setNewSubTaskTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleCreateSubTask()
+                    if (e.key === 'Escape') { setNewSubTaskTitle(''); setIsAddingSubTask(false) }
+                  }}
+                  onBlur={() => { if (!newSubTaskTitle.trim()) setIsAddingSubTask(false) }}
+                  placeholder="What would you like to do?"
+                  autoFocus
+                  style={{
+                    flex: 1, background: 'transparent', outline: 'none', border: 'none',
+                    fontSize: 14, fontWeight: 500, color: 'var(--text-primary)',
+                    fontFamily: 'Inter, system-ui, sans-serif', padding: 0,
+                  }}
+                />
+                <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-faint)', flexShrink: 0 }}>⌃N</span>
+              </div>
+            ) : (
+              <div
+                onClick={() => { setIsAddingSubTask(true); setTimeout(() => subTaskInputRef.current?.focus(), 50) }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, rgba(108,108,158,0.06))' }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '10px 14px', borderRadius: 10,
+                  cursor: 'text', color: 'var(--text-faint)',
+                  transition: 'background-color 150ms ease',
+                  borderBottom: '1px solid var(--overlay-1, rgba(108,108,158,0.06))',
+                }}
+              >
+                <Plus size={16} strokeWidth={1.5} style={{ flexShrink: 0 }} />
+                <span style={{ flex: 1, fontSize: 14, fontWeight: 500, fontFamily: 'Inter, system-ui, sans-serif' }}>New task</span>
+                <span style={{ fontSize: 12, fontWeight: 500 }}>⌃N</span>
+              </div>
             )}
           </div>
 
@@ -668,8 +975,6 @@ export default function TaskDetailPanel({
             />
           </div>
 
-          {/* ── Focus section ── */}
-          <FocusSection taskId={task._id} taskTitle={task.title} />
         </div>
       </div>
 
