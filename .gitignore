@@ -53,3 +53,10 @@ client_secret*.json
 *credentials*.json
 *.pem
 *.key
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
