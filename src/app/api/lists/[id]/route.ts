@@ -1,29 +1,16 @@
 import { NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongodb'
 import ListModel from '@/lib/models/List'
-import { cookies } from 'next/headers'
-import { verifyToken } from '@/lib/auth'
+import { getAuthUserId } from '@/lib/auth'
 
 type LeanDoc = Record<string, unknown> & { _id: unknown }
-
-async function getUserId() {
-  const cookieStore = cookies()
-  const token = cookieStore.get('pim_token')?.value
-  if (!token) return null
-  try {
-    const payload = await verifyToken(token)
-    return payload.userId
-  } catch {
-    return null
-  }
-}
 
 export async function GET(
   _req: Request,
   { params }: { params: { id: string } }
 ) {
   await connectDB()
-  const userId = await getUserId()
+  const userId = await getAuthUserId()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const doc = await ListModel.findOne({
@@ -41,7 +28,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   await connectDB()
-  const userId = await getUserId()
+  const userId = await getAuthUserId()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
@@ -71,7 +58,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   await connectDB()
-  const userId = await getUserId()
+  const userId = await getAuthUserId()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Check if it's the inbox — can't delete

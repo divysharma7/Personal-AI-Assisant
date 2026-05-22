@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { verifyToken, COOKIE_NAME } from '@/lib/auth'
+import { getAuthUserId } from '@/lib/auth'
 import { connectDB } from '@/lib/mongodb'
 import TaskModel from '@/lib/models/Task'
 import UserModel from '@/lib/models/User'
@@ -13,24 +12,17 @@ type LeanDoc = Record<string, unknown> & { _id: unknown }
  * Returns habits due today with completion status.
  */
 export async function GET() {
-  const token = (await cookies()).get(COOKIE_NAME)?.value
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  let payload
-  try {
-    payload = await verifyToken(token)
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const userId = await getAuthUserId()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   await connectDB()
 
-  const user = await UserModel.findById(payload.userId).lean() as LeanDoc | null
+  const user = await UserModel.findById(userId).lean() as LeanDoc | null
   const timezone = (user?.timezone as string) || 'UTC'
 
   // Find all habits owned by this user
   const habits = await TaskModel.find({
-    createdBy: payload.userId,
+    createdBy: userId,
     isHabit: true,
   }).lean() as LeanDoc[]
 

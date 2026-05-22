@@ -50,13 +50,11 @@ async function sendPushToAllDevices(notification: { title: string; body: string 
   )
 
   const failed = results.filter(r => r.status === 'rejected')
-  if (failed.length) console.warn(`[posthook_listener] ${failed.length} push(es) failed`)
-  console.log(`[posthook_listener] Sent ${results.length - failed.length}/${results.length} notifications`)
+  if (failed.length) console.error(`[posthook_listener] ${failed.length} push(es) failed`)
 }
 
 export async function POST(req: Request) {
   const raw = await req.text().catch(() => '')
-  console.log('[posthook_listener] raw body:', raw)
 
   let body: Record<string, unknown> | null = null
   try {
@@ -90,7 +88,6 @@ export async function POST(req: Request) {
   }
 
   const title = String(item.title ?? '')
-  console.log(`[posthook_listener] Fired for ${type}:${id} — "${title}"`)
 
   const notification = NOTIFICATION_COPY[type as ItemType](title)
   await sendPushToAllDevices(notification, { type, id: String(id) })
@@ -106,9 +103,8 @@ export async function POST(req: Request) {
       createdAt: Date.now(),
       read:      false,
     })
-    console.log(`[posthook_listener] RTDB notification written: ${ref.key}`)
   } catch (err) {
-    console.warn('[posthook_listener] RTDB write failed (non-fatal):', err)
+    console.error('[posthook_listener] RTDB write failed (non-fatal):', err)
   }
 
   // Send Web Push to all browser subscribers
@@ -125,7 +121,6 @@ export async function POST(req: Request) {
         )
       )
       const failed = results.filter(r => r.status === 'rejected').length
-      console.log(`[posthook_listener] Web Push: ${subs.length - failed}/${subs.length} sent`)
 
       // Prune dead subscriptions (410 Gone)
       const deadEndpoints: string[] = []
@@ -139,11 +134,10 @@ export async function POST(req: Request) {
       })
       if (deadEndpoints.length) {
         await WebPushSubscriptionModel.deleteMany({ endpoint: { $in: deadEndpoints } })
-        console.log(`[posthook_listener] Removed ${deadEndpoints.length} expired subscriptions`)
       }
     }
   } catch (err) {
-    console.warn('[posthook_listener] Web Push failed (non-fatal):', err)
+    console.error('[posthook_listener] Web Push failed (non-fatal):', err)
   }
 
   if (type === 'reminder') {

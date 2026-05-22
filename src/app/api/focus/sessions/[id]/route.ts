@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { verifyToken, COOKIE_NAME } from '@/lib/auth'
+import { getAuthUserId } from '@/lib/auth'
 import { connectDB } from '@/lib/mongodb'
 import FocusSession from '@/lib/models/FocusSession'
 import TaskModel from '@/lib/models/Task'
@@ -25,15 +24,8 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const token = (await cookies()).get(COOKIE_NAME)?.value
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  let payload
-  try {
-    payload = await verifyToken(token)
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const userId = await getAuthUserId()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
   const body = (await req.json()) as ActionBody
@@ -46,7 +38,7 @@ export async function PATCH(
 
   const session = await FocusSession.findOne({
     _id: id,
-    userId: payload.userId,
+    userId: userId,
   }).lean() as LeanDoc | null
 
   if (!session) {

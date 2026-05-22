@@ -41,6 +41,7 @@ export default function CurrentTimeLine() {
     >
       {/* Pulsing dot */}
       <div
+        className="cal-dot-pulse"
         style={{
           width: 8,
           height: 8,
@@ -49,7 +50,6 @@ export default function CurrentTimeLine() {
           marginLeft: -4,
           flexShrink: 0,
           opacity: pulseOpacity,
-          animation: 'cal-dot-pulse 4s ease-in-out infinite',
         }}
       />
       {/* Line */}

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { verifyToken, COOKIE_NAME } from '@/lib/auth'
+import { getAuthUserId } from '@/lib/auth'
 import { connectDB } from '@/lib/mongodb'
 import TaskModel from '@/lib/models/Task'
 
@@ -12,14 +11,8 @@ type LeanDoc = Record<string, unknown> & { _id: unknown }
  * Clears scheduledStart and scheduledEnd without deleting the task.
  */
 export async function PATCH(_req: Request, { params }: { params: { id: string } }) {
-  const token = (await cookies()).get(COOKIE_NAME)?.value
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  try {
-    await verifyToken(token)
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const userId = await getAuthUserId()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   await connectDB()
 

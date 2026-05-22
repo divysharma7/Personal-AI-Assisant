@@ -29,12 +29,7 @@ export async function sendNotification(
   user: NotificationUser,
   notification: NotificationEntry,
 ): Promise<{ delivered: boolean; error: string }> {
-  console.log('[STUB] Would send:', {
-    userId: user._id,
-    type: notification.type,
-    title: notification.payload.title,
-    scheduledFor: notification.scheduledFor,
-  })
+  // NOTE: Delivery not yet implemented — pending Flutter mobile app integration
   return { delivered: false, error: 'delivery_not_implemented' }
 }
 

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { verifyToken, COOKIE_NAME } from '@/lib/auth'
+import { getAuthUserId } from '@/lib/auth'
 import { connectDB } from '@/lib/mongodb'
 import TaskModel from '@/lib/models/Task'
 
@@ -22,15 +21,8 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const token = (await cookies()).get(COOKIE_NAME)?.value
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  let payload
-  try {
-    payload = await verifyToken(token)
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const userId = await getAuthUserId()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
   const { searchParams } = new URL(req.url)
@@ -41,7 +33,7 @@ export async function GET(
 
   const habit = await TaskModel.findOne({
     _id: id,
-    createdBy: payload.userId,
+    createdBy: userId,
     isHabit: true,
   }).lean() as LeanDoc | null
 

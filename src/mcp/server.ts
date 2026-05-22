@@ -158,6 +158,6 @@ export const MCP_TOOLS = [
 
 // Stub -- will be implemented when backend is connected
 export async function handleToolCall(toolName: string, args: Record<string, unknown>) {
-  console.log(`[MCP STUB] Tool called: ${toolName}`, args)
+  // NOTE: MCP tool execution pending backend connection
   return { success: false, error: 'Backend not connected' }
 }

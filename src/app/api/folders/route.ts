@@ -1,22 +1,10 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { verifyToken, COOKIE_NAME } from '@/lib/auth'
+import { getAuthUserId } from '@/lib/auth'
 import { createFolder } from '@/lib/services/folderService'
 
 export async function POST(req: Request) {
-  // Auth check
-  const token = cookies().get(COOKIE_NAME)?.value
-  if (!token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  let userId: string
-  try {
-    const payload = await verifyToken(token)
-    userId = payload.userId
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const userId = await getAuthUserId()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Parse body
   const body = await req.json().catch(() => null)

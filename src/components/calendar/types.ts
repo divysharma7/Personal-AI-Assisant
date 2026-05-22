@@ -1,6 +1,6 @@
 /** Shared types for the Calendar view components. */
 
-export type CalendarViewMode = 'day' | 'week' | 'month' | 'year' | 'agenda'
+export type CalendarViewMode = 'day' | '3day' | 'week' | 'multiweek' | 'month' | 'year' | 'agenda'
 
 export interface CalendarEvent {
   id: string
@@ -25,6 +25,10 @@ export interface CalendarEvent {
   listName?: string
   /** Priority */
   priority?: 'high' | 'medium' | 'low'
+  /** Whether this is an all-day event (no specific time) */
+  isAllDay?: boolean
+  /** Whether the event/task is completed */
+  isCompleted?: boolean
 }
 
 export interface CalendarHeaderProps {
@@ -32,6 +36,7 @@ export interface CalendarHeaderProps {
   view: CalendarViewMode
   onViewChange: (view: CalendarViewMode) => void
   onNavigate: (direction: -1 | 0 | 1) => void
+  onQuickAdd?: () => void
 }
 
 export interface CapacityBarProps {

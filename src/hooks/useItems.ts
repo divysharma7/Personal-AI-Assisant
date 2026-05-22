@@ -15,7 +15,7 @@ const MOCK_ITEMS: AnyItem[] = [
 ] as AnyItem[]
 
 async function fetchItems(): Promise<AnyItem[]> {
-  // TODO: Switch back to API calls when backend is connected:
+  // NOTE: Using mock data — switch to API calls when backend is connected:
   // const [events, tasks, reminders] = await Promise.all([
   //   fetch('/api/events').then(r => r.json()),
   //   fetch('/api/tasks').then(r => r.json()),

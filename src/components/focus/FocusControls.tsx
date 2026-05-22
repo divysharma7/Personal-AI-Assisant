@@ -29,24 +29,32 @@ export default function FocusControls({
     }
   }
 
+  const btnStyle = {
+    backgroundColor: 'var(--overlay-2, rgba(108,108,158,0.12))',
+    color: 'var(--text-primary)',
+    border: '1px solid var(--overlay-3, rgba(108,108,158,0.2))',
+  }
+  const btnHoverIn = (e: React.MouseEvent<HTMLElement>) => {
+    e.currentTarget.style.backgroundColor = 'var(--overlay-3, rgba(108,108,158,0.25))'
+  }
+  const btnHoverOut = (e: React.MouseEvent<HTMLElement>) => {
+    e.currentTarget.style.backgroundColor = 'var(--overlay-2, rgba(108,108,158,0.12))'
+  }
+
   return (
-    <div className="flex items-center gap-4 relative">
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative' }}>
       {/* Pause / Resume */}
       <motion.button
         {...buttonPress}
         onClick={onPauseResume}
-        className="flex h-12 w-12 items-center justify-center rounded-full cursor-pointer transition-colors duration-150"
         style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.08)',
-          color: 'rgba(255, 255, 255, 0.9)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          ...btnStyle,
+          width: 48, height: 48, borderRadius: '50%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', transition: 'background-color 180ms ease-out',
         }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)'
-        }}
+        onMouseEnter={btnHoverIn}
+        onMouseLeave={btnHoverOut}
         title={isPaused ? 'Resume (Space)' : 'Pause (Space)'}
         aria-label={isPaused ? 'Resume' : 'Pause'}
       >
@@ -57,64 +65,62 @@ export default function FocusControls({
       <motion.button
         {...buttonPress}
         onClick={onExtend}
-        className="flex h-12 items-center gap-1.5 rounded-full px-4 cursor-pointer transition-colors duration-150"
         style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.08)',
-          color: 'rgba(255, 255, 255, 0.9)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          ...btnStyle,
+          height: 48, borderRadius: 999,
+          display: 'flex', alignItems: 'center', gap: 6, padding: '0 18px',
+          cursor: 'pointer', fontSize: 14, fontWeight: 600,
+          fontFamily: 'Inter, system-ui, sans-serif',
+          transition: 'background-color 180ms ease-out',
         }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)'
-        }}
+        onMouseEnter={btnHoverIn}
+        onMouseLeave={btnHoverOut}
         title="Extend +5 min (E)"
         aria-label="Extend by 5 minutes"
       >
         <Plus size={16} strokeWidth={1.5} />
-        <span className="text-sm font-medium">5 min</span>
+        <span>5 min</span>
       </motion.button>
 
       {/* End */}
       <motion.button
         {...buttonPress}
         onClick={handleEndClick}
-        className="flex h-12 w-12 items-center justify-center rounded-full cursor-pointer transition-colors duration-150"
         style={{
-          backgroundColor: showEndConfirm ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.08)',
-          color: showEndConfirm ? '#ef4444' : 'rgba(255, 255, 255, 0.9)',
-          border: showEndConfirm ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
+          width: 48, height: 48, borderRadius: '50%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer',
+          backgroundColor: showEndConfirm ? 'rgba(239, 68, 68, 0.15)' : btnStyle.backgroundColor,
+          color: showEndConfirm ? '#ef4444' : btnStyle.color,
+          border: showEndConfirm ? '1px solid rgba(239, 68, 68, 0.3)' : btnStyle.border,
+          transition: 'background-color 180ms ease-out, color 180ms ease-out, border-color 180ms ease-out',
         }}
         onMouseEnter={(e) => {
-          if (!showEndConfirm) {
-            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)'
-          }
+          if (!showEndConfirm) btnHoverIn(e)
         }}
         onMouseLeave={(e) => {
-          if (!showEndConfirm) {
-            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)'
-          }
+          if (!showEndConfirm) btnHoverOut(e)
           setShowEndConfirm(false)
         }}
-        title="End session (Esc)"
+        title="End session"
         aria-label={showEndConfirm ? 'Confirm end session' : 'End session'}
       >
         <Square size={18} strokeWidth={1.5} />
       </motion.button>
 
-      {/* End confirm tooltip */}
+      {/* Confirm tooltip */}
       <AnimatePresence>
         {showEndConfirm && (
           <motion.div
             {...fade}
             transition={ease.fast}
-            className="absolute -top-10 right-0 rounded-lg px-3 py-1.5 text-xs font-medium"
             style={{
-              backgroundColor: 'rgba(239, 68, 68, 0.15)',
-              color: '#ef4444',
-              border: '1px solid rgba(239, 68, 68, 0.2)',
-              whiteSpace: 'nowrap',
+              position: 'absolute', top: -36, right: 0,
+              padding: '4px 12px', borderRadius: 8,
+              backgroundColor: 'rgba(239, 68, 68, 0.12)',
+              color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)',
+              fontSize: 12, fontWeight: 500, whiteSpace: 'nowrap',
+              fontFamily: 'Inter, system-ui, sans-serif',
             }}
           >
             Click again to end

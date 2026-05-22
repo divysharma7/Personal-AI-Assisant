@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongodb'
 import JournalEntry from '@/lib/models/JournalEntry'
+import type { IJournalEntry } from '@/lib/models/JournalEntry'
 
 const EMPTY_DOC = '{"type":"doc","content":[{"type":"paragraph"}]}'
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY
@@ -26,7 +27,7 @@ export async function GET(req: Request) {
 
   await connectDB()
 
-  const entry   = await JournalEntry.findOne({ date }).lean() as any
+  const entry   = await JournalEntry.findOne({ date }).lean<IJournalEntry>()
   const content = entry?.content ?? ''
 
   if (!content || content === EMPTY_DOC) {

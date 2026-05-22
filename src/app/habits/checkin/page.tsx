@@ -8,15 +8,9 @@ import { useHabits } from '@/hooks/useHabits'
 import type { Habit } from '@/hooks/useHabits'
 import { format, subDays, addDays, isToday, isBefore, startOfDay } from 'date-fns'
 import StreakCelebration from '@/components/habits/StreakCelebration'
+import { copy } from '@/lib/copy'
 
-// TODO: move to copy.ts
-const COPY = {
-  title: 'Daily Check-in',
-  progress: (done: number, total: number) => `${done} of ${total} habits checked in`,
-  allDone: 'See you tomorrow',
-  markUnachieved: 'Mark as Unachieved',
-  reasons: ['Tired', 'Forgot', 'No time', 'Sick', 'Traveling', 'Not feeling it', 'Custom'] as const,
-} as const
+const COPY = copy.habitCheckin
 
 function WeekMiniGrid({ habit, targetDate, weekCompletions }: {
   habit: Habit

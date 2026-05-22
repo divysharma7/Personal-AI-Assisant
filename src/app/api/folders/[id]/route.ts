@@ -1,22 +1,10 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { verifyToken, COOKIE_NAME } from '@/lib/auth'
+import { getAuthUserId } from '@/lib/auth'
 import { updateFolder, deleteFolder } from '@/lib/services/folderService'
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  // Auth check
-  const token = cookies().get(COOKIE_NAME)?.value
-  if (!token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  let userId: string
-  try {
-    const payload = await verifyToken(token)
-    userId = payload.userId
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const userId = await getAuthUserId()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json().catch(() => ({}))
 
@@ -40,19 +28,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  // Auth check
-  const token = cookies().get(COOKIE_NAME)?.value
-  if (!token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  let userId: string
-  try {
-    const payload = await verifyToken(token)
-    userId = payload.userId
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const userId = await getAuthUserId()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
     const result = await deleteFolder(params.id, userId)

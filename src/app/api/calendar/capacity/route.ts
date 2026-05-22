@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { verifyToken, COOKIE_NAME } from '@/lib/auth'
+import { getAuthUserId } from '@/lib/auth'
 import { connectDB } from '@/lib/mongodb'
 import UserModel from '@/lib/models/User'
 import TaskModel from '@/lib/models/Task'
@@ -19,15 +18,8 @@ interface DayCapacity {
  * Returns per-day capacity aggregation: { [dateISO]: { scheduledHours, capacity, fullness } }
  */
 export async function GET(req: Request) {
-  const token = (await cookies()).get(COOKIE_NAME)?.value
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  let payload
-  try {
-    payload = await verifyToken(token)
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const userId = await getAuthUserId()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(req.url)
   const fromParam = searchParams.get('from')
@@ -49,7 +41,7 @@ export async function GET(req: Request) {
 
   await connectDB()
 
-  const user = await UserModel.findById(payload.userId).lean() as LeanDoc | null
+  const user = await UserModel.findById(userId).lean() as LeanDoc | null
   const dailyCapacity = ((user?.calendarPreferences as Record<string, unknown>)?.dailyCapacityHours as number) || 8
 
   // Get all scheduled tasks in range

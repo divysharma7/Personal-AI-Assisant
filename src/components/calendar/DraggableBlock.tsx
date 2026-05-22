@@ -91,21 +91,25 @@ export default function DraggableBlock({
     >
       {children}
 
-      {/* Resize handle at bottom edge */}
+      {/* Resize handle at bottom edge — larger hit area for easier grabbing */}
       {!isReadOnly && (
         <div
           ref={setResizeRef}
           {...resizeAttrs}
           {...resizeListeners}
-          className="absolute bottom-0 left-0 right-0 h-2 cursor-s-resize group"
+          className="absolute bottom-0 left-0 right-0 cursor-s-resize group"
           style={{
+            height: 12,
             borderBottomLeftRadius: 'inherit',
             borderBottomRightRadius: 'inherit',
           }}
         >
           <div
-            className="mx-auto mt-0.5 h-[3px] w-8 rounded-full opacity-0 transition-opacity duration-150 group-hover:opacity-60"
-            style={{ backgroundColor: 'var(--text-faint)' }}
+            className="mx-auto h-[3px] w-10 rounded-full opacity-0 transition-opacity duration-150 group-hover:opacity-80"
+            style={{
+              backgroundColor: '#fff',
+              marginTop: 4,
+            }}
           />
         </div>
       )}

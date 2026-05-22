@@ -207,7 +207,7 @@ function groupTasks(
 // ── Component ─────────────────────────────────────────────────
 
 export default function TodayPage() {
-  const { tasks, createTask, toggleComplete, updateTask, deleteTask } = useTasks()
+  const { tasks, isLoading, createTask, toggleComplete, updateTask, deleteTask } = useTasks()
   const { labels } = useLabels()
   const { connected: googleConnected, syncTask } = useGoogleCalendar()
   const { focus } = useFocusState()
@@ -579,7 +579,8 @@ export default function TodayPage() {
   const currentGroupLabel = GROUP_OPTIONS.find((o) => o.value === groupBy)?.label || 'Due date'
 
   return (
-    <div className="flex flex-col" style={{ paddingTop: 32, paddingBottom: 40, paddingLeft: '22%', paddingRight: '4%' }}>
+    <div className="flex flex-col h-full overflow-y-auto">
+    <div className="mx-auto w-full max-w-[720px] px-6 py-8">
       {/* Top-right toolbar */}
       <div className="flex items-center justify-end gap-2 mb-6">
         {/* Grouping selector — Superlist pill style */}
@@ -720,7 +721,11 @@ export default function TodayPage() {
       </div>
 
       {/* Task groups */}
-      {!hasAnyTasks ? (
+      {isLoading ? (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
+          <div style={{ width: 24, height: 24, borderRadius: '50%', border: '2px solid var(--accent)', borderTopColor: 'transparent', animation: 'spin 1s linear infinite' }} />
+        </div>
+      ) : !hasAnyTasks ? (
         <motion.div
           {...fadeSlideUp}
           transition={ease.normal}
@@ -807,6 +812,7 @@ export default function TodayPage() {
           onDelete={() => handleDeleteTask(contextMenu.task._id)}
         />
       )}
+    </div>
     </div>
   )
 }

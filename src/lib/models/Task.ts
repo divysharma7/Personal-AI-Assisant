@@ -54,6 +54,15 @@ const TaskSchema = new Schema({
   habitReminderTime: { type: String, default: null }, // HH:MM format
   habitIcon: { type: String, default: null },
   habitColor: { type: String, default: null },
+  // Kanban fields
+  kanbanOrder: { type: Number, default: 0 },
+  sectionId: { type: String, default: null },
+  // Activity log
+  activities: [{
+    action: { type: String, required: true },
+    detail: { type: String },
+    timestamp: { type: Date, default: Date.now },
+  }],
 }, { timestamps: true })
 
 TaskSchema.index({ parentId: 1, order: 1 })

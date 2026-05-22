@@ -5,19 +5,9 @@ import { motion } from 'framer-motion'
 import { fadeSlideUp, stagger, ease } from '@/lib/motion'
 import { format, subDays, eachDayOfInterval } from 'date-fns'
 import type { Habit } from '@/hooks/useHabits'
+import { copy } from '@/lib/copy'
 
-// TODO: move to copy.ts
-const COPY = {
-  heatmapTitle: '90-Day Activity',
-  completionRates: 'Completion Rates',
-  dayBreakdown: 'Day-of-Week Breakdown',
-  topReasons: 'Top Unachieved Reasons',
-  insights: 'Insights',
-  sevenDay: '7-day',
-  thirtyDay: '30-day',
-  ninetyDay: '90-day',
-  noData: 'Not enough data for insights yet.',
-} as const
+const COPY = copy.habitAnalytics
 
 interface HabitAnalyticsProps {
   habits: Habit[]

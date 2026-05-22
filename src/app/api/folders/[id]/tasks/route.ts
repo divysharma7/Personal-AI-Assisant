@@ -1,22 +1,10 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { verifyToken, COOKIE_NAME } from '@/lib/auth'
+import { getAuthUserId } from '@/lib/auth'
 import { addTaskToFolder } from '@/lib/services/folderService'
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  // Auth check
-  const token = cookies().get(COOKIE_NAME)?.value
-  if (!token) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  let userId: string
-  try {
-    const payload = await verifyToken(token)
-    userId = payload.userId
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const userId = await getAuthUserId()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json().catch(() => null)
   if (!body?.taskId || typeof body.taskId !== 'string') {

@@ -56,7 +56,7 @@ export function useWebNotifications() {
     }
   }, [])
 
-  // TODO: Replace polling with Firebase push notifications
+  // NOTE: Replace polling with Firebase push notifications when available.
   // Polling disabled — was exhausting Vercel function calls (every 20s per tab)
 
   return { toasts, unread, dismiss, clearUnread: () => setUnread(0) }

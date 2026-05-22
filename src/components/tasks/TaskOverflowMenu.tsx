@@ -11,6 +11,7 @@ import {
   CircleDot,
   Trash2,
   Target,
+  Activity,
 } from 'lucide-react'
 import { fadeSlideDown, ease } from '@/lib/motion'
 
@@ -24,6 +25,7 @@ interface TaskOverflowMenuProps {
   onPrint?: () => void
   onHideCompleted?: () => void
   onStartFocus?: () => void
+  onShowActivities?: () => void
 }
 
 export default function TaskOverflowMenu({
@@ -36,6 +38,7 @@ export default function TaskOverflowMenu({
   onPrint,
   onHideCompleted,
   onStartFocus,
+  onShowActivities,
 }: TaskOverflowMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -93,6 +96,11 @@ export default function TaskOverflowMenu({
       label: 'Start Focus',
       icon: <Target size={15} strokeWidth={1.5} />,
       onClick: () => { onStartFocus?.(); onClose() },
+    },
+    {
+      label: 'Task Activities',
+      icon: <Activity size={15} strokeWidth={1.5} />,
+      onClick: () => { onShowActivities?.(); onClose() },
     },
   ]
 

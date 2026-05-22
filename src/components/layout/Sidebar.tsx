@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -8,8 +8,6 @@ import {
   Inbox,
   CalendarDays,
   CheckCircle2,
-  Bell,
-  List,
   ChevronDown,
   Plus,
   Search,
@@ -23,22 +21,48 @@ import {
   BarChart3,
   Target,
   MessageCircle,
-  LayoutGrid,
-  SlidersHorizontal,
-  FolderPlus,
-  X,
+  Sun,
+  CalendarRange,
 } from 'lucide-react'
 import { collapse, fadeSlideDown, buttonPress, ease } from '@/lib/motion'
-import { useLists } from '@/hooks/useLists'
 import { useTasks } from '@/hooks/useTasks'
+import type { TaskRecord } from '@/hooks/useTasks'
+import { useWorkflows } from '@/hooks/useWorkflows'
+import { CreateWorkflowDialog } from '@/components/tasks/kanban/CreateWorkflowDialog'
+
+/* ── Smart list definitions ── */
+type SmartFilter = 'inbox' | 'today' | 'tomorrow' | 'next7days' | 'completed'
+
+interface SmartListDef {
+  id: SmartFilter
+  label: string
+  icon: typeof Inbox
+  accent?: string
+}
+
+const SMART_LISTS: SmartListDef[] = [
+  { id: 'tomorrow', label: 'Tomorrow', icon: Sun },
+  { id: 'next7days', label: 'Next 7 Days', icon: CalendarRange },
+  { id: 'completed', label: 'Completed', icon: CheckCircle2, accent: '#34d399' },
+]
+
+function startOfDay(date: Date): Date {
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
+function addDays(date: Date, days: number): Date {
+  const d = new Date(date)
+  d.setDate(d.getDate() + days)
+  return d
+}
 
 /* ── Primary nav — 5 items matching Superlist screenshot ── */
 const NAV_ITEMS = [
   { label: 'Inbox', icon: Inbox, href: '/', badge: true },
   { label: 'Today', icon: CalendarDays, href: '/today', badge: true },
   { label: 'Tasks', icon: CheckCircle2, href: '/tasks' },
-  { label: 'Updates', icon: Bell, href: '/updates' },
-  { label: 'Lists', icon: List, href: '/lists' },
 ] as const
 
 /* ── Profile menu items — features moved from sidebar ── */
@@ -46,10 +70,186 @@ const PROFILE_NAV = [
   { label: 'Habits', icon: Flame, href: '/habits' },
   { label: 'Calendar', icon: Calendar, href: '/calendar' },
   { label: 'Focus', icon: Target, href: '/focus' },
-  { label: 'Matrix', icon: LayoutGrid, href: '/matrix' },
   { label: 'Statistics', icon: BarChart3, href: '/statistics' },
   { label: 'Chat', icon: MessageCircle, href: '/chat' },
 ] as const
+
+/* ── Habits inline section ── */
+function HabitsSection({ tasks }: { tasks: TaskRecord[] }) {
+  const [open, setOpen] = useState(true)
+  const router = useRouter()
+  const habits = useMemo(() => tasks.filter((t) => t.isHabit && t.status !== 'dropped'), [tasks])
+  const { updateTask } = useTasks()
+
+  const today = useMemo(() => {
+    const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString().split('T')[0]
+  }, [])
+
+  const isCheckedToday = useCallback((habit: TaskRecord) => {
+    if (!habit.completions || !Array.isArray(habit.completions)) return false
+    return habit.completions.some((c) => c.date?.startsWith(today) && c.status === 'achieved')
+  }, [today])
+
+  const toggleCheckin = useCallback(async (habit: TaskRecord) => {
+    const checked = isCheckedToday(habit)
+    const completions = Array.isArray(habit.completions) ? [...habit.completions] : []
+    if (checked) {
+      const idx = completions.findIndex((c) => c.date?.startsWith(today))
+      if (idx >= 0) completions.splice(idx, 1)
+    } else {
+      completions.push({ date: new Date().toISOString(), status: 'achieved' as const, value: 1 })
+    }
+    await updateTask(habit._id, { completions })
+  }, [today, isCheckedToday, updateTask])
+
+  if (habits.length === 0) return null
+
+  return (
+    <div className="mt-4">
+      <div className="group mb-1 flex items-center justify-between px-2.5">
+        <button
+          onClick={() => setOpen(!open)}
+          className="flex items-center gap-1 cursor-pointer"
+          style={{ color: 'var(--text-faint)' }}
+        >
+          <span className="text-[12px] font-medium">Habits</span>
+          <motion.div animate={{ rotate: open ? 0 : -90 }} transition={{ duration: 0.15 }}>
+            <ChevronDown size={12} strokeWidth={1.5} />
+          </motion.div>
+        </button>
+        <button
+          onClick={() => router.push('/habits')}
+          className="opacity-0 group-hover:opacity-100 transition-opacity flex h-5 w-5 items-center justify-center rounded cursor-pointer"
+          style={{ color: 'var(--text-faint)', transitionDuration: '150ms' }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-faint)' }}
+          title="View all habits"
+        >
+          <Flame size={12} strokeWidth={1.5} />
+        </button>
+      </div>
+      <AnimatePresence>
+        {open && (
+          <motion.div {...collapse} transition={ease.normal} className="flex flex-col gap-0.5 overflow-hidden">
+            {habits.map((habit) => {
+              const checked = isCheckedToday(habit)
+              const icon = habit.habitIcon || '🔥'
+              const color = habit.color || 'var(--accent)'
+              return (
+                <div
+                  key={habit._id}
+                  className="flex items-center gap-2 rounded-lg px-2.5 py-1 text-[13px] font-medium cursor-pointer"
+                  style={{ color: 'var(--text-primary)' }}
+                  onClick={() => router.push(`/habits?selected=${habit._id}`)}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                >
+                  <span style={{ fontSize: 14, lineHeight: 1 }}>{icon}</span>
+                  <span className="flex-1 truncate">{habit.title}</span>
+                  {/* Today check-in toggle */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleCheckin(habit) }}
+                    className="flex items-center justify-center rounded-full flex-shrink-0"
+                    style={{
+                      width: 18,
+                      height: 18,
+                      border: checked ? 'none' : `1.5px solid ${color}`,
+                      backgroundColor: checked ? color : 'transparent',
+                      cursor: 'pointer',
+                      transition: 'all 150ms ease',
+                    }}
+                    title={checked ? 'Uncheck today' : 'Check in today'}
+                  >
+                    {checked && (
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                        <path d="M2 5.5L4 7.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              )
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+/* ── Workflows inline section ── */
+function WorkflowsSection() {
+  const pathname = usePathname()
+  const [open, setOpen] = useState(true)
+  const [createOpen, setCreateOpen] = useState(false)
+  const { workflows } = useWorkflows()
+
+  useEffect(() => {
+    const handler = () => setCreateOpen(true)
+    window.addEventListener('laif:create-workflow', handler)
+    return () => window.removeEventListener('laif:create-workflow', handler)
+  }, [])
+
+  return (
+    <>
+      <div className="mt-5">
+        <div className="group mb-1 flex items-center justify-between px-2.5">
+          <button
+            onClick={() => setOpen(!open)}
+            className="flex items-center gap-1 cursor-pointer"
+            style={{ color: 'var(--text-faint)' }}
+          >
+            <span className="text-[12px] font-medium">Workflows</span>
+            <motion.div animate={{ rotate: open ? 0 : -90 }} transition={{ duration: 0.15 }}>
+              <ChevronDown size={12} strokeWidth={1.5} />
+            </motion.div>
+          </button>
+          <button
+            onClick={() => setCreateOpen(true)}
+            title="New Workflow"
+            className="opacity-0 group-hover:opacity-100 transition-opacity flex h-5 w-5 items-center justify-center rounded cursor-pointer"
+            style={{ color: 'var(--text-faint)', transitionDuration: '150ms' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-faint)' }}
+          >
+            <Plus size={12} strokeWidth={1.5} />
+          </button>
+        </div>
+        <AnimatePresence>
+          {open && (
+            <motion.div {...collapse} transition={ease.normal} className="flex flex-col gap-0.5 overflow-hidden">
+              {workflows.map((wf) => {
+                const active = pathname === `/workflows/${wf._id}`
+                return (
+                  <Link
+                    key={wf._id}
+                    href={`/workflows/${wf._id}`}
+                    className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[14px] font-medium no-underline transition-sl"
+                    style={{
+                      color: 'var(--text-primary)',
+                      backgroundColor: active ? 'var(--overlay-2, var(--bg-hover))' : 'transparent',
+                      boxShadow: active ? 'inset -3px 0 0 var(--accent)' : 'none',
+                    }}
+                    onMouseEnter={(e) => { if (!active) e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = active ? 'var(--overlay-2, var(--bg-hover))' : 'transparent' }}
+                  >
+                    <span style={{ fontSize: 16 }}>{wf.icon || '📋'}</span>
+                    <span className="truncate">{wf.name}</span>
+                  </Link>
+                )
+              })}
+              {workflows.length === 0 && (
+                <p className="px-2.5 py-2 text-[13px]" style={{ color: 'var(--text-faint)' }}>
+                  No workflows yet
+                </p>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+      <CreateWorkflowDialog open={createOpen} onClose={() => setCreateOpen(false)} />
+    </>
+  )
+}
 
 interface SidebarProps {
   collapsed?: boolean
@@ -60,20 +260,14 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   const pathname = usePathname()
   const router = useRouter()
   const { tasks } = useTasks()
-  const { lists, createList } = useLists()
+
 
   const [isHovered, setIsHovered] = useState(false)
-  const [favoritesOpen, setFavoritesOpen] = useState(true)
   const [avatarOpen, setAvatarOpen] = useState(false)
   const [fabOpen, setFabOpen] = useState(false)
   const [userInitial, setUserInitial] = useState('U')
   const popoverRef = useRef<HTMLDivElement>(null)
   const fabPopoverRef = useRef<HTMLDivElement>(null)
-
-  // Inline list creation inside favorites
-  const [isCreatingFav, setIsCreatingFav] = useState(false)
-  const [newFavTitle, setNewFavTitle] = useState('')
-  const favInputRef = useRef<HTMLInputElement>(null)
 
   // Badge counts
   const inboxCount = tasks.filter((t) => t.status !== 'done' && t.status !== 'dropped' && !t.listId).length
@@ -84,7 +278,50 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
     return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()
   }).length
 
-  const favoriteLists = lists.filter((l) => l.pinnedToFavorites)
+  // Smart list counts
+  const [smartListsOpen, setSmartListsOpen] = useState(true)
+  const [activeSmartFilter, setActiveSmartFilter] = useState<SmartFilter | null>(null)
+
+  const smartCounts = useMemo(() => {
+    const now = new Date()
+    const todayStart = startOfDay(now)
+    const tomorrowStart = addDays(todayStart, 1)
+    const tomorrowEnd = addDays(todayStart, 2)
+    const next7End = addDays(todayStart, 7)
+    const thirtyDaysAgo = addDays(todayStart, -30)
+
+    let inbox = 0
+    let today = 0
+    let tomorrow = 0
+    let next7days = 0
+    let completed = 0
+
+    for (const task of tasks) {
+      const isDone = task.status === 'done'
+      const isDropped = task.status === 'dropped'
+
+      if (isDone) {
+        const completedAt = task.completedAt ? new Date(task.completedAt) : null
+        if (completedAt && completedAt >= thirtyDaysAgo) completed++
+        continue
+      }
+
+      if (isDropped) continue
+
+      // Incomplete tasks
+      if (!task.listId) inbox++
+
+      const dateVal = task.scheduledStart || task.dueDate
+      if (dateVal) {
+        const d = new Date(dateVal)
+        if (d >= todayStart && d < tomorrowStart) today++
+        if (d >= tomorrowStart && d < tomorrowEnd) tomorrow++
+        if (d >= todayStart && d < next7End) next7days++
+      }
+    }
+
+    return { inbox, today, tomorrow, next7days, completed }
+  }, [tasks])
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -105,24 +342,6 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
     return () => document.removeEventListener('mousedown', handler)
   }, [avatarOpen, fabOpen])
 
-  // Auto-focus inline input
-  useEffect(() => {
-    if (isCreatingFav) favInputRef.current?.focus()
-  }, [isCreatingFav])
-
-  const handleCreateFavoriteList = useCallback(async () => {
-    const title = newFavTitle.trim()
-    if (!title) { setIsCreatingFav(false); return }
-    try {
-      const newList = await createList({ title, icon: '📁', pinnedToFavorites: true })
-      setIsCreatingFav(false)
-      setNewFavTitle('')
-      router.push(`/lists/${newList._id}`)
-    } catch {
-      setIsCreatingFav(false)
-    }
-  }, [newFavTitle, createList, router])
-
   const handleSignOut = useCallback(async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
     router.push('/login')
@@ -139,7 +358,105 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
     return 0
   }
 
-  if (collapsed) return null
+  /* ── Collapsed icon-only sidebar ── */
+  if (collapsed) {
+    const COLLAPSED_NAV = [
+      ...NAV_ITEMS.map((item) => ({ label: item.label, icon: item.icon, href: item.href })),
+      ...PROFILE_NAV.map((item) => ({ label: item.label, icon: item.icon, href: item.href })),
+    ]
+
+    return (
+      <aside
+        className="flex flex-shrink-0 flex-col items-center h-full"
+        style={{
+          width: 48,
+          padding: '10px 0 12px',
+          backgroundColor: 'var(--bg-pane)',
+        }}
+      >
+        {/* Avatar at top */}
+        <button
+          onClick={() => setAvatarOpen(!avatarOpen)}
+          aria-label="User menu"
+          className="flex items-center justify-center rounded-full text-[11px] font-semibold text-white cursor-pointer overflow-hidden"
+          style={{
+            width: 28,
+            height: 28,
+            backgroundColor: 'var(--avatar-bg, #6b7280)',
+            marginBottom: 12,
+            flexShrink: 0,
+          }}
+        >
+          {userInitial}
+        </button>
+
+        {/* Icon nav */}
+        <nav className="flex flex-col items-center gap-1">
+          {COLLAPSED_NAV.map((item) => {
+            const active = isActive(item.href)
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                title={item.label}
+                className="flex items-center justify-center rounded-lg no-underline"
+                style={{
+                  width: 36,
+                  height: 36,
+                  backgroundColor: active ? 'color-mix(in srgb, var(--accent) 12%, transparent)' : 'transparent',
+                  color: active ? 'var(--accent)' : 'var(--text-muted)',
+                  transition: 'background-color 150ms ease, color 150ms ease',
+                }}
+                onMouseEnter={(e) => {
+                  if (!active) {
+                    e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))'
+                    e.currentTarget.style.color = 'var(--text-primary)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!active) {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                    e.currentTarget.style.color = 'var(--text-muted)'
+                  }
+                }}
+              >
+                <item.icon size={20} strokeWidth={1.5} />
+              </Link>
+            )
+          })}
+        </nav>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Expand button at bottom */}
+        <button
+          onClick={onToggleCollapse}
+          aria-label="Expand sidebar"
+          title="Expand sidebar"
+          className="flex items-center justify-center rounded-lg cursor-pointer"
+          style={{
+            width: 36,
+            height: 36,
+            backgroundColor: 'transparent',
+            border: 'none',
+            color: 'var(--text-faint)',
+            transition: 'background-color 150ms ease, color 150ms ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))'
+            e.currentTarget.style.color = 'var(--text-primary)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent'
+            e.currentTarget.style.color = 'var(--text-faint)'
+          }}
+        >
+          <PanelLeft size={18} strokeWidth={1.5} />
+        </button>
+      </aside>
+    )
+  }
 
   return (
     <aside
@@ -218,93 +535,100 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
         })}
       </nav>
 
-      {/* ── Favorites section ── */}
-      <div className="mt-5">
+      {/* ── Smart Lists section ── */}
+      <div className="mt-4">
         <div className="group mb-1 flex items-center justify-between px-2.5">
           <button
-            onClick={() => setFavoritesOpen(!favoritesOpen)}
+            onClick={() => setSmartListsOpen(!smartListsOpen)}
             className="flex items-center gap-1 cursor-pointer"
             style={{ color: 'var(--text-faint)' }}
           >
-            <span className="text-[12px] font-medium">Favorites</span>
-            <motion.div animate={{ rotate: favoritesOpen ? 0 : -90 }} transition={{ duration: 0.15 }}>
+            <span className="text-[12px] font-medium">Smart Lists</span>
+            <motion.div animate={{ rotate: smartListsOpen ? 0 : -90 }} transition={{ duration: 0.15 }}>
               <ChevronDown size={12} strokeWidth={1.5} />
             </motion.div>
           </button>
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" style={{ transitionDuration: '150ms' }}>
-            <button
-              onClick={() => { setIsCreatingFav(true); setNewFavTitle(''); setFavoritesOpen(true) }}
-              className="flex h-5 w-5 items-center justify-center rounded cursor-pointer transition-sl"
-              style={{ color: 'var(--text-faint)' }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-faint)' }}
-            >
-              <FolderPlus size={12} strokeWidth={1.5} />
-            </button>
-            <button className="flex h-5 w-5 items-center justify-center rounded cursor-pointer" style={{ color: 'var(--text-faint)' }}>
-              <SlidersHorizontal size={12} strokeWidth={1.5} />
-            </button>
-          </div>
         </div>
         <AnimatePresence>
-          {favoritesOpen && (
+          {smartListsOpen && (
             <motion.div {...collapse} transition={ease.normal} className="flex flex-col gap-0.5 overflow-hidden">
-              {/* Inline creation input */}
-              {isCreatingFav && (
-                <div className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5">
-                  <span className="text-base">📁</span>
-                  <input
-                    ref={favInputRef}
-                    value={newFavTitle}
-                    onChange={(e) => setNewFavTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleCreateFavoriteList()
-                      if (e.key === 'Escape') { setIsCreatingFav(false); setNewFavTitle('') }
-                    }}
-                    onBlur={handleCreateFavoriteList}
-                    placeholder="List name..."
-                    className="flex-1 bg-transparent text-[14px] font-medium outline-none"
-                    style={{ color: 'var(--text-primary)' }}
-                  />
-                </div>
-              )}
-              {favoriteLists.map((list) => {
-                const active = pathname === `/lists/${list._id}`
+              {SMART_LISTS.map((item) => {
+                const count = smartCounts[item.id] ?? 0
+                const isSmartActive = activeSmartFilter === item.id
+                const Icon = item.icon
                 return (
-                  <Link
-                    key={list._id}
-                    href={`/lists/${list._id}`}
-                    className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[14px] font-medium no-underline transition-sl"
+                  <motion.button
+                    key={item.id}
+                    onClick={() => setActiveSmartFilter(isSmartActive ? null : item.id)}
+                    whileHover={{ x: 2 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    className="relative flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[14px] font-medium cursor-pointer"
                     style={{
                       color: 'var(--text-primary)',
-                      backgroundColor: active ? 'var(--overlay-2, var(--bg-hover))' : 'transparent',
-                      boxShadow: active ? 'inset -3px 0 0 var(--accent)' : 'none',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      width: '100%',
+                      textAlign: 'left',
                     }}
-                    onMouseEnter={(e) => { if (!active) e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = active ? 'var(--overlay-2, var(--bg-hover))' : 'transparent' }}
+                    onMouseEnter={(e) => {
+                      if (!isSmartActive) e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))'
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSmartActive) e.currentTarget.style.backgroundColor = 'transparent'
+                    }}
                   >
-                    <span className="text-base">{list.icon || '📋'}</span>
-                    <span className="truncate">{list.title || 'Untitled'}</span>
-                  </Link>
+                    {/* Active indicator with layoutId */}
+                    {isSmartActive && (
+                      <motion.div
+                        layoutId="smart-list-active"
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          borderRadius: 8,
+                          backgroundColor: 'var(--overlay-2, var(--bg-hover))',
+                          boxShadow: 'inset -3px 0 0 var(--accent)',
+                        }}
+                        transition={{ type: 'spring', stiffness: 120, damping: 14 }}
+                      />
+                    )}
+                    <Icon
+                      size={16}
+                      strokeWidth={1.5}
+                      style={{
+                        color: isSmartActive ? (item.accent || 'var(--accent)') : 'var(--text-muted)',
+                        position: 'relative',
+                        zIndex: 1,
+                      }}
+                    />
+                    <span style={{ flex: 1, position: 'relative', zIndex: 1 }}>{item.label}</span>
+                    {count > 0 && (
+                      <span
+                        className="flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-medium"
+                        style={{
+                          backgroundColor: item.accent
+                            ? `color-mix(in srgb, ${item.accent} 15%, transparent)`
+                            : 'var(--overlay-2, var(--bg-hover))',
+                          color: item.accent || 'var(--text-muted)',
+                          position: 'relative',
+                          zIndex: 1,
+                        }}
+                      >
+                        {count}
+                      </span>
+                    )}
+                  </motion.button>
                 )
               })}
-              {/* Ghost placeholder / Getting Started */}
-              {favoriteLists.length === 0 && (
-                <Link
-                  href="/getting-started"
-                  className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[14px] font-medium no-underline transition-sl"
-                  style={{ color: 'var(--text-primary)' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                >
-                  <span className="text-base">👋</span>
-                  <span>Getting Started</span>
-                </Link>
-              )}
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      {/* ── Workflows section ── */}
+      <WorkflowsSection />
+
+      {/* ── Habits section ── */}
+      <HabitsSection tasks={tasks} />
 
       {/* ── Spacer ── */}
       <div className="flex-1 min-h-[24px]" />
@@ -352,13 +676,13 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                   <span className="text-[12px]" style={{ color: 'var(--text-faint)' }}>⌃N</span>
                 </button>
                 <button
-                  onClick={() => { setFabOpen(false); router.push('/lists') }}
+                  onClick={() => { setFabOpen(false); window.dispatchEvent(new CustomEvent('laif:create-workflow')) }}
                   className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-[15px] font-medium transition-sl cursor-pointer"
                   style={{ color: 'var(--text-primary)' }}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                  <div className="flex items-center gap-3"><List size={18} strokeWidth={1.5} style={{ color: 'var(--text-muted)' }} /><span>New list</span></div>
+                  <div className="flex items-center gap-3"><ListChecks size={18} strokeWidth={1.5} style={{ color: 'var(--text-muted)' }} /><span>New workflow</span></div>
                   <span className="text-[12px]" style={{ color: 'var(--text-faint)' }}>⇧⌘N</span>
                 </button>
                 <button

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { verifyToken, COOKIE_NAME } from '@/lib/auth'
+import { getAuthUserId } from '@/lib/auth'
 import { connectDB } from '@/lib/mongodb'
 import UserModel from '@/lib/models/User'
 import TaskModel from '@/lib/models/Task'
@@ -50,15 +49,8 @@ function computeColor(
  * Returns a unified array of calendar events within the date range.
  */
 export async function GET(req: Request) {
-  const token = (await cookies()).get(COOKIE_NAME)?.value
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  let payload
-  try {
-    payload = await verifyToken(token)
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const userId = await getAuthUserId()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(req.url)
   const fromParam = searchParams.get('from')
@@ -83,7 +75,7 @@ export async function GET(req: Request) {
 
   await connectDB()
 
-  const user = await UserModel.findById(payload.userId).lean() as LeanDoc | null
+  const user = await UserModel.findById(userId).lean() as LeanDoc | null
   const colorCodingMode = ((user?.calendarPreferences as Record<string, unknown>)?.colorCodingMode as string) || 'list'
 
   const events: CalendarEvent[] = []
@@ -182,7 +174,7 @@ export async function GET(req: Request) {
   // Google Calendar events
   if (include.includes('google')) {
     const googleEvents = (await ExternalCalendarEventModel.find({
-      userId: payload.userId,
+      userId: userId,
       start: { $lte: to },
       end: { $gte: from },
     })
@@ -211,7 +203,7 @@ export async function GET(req: Request) {
   // Focus sessions
   if (include.includes('focus')) {
     const sessions = (await FocusSessionModel.find({
-      userId: payload.userId,
+      userId: userId,
       startedAt: { $gte: from, $lte: to },
       status: 'completed',
     })

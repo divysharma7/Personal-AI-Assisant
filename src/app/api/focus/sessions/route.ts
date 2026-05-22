@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { verifyToken, COOKIE_NAME } from '@/lib/auth'
+import { getAuthUserId } from '@/lib/auth'
 import { connectDB } from '@/lib/mongodb'
 import FocusSession from '@/lib/models/FocusSession'
 import TaskModel from '@/lib/models/Task'
@@ -15,21 +14,14 @@ function serialize(doc: LeanDoc) {
  * POST /api/focus/sessions — Start a new focus session
  */
 export async function POST(req: Request) {
-  const token = (await cookies()).get(COOKIE_NAME)?.value
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  let payload
-  try {
-    payload = await verifyToken(token)
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const userId = await getAuthUserId()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   await connectDB()
 
   // Check no other active session exists for this user
   const existing = await FocusSession.findOne({
-    userId: payload.userId,
+    userId: userId,
     status: 'active',
   }).lean() as LeanDoc | null
 
@@ -57,7 +49,7 @@ export async function POST(req: Request) {
   }
 
   const session = await FocusSession.create({
-    userId: payload.userId,
+    userId: userId,
     taskId,
     taskTitleSnapshot,
     plannedDurationMin,
@@ -75,15 +67,8 @@ export async function POST(req: Request) {
  * Query: ?from=&to=&taskId=&limit=
  */
 export async function GET(req: Request) {
-  const token = (await cookies()).get(COOKIE_NAME)?.value
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  let payload
-  try {
-    payload = await verifyToken(token)
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const userId = await getAuthUserId()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   await connectDB()
 
@@ -93,7 +78,7 @@ export async function GET(req: Request) {
   const taskId = searchParams.get('taskId')
   const limit = parseInt(searchParams.get('limit') ?? '50', 10)
 
-  const filter: Record<string, unknown> = { userId: payload.userId }
+  const filter: Record<string, unknown> = { userId: userId }
 
   if (from || to) {
     const dateRange: Record<string, Date> = {}

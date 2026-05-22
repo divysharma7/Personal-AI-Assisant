@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, ArrowRight, AlignJustify, Tag, Calendar } from 'lucide-react'
 import { copy } from '@/lib/copy'
@@ -104,7 +104,7 @@ interface TaskRowProps {
   isCompleting?: boolean
 }
 
-export default function TaskRow({
+export default memo(function TaskRow({
   task, onToggle, onOpenDetail, onUpdate, isSelected, isDetailOpen,
   subTaskCount, labels = [], onTitleChange, isCompleting = false,
 }: TaskRowProps) {
@@ -150,14 +150,14 @@ export default function TaskRow({
         backgroundColor: isSelected
           ? 'var(--overlay-2, rgba(108,108,158,0.12))'
           : hovered ? 'var(--overlay-1, rgba(108,108,158,0.05))' : 'transparent',
-        transition: 'background-color 150ms ease',
+        transition: 'background-color 180ms ease-out',
       }}
     >
       {/* ── Drag handle — hover only ── */}
       <div style={{
         flexShrink: 0, width: 16, marginRight: 8, marginTop: 4,
         opacity: hovered ? 0.35 : 0, color: 'var(--text-faint)',
-        transition: 'opacity 150ms ease', cursor: 'grab',
+        transition: 'opacity 180ms ease-out', cursor: 'grab',
       }}>
         <DragHandle />
       </div>
@@ -171,7 +171,7 @@ export default function TaskRow({
           border: done ? 'none' : '2.5px solid var(--overlay-3, #3a394a)',
           backgroundColor: done ? 'var(--accent)' : 'transparent',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', transition: 'all 150ms ease',
+          cursor: 'pointer', transition: 'background-color 150ms ease, border-color 150ms ease',
         }}
       >
         <AnimatePresence>
@@ -254,7 +254,7 @@ export default function TaskRow({
                     borderRadius: 999,
                     fontFamily: 'Inter, system-ui, sans-serif',
                     fontWeight: 500,
-                    transition: 'all 150ms ease',
+                    transition: 'background-color 150ms ease, border-color 150ms ease',
                   }}
                 >
                   <Calendar size={14} strokeWidth={1.5} style={{ color: overdue ? 'var(--accent)' : 'var(--text-faint)' }} />
@@ -313,7 +313,7 @@ export default function TaskRow({
                     padding: priorityHovered ? '3px 8px' : '3px 4px',
                     borderRadius: 999,
                     fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 500,
-                    transition: 'all 150ms ease',
+                    transition: 'background-color 150ms ease, border-color 150ms ease',
                   }}
                 >
                   <PriorityBarsIcon color={priorityColor} size={13} />
@@ -375,11 +375,11 @@ export default function TaskRow({
         <div
           onClick={(e) => { e.stopPropagation(); onOpenDetail(task._id) }}
           style={{
-            width: 28, height: 28, borderRadius: '50%',
+            width: 40, height: 40, borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             backgroundColor: hovered ? 'var(--overlay-2, rgba(108,108,158,0.12))' : 'transparent',
             cursor: 'pointer',
-            transition: 'background-color 150ms ease',
+            transition: 'background-color 180ms ease-out',
           }}
           onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-3, rgba(108,108,158,0.25))' }}
           onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = hovered ? 'var(--overlay-2, rgba(108,108,158,0.12))' : 'transparent' }}
@@ -393,4 +393,4 @@ export default function TaskRow({
       </div>
     </div>
   )
-}
+})

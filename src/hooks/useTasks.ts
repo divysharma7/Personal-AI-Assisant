@@ -62,6 +62,11 @@ export interface TaskRecord {
   habitReminderTime?: string | null
   habitIcon?: string | null
   habitColor?: string | null
+  // Kanban fields
+  kanbanOrder?: number
+  sectionId?: string | null
+  // Activity log
+  activities?: Array<{ action: string; detail?: string; timestamp: string }>
 }
 
 async function fetchTasks(): Promise<TaskRecord[]> {

@@ -3,12 +3,9 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { scaleIn, buttonPress, ease } from '@/lib/motion'
+import { copy } from '@/lib/copy'
 
-// TODO: move to copy.ts
-const COPY = {
-  streakTitle: (days: number) => `${days}-day streak!`,
-  keepGoing: 'Keep going',
-} as const
+const COPY = copy.streakCelebration
 
 const MILESTONES = [7, 14, 30, 60, 100, 365]
 

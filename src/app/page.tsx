@@ -168,182 +168,86 @@ export default function InboxPage() {
   }, [detailTaskId])
 
   return (
-    <div className="flex flex-col px-6 py-5">
-      {/* ── Header ── */}
-      <div className="mb-1 flex items-start justify-between">
-        <div />
-        <div className="flex items-center gap-2">
-          <motion.button
-            {...buttonPress}
-            aria-label="Filter"
-            className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
-            style={{ color: 'var(--text-muted)' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-            }}
-          >
-            <SlidersHorizontal size={18} strokeWidth={1.5} />
-          </motion.button>
-          <motion.button
-            {...buttonPress}
-            aria-label="More options"
-            className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
-            style={{ color: 'var(--text-muted)' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-            }}
-          >
-            <MoreVertical size={18} strokeWidth={1.5} />
-          </motion.button>
-        </div>
+    <div className="flex flex-col h-full overflow-y-auto">
+    <div className="mx-auto w-full max-w-[720px] px-6 py-8">
+      {/* ── Top-right toolbar ── */}
+      <div className="flex items-center justify-end gap-2 mb-6">
+        <motion.button
+          {...buttonPress}
+          aria-label="Filter"
+          className="flex h-8 w-8 items-center justify-center rounded-full cursor-pointer transition-sl"
+          style={{ color: 'var(--text-muted)' }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+        >
+          <SlidersHorizontal size={18} strokeWidth={1.5} />
+        </motion.button>
+        <motion.button
+          {...buttonPress}
+          aria-label="More options"
+          className="flex h-8 w-8 items-center justify-center rounded-full cursor-pointer transition-sl"
+          style={{ color: 'var(--text-muted)' }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+        >
+          <MoreVertical size={18} strokeWidth={1.5} />
+        </motion.button>
       </div>
 
       {/* ── Title ── */}
-      <h1
-        className="mb-5 text-[32px]"
-        style={{ color: 'var(--text-primary)' }}
-      >
+      <h1 style={{ color: 'var(--text-primary)', fontSize: 42, fontWeight: 700, fontFamily: 'Inter, system-ui, sans-serif', letterSpacing: '-0.02em', marginBottom: 24 }}>
         {copy.inbox.title}
       </h1>
 
-      {/* ── Tip banner ── */}
-      <AnimatePresence>
-        {!tipDismissed && (
-          <motion.div
-            {...fadeSlideUp}
-            transition={ease.normal}
-            className="mb-5 flex items-center gap-3 rounded-xl px-4 py-3"
-            style={{
-              backgroundColor: 'rgba(99, 91, 255, 0.08)',
-              border: '1px solid rgba(99, 91, 255, 0.3)',
-            }}
-          >
-            <BookOpen size={18} className="flex-shrink-0" style={{ color: '#635BFF' }} />
-            <p className="flex-1 text-sm" style={{ color: '#635BFF' }}>
-              {copy.inbox.tipBanner}
-            </p>
-            <button
-              onClick={() => setTipDismissed(true)}
-              aria-label="Dismiss"
-              className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
-              style={{ color: '#635BFF' }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = '0.7'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = '1'
-              }}
-            >
-              <X size={14} strokeWidth={2} />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* ── New task row ── */}
-      <div
-        className="mb-6 rounded-xl px-4 py-3 transition-colors duration-150"
-        style={{
-          backgroundColor: 'var(--bg-pane-2)',
-          border: '1px solid var(--border)',
-          boxShadow: 'var(--shadow-card)',
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <Plus
-            size={20}
-            strokeWidth={1.5}
-            className="flex-shrink-0 transition-colors duration-150"
-            style={{ color: newTaskFocused ? 'var(--text-primary)' : 'var(--text-faint)' }}
-          />
-          <input
-            ref={inputRef}
-            type="text"
-            value={newTaskTitle}
-            onChange={(e) => setNewTaskTitle(e.target.value)}
-            onFocus={() => setNewTaskFocused(true)}
-            onBlur={() => setNewTaskFocused(false)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleNewTask()
-              if (e.key === 'Escape') {
-                setNewTaskTitle('')
-                inputRef.current?.blur()
-              }
-            }}
-            placeholder={copy.newTask.placeholder}
-            aria-label="New task title"
-            className="flex-1 bg-transparent text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
-            style={{
-              color: 'var(--text-primary)',
-            }}
-          />
-          {!newTaskFocused && !newTaskTitle && (
-            <span
-              className="rounded px-1.5 py-0.5 text-[11px] font-medium"
-              style={{
-                backgroundColor: 'var(--bg-hover)',
-                color: 'var(--text-faint)',
+      <div style={{ marginBottom: 20 }}>
+        <div
+          onClick={() => {
+            if (!newTaskFocused) {
+              setNewTaskFocused(true)
+              setTimeout(() => inputRef.current?.focus(), 10)
+            }
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, rgba(108,108,158,0.05))' }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '12px 8px',
+            borderRadius: 10,
+            cursor: 'text',
+            color: 'var(--text-faint)',
+            transition: 'background-color 150ms ease',
+          }}
+        >
+          <Plus size={18} strokeWidth={1.5} style={{ flexShrink: 0 }} />
+          {newTaskFocused || newTaskTitle ? (
+            <input
+              ref={inputRef}
+              type="text"
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
+              onFocus={() => setNewTaskFocused(true)}
+              onBlur={() => setTimeout(() => { if (!newTaskTitle.trim()) setNewTaskFocused(false) }, 150)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleNewTask()
+                if (e.key === 'Escape') { setNewTaskTitle(''); setNewTaskFocused(false) }
               }}
-            >
-              {copy.newTask.shortcutHint}
-            </span>
+              placeholder={copy.newTask.placeholder}
+              aria-label="New task title"
+              style={{
+                flex: 1, background: 'transparent', outline: 'none', border: 'none',
+                fontSize: 15, fontWeight: 500, color: 'var(--text-primary)',
+                fontFamily: 'Inter, system-ui, sans-serif', padding: 0,
+              }}
+              autoFocus
+            />
+          ) : (
+            <>
+              <span style={{ flex: 1, fontSize: 15, fontWeight: 500, fontFamily: 'Inter, system-ui, sans-serif' }}>New task</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-faint)' }}>{copy.newTask.shortcutHint}</span>
+            </>
           )}
         </div>
-
-        {/* Sub-icons row (visible when focused) */}
-        {newTaskFocused && (
-          <div className="mt-2 flex items-center gap-2 pl-8">
-            <button
-              aria-label="Set due date"
-              className="flex h-7 w-7 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
-              style={{ color: 'var(--text-faint)' }}
-              onMouseDown={(e) => e.preventDefault()}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
-            >
-              <Calendar size={15} strokeWidth={1.5} />
-            </button>
-            <button
-              aria-label="Set priority"
-              className="flex h-7 w-7 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
-              style={{ color: 'var(--text-faint)' }}
-              onMouseDown={(e) => e.preventDefault()}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
-            >
-              <BarChart3 size={15} strokeWidth={1.5} />
-            </button>
-            <button
-              aria-label="Add label"
-              className="flex h-7 w-7 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
-              style={{ color: 'var(--text-faint)' }}
-              onMouseDown={(e) => e.preventDefault()}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
-            >
-              <Tag size={15} strokeWidth={1.5} />
-            </button>
-            <VoiceCapture onTranscript={handleVoiceTranscript} inline />
-          </div>
-        )}
       </div>
 
       {/* ── Active tasks ── */}
@@ -439,6 +343,7 @@ export default function InboxPage() {
           </div>
         </div>
       )}
+    </div>
     </div>
   )
 }

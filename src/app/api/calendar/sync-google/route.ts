@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { google } from 'googleapis'
-import { verifyToken, COOKIE_NAME } from '@/lib/auth'
+import { getAuthUserId } from '@/lib/auth'
 import { connectDB } from '@/lib/mongodb'
 import UserModel from '@/lib/models/User'
 import ExternalCalendarEventModel from '@/lib/models/ExternalCalendarEvent'
@@ -16,19 +15,12 @@ type LeanDoc = Record<string, unknown> & { _id: unknown }
  * Query: ?from=ISO&to=ISO (defaults to current month if omitted)
  */
 export async function POST(req: Request) {
-  const token = (await cookies()).get(COOKIE_NAME)?.value
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  let payload
-  try {
-    payload = await verifyToken(token)
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const userId = await getAuthUserId()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   await connectDB()
 
-  const user = await UserModel.findById(payload.userId).lean() as LeanDoc | null
+  const user = await UserModel.findById(userId).lean() as LeanDoc | null
   if (!user || !user.googleCalendarConnected) {
     return NextResponse.json({ error: 'Google Calendar not connected' }, { status: 400 })
   }
@@ -76,10 +68,10 @@ export async function POST(req: Request) {
         : new Date(event.end!.dateTime!)
 
       await ExternalCalendarEventModel.findOneAndUpdate(
-        { userId: payload.userId, externalId: event.id },
+        { userId: userId, externalId: event.id },
         {
           $set: {
-            userId: payload.userId,
+            userId: userId,
             source: 'google',
             externalId: event.id,
             title: event.summary || '',

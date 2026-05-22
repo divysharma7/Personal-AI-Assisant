@@ -8,7 +8,6 @@ type LeanUser = { _id: unknown; username: string; name?: string; passwordHash: s
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null)
-  console.log('[login] body received:', JSON.stringify({ ...body, password: body?.password ? '***' : undefined }))
 
   // Accept both "username" and "email" fields (mobile sends "email")
   const username = typeof body?.username === 'string' ? body.username.trim().toLowerCase()
@@ -16,10 +15,7 @@ export async function POST(req: Request) {
                  : ''
   const password = typeof body?.password === 'string' ? body.password : ''
 
-  console.log('[login] resolved username:', username, '| password provided:', !!password)
-
   if (!username || !password) {
-    console.log('[login] 400 — missing username or password')
     return NextResponse.json({ error: 'Username and password are required' }, { status: 400 })
   }
 

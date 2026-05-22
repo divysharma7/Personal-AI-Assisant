@@ -9,27 +9,11 @@ import {
   type ReactNode,
 } from 'react'
 
-export type Theme =
-  | 'system'
-  | 'light'
-  | 'dark'
-  | 'blackout'
-  | 'ocean'
-  | 'berry'
-  | 'forest'
-  | 'sunset'
-  | 'blossom'
-  | 'blue-white'
-  | 'black-yellow'
-  | 'blue-red'
-  | 'red-white'
+export type Theme = 'system' | 'light' | 'dark'
 
 type ResolvedTheme = Exclude<Theme, 'system'>
 
-const ALL_THEMES: Theme[] = [
-  'system', 'light', 'dark', 'blackout', 'ocean', 'berry', 'forest',
-  'sunset', 'blossom', 'blue-white', 'black-yellow', 'blue-red', 'red-white',
-]
+const ALL_THEMES: Theme[] = ['system', 'dark', 'light']
 
 interface ThemeContextValue {
   theme: Theme

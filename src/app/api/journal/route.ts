@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongodb'
 import JournalEntry from '@/lib/models/JournalEntry'
+import type { IJournalEntry } from '@/lib/models/JournalEntry'
 
 // GET /api/journal?date=YYYY-MM-DD   → { content }
 // GET /api/journal                   → { dates: string[] }  (all dates that have entries)
@@ -11,11 +12,11 @@ export async function GET(req: Request) {
   await connectDB()
 
   if (!date) {
-    const entries = await JournalEntry.find({}, { date: 1, _id: 0 }).lean()
-    return NextResponse.json({ dates: entries.map((e: any) => e.date) })
+    const entries = await JournalEntry.find({}, { date: 1, _id: 0 }).lean<Pick<IJournalEntry, 'date'>[]>()
+    return NextResponse.json({ dates: entries.map((e) => e.date) })
   }
 
-  const entry = await JournalEntry.findOne({ date }).lean() as any
+  const entry = await JournalEntry.findOne({ date }).lean<IJournalEntry>()
   return NextResponse.json({
     content:         entry?.content         ?? '',
     last_summary:    entry?.last_summary    ?? '',

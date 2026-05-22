@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { verifyToken, COOKIE_NAME } from '@/lib/auth'
+import { getAuthUserId } from '@/lib/auth'
 import { connectDB } from '@/lib/mongodb'
 import UserModel from '@/lib/models/User'
 import TaskModel from '@/lib/models/Task'
@@ -19,15 +18,8 @@ type LeanDoc = Record<string, unknown> & { _id: unknown }
  * Auto-promotes backlog -> todo. Pushes to Google Calendar if synced.
  */
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
-  const token = (await cookies()).get(COOKIE_NAME)?.value
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  let payload
-  try {
-    payload = await verifyToken(token)
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const userId = await getAuthUserId()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
   const { scheduledStart, scheduledEnd } = body
@@ -65,7 +57,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
   // Push to Google Calendar if user has it connected
   try {
-    const user = await UserModel.findById(payload.userId).lean() as LeanDoc | null
+    const user = await UserModel.findById(userId).lean() as LeanDoc | null
     if (user && user.googleCalendarConnected) {
       const client = getAuthenticatedClient({
         googleAccessToken: user.googleAccessToken as string | null,

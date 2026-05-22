@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { verifyToken, COOKIE_NAME } from '@/lib/auth'
+import { getAuthUserId } from '@/lib/auth'
 import { connectDB } from '@/lib/mongodb'
 import FocusSession from '@/lib/models/FocusSession'
 
@@ -12,15 +11,8 @@ type LeanDoc = Record<string, unknown> & { _id: unknown }
  *          totalMinutesAllTime, averageSessionMin, longestSessionMin, currentDailyStreak
  */
 export async function GET() {
-  const token = (await cookies()).get(COOKIE_NAME)?.value
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  let payload
-  try {
-    payload = await verifyToken(token)
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const userId = await getAuthUserId()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   await connectDB()
 
@@ -34,7 +26,7 @@ export async function GET() {
 
   // Fetch all completed sessions for this user
   const allSessions = await FocusSession.find({
-    userId: payload.userId,
+    userId: userId,
     status: 'completed',
   }).sort({ startedAt: -1 }).lean() as LeanDoc[]
 

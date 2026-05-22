@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { verifyToken, COOKIE_NAME } from '@/lib/auth'
+import { getAuthUserId } from '@/lib/auth'
 import { connectDB } from '@/lib/mongodb'
 import UserModel from '@/lib/models/User'
 
@@ -23,19 +22,12 @@ interface FocusPreferences {
  * GET /api/users/me/focus-preferences — Read focus preferences
  */
 export async function GET() {
-  const token = (await cookies()).get(COOKIE_NAME)?.value
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  let payload
-  try {
-    payload = await verifyToken(token)
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const userId = await getAuthUserId()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   await connectDB()
 
-  const user = await UserModel.findById(payload.userId).lean() as LeanDoc | null
+  const user = await UserModel.findById(userId).lean() as LeanDoc | null
   if (!user) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 })
   }
@@ -58,15 +50,8 @@ export async function GET() {
  * PATCH /api/users/me/focus-preferences — Update focus preferences
  */
 export async function PATCH(req: Request) {
-  const token = (await cookies()).get(COOKIE_NAME)?.value
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  let payload
-  try {
-    payload = await verifyToken(token)
-  } catch {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const userId = await getAuthUserId()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = (await req.json()) as FocusPreferences
 
@@ -93,7 +78,7 @@ export async function PATCH(req: Request) {
   }
 
   const updated = await UserModel.findByIdAndUpdate(
-    payload.userId,
+    userId,
     { $set: setFields },
     { new: true },
   ).lean() as LeanDoc | null

@@ -4,48 +4,9 @@ import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { fadeSlideUp, scaleIn, buttonPress, ease } from '@/lib/motion'
+import { copy } from '@/lib/copy'
 
-// TODO: move to copy.ts
-const COPY = {
-  title: 'Create Habit',
-  steps: [
-    'Name & Icon',
-    'Goal Type',
-    'Target',
-    'Frequency',
-    'Reminder',
-    'List',
-  ] as const,
-  stepTitles: [
-    'What habit do you want to build?',
-    'How will you track it?',
-    'Set your target',
-    'How often?',
-    'When should we remind you?',
-    'Which list should this live in?',
-  ] as const,
-  goalTypes: {
-    binary: { title: 'Done / not done', desc: 'Simple yes or no tracking' },
-    count: { title: 'Reach a number', desc: 'Track a measurable goal' },
-  },
-  frequencies: {
-    daily: 'Daily',
-    weekly: 'Weekly',
-    interval: 'Every N days',
-  },
-  weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const,
-  back: 'Back',
-  next: 'Next',
-  create: 'Create',
-  namePlaceholder: 'e.g. Read 30 pages',
-  unitPlaceholder: 'pages, min, km...',
-  targetPlaceholder: '30',
-  timesPerWeek: 'times per week',
-  everyNDays: 'Every',
-  days: 'days',
-  reminderHint: 'Reminders deliver via mobile app (coming soon)',
-  defaultList: 'Personal Habits',
-} as const
+const COPY = copy.habitCreationWizard
 
 const EMOJI_PRESETS = ['\uD83D\uDCDA', '\uD83C\uDFCB\uFE0F', '\uD83E\uDDD8', '\uD83D\uDCDD', '\uD83C\uDFAF', '\uD83D\uDD25']
 const COLOR_PRESETS = [

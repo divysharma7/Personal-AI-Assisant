@@ -1,9 +1,9 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState, useCallback, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { fadeSlideUp, ease, stagger } from '@/lib/motion'
-import { isSameDay, isToday, isPast } from './calendarUtils'
+import { isSameDay, isToday, isPast, formatDuration } from './calendarUtils'
 import type { CalendarEvent } from './types'
 
 interface AgendaViewProps {
@@ -11,29 +11,40 @@ interface AgendaViewProps {
   events: CalendarEvent[]
 }
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const INITIAL_DAYS = 30
+const LOAD_MORE_DAYS = 30
 
-const AGENDA_DAYS = 14
+const SHORT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+/**
+ * Hex color to rgba helper.
+ * Accepts "#RRGGBB" and returns rgba at specified opacity.
+ */
+function hexToRgba(hex: string, alpha: number): string {
+  const clean = hex.replace('#', '')
+  if (clean.length < 6) return `rgba(120,120,140,${alpha})`
+  const r = parseInt(clean.substring(0, 2), 16)
+  const g = parseInt(clean.substring(2, 4), 16)
+  const b = parseInt(clean.substring(4, 6), 16)
+  return `rgba(${r},${g},${b},${alpha})`
+}
 
 /**
  * Check if a calendar event is an all-day event.
- * All-day events either have no time component (midnight to midnight)
- * or span 24+ hours.
  */
 function isAllDay(ev: CalendarEvent): boolean {
+  if (ev.isAllDay) return true
   const start = new Date(ev.start)
   const end = new Date(ev.end)
-  // Midnight-to-midnight on same or next day
   if (start.getHours() === 0 && start.getMinutes() === 0) {
     if (end.getHours() === 0 && end.getMinutes() === 0) return true
     if (end.getHours() === 23 && end.getMinutes() === 59) return true
   }
-  // Spans 24+ hours
   return end.getTime() - start.getTime() >= 24 * 60 * 60 * 1000
 }
 
 /**
- * Format a time string like "9:30 AM" from a Date.
+ * Format a time string like "9:00 AM" from a Date.
  */
 function formatTime(d: Date): string {
   const hours = d.getHours()
@@ -45,164 +56,517 @@ function formatTime(d: Date): string {
 }
 
 /**
- * AgendaView -- scrollable list of events grouped by day.
- * Shows 14 days starting from the given date.
- * Today's header is accented; past dates are dimmed.
- * Clicking an event opens the task detail panel.
+ * Get a short relative label for the date header badge.
+ */
+function getRelativeLabel(d: Date): string | null {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const compare = new Date(d)
+  compare.setHours(0, 0, 0, 0)
+  const diffDays = Math.round(
+    (compare.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+  )
+
+  if (diffDays === 0) return 'Today'
+  if (diffDays === 1) return 'Tomorrow'
+  if (diffDays === -1) return 'Yesterday'
+  return null
+}
+
+/**
+ * AgendaView -- TickTick-style timeline layout with:
+ * - Large date number + day name headers
+ * - Time column with right-aligned labels
+ * - Checkbox column with vertical timeline connector
+ * - Pastel task cards with left color border
+ * - IntersectionObserver infinite scroll
  */
 export default function AgendaView({ date, events }: AgendaViewProps) {
-  // Build an array of 14 dates starting from `date`
+  const [visibleDays, setVisibleDays] = useState(INITIAL_DAYS)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const bottomSentinelRef = useRef<HTMLDivElement>(null)
+  const todayRef = useRef<HTMLDivElement>(null)
+
+  // Build an array of dates starting from `date`
   const days = useMemo(() => {
     const result: Date[] = []
-    for (let i = 0; i < AGENDA_DAYS; i++) {
+    for (let i = 0; i < visibleDays; i++) {
       const d = new Date(date)
       d.setDate(date.getDate() + i)
       d.setHours(0, 0, 0, 0)
       result.push(d)
     }
     return result
-  }, [date])
+  }, [date, visibleDays])
 
-  // Group events by day for quick lookup
-  const eventsByDay = useMemo(() => {
-    const map = new Map<string, CalendarEvent[]>()
+  // Group events by day, filtering out empty days
+  const daysWithEvents = useMemo(() => {
+    const result: { day: Date; events: CalendarEvent[] }[] = []
     for (const day of days) {
-      const key = day.toDateString()
       const dayEvents = events
         .filter((ev) => ev.start && isSameDay(new Date(ev.start), day))
         .sort((a, b) => {
-          // All-day events first, then sort by start time
+          // Completed events last
+          if (a.isCompleted && !b.isCompleted) return 1
+          if (!a.isCompleted && b.isCompleted) return -1
+          // All-day events first, then by start time
           const aAllDay = isAllDay(a)
           const bAllDay = isAllDay(b)
           if (aAllDay && !bAllDay) return -1
           if (!aAllDay && bAllDay) return 1
+          // Overdue items first within their group
+          if ((a.daysOverdue ?? 0) > 0 && !(b.daysOverdue ?? 0)) return -1
+          if (!(a.daysOverdue ?? 0) && (b.daysOverdue ?? 0) > 0) return 1
           return new Date(a.start).getTime() - new Date(b.start).getTime()
         })
-      map.set(key, dayEvents)
+
+      if (dayEvents.length > 0) {
+        result.push({ day, events: dayEvents })
+      }
     }
-    return map
+    return result
   }, [days, events])
+
+  const handleLoadMore = useCallback(() => {
+    setVisibleDays((prev) => prev + LOAD_MORE_DAYS)
+  }, [])
+
+  // IntersectionObserver for infinite scroll
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    const sentinel = bottomSentinelRef.current
+    if (!container || !sentinel) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setVisibleDays((prev) => prev + LOAD_MORE_DAYS)
+          }
+        }
+      },
+      { root: container, rootMargin: '200px' }
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [])
+
+  // Scroll to today on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      todayRef.current?.scrollIntoView({ block: 'start' })
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
     <motion.div
-      className="flex flex-col flex-1 overflow-y-auto px-4 py-2"
-      variants={stagger(0.04)}
+      ref={scrollContainerRef}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        flex: 1,
+        overflowY: 'auto',
+        padding: '8px 0 16px 0',
+      }}
+      variants={stagger(0.03)}
       initial="initial"
       animate="animate"
     >
-      {days.map((day) => {
-        const today = isToday(day)
-        const past = isPast(day) && !today
-        const dayEvents = eventsByDay.get(day.toDateString()) || []
-        const weekday = WEEKDAYS[day.getDay()]
-
-        return (
-          <motion.div
+      {daysWithEvents.length === 0 ? (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flex: 1,
+            color: 'var(--text-faint)',
+            fontSize: 14,
+            padding: 48,
+          }}
+        >
+          No events in the next {visibleDays} days
+        </div>
+      ) : (
+        daysWithEvents.map(({ day, events: dayEvents }) => (
+          <DayGroup
             key={day.toDateString()}
-            variants={fadeSlideUp}
-            transition={ease.normal}
-            className="flex gap-4 py-3"
+            day={day}
+            dayEvents={dayEvents}
+            todayRef={isToday(day) ? todayRef : undefined}
+          />
+        ))
+      )}
+
+      {/* Bottom sentinel for IntersectionObserver infinite scroll */}
+      <div ref={bottomSentinelRef} style={{ height: 1 }} />
+
+      {/* Manual load more button (fallback) */}
+      {daysWithEvents.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            padding: '12px 16px 8px',
+          }}
+        >
+          <button
+            type="button"
+            onClick={handleLoadMore}
             style={{
-              borderBottom: '1px solid var(--border)',
-              opacity: past ? 0.5 : 1,
+              fontSize: 13,
+              fontWeight: 500,
+              color: 'var(--accent)',
+              backgroundColor: 'transparent',
+              border: '1px solid var(--border)',
+              borderRadius: 8,
+              padding: '8px 24px',
+              cursor: 'pointer',
+              transition: 'background-color 100ms ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
             }}
           >
-            {/* Left: day number + weekday */}
-            <div
-              className="flex flex-col items-center flex-shrink-0"
-              style={{ width: 48 }}
-            >
-              <span
-                className="text-2xl font-bold leading-none"
-                style={{
-                  color: today ? 'var(--accent)' : 'var(--text-primary)',
-                }}
-              >
-                {day.getDate()}
-              </span>
-              <span
-                className="text-xs mt-0.5"
-                style={{
-                  color: today ? 'var(--accent)' : 'var(--text-muted)',
-                }}
-              >
-                {weekday}
-              </span>
-            </div>
-
-            {/* Right: event list */}
-            <div className="flex flex-col flex-1 gap-1 min-w-0">
-              {dayEvents.length === 0 ? (
-                <div
-                  className="text-sm py-1"
-                  style={{ color: 'var(--text-faint)' }}
-                >
-                  No tasks
-                </div>
-              ) : (
-                dayEvents.map((ev) => {
-                  const allDay = isAllDay(ev)
-                  const startDate = new Date(ev.start)
-
-                  return (
-                    <button
-                      key={ev.id}
-                      type="button"
-                      className="flex items-center gap-2 py-1.5 px-1 rounded-md text-left cursor-pointer transition-colors duration-75 w-full"
-                      style={{ border: 'none', background: 'none' }}
-                      onClick={() => {
-                        window.dispatchEvent(
-                          new CustomEvent('laif:detail-task', {
-                            detail: { taskId: ev.id },
-                          })
-                        )
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent'
-                      }}
-                    >
-                      {/* Time label */}
-                      <span
-                        className="text-xs flex-shrink-0 w-16 text-right"
-                        style={{
-                          color: 'var(--text-faint)',
-                          fontSize: 12,
-                        }}
-                      >
-                        {allDay ? 'All Day' : formatTime(startDate)}
-                      </span>
-
-                      {/* Colored dot */}
-                      <span
-                        className="flex-shrink-0 rounded-full"
-                        style={{
-                          width: 6,
-                          height: 6,
-                          backgroundColor: ev.color,
-                        }}
-                      />
-
-                      {/* Event title */}
-                      <span
-                        className="text-sm truncate"
-                        style={{
-                          color: 'var(--text-primary)',
-                          fontSize: 14,
-                        }}
-                      >
-                        {ev.title}
-                      </span>
-                    </button>
-                  )
-                })
-              )}
-            </div>
-          </motion.div>
-        )
-      })}
+            Load more ({LOAD_MORE_DAYS} days)
+          </button>
+        </div>
+      )}
     </motion.div>
+  )
+}
+
+// ── Day Group ──────────────────────────────────────────────────
+
+interface DayGroupProps {
+  day: Date
+  dayEvents: CalendarEvent[]
+  todayRef?: React.RefObject<HTMLDivElement>
+}
+
+function DayGroup({ day, dayEvents, todayRef }: DayGroupProps) {
+  const today = isToday(day)
+  const past = isPast(day) && !today
+  const relativeLabel = getRelativeLabel(day)
+
+  return (
+    <motion.div
+      ref={todayRef}
+      variants={fadeSlideUp}
+      transition={ease.normal}
+      style={{
+        marginBottom: 32,
+        opacity: past ? 0.6 : 1,
+      }}
+    >
+      {/* Date header row */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: 6,
+          padding: '0 20px 10px',
+        }}
+      >
+        <span
+          style={{
+            fontSize: 28,
+            fontWeight: 700,
+            lineHeight: 1,
+            color: today ? 'var(--accent)' : 'var(--text-primary)',
+          }}
+        >
+          {day.getDate()}
+        </span>
+        <span
+          style={{
+            fontSize: 14,
+            fontWeight: 400,
+            color: today ? 'var(--accent)' : 'var(--text-muted)',
+          }}
+        >
+          {relativeLabel || SHORT_DAYS[day.getDay()]}
+        </span>
+      </div>
+
+      {/* Event rows */}
+      <div style={{ padding: '0 12px 0 20px' }}>
+        {dayEvents.map((ev, idx) => (
+          <AgendaRow
+            key={ev.id}
+            ev={ev}
+            isLast={idx === dayEvents.length - 1}
+            dayIsPast={past}
+          />
+        ))}
+      </div>
+    </motion.div>
+  )
+}
+
+// ── Agenda Row ─────────────────────────────────────────────────
+
+interface AgendaRowProps {
+  ev: CalendarEvent
+  isLast: boolean
+  dayIsPast: boolean
+}
+
+function AgendaRow({ ev, isLast, dayIsPast }: AgendaRowProps) {
+  const allDay = isAllDay(ev)
+  const startDate = new Date(ev.start)
+  const endDate = new Date(ev.end)
+  const isOverdue = (ev.daysOverdue ?? 0) > 0
+  const isCompleted = !!ev.isCompleted
+  const hasTimed = !allDay
+
+  const cardColor = isOverdue && !isCompleted
+    ? '#ef4444'
+    : ev.color || 'var(--accent)'
+
+  // For hexToRgba we need an actual hex; fallback for CSS var
+  const cardColorHex = cardColor.startsWith('#') ? cardColor : '#5DA8FF'
+
+  const handleToggleComplete = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+    window.dispatchEvent(
+      new CustomEvent('laif:detail-task', {
+        detail: { taskId: ev.id, action: 'toggle-complete' },
+      })
+    )
+  }, [ev.id])
+
+  const handleOpenDetail = useCallback(() => {
+    window.dispatchEvent(
+      new CustomEvent('laif:detail-task', {
+        detail: { taskId: ev.id },
+      })
+    )
+  }, [ev.id])
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'stretch',
+        minHeight: hasTimed ? 68 : 52,
+      }}
+    >
+      {/* Time column */}
+      <div
+        style={{
+          width: 80,
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          paddingRight: 12,
+        }}
+      >
+        <span
+          style={{
+            fontSize: 13,
+            fontWeight: 400,
+            color: isOverdue && !isCompleted ? '#ef4444' : 'var(--text-faint)',
+            fontVariantNumeric: 'tabular-nums',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {allDay ? 'All Day' : formatTime(startDate)}
+        </span>
+      </div>
+
+      {/* Checkbox + vertical timeline connector */}
+      <div
+        style={{
+          width: 24,
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          position: 'relative',
+        }}
+      >
+        {/* Top connector line */}
+        <div
+          style={{
+            flex: 1,
+            width: 1,
+            borderLeft: '1px dashed var(--border)',
+            visibility: 'visible',
+          }}
+        />
+
+        {/* Checkbox circle */}
+        <button
+          type="button"
+          onClick={handleToggleComplete}
+          style={{
+            width: 16,
+            height: 16,
+            borderRadius: '50%',
+            border: isCompleted
+              ? 'none'
+              : `1.5px solid ${isOverdue && !isCompleted ? '#ef4444' : 'var(--border)'}`,
+            backgroundColor: isCompleted ? 'var(--accent)' : 'transparent',
+            cursor: 'pointer',
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            transition: 'background-color 150ms ease, border-color 150ms ease',
+          }}
+          aria-label={isCompleted ? 'Mark incomplete' : 'Mark complete'}
+        >
+          {isCompleted && (
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path
+                d="M2 5L4.5 7.5L8 3"
+                stroke="#fff"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+        </button>
+
+        {/* Bottom connector line */}
+        <div
+          style={{
+            flex: 1,
+            width: 1,
+            borderLeft: isLast ? 'none' : '1px dashed var(--border)',
+          }}
+        />
+      </div>
+
+      {/* Task card */}
+      <button
+        type="button"
+        onClick={handleOpenDetail}
+        style={{
+          flex: 1,
+          minWidth: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          margin: '3px 0 3px 10px',
+          padding: '10px 14px',
+          borderRadius: 8,
+          border: 'none',
+          borderLeft: `3px solid ${hexToRgba(cardColorHex, 0.4)}`,
+          backgroundColor: hexToRgba(cardColorHex, 0.08),
+          cursor: 'pointer',
+          textAlign: 'left',
+          transition: 'background-color 100ms ease',
+          opacity: isCompleted ? 0.45 : dayIsPast && !isOverdue ? 0.7 : 1,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = hexToRgba(cardColorHex, 0.14)
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = hexToRgba(cardColorHex, 0.08)
+        }}
+      >
+        {/* Title + time range area */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            flex: 1,
+            minWidth: 0,
+            gap: hasTimed ? 2 : 0,
+          }}
+        >
+          {/* Time range line (for timed tasks) */}
+          {hasTimed && (
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 400,
+                color: cardColor.startsWith('#') ? cardColor : 'var(--accent)',
+                lineHeight: 1.3,
+              }}
+            >
+              {formatTime(startDate)} - {formatTime(endDate)}
+            </span>
+          )}
+
+          {/* Title */}
+          <span
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: isOverdue && !isCompleted
+                ? '#ef4444'
+                : 'var(--text-primary)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              textDecoration: isCompleted ? 'line-through' : 'none',
+              lineHeight: 1.3,
+            }}
+          >
+            {ev.title}
+          </span>
+        </div>
+
+        {/* Overdue badge */}
+        {isOverdue && !isCompleted && (
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 600,
+              color: '#ef4444',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              padding: '2px 6px',
+              borderRadius: 4,
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {ev.daysOverdue}d overdue
+          </span>
+        )}
+
+        {/* Calendar icon for timed / external events */}
+        {(hasTimed || ev.isExternal) && (
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill="none"
+            style={{ flexShrink: 0, opacity: 0.35 }}
+          >
+            <rect
+              x="2"
+              y="3"
+              width="12"
+              height="11"
+              rx="2"
+              stroke="var(--text-faint)"
+              strokeWidth="1.3"
+            />
+            <path
+              d="M2 7h12"
+              stroke="var(--text-faint)"
+              strokeWidth="1.3"
+            />
+            <path
+              d="M5.5 1.5v3M10.5 1.5v3"
+              stroke="var(--text-faint)"
+              strokeWidth="1.3"
+              strokeLinecap="round"
+            />
+          </svg>
+        )}
+      </button>
+    </div>
   )
 }

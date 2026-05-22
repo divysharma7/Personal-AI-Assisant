@@ -4,13 +4,9 @@ import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Plus } from 'lucide-react'
 import { scaleIn, fade, buttonPress, ease } from '@/lib/motion'
+import { copy } from '@/lib/copy'
 
-// TODO: move to copy.ts
-const COPY = {
-  title: 'Habit Gallery',
-  addCta: 'Add',
-  categories: ['Content & Creative', 'Learning', 'Health & Fitness', 'Networking & Career'] as const,
-} as const
+const COPY = copy.habitGallery
 
 interface GalleryHabit {
   icon: string

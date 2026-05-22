@@ -14,8 +14,10 @@ import DroppableSlot from './DroppableSlot'
 import CurrentTimeLine from './CurrentTimeLine'
 import CalendarEmpty from './CalendarEmpty'
 import CapacityBar from './CapacityBar'
+import HiddenHoursDivider from './week/HiddenHoursDivider'
 import type { CalendarEvent } from './types'
 import { MOCK_CAPACITY } from './mockData'
+import { useCalendarStore } from '@/stores/calendarStore'
 
 interface DayViewProps {
   date: Date
@@ -23,16 +25,44 @@ interface DayViewProps {
 }
 
 const HOUR_LABELS = getHourLabels()
-const COLLAPSE_START_HOUR = 21
-const COLLAPSE_END_HOUR = 7
+/** Total grid columns in day view: 1 time-label + 1 content column */
+const DAY_GRID_COLUMNS = 2
+
+/**
+ * Check if a calendar event is an all-day event.
+ * All-day events either have no time component (midnight to midnight)
+ * or span 24+ hours.
+ */
+function isAllDay(ev: CalendarEvent): boolean {
+  if (ev.isAllDay) return true
+  const start = new Date(ev.start)
+  const end = new Date(ev.end)
+  // Midnight-to-midnight on same or next day
+  if (start.getHours() === 0 && start.getMinutes() === 0) {
+    if (end.getHours() === 0 && end.getMinutes() === 0) return true
+    if (end.getHours() === 23 && end.getMinutes() === 59) return true
+  }
+  // Spans 24+ hours
+  return end.getTime() - start.getTime() >= 24 * 60 * 60 * 1000
+}
 
 export default function DayView({ date, events }: DayViewProps) {
+  const hiddenHoursStart = useCalendarStore((s) => s.hiddenHoursStart)
+  const hiddenHoursEnd = useCalendarStore((s) => s.hiddenHoursEnd)
+  const setHiddenHoursStart = useCalendarStore((s) => s.setHiddenHoursStart)
+  const setHiddenHoursEnd = useCalendarStore((s) => s.setHiddenHoursEnd)
+
   const [showEarlyHours, setShowEarlyHours] = useState(false)
   const [showLateHours, setShowLateHours] = useState(false)
   const [newTaskSlot, setNewTaskSlot] = useState<number | null>(null)
 
   const dayEvents = useMemo(
-    () => events.filter((ev) => ev.start && isSameDay(new Date(ev.start), date) && !ev.isHabit),
+    () => events.filter((ev) => ev.start && isSameDay(new Date(ev.start), date) && !ev.isHabit && !isAllDay(ev)),
+    [events, date]
+  )
+
+  const allDayEvents = useMemo(
+    () => events.filter((ev) => ev.start && isSameDay(new Date(ev.start), date) && !ev.isHabit && isAllDay(ev)),
     [events, date]
   )
 
@@ -44,9 +74,17 @@ export default function DayView({ date, events }: DayViewProps) {
   const showToday = isToday(date)
   const dayISO = date.toISOString().split('T')[0]
 
-  const firstVisibleRow = showEarlyHours ? 1 : COLLAPSE_END_HOUR * 4 + 1
-  const lastVisibleRow = showLateHours ? 96 : COLLAPSE_START_HOUR * 4
+  const effectiveStart = showEarlyHours ? 0 : hiddenHoursStart
+  const effectiveEnd = showLateHours ? 24 : hiddenHoursEnd
+  const firstVisibleRow = effectiveStart * 4 + 1
+  const lastVisibleRow = effectiveEnd * 4
   const visibleRowCount = lastVisibleRow - firstVisibleRow + 1
+
+  const hasHiddenTop = hiddenHoursStart > 0
+  const hasHiddenBottom = hiddenHoursEnd < 24
+  const topDividerRows = hasHiddenTop ? 1 : 0
+  const bottomDividerRows = hasHiddenBottom ? 1 : 0
+  const totalGridRows = topDividerRows + visibleRowCount + bottomDividerRows
 
   // Build a map of which slots are occupied by which events
   const slotOccupancy = useMemo(() => {
@@ -70,12 +108,46 @@ export default function DayView({ date, events }: DayViewProps) {
 
   const handleNewTaskKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Escape' || e.key === 'Enter') {
+      if (e.key === 'Escape') {
+        setNewTaskSlot(null)
+        return
+      }
+      if (e.key === 'Enter') {
+        const title = (e.target as HTMLInputElement).value.trim()
+        if (title && newTaskSlot !== null) {
+          const slotIndex = newTaskSlot - 1 // convert from 1-indexed grid row to 0-indexed slot
+          window.dispatchEvent(
+            new CustomEvent('laif:create-calendar-task', {
+              detail: { title, slotIndex, dayISO },
+            })
+          )
+        }
         setNewTaskSlot(null)
       }
     },
-    []
+    [newTaskSlot, dayISO]
   )
+
+  const handleDragTop = useCallback(
+    (newHour: number) => {
+      setHiddenHoursStart(newHour)
+      if (newHour === 0) setShowEarlyHours(false)
+    },
+    [setHiddenHoursStart],
+  )
+
+  const handleDragBottom = useCallback(
+    (newHour: number) => {
+      setHiddenHoursEnd(newHour)
+      if (newHour === 24) setShowLateHours(false)
+    },
+    [setHiddenHoursEnd],
+  )
+
+  /** Map an absolute grid row to the local grid row (accounting for top divider). */
+  const toLocalRow = (absoluteRow: number): number => {
+    return absoluteRow - firstVisibleRow + 1 + topDividerRows
+  }
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -91,6 +163,43 @@ export default function DayView({ date, events }: DayViewProps) {
         </div>
       )}
 
+      {/* All-day event lane */}
+      {allDayEvents.length > 0 && (
+        <div
+          className="flex items-center gap-2 px-4 py-2"
+          style={{ borderBottom: '1px solid var(--border)' }}
+        >
+          <span
+            className="text-[10px] font-medium shrink-0"
+            style={{ color: 'var(--text-faint)', width: 44, textAlign: 'right' }}
+          >
+            All Day
+          </span>
+          <div className="flex items-center gap-1.5 overflow-x-auto flex-1">
+            {allDayEvents.map((ev) => (
+              <button
+                key={ev.id}
+                className="flex items-center rounded-md px-2.5 py-1 text-[11px] font-medium whitespace-nowrap cursor-pointer"
+                style={{
+                  backgroundColor: ev.color + '22',
+                  color: ev.color,
+                  border: `1px solid ${ev.color}33`,
+                }}
+                onClick={() => {
+                  window.dispatchEvent(
+                    new CustomEvent('laif:detail-task', {
+                      detail: { taskId: ev.id },
+                    })
+                  )
+                }}
+              >
+                {ev.title}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Capacity bar */}
       <div className="px-4 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
         <CapacityBar
@@ -98,17 +207,6 @@ export default function DayView({ date, events }: DayViewProps) {
           capacityHours={MOCK_CAPACITY.capacityHours}
         />
       </div>
-
-      {/* Early hours toggle */}
-      {!showEarlyHours && (
-        <button
-          onClick={() => setShowEarlyHours(true)}
-          className="text-[10px] font-medium py-1 cursor-pointer"
-          style={{ color: 'var(--text-faint)', backgroundColor: 'var(--bg-pane-2)' }}
-        >
-          Show 12 AM - 7 AM
-        </button>
-      )}
 
       {/* Time grid */}
       <div className="flex-1 overflow-y-auto">
@@ -119,16 +217,30 @@ export default function DayView({ date, events }: DayViewProps) {
             className="cal-grid relative"
             style={{
               gridTemplateColumns: '60px 1fr',
-              gridTemplateRows: `repeat(${visibleRowCount}, minmax(16px, 1fr))`,
-              minHeight: visibleRowCount * 16,
+              gridTemplateRows: hasHiddenTop || hasHiddenBottom
+                ? `${hasHiddenTop ? '24px ' : ''}repeat(${visibleRowCount}, minmax(16px, 1fr))${hasHiddenBottom ? ' 24px' : ''}`
+                : `repeat(${visibleRowCount}, minmax(16px, 1fr))`,
+              minHeight: visibleRowCount * 16 + topDividerRows * 24 + bottomDividerRows * 24,
             }}
           >
+            {/* Top hidden hours divider */}
+            {hasHiddenTop && (
+              <HiddenHoursDivider
+                position="top"
+                hour={hiddenHoursStart}
+                onDrag={handleDragTop}
+                onToggleExpand={() => setShowEarlyHours((p) => !p)}
+                isExpanded={showEarlyHours}
+                gridColumns={DAY_GRID_COLUMNS}
+              />
+            )}
+
             {/* Hour labels */}
             {Array.from({ length: visibleRowCount }, (_, i) => {
               const actualRow = firstVisibleRow + i
               const hour = Math.floor((actualRow - 1) / 4)
               const isHourStart = (actualRow - 1) % 4 === 0
-              const gridRowIndex = i + 1
+              const gridRowIndex = i + 1 + topDividerRows
 
               return (
                 <div
@@ -150,7 +262,7 @@ export default function DayView({ date, events }: DayViewProps) {
             {Array.from({ length: visibleRowCount }, (_, i) => {
               const actualRow = firstVisibleRow + i
               const slotIndex = actualRow - 1 // 0-indexed
-              const gridRowIndex = i + 1
+              const gridRowIndex = i + 1 + topDividerRows
               const isHourStart = (actualRow - 1) % 4 === 0
               const slotId = `slot-${dayISO}-${slotIndex}`
               const occupied = slotOccupancy.get(slotIndex) || []
@@ -180,16 +292,28 @@ export default function DayView({ date, events }: DayViewProps) {
               )
             })}
 
-            {/* Event blocks — wrapped in DraggableBlock */}
+            {/* Bottom hidden hours divider */}
+            {hasHiddenBottom && (
+              <HiddenHoursDivider
+                position="bottom"
+                hour={hiddenHoursEnd}
+                onDrag={handleDragBottom}
+                onToggleExpand={() => setShowLateHours((p) => !p)}
+                isExpanded={showLateHours}
+                gridColumns={DAY_GRID_COLUMNS}
+              />
+            )}
+
+            {/* Event blocks -- wrapped in DraggableBlock */}
             {dayEvents.map((ev) => {
               const start = new Date(ev.start)
               const end = new Date(ev.end)
               const startRow = timeToGridRow(start)
               const span = gridRowSpan(start, end)
-              const visibleStart = startRow - firstVisibleRow + 1
+              const visibleStart = toLocalRow(startRow)
               const visibleEnd = visibleStart + span
 
-              if (visibleStart > visibleRowCount || visibleEnd < 1) return null
+              if (visibleStart > totalGridRows || visibleEnd < 1 + topDividerRows) return null
 
               const isReadOnly = !!(ev.isExternal || ev.isFocusSession || ev.isReadOnly)
 
@@ -198,7 +322,7 @@ export default function DayView({ date, events }: DayViewProps) {
                   key={ev.id}
                   style={{
                     gridColumn: '2 / 3',
-                    gridRow: `${Math.max(1, visibleStart)} / ${Math.min(visibleRowCount + 1, visibleEnd)}`,
+                    gridRow: `${Math.max(1 + topDividerRows, visibleStart)} / ${Math.min(totalGridRows - bottomDividerRows + 1, visibleEnd)}`,
                     padding: '0 4px',
                     zIndex: 5,
                     pointerEvents: 'auto',
@@ -229,29 +353,41 @@ export default function DayView({ date, events }: DayViewProps) {
 
             {/* Inline new task input */}
             {newTaskSlot !== null && (() => {
-              const visibleSlot = newTaskSlot - firstVisibleRow + 1
-              if (visibleSlot < 1 || visibleSlot > visibleRowCount) return null
+              const visibleSlot = toLocalRow(newTaskSlot)
+              if (visibleSlot < 1 + topDividerRows || visibleSlot > totalGridRows - bottomDividerRows) return null
               return (
                 <div
                   style={{
                     gridColumn: '2 / 3',
-                    gridRow: `${visibleSlot} / ${visibleSlot + 2}`,
+                    gridRow: `${visibleSlot} / ${visibleSlot + 4}`,
                     padding: '0 4px',
                     zIndex: 15,
                   }}
                 >
-                  <input
-                    autoFocus
-                    placeholder="New task"
-                    className="w-full h-full rounded-md px-2 text-xs outline-none"
+                  <div
                     style={{
-                      backgroundColor: 'var(--bg-pane-2)',
-                      border: '1px solid var(--accent)',
-                      color: 'var(--text-primary)',
+                      height: '100%',
+                      borderRadius: 8,
+                      backgroundColor: 'color-mix(in srgb, var(--accent) 15%, transparent)',
+                      border: '2px solid var(--accent)',
+                      display: 'flex', alignItems: 'flex-start',
+                      padding: '6px 10px',
                     }}
-                    onBlur={() => setNewTaskSlot(null)}
-                    onKeyDown={handleNewTaskKeyDown}
-                  />
+                  >
+                    <input
+                      autoFocus
+                      placeholder="Type task name, press Enter..."
+                      style={{
+                        width: '100%',
+                        background: 'transparent', border: 'none', outline: 'none',
+                        fontSize: 13, fontWeight: 600,
+                        color: 'var(--text-primary)',
+                        fontFamily: 'Inter, system-ui, sans-serif',
+                      }}
+                      onBlur={() => setNewTaskSlot(null)}
+                      onKeyDown={handleNewTaskKeyDown}
+                    />
+                  </div>
                 </div>
               )
             })()}
@@ -272,17 +408,6 @@ export default function DayView({ date, events }: DayViewProps) {
           </div>
         )}
       </div>
-
-      {/* Late hours toggle */}
-      {!showLateHours && (
-        <button
-          onClick={() => setShowLateHours(true)}
-          className="text-[10px] font-medium py-1 cursor-pointer"
-          style={{ color: 'var(--text-faint)', backgroundColor: 'var(--bg-pane-2)' }}
-        >
-          Show 9 PM - 12 AM
-        </button>
-      )}
     </div>
   )
 }
@@ -316,6 +441,7 @@ function CurrentTimeLinePositioned({
       }}
     >
       <div
+        className="cal-dot-pulse"
         style={{
           width: 8,
           height: 8,
@@ -323,7 +449,6 @@ function CurrentTimeLinePositioned({
           backgroundColor: 'var(--accent)',
           marginLeft: -4,
           flexShrink: 0,
-          animation: 'cal-dot-pulse 4s ease-in-out infinite',
         }}
       />
       <div style={{ flex: 1, height: 2, backgroundColor: 'var(--accent)' }} />

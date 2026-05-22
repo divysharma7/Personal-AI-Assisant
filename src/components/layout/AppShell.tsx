@@ -203,20 +203,17 @@ export default function AppShell({ children }: { children: ReactNode }) {
         />
       )}
 
-      {/* Left: Sidebar — collapsible */}
-      <AnimatePresence>
-        {!sidebarCollapsed && (
-          <motion.div
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 260, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: motionTokens.duration.fast, ease: motionTokens.easing.sharp }}
-            className="flex-shrink-0 overflow-hidden"
-          >
-            <Sidebar onToggleCollapse={() => setSidebarCollapsed(true)} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Left: Sidebar — always visible, collapsed or expanded */}
+      <motion.div
+        animate={{ width: sidebarCollapsed ? 48 : 260 }}
+        transition={{ duration: motionTokens.duration.fast, ease: motionTokens.easing.sharp }}
+        className="flex-shrink-0 overflow-hidden"
+      >
+        <Sidebar
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
+      </motion.div>
 
       {/* Center: Main content */}
       <main
@@ -228,21 +225,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
           transition: 'flex 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
-        {/* Sidebar expand button when collapsed */}
-        {sidebarCollapsed && (
-          <button
-            onClick={() => setSidebarCollapsed(false)}
-            className="absolute left-3 top-3 z-30 flex h-7 w-7 items-center justify-center rounded-md cursor-pointer transition-sl"
-            style={{ color: 'var(--text-faint)', backgroundColor: 'var(--overlay-1, transparent)' }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-2, var(--bg-hover))' }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, transparent)' }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <path d="M9 3v18" />
-            </svg>
-          </button>
-        )}
         <AnimatePresence mode="wait">
           <motion.div
             key={pathname}
