@@ -2,8 +2,8 @@
 
 import { useRef, useState, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowUp, Mic } from 'lucide-react'
-import { buttonPress } from '@/lib/motion'
+import { ArrowUp, Plus } from 'lucide-react'
+import { buttonPress, motionTokens } from '@/lib/motion'
 
 interface ChatInputProps {
   onSend: (text: string) => void
@@ -22,8 +22,7 @@ export default function ChatInput({ onSend, disabled, placeholder }: ChatInputPr
     const ta = textareaRef.current
     if (!ta) return
     ta.style.height = 'auto'
-    // Max 4 lines (~80px)
-    ta.style.height = `${Math.min(ta.scrollHeight, 80)}px`
+    ta.style.height = `${Math.min(ta.scrollHeight, 120)}px`
   }, [])
 
   useEffect(() => {
@@ -35,7 +34,6 @@ export default function ChatInput({ onSend, disabled, placeholder }: ChatInputPr
     if (!trimmed || disabled) return
     onSend(trimmed)
     setValue('')
-    // Reset height
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
     }
@@ -56,55 +54,89 @@ export default function ChatInput({ onSend, disabled, placeholder }: ChatInputPr
 
   return (
     <div
-      className="flex items-end gap-2 rounded-full px-4 py-2"
       style={{
-        backgroundColor: 'var(--bg-pane-2)',
-        border: '1px solid var(--border)',
+        display: 'flex',
+        alignItems: 'flex-end',
+        gap: 10,
+        padding: '10px 10px 10px 16px',
+        borderRadius: 999,
+        backgroundColor: 'var(--bg-hover)',
+        border: '1px solid var(--overlay-2, rgba(108,108,158,0.1))',
+        transition: 'border-color 200ms ease, box-shadow 200ms ease',
+      }}
+      onFocus={(e) => {
+        e.currentTarget.style.borderColor = 'var(--overlay-3, rgba(108,108,158,0.25))'
+        e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.08)'
+      }}
+      onBlur={(e) => {
+        e.currentTarget.style.borderColor = 'var(--overlay-2, rgba(108,108,158,0.1))'
+        e.currentTarget.style.boxShadow = 'none'
       }}
     >
+      {/* Plus icon — matches Today new-task style */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 28,
+          height: 28,
+          flexShrink: 0,
+          color: 'var(--text-faint)',
+        }}
+      >
+        <Plus size={18} strokeWidth={1.5} />
+      </div>
+
       <textarea
         ref={textareaRef}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
         disabled={disabled}
-        placeholder={placeholder}
+        placeholder={placeholder || 'Ask anything about your tasks...'}
         rows={1}
-        className="flex-1 resize-none bg-transparent text-sm leading-snug outline-none placeholder:text-[var(--text-faint)]"
         style={{
+          flex: 1,
+          resize: 'none',
+          background: 'transparent',
+          outline: 'none',
+          border: 'none',
+          fontSize: 15,
+          fontWeight: 500,
           color: 'var(--text-primary)',
-          maxHeight: 80,
-          minHeight: 20,
+          fontFamily: 'Inter, system-ui, sans-serif',
+          maxHeight: 120,
+          minHeight: 22,
+          lineHeight: 1.5,
+          padding: 0,
         }}
       />
 
-      {/* Microphone placeholder */}
-      {!hasText && (
-        <button
-          type="button"
-          disabled
-          aria-label="Voice input"
-          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full opacity-40 cursor-not-allowed"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          <Mic size={18} strokeWidth={1.5} />
-        </button>
-      )}
-
-      {/* Send button */}
-      {hasText && (
-        <motion.button
-          {...buttonPress}
-          type="button"
-          onClick={handleSend}
-          disabled={disabled}
-          aria-label="Send message"
-          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-white transition-colors duration-150 cursor-pointer"
-          style={{ backgroundColor: 'var(--accent)' }}
-        >
-          <ArrowUp size={16} strokeWidth={2} />
-        </motion.button>
-      )}
+      {/* Send button — accent circle with arrow */}
+      <motion.button
+        {...buttonPress}
+        type="button"
+        onClick={handleSend}
+        disabled={!hasText || disabled}
+        aria-label="Send message"
+        style={{
+          width: 34,
+          height: 34,
+          borderRadius: '50%',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: 'none',
+          cursor: hasText ? 'pointer' : 'default',
+          backgroundColor: hasText ? 'var(--accent)' : 'var(--overlay-2, rgba(108,108,158,0.12))',
+          color: hasText ? '#fff' : 'var(--text-faint)',
+          transition: `background-color ${motionTokens.duration.fast * 1000}ms ease, color ${motionTokens.duration.fast * 1000}ms ease`,
+        }}
+      >
+        <ArrowUp size={16} strokeWidth={2} />
+      </motion.button>
     </div>
   )
 }

@@ -1,49 +1,62 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { fadeSlideUp, ease } from '@/lib/motion'
+import { Bot } from 'lucide-react'
+import { motionTokens } from '@/lib/motion'
 
 export default function TypingIndicator() {
   return (
     <motion.div
-      {...fadeSlideUp}
-      transition={ease.normal}
-      className="flex items-start gap-2 mb-3"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: motionTokens.duration.fast }}
+      style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 20 }}
     >
-      {/* Avatar */}
+      {/* AI Avatar */}
       <div
-        className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold"
-        style={{ backgroundColor: 'var(--bg-pane-2)', color: 'var(--text-primary)' }}
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: '50%',
+          flexShrink: 0,
+          backgroundColor: 'var(--accent)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
       >
-        L
+        <Bot size={16} strokeWidth={1.5} color="#fff" />
       </div>
 
-      {/* Bubble with bouncing dots */}
+      {/* Bouncing dots */}
       <div
-        className="flex items-center gap-1 rounded-2xl px-4 py-3"
-        style={{ backgroundColor: 'var(--bg-pane-2)' }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 5,
+          padding: '14px 18px',
+          borderRadius: 18,
+          borderBottomLeftRadius: 6,
+          backgroundColor: 'var(--bg-pane-2)',
+        }}
       >
         {[0, 1, 2].map((i) => (
-          <span
+          <motion.div
             key={i}
-            className="inline-block h-1.5 w-1.5 rounded-full"
+            animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }}
+            transition={{
+              duration: motionTokens.duration.crawl,
+              repeat: Infinity,
+              delay: i * motionTokens.duration.fast,
+            }}
             style={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
               backgroundColor: 'var(--accent)',
-              animation: `chat-bounce 1.2s ease-in-out ${i * 150}ms infinite`,
             }}
           />
         ))}
-
-        <style jsx>{`
-          @keyframes chat-bounce {
-            0%, 60%, 100% {
-              transform: translateY(0);
-            }
-            30% {
-              transform: translateY(-4px);
-            }
-          }
-        `}</style>
       </div>
     </motion.div>
   )

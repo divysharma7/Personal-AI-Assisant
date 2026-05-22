@@ -1,78 +1,54 @@
 /**
  * LAIF MCP Server -- Model Context Protocol
  *
- * This server exposes LAIF's capabilities as MCP tools that Claude Desktop
- * (or any MCP client) can call directly.
- *
- * Architecture:
- *   Claude Desktop -> MCP Protocol -> This server -> MongoDB (when connected)
- *
- * To run: npx tsx src/mcp/server.ts
- * To connect: Add to ~/Library/Application Support/Claude/claude_desktop_config.json:
- *   {
- *     "mcpServers": {
- *       "laif": {
- *         "command": "npx",
- *         "args": ["tsx", "/path/to/laif/src/mcp/server.ts"],
- *         "env": { "MONGODB_URI": "..." }
- *       }
- *     }
- *   }
+ * Functional tool handlers that connect to MongoDB via Mongoose.
+ * Each handler: connectDB() -> query -> return JSON result.
  *
  * Tools exposed:
- *   1. laif_list_tasks     -- List tasks with filters (status, priority, list, date range)
- *   2. laif_create_task    -- Create a task with title, priority, due date, list
- *   3. laif_complete_task  -- Mark a task as done (plays completion sound on web)
- *   4. laif_get_today      -- Get today's schedule (tasks + habits + events)
- *   5. laif_start_focus    -- Start a Pomodoro session on a task
- *   6. laif_check_habits   -- Get today's habit status with streaks
- *   7. laif_checkin_habit  -- Check in a habit (achieved/unachieved)
- *   8. laif_get_stats      -- Get productivity statistics
- *   9. laif_create_list    -- Create a new list/folder
- *   10. laif_schedule_task -- Schedule a task to a time slot
- *
- * NOT IMPLEMENTED YET -- connect backend first, then:
- *   - import { Server } from '@anthropic-ai/mcp'
- *   - import mongoose from 'mongoose'
- *   - Register each tool with schema + handler
- *   - Start server on stdio transport
+ *   1. list_tasks     -- List tasks with filters (status, priority, limit)
+ *   2. create_task    -- Create a task with title, priority, due date
+ *   3. complete_task  -- Mark a task as done
+ *   4. list_habits    -- View habits
+ *   5. check_in_habit -- Log habit completion
+ *   6. get_calendar   -- View scheduled events in a date range
+ *   7. get_stats      -- Task & habit statistics
  */
+
+import { connectDB } from '@/lib/mongodb'
+import TaskModel from '@/lib/models/Task'
+
+/* ─── Tool definitions (for UI display & validation) ─── */
 
 export const MCP_TOOLS = [
   {
-    name: 'laif_list_tasks',
-    description: 'List tasks with optional filters',
+    name: 'list_tasks',
+    description: 'Query your tasks',
     parameters: {
       type: 'object' as const,
       properties: {
         status: { type: 'string', enum: ['backlog', 'todo', 'in-progress', 'done', 'dropped'] },
         priority: { type: 'string', enum: ['high', 'medium', 'low'] },
-        listId: { type: 'string', description: 'Filter by list/folder ID' },
-        dueBy: { type: 'string', description: 'ISO date -- tasks due by this date' },
-        isHabit: { type: 'boolean', description: 'Filter habits only' },
         limit: { type: 'number', default: 20 },
       },
     },
   },
   {
-    name: 'laif_create_task',
-    description: 'Create a new task',
+    name: 'create_task',
+    description: 'Create new tasks',
     parameters: {
       type: 'object' as const,
       properties: {
         title: { type: 'string' },
         priority: { type: 'string', enum: ['high', 'medium', 'low'] },
         dueDate: { type: 'string', description: 'ISO date' },
-        estimatedEffort: { type: 'number', description: 'Hours' },
-        listId: { type: 'string' },
-        status: { type: 'string', enum: ['backlog', 'todo'] },
+        description: { type: 'string' },
       },
       required: ['title'],
     },
   },
   {
-    name: 'laif_complete_task',
-    description: 'Mark a task as done',
+    name: 'complete_task',
+    description: 'Mark tasks done',
     parameters: {
       type: 'object' as const,
       properties: {
@@ -82,82 +58,205 @@ export const MCP_TOOLS = [
     },
   },
   {
-    name: 'laif_get_today',
-    description: "Get today's schedule -- tasks due today, habits, events",
+    name: 'list_habits',
+    description: 'View habits',
     parameters: { type: 'object' as const, properties: {} },
   },
   {
-    name: 'laif_start_focus',
-    description: 'Start a Pomodoro focus session on a task',
-    parameters: {
-      type: 'object' as const,
-      properties: {
-        taskId: { type: 'string' },
-        durationMin: { type: 'number', default: 25 },
-      },
-      required: ['taskId'],
-    },
-  },
-  {
-    name: 'laif_check_habits',
-    description: "Get today's habits with completion status and streaks",
-    parameters: { type: 'object' as const, properties: {} },
-  },
-  {
-    name: 'laif_checkin_habit',
-    description: 'Check in a habit for today',
+    name: 'check_in_habit',
+    description: 'Log habit completion',
     parameters: {
       type: 'object' as const,
       properties: {
         habitId: { type: 'string' },
-        status: { type: 'string', enum: ['achieved', 'unachieved'] },
-        value: { type: 'number', description: 'For count habits' },
-        reason: { type: 'string', description: 'For unachieved -- why' },
+        date: { type: 'string', description: 'YYYY-MM-DD (defaults to today)' },
       },
-      required: ['habitId', 'status'],
+      required: ['habitId'],
     },
   },
   {
-    name: 'laif_get_stats',
-    description: 'Get productivity statistics',
+    name: 'get_calendar',
+    description: 'View scheduled events',
     parameters: {
       type: 'object' as const,
       properties: {
-        range: { type: 'string', enum: ['today', '7d', '30d'], default: '7d' },
+        startDate: { type: 'string', description: 'ISO date' },
+        endDate: { type: 'string', description: 'ISO date' },
       },
+      required: ['startDate', 'endDate'],
     },
   },
   {
-    name: 'laif_create_list',
-    description: 'Create a new list/folder',
-    parameters: {
-      type: 'object' as const,
-      properties: {
-        title: { type: 'string' },
-        icon: { type: 'string', description: 'Emoji icon' },
-        groupTitle: { type: 'string', description: 'Sidebar group name' },
-      },
-      required: ['title'],
-    },
+    name: 'get_stats',
+    description: 'Task & habit statistics',
+    parameters: { type: 'object' as const, properties: {} },
   },
-  {
-    name: 'laif_schedule_task',
-    description: 'Schedule a task to a specific time slot',
-    parameters: {
-      type: 'object' as const,
-      properties: {
-        taskId: { type: 'string' },
-        scheduledStart: { type: 'string', description: 'ISO datetime' },
-        scheduledEnd: { type: 'string', description: 'ISO datetime' },
-        syncToGoogle: { type: 'boolean', default: false },
-      },
-      required: ['taskId', 'scheduledStart', 'scheduledEnd'],
-    },
-  },
-]
+] as const
 
-// Stub -- will be implemented when backend is connected
-export async function handleToolCall(toolName: string, args: Record<string, unknown>) {
-  // NOTE: MCP tool execution pending backend connection
-  return { success: false, error: 'Backend not connected' }
+/* ─── Tool type map ─── */
+
+type ToolName = (typeof MCP_TOOLS)[number]['name']
+
+/* ─── Individual handlers ─── */
+
+async function listTasks(userId: string, params: Record<string, unknown>) {
+  await connectDB()
+  const filter: Record<string, unknown> = { createdBy: userId, isHabit: { $ne: true } }
+  if (params.status) filter.status = params.status
+  if (params.priority) filter.priority = params.priority
+  const limit = typeof params.limit === 'number' ? Math.min(params.limit, 100) : 20
+  const tasks = await TaskModel.find(filter).sort({ updatedAt: -1 }).limit(limit).lean()
+  return { tasks, count: tasks.length }
+}
+
+async function createTask(userId: string, params: Record<string, unknown>) {
+  await connectDB()
+  const title = params.title as string
+  if (!title || typeof title !== 'string') {
+    return { error: 'title is required' }
+  }
+  const doc: Record<string, unknown> = {
+    title,
+    createdBy: userId,
+    status: 'todo',
+  }
+  if (params.priority) doc.priority = params.priority
+  if (params.dueDate) doc.dueDate = new Date(params.dueDate as string)
+  if (params.description) doc.description = params.description
+  const task = await TaskModel.create(doc)
+  return { task: task.toObject() }
+}
+
+async function completeTask(userId: string, params: Record<string, unknown>) {
+  await connectDB()
+  const taskId = params.taskId as string
+  if (!taskId) return { error: 'taskId is required' }
+  const task = await TaskModel.findOneAndUpdate(
+    { _id: taskId, createdBy: userId },
+    { status: 'done', completedAt: new Date() },
+    { new: true },
+  ).lean()
+  if (!task) return { error: 'Task not found' }
+  return { task }
+}
+
+async function listHabits(userId: string) {
+  await connectDB()
+  const habits = await TaskModel.find({ createdBy: userId, isHabit: true })
+    .sort({ updatedAt: -1 })
+    .lean()
+  return { habits, count: habits.length }
+}
+
+async function checkInHabit(userId: string, params: Record<string, unknown>) {
+  await connectDB()
+  const habitId = params.habitId as string
+  if (!habitId) return { error: 'habitId is required' }
+  const dateStr = (params.date as string) || new Date().toISOString().slice(0, 10)
+  const habit = await TaskModel.findOne({ _id: habitId, createdBy: userId, isHabit: true })
+  if (!habit) return { error: 'Habit not found' }
+
+  // Check if already checked in for this date
+  const existing = habit.completions?.find(
+    (c: { date: string }) => c.date === dateStr,
+  )
+  if (existing) {
+    return { error: `Already checked in for ${dateStr}`, habit: habit.toObject() }
+  }
+
+  habit.completions = habit.completions || []
+  habit.completions.push({
+    date: dateStr,
+    status: 'achieved',
+    value: 1,
+    loggedAt: new Date(),
+  })
+  habit.streakCurrent = (habit.streakCurrent || 0) + 1
+  if (habit.streakCurrent > (habit.streakBest || 0)) {
+    habit.streakBest = habit.streakCurrent
+  }
+  habit.streakLastUpdated = new Date()
+  await habit.save()
+  return { habit: habit.toObject() }
+}
+
+async function getCalendar(userId: string, params: Record<string, unknown>) {
+  await connectDB()
+  const startDate = params.startDate as string
+  const endDate = params.endDate as string
+  if (!startDate || !endDate) return { error: 'startDate and endDate are required' }
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+  const events = await TaskModel.find({
+    createdBy: userId,
+    scheduledStart: { $gte: start, $lte: end },
+  })
+    .sort({ scheduledStart: 1 })
+    .lean()
+  return { events, count: events.length }
+}
+
+async function getStats(userId: string) {
+  await connectDB()
+  const now = new Date()
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const todayEnd = new Date(todayStart.getTime() + 86400000)
+
+  const [totalTasks, completedToday, overdue, totalHabits] = await Promise.all([
+    TaskModel.countDocuments({ createdBy: userId, isHabit: { $ne: true } }),
+    TaskModel.countDocuments({
+      createdBy: userId,
+      status: 'done',
+      completedAt: { $gte: todayStart, $lt: todayEnd },
+    }),
+    TaskModel.countDocuments({
+      createdBy: userId,
+      isHabit: { $ne: true },
+      status: { $nin: ['done', 'dropped'] },
+      dueDate: { $lt: todayStart },
+    }),
+    TaskModel.countDocuments({ createdBy: userId, isHabit: true }),
+  ])
+
+  return {
+    totalTasks,
+    completedToday,
+    overdue,
+    totalHabits,
+  }
+}
+
+/* ─── Main dispatcher ─── */
+
+const handlers: Record<ToolName, (userId: string, params: Record<string, unknown>) => Promise<unknown>> = {
+  list_tasks: listTasks,
+  create_task: createTask,
+  complete_task: completeTask,
+  list_habits: (userId) => listHabits(userId),
+  check_in_habit: checkInHabit,
+  get_calendar: getCalendar,
+  get_stats: (userId) => getStats(userId),
+}
+
+export async function handleToolCall(
+  toolName: string,
+  params: Record<string, unknown>,
+  userId: string,
+): Promise<{ success: boolean; result?: unknown; error?: string }> {
+  const handler = handlers[toolName as ToolName]
+  if (!handler) {
+    return { success: false, error: `Unknown tool: ${toolName}` }
+  }
+  try {
+    const result = await handler(userId, params)
+    // If the handler itself returned an error field, propagate it
+    if (result && typeof result === 'object' && 'error' in result) {
+      return { success: false, error: (result as { error: string }).error }
+    }
+    return { success: true, result }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    console.error(`[MCP] ${toolName} failed:`, message)
+    return { success: false, error: message }
+  }
 }

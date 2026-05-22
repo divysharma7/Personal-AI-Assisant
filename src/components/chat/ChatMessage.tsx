@@ -1,8 +1,8 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Search, CheckCircle2, Plus, AlertCircle } from 'lucide-react'
-import { fadeSlideUp, ease } from '@/lib/motion'
+import { Search, CheckCircle2, Plus, AlertCircle, Bot } from 'lucide-react'
+import { fadeSlideUp, ease, motionTokens } from '@/lib/motion'
 
 export interface ChatStep {
   icon: 'search' | 'found' | 'created' | 'warning'
@@ -26,56 +26,67 @@ const STEP_ICONS = {
 
 /** Basic inline formatting: **bold** and `code` */
 function renderContent(text: string) {
-  const parts: (string | JSX.Element)[] = []
-  // Regex: match **bold** or `code`
-  const regex = /(\*\*(.+?)\*\*|`([^`]+)`)/g
-  let lastIndex = 0
-  let match: RegExpExecArray | null
+  return text.split('\n').map((line, i) => {
+    const parts: (string | JSX.Element)[] = []
+    const regex = /(\*\*(.+?)\*\*|`([^`]+)`)/g
+    let lastIndex = 0
+    let match: RegExpExecArray | null
 
-  while ((match = regex.exec(text)) !== null) {
-    // Push text before the match
-    if (match.index > lastIndex) {
-      parts.push(text.slice(lastIndex, match.index))
+    while ((match = regex.exec(line)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(line.slice(lastIndex, match.index))
+      }
+      if (match[2]) {
+        parts.push(
+          <strong key={`${i}-${match.index}`} style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+            {match[2]}
+          </strong>
+        )
+      } else if (match[3]) {
+        parts.push(
+          <code
+            key={`${i}-${match.index}`}
+            style={{
+              backgroundColor: 'var(--overlay-2)',
+              borderRadius: 4,
+              padding: '1px 5px',
+              fontSize: 13,
+            }}
+          >
+            {match[3]}
+          </code>
+        )
+      }
+      lastIndex = match.index + match[0].length
     }
-    if (match[2]) {
-      // Bold
-      parts.push(
-        <strong key={match.index} className="font-semibold">
-          {match[2]}
-        </strong>
-      )
-    } else if (match[3]) {
-      // Code
-      parts.push(
-        <code
-          key={match.index}
-          className="rounded px-1 py-0.5 text-[13px]"
-          style={{ backgroundColor: 'var(--bg-hover)' }}
-        >
-          {match[3]}
-        </code>
-      )
+    if (lastIndex < line.length) {
+      parts.push(line.slice(lastIndex))
     }
-    lastIndex = match.index + match[0].length
-  }
-  if (lastIndex < text.length) {
-    parts.push(text.slice(lastIndex))
-  }
-  return parts
+    return (
+      <p key={i} style={{ margin: line === '' ? '8px 0' : '2px 0' }}>
+        {parts.length > 0 ? parts : '\u00A0'}
+      </p>
+    )
+  })
 }
 
 function formatTime(d: Date) {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-export default function ChatMessage({ message }: { message: ChatMessageData }) {
+export default function ChatMessage({ message, index }: { message: ChatMessageData; index: number }) {
   const isUser = message.role === 'user'
 
   return (
-    <div className="mb-3">
+    <motion.div
+      initial={{ opacity: 0, y: motionTokens.distance.sm }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: motionTokens.duration.normal, ease: motionTokens.easing.smooth, delay: index * 0.03 }}
+      style={{ marginBottom: 20 }}
+    >
       {/* Tool steps (shown above assistant messages) */}
       {message.steps && message.steps.length > 0 && (
-        <div className="mb-2 flex flex-wrap gap-1.5 pl-9">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8, paddingLeft: isUser ? 0 : 44 }}>
           {message.steps.map((step, i) => {
             const Icon = STEP_ICONS[step.icon]
             return (
@@ -84,8 +95,13 @@ export default function ChatMessage({ message }: { message: ChatMessageData }) {
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ ...ease.fast, delay: i * 0.2 }}
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs"
                 style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  borderRadius: 999,
+                  padding: '4px 12px',
+                  fontSize: 12,
                   backgroundColor: 'var(--bg-hover)',
                   color: 'var(--text-muted)',
                 }}
@@ -98,43 +114,69 @@ export default function ChatMessage({ message }: { message: ChatMessageData }) {
         </div>
       )}
 
-      {/* Message bubble */}
-      <motion.div
-        {...fadeSlideUp}
-        transition={ease.normal}
-        className={`flex items-start gap-2 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
-      >
-        {/* Avatar */}
-        <div
-          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-xs font-semibold"
-          style={{
-            backgroundColor: isUser ? 'var(--accent)' : 'var(--bg-pane-2)',
-            color: isUser ? '#fff' : 'var(--text-primary)',
-          }}
-        >
-          {isUser ? 'Y' : 'L'}
+      {isUser ? (
+        /* User message — right-aligned, accent at 10% opacity */
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ maxWidth: '80%', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+            <div
+              style={{
+                padding: '12px 18px',
+                borderRadius: 18,
+                borderBottomRightRadius: 6,
+                backgroundColor: 'var(--accent-soft, rgba(15, 98, 254, 0.1))',
+                color: 'var(--text-primary)',
+                fontSize: 15,
+                fontWeight: 500,
+                lineHeight: 1.55,
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {message.content}
+            </div>
+            <span style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>
+              {formatTime(message.timestamp)}
+            </span>
+          </div>
         </div>
-
-        <div className={`flex max-w-[80%] flex-col ${isUser ? 'items-end' : 'items-start'}`}>
+      ) : (
+        /* Assistant message — left-aligned, bg-pane-2, with AI avatar */
+        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
           <div
-            className="rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap"
             style={{
-              backgroundColor: isUser ? 'var(--accent)' : 'var(--bg-pane-2)',
-              color: isUser ? '#fff' : 'var(--text-primary)',
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              flexShrink: 0,
+              backgroundColor: 'var(--accent)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginTop: 2,
             }}
           >
-            {renderContent(message.content)}
+            <Bot size={16} strokeWidth={1.5} color="#fff" />
           </div>
-
-          {/* Timestamp */}
-          <span
-            className="mt-1 text-[10px]"
-            style={{ color: 'var(--text-faint)' }}
-          >
-            {formatTime(message.timestamp)}
-          </span>
+          <div style={{ maxWidth: '85%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+            <div
+              style={{
+                padding: '12px 18px',
+                borderRadius: 18,
+                borderBottomLeftRadius: 6,
+                backgroundColor: 'var(--bg-pane-2)',
+                color: 'var(--text-muted)',
+                fontSize: 15,
+                fontWeight: 400,
+                lineHeight: 1.7,
+              }}
+            >
+              {renderContent(message.content)}
+            </div>
+            <span style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>
+              {formatTime(message.timestamp)}
+            </span>
+          </div>
         </div>
-      </motion.div>
-    </div>
+      )}
+    </motion.div>
   )
 }

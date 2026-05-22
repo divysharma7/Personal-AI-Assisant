@@ -6,7 +6,10 @@ import ReminderModel from '@/lib/models/Reminder'
 import NoteModel     from '@/lib/models/Note'
 import MemoryModel   from '@/lib/models/Memory'
 import ContactModel  from '@/lib/models/Contact'
+import WorkflowModel from '@/lib/models/Workflow'
 import { scheduleNotification } from '@/lib/posthook'
+import { getAuthUserId } from '@/lib/auth'
+import { getTemplateColumns, WORKFLOW_TEMPLATES } from '@/lib/workflowTemplates'
 
 // ─── Stream chunk types ────────────────────────────────────────────────────
 export type StepIcon = 'search' | 'found' | 'warn' | 'clash' | 'add' | 'done' | 'err'
@@ -122,6 +125,8 @@ const FETCHABLE = ['events', 'tasks', 'reminders', 'notes', 'memories'] as const
 type Fetchable = typeof FETCHABLE[number]
 
 async function toolFetchData(args: Record<string, unknown>, timezone?: string) {
+  const userId = await getAuthUserId()
+  if (!userId) throw new Error('Not authenticated')
   await connectDB()
 
   // Parse what[]
@@ -211,6 +216,8 @@ async function toolFetchData(args: Record<string, unknown>, timezone?: string) {
 // ─── Tool: check_availability ──────────────────────────────────────────────
 
 async function toolCheckAvailability(args: Record<string, unknown>) {
+  const userId = await getAuthUserId()
+  if (!userId) throw new Error('Not authenticated')
   const start = new Date(sanitizeDate(args.start))
   const end   = new Date(sanitizeDate(args.end))
   if (start >= end) return { available: false, error: 'start must be before end' }
@@ -234,6 +241,8 @@ async function toolCheckAvailability(args: Record<string, unknown>) {
 // ─── Tool: add_event / add_task / add_reminder ─────────────────────────────
 
 async function toolAddEvent(args: Record<string, unknown>) {
+  const userId = await getAuthUserId()
+  if (!userId) throw new Error('Not authenticated')
   const title = sanitizeStr(args.title, 300)
   if (!title) throw new Error('title is required')
   const startDate = new Date(sanitizeDate(args.startDate))
@@ -255,6 +264,8 @@ async function toolAddEvent(args: Record<string, unknown>) {
 }
 
 async function toolUpdateTask(args: Record<string, unknown>) {
+  const userId = await getAuthUserId()
+  if (!userId) throw new Error('Not authenticated')
   const title  = sanitizeStr(args.title, 300)
   const status = sanitizeEnum(args.status, ['todo', 'in-progress', 'done'], 'todo')
   if (!title) throw new Error('title is required to find the task')
@@ -271,6 +282,8 @@ async function toolUpdateTask(args: Record<string, unknown>) {
 }
 
 async function toolAddTask(args: Record<string, unknown>) {
+  const userId = await getAuthUserId()
+  if (!userId) throw new Error('Not authenticated')
   const title = sanitizeStr(args.title, 300)
   if (!title) throw new Error('title is required')
   await connectDB()
@@ -281,12 +294,15 @@ async function toolAddTask(args: Record<string, unknown>) {
     priority: sanitizeEnum(args.priority, ['low', 'medium', 'high'], 'medium'),
     status:   sanitizeEnum(args.status,   ['todo', 'in-progress', 'done'], 'todo'),
     color: '#34d399',
+    createdBy: userId,
   })
   if (!doc?._id) throw new Error('DB write failed — no document returned')
   return { success: true, title, id: String(doc._id) }
 }
 
 async function toolAddMemory(args: Record<string, unknown>) {
+  const userId = await getAuthUserId()
+  if (!userId) throw new Error('Not authenticated')
   const title = sanitizeStr(args.title, 300)
   if (!title) throw new Error('title is required')
   const VALID_TYPES = ['book', 'movie', 'song', 'contact', 'shopping', 'task', 'place', 'quote', 'link', 'general']
@@ -306,6 +322,8 @@ async function toolAddMemory(args: Record<string, unknown>) {
 }
 
 async function toolAddReminder(args: Record<string, unknown>) {
+  const userId = await getAuthUserId()
+  if (!userId) throw new Error('Not authenticated')
   const title = sanitizeStr(args.title, 300)
   if (!title) throw new Error('title is required')
   const reminderDate = new Date(sanitizeDate(args.reminderDate))
@@ -326,6 +344,8 @@ async function toolAddReminder(args: Record<string, unknown>) {
 // Returns only id + name + role + notes — never phone / email / address
 
 async function toolLookupContact(args: Record<string, unknown>) {
+  const userId = await getAuthUserId()
+  if (!userId) throw new Error('Not authenticated')
   const query = sanitizeStr(args.query, 200).toLowerCase()
   await connectDB()
 
@@ -353,6 +373,199 @@ async function toolLookupContact(args: Record<string, unknown>) {
   }
 }
 
+// ─── Tool: list_workflows ─────────────────────────────────────────────────
+
+async function toolListWorkflows() {
+  const userId = await getAuthUserId()
+  if (!userId) throw new Error('Not authenticated')
+  await connectDB()
+  const workflows = await WorkflowModel.find({ ownerId: userId, archived: { $ne: true } })
+    .sort({ order: 1 })
+    .lean() as LeanDoc[]
+
+  return {
+    workflows: workflows.map(w => ({
+      id: String(w._id),
+      name: String(w.name ?? ''),
+      icon: String(w.icon ?? '📋'),
+      templateType: String(w.templateType ?? 'kanban'),
+      columns: Array.isArray(w.columns) ? (w.columns as Array<{ id: string; title: string; order: number }>).map(c => ({
+        id: c.id,
+        title: c.title,
+        order: c.order,
+      })) : [],
+      labelIds: Array.isArray(w.labelIds) ? w.labelIds as string[] : [],
+    })),
+    total: workflows.length,
+  }
+}
+
+// ─── Tool: create_workflow ────────────────────────────────────────────────
+
+async function toolCreateWorkflow(args: Record<string, unknown>) {
+  const userId = await getAuthUserId()
+  if (!userId) throw new Error('Not authenticated')
+  const name = sanitizeStr(args.name, 200)
+  if (!name) throw new Error('name is required')
+  const validTypes = ['kanban', 'sprint', 'sales', 'content', 'matrix', 'custom'] as const
+  const templateType = sanitizeEnum(args.templateType, [...validTypes], 'kanban')
+  const columns = getTemplateColumns(templateType)
+  const template = WORKFLOW_TEMPLATES.find(t => t.type === templateType)
+
+  await connectDB()
+  const doc = await WorkflowModel.create({
+    name,
+    icon: template?.icon ?? '📋',
+    color: template?.color ?? '#0f62fe',
+    ownerId: userId,
+    templateType,
+    columns,
+    labelIds: [],
+  })
+  if (!doc?._id) throw new Error('DB write failed — no document returned')
+  return { success: true, name, id: String(doc._id), templateType }
+}
+
+// ─── Tool: move_task_to_workflow ──────────────────────────────────────────
+
+async function toolMoveTaskToWorkflow(args: Record<string, unknown>) {
+  const userId = await getAuthUserId()
+  if (!userId) throw new Error('Not authenticated')
+  const taskId = sanitizeStr(args.taskId, 100)
+  const workflowName = sanitizeStr(args.workflowName, 200)
+  if (!taskId) throw new Error('taskId is required')
+  if (!workflowName) throw new Error('workflowName is required')
+
+  await connectDB()
+  const workflow = await WorkflowModel.findOne({
+    ownerId: userId,
+    name: { $regex: new RegExp(workflowName, 'i') },
+    archived: { $ne: true },
+  }).lean() as LeanDoc | null
+  if (!workflow) return { success: false, error: `No workflow found matching "${workflowName}"` }
+
+  const task = await TaskModel.findById(taskId).lean() as LeanDoc | null
+  if (!task) return { success: false, error: `No task found with id "${taskId}"` }
+
+  const workflowLabelIds = Array.isArray(workflow.labelIds) ? workflow.labelIds as string[] : []
+  const existingLabelIds = Array.isArray(task.labelIds) ? task.labelIds as string[] : []
+  const mergedLabelIds = Array.from(new Set([...existingLabelIds, ...workflowLabelIds]))
+
+  await TaskModel.findByIdAndUpdate(taskId, { labelIds: mergedLabelIds })
+  return {
+    success: true,
+    taskTitle: String(task.title),
+    workflowName: String(workflow.name),
+    labelsAdded: workflowLabelIds.length,
+  }
+}
+
+// ─── Tool: get_calendar_summary ───────────────────────────────────────────
+
+async function toolGetCalendarSummary(args: Record<string, unknown>, timezone?: string) {
+  const userId = await getAuthUserId()
+  if (!userId) throw new Error('Not authenticated')
+  const startDate = new Date(sanitizeDate(args.startDate))
+  const endDate = new Date(sanitizeDate(args.endDate))
+  if (startDate > endDate) throw new Error('startDate must be before endDate')
+
+  await connectDB()
+  const tasks = await TaskModel.find({
+    createdBy: userId,
+    scheduledStart: { $gte: startDate, $lte: endDate },
+  }).sort({ scheduledStart: 1 }).lean() as LeanDoc[]
+
+  // Group by date
+  const byDate: Record<string, Array<{ title: string; start: string; end: string; status: string }>> = {}
+  for (const t of tasks) {
+    const dateKey = new Date(t.scheduledStart as string).toLocaleDateString('sv-SE', { timeZone: timezone || 'UTC' })
+    if (!byDate[dateKey]) byDate[dateKey] = []
+    byDate[dateKey].push({
+      title: String(t.title ?? ''),
+      start: String(t.scheduledStart ?? ''),
+      end: String(t.scheduledEnd ?? ''),
+      status: String(t.status ?? 'todo'),
+    })
+  }
+
+  return {
+    range: { start: startDate.toISOString(), end: endDate.toISOString() },
+    totalScheduled: tasks.length,
+    byDate,
+  }
+}
+
+// ─── Tool: get_habit_stats ────────────────────────────────────────────────
+
+async function toolGetHabitStats(args: Record<string, unknown>) {
+  const userId = await getAuthUserId()
+  if (!userId) throw new Error('Not authenticated')
+  await connectDB()
+
+  const filter: Record<string, unknown> = { isHabit: true, createdBy: userId }
+  if (args.habitName && typeof args.habitName === 'string') {
+    filter.title = { $regex: new RegExp(sanitizeStr(args.habitName, 200), 'i') }
+  }
+
+  const habits = await TaskModel.find(filter).lean() as LeanDoc[]
+
+  return {
+    habits: habits.map(h => {
+      const completions = Array.isArray(h.completions)
+        ? (h.completions as Array<{ date: string; status: string; value?: number }>)
+        : []
+      const achieved = completions.filter(c => c.status === 'achieved').length
+      const total = completions.length
+      const rate = total > 0 ? Math.round((achieved / total) * 100) : 0
+
+      return {
+        title: String(h.title ?? ''),
+        streakCurrent: Number(h.streakCurrent ?? 0),
+        streakBest: Number(h.streakBest ?? 0),
+        totalCheckIns: total,
+        achievedCount: achieved,
+        completionRate: `${rate}%`,
+        habitGoalType: String(h.habitGoalType ?? 'binary'),
+        habitFrequency: h.habitFrequency ?? null,
+      }
+    }),
+    total: habits.length,
+  }
+}
+
+// ─── Tool: postpone_tasks ─────────────────────────────────────────────────
+
+async function toolPostponeTasks(args: Record<string, unknown>) {
+  const userId = await getAuthUserId()
+  if (!userId) throw new Error('Not authenticated')
+  const days = typeof args.days === 'number' && args.days > 0 ? Math.min(args.days, 365) : 1
+
+  await connectDB()
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+
+  const overdueTasks = await TaskModel.find({
+    createdBy: userId,
+    dueDate: { $lt: now },
+    status: { $nin: ['done', 'dropped'] },
+  }).lean() as LeanDoc[]
+
+  const updates: string[] = []
+  for (const task of overdueTasks) {
+    const oldDue = new Date(task.dueDate as string)
+    const newDue = new Date(oldDue.getTime() + days * 24 * 60 * 60 * 1000)
+    await TaskModel.findByIdAndUpdate(task._id, { dueDate: newDue })
+    updates.push(String(task.title ?? ''))
+  }
+
+  return {
+    success: true,
+    postponedCount: updates.length,
+    days,
+    tasks: updates,
+  }
+}
+
 // ─── Tool dispatcher ───────────────────────────────────────────────────────
 
 type Emit = (chunk: StreamChunk) => void
@@ -365,14 +578,20 @@ function fetchStepLabel(args: Record<string, unknown>): string {
 
 async function executeTool(name: string, args: Record<string, unknown>, emit: Emit, timezone?: string): Promise<unknown> {
   const stepText =
-    name === 'fetch_data'          ? fetchStepLabel(args)
-    : name === 'check_availability'? `Checking availability...`
-    : name === 'add_event'         ? `Adding event: "${args.title}"...`
-    : name === 'add_task'          ? `Adding task: "${args.title}"...`
-    : name === 'add_reminder'      ? `Setting reminder: "${args.title}"...`
-    : name === 'update_task'       ? `Updating task: "${args.title}"...`
-    : name === 'add_memory'        ? `Saving to memory: "${args.title}"...`
-    : name === 'lookup_contact'    ? `Looking up contact: "${args.query}"...`
+    name === 'fetch_data'            ? fetchStepLabel(args)
+    : name === 'check_availability'  ? `Checking availability...`
+    : name === 'add_event'           ? `Adding event: "${args.title}"...`
+    : name === 'add_task'            ? `Adding task: "${args.title}"...`
+    : name === 'add_reminder'        ? `Setting reminder: "${args.title}"...`
+    : name === 'update_task'         ? `Updating task: "${args.title}"...`
+    : name === 'add_memory'          ? `Saving to memory: "${args.title}"...`
+    : name === 'lookup_contact'      ? `Looking up contact: "${args.query}"...`
+    : name === 'list_workflows'      ? `Listing your workflows...`
+    : name === 'create_workflow'     ? `Creating workflow: "${args.name}"...`
+    : name === 'move_task_to_workflow' ? `Moving task to workflow...`
+    : name === 'get_calendar_summary'? `Getting calendar summary...`
+    : name === 'get_habit_stats'     ? `Fetching habit statistics...`
+    : name === 'postpone_tasks'      ? `Postponing overdue tasks...`
     : `Running ${name}...`
 
   emit({ t: 's', icon: 'search', text: stepText })
@@ -444,6 +663,54 @@ async function executeTool(name: string, args: Record<string, unknown>, emit: Em
         for (const c of r.matches) {
           emit({ t: 'contact_ref', id: c.id, name: c.name, role: c.role || undefined })
         }
+      }
+
+    } else if (name === 'list_workflows') {
+      const r = await toolListWorkflows()
+      result = r
+      if (r.total === 0) {
+        emit({ t: 's', icon: 'warn', text: 'No workflows found' })
+      } else {
+        emit({ t: 's', icon: 'found', text: `Found ${r.total} workflow${r.total > 1 ? 's' : ''}` })
+      }
+
+    } else if (name === 'create_workflow') {
+      result = await toolCreateWorkflow(args)
+      emit({ t: 's', icon: 'done', text: `Workflow "${args.name}" created!` })
+      emit({ t: 'refresh' })
+
+    } else if (name === 'move_task_to_workflow') {
+      const r = await toolMoveTaskToWorkflow(args)
+      result = r
+      if (r.success) {
+        emit({ t: 's', icon: 'done', text: `Moved "${r.taskTitle}" to "${r.workflowName}"` })
+        emit({ t: 'refresh' })
+      } else {
+        emit({ t: 's', icon: 'warn', text: r.error ?? 'Could not move task' })
+      }
+
+    } else if (name === 'get_calendar_summary') {
+      const r = await toolGetCalendarSummary(args, timezone)
+      result = r
+      emit({ t: 's', icon: 'found', text: `Found ${r.totalScheduled} scheduled item${r.totalScheduled !== 1 ? 's' : ''}` })
+
+    } else if (name === 'get_habit_stats') {
+      const r = await toolGetHabitStats(args)
+      result = r
+      if (r.total === 0) {
+        emit({ t: 's', icon: 'warn', text: args.habitName ? `No habit found matching "${args.habitName}"` : 'No habits found' })
+      } else {
+        emit({ t: 's', icon: 'found', text: `Found stats for ${r.total} habit${r.total > 1 ? 's' : ''}` })
+      }
+
+    } else if (name === 'postpone_tasks') {
+      const r = await toolPostponeTasks(args)
+      result = r
+      if (r.postponedCount === 0) {
+        emit({ t: 's', icon: 'found', text: 'No overdue tasks to postpone' })
+      } else {
+        emit({ t: 's', icon: 'done', text: `Postponed ${r.postponedCount} task${r.postponedCount > 1 ? 's' : ''} by ${r.days} day${r.days > 1 ? 's' : ''}` })
+        emit({ t: 'refresh' })
       }
 
     } else {

@@ -9,6 +9,9 @@ const UserSchema = new Schema({
   googleRefreshToken: { type: String, default: null },
   googleCalendarId: { type: String, default: 'primary' },
   googleCalendarConnected: { type: Boolean, default: false },
+  // MCP Server integration
+  mcpEnabled: { type: Boolean, default: false },
+  mcpApiKey: { type: String, default: null },
   // Timezone & push devices
   timezone: { type: String, default: 'UTC' },
   pushDevices: [{
