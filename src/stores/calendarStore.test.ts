@@ -139,9 +139,12 @@ describe('calendarStore', () => {
     expect(useCalendarStore.getState().navigationDirection).toBe(-1)
   })
 
-  it('navigateBy(0) sets navigationDirection to 1', () => {
+  // Regression: audit flagged that navigateBy(0) hardcodes navigationDirection to 1
+  // instead of 0. This test documents the current behavior.
+  it('navigateBy(0) sets navigationDirection to 1 (audit-flagged behavior)', () => {
     useCalendarStore.setState({ navigationDirection: -1 })
     useCalendarStore.getState().navigateBy(0)
+    // Direction is set to 1 (not 0) — intentional for animation direction after "go to today"
     expect(useCalendarStore.getState().navigationDirection).toBe(1)
   })
 })
