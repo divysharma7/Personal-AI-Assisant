@@ -309,6 +309,7 @@ export function StatBlock({
             fontWeight: 700,
             color: accent ? 'var(--accent)' : 'var(--text-primary)',
             lineHeight: 1,
+            fontVariantNumeric: 'tabular-nums',
           }}
         >
           {value}

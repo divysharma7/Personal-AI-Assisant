@@ -84,24 +84,6 @@ export default function SettingsPage() {
     updateApiSettings(data as Parameters<typeof updateApiSettings>[0]).catch(() => {})
   }, [showCalToast, updateApiSettings])
 
-  // Focus settings
-  const [focusWorkDuration, setFocusWorkDuration] = useState(25)
-  const [focusShortBreak, setFocusShortBreak] = useState(5)
-  const [focusLongBreak, setFocusLongBreak] = useState(15)
-  const [focusLongBreakEvery, setFocusLongBreakEvery] = useState(4)
-  const [focusClockTheme, setFocusClockTheme] = useState<'aurora' | 'minimal' | 'liquid'>('aurora')
-  const [focusSoundOnComplete, setFocusSoundOnComplete] = useState(true)
-  const [focusKeyboardShortcuts, setFocusKeyboardShortcuts] = useState(true)
-  const [focusShowActiveSession, setFocusShowActiveSession] = useState(true)
-  const [focusSettingsToast, setFocusSettingsToast] = useState(false)
-  const focusToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const showFocusToast = useCallback(() => {
-    setFocusSettingsToast(true)
-    if (focusToastTimerRef.current) clearTimeout(focusToastTimerRef.current)
-    focusToastTimerRef.current = setTimeout(() => setFocusSettingsToast(false), 2000)
-  }, [])
-
   useEffect(() => {
     fetch('/api/auth/me')
       .then((r) => (r.ok ? r.json() : null))
@@ -247,52 +229,6 @@ export default function SettingsPage() {
               setSoundsEnabled={setSoundsEnabled}
               meetingNotesEnabled={meetingNotesEnabled}
               setMeetingNotesEnabled={setMeetingNotesEnabled}
-              focusWorkDuration={focusWorkDuration}
-              setFocusWorkDuration={setFocusWorkDuration}
-              focusShortBreak={focusShortBreak}
-              setFocusShortBreak={setFocusShortBreak}
-              focusLongBreak={focusLongBreak}
-              setFocusLongBreak={setFocusLongBreak}
-              focusLongBreakEvery={focusLongBreakEvery}
-              setFocusLongBreakEvery={setFocusLongBreakEvery}
-              focusClockTheme={focusClockTheme}
-              setFocusClockTheme={setFocusClockTheme}
-              focusSoundOnComplete={focusSoundOnComplete}
-              setFocusSoundOnComplete={setFocusSoundOnComplete}
-              focusKeyboardShortcuts={focusKeyboardShortcuts}
-              setFocusKeyboardShortcuts={setFocusKeyboardShortcuts}
-              focusShowActiveSession={focusShowActiveSession}
-              setFocusShowActiveSession={setFocusShowActiveSession}
-              focusSettingsToast={focusSettingsToast}
-              showFocusToast={showFocusToast}
-              calSettingsToast={calSettingsToast}
-              showCalToast={showCalToast}
-              calDefaultView={calDefaultView}
-              setCalDefaultView={setCalDefaultView}
-              calWeekStartsOn={calWeekStartsOn}
-              setCalWeekStartsOn={setCalWeekStartsOn}
-              calTimeFormat={calTimeFormat}
-              setCalTimeFormat={setCalTimeFormat}
-              calShowCurrentTime={calShowCurrentTime}
-              setCalShowCurrentTime={setCalShowCurrentTime}
-              calHideHoursFrom={calHideHoursFrom}
-              setCalHideHoursFrom={setCalHideHoursFrom}
-              calHideHoursTo={calHideHoursTo}
-              setCalHideHoursTo={setCalHideHoursTo}
-              calColorBy={calColorBy}
-              setCalColorBy={setCalColorBy}
-              calDailyCapacity={calDailyCapacity}
-              setCalDailyCapacity={setCalDailyCapacity}
-              calShowCapacityBar={calShowCapacityBar}
-              setCalShowCapacityBar={setCalShowCapacityBar}
-              calShowWarnings={calShowWarnings}
-              setCalShowWarnings={setCalShowWarnings}
-              calShowGoogleOverlay={calShowGoogleOverlay}
-              setCalShowGoogleOverlay={setCalShowGoogleOverlay}
-              calShowHabitsOverlay={calShowHabitsOverlay}
-              setCalShowHabitsOverlay={setCalShowHabitsOverlay}
-              calShowFocusOverlay={calShowFocusOverlay}
-              setCalShowFocusOverlay={setCalShowFocusOverlay}
             />
           )}
 

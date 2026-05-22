@@ -8,44 +8,9 @@ import { useHabits } from '@/hooks/useHabits'
 import { useTasks } from '@/hooks/useTasks'
 import { format, subDays, eachDayOfInterval, isToday, startOfWeek, endOfWeek } from 'date-fns'
 import HabitAnalytics from '@/components/habits/HabitAnalytics'
+import { copy } from '@/lib/copy'
 
-// TODO: move to copy.ts
-const COPY = {
-  title: 'Statistics',
-  tabs: ['Overview', 'Task', 'Focus'] as const,
-  stats: {
-    tasksCompleted: 'Tasks completed',
-    activeHabits: 'Active habits',
-    focusHours: 'Focus hours',
-    currentStreaks: 'Current streaks',
-    thisWeek: 'this week',
-  },
-  weeklyCompletion: 'Weekly Completion',
-  habitsSummary: 'Habits Summary',
-  completionRate: 'Completion rate',
-  mostConsistent: 'Most consistent',
-  leastConsistent: 'Least consistent',
-  atRisk: 'At risk',
-  atRiskDesc: 'streak < 3 days',
-  // Task tab
-  taskTab: {
-    dailyCompleted: 'Tasks Completed (Last 7 Days)',
-    byPriority: 'By Priority',
-    byList: 'By List (Top 5)',
-    completionTrend: 'Completion Rate Trend',
-  },
-  // Focus tab
-  focusTab: {
-    sessions: 'Focus Sessions (Last 7 Days)',
-    totalHours: 'Total Focus Hours',
-    avgSession: 'Average Session Length',
-    focusStreak: 'Focus Streak',
-    thisWeek: 'This week',
-    thisMonth: 'This month',
-    consecutiveDays: 'consecutive days',
-  },
-  noData: 'No data yet',
-} as const
+const COPY = copy.profileStats
 
 type Tab = (typeof COPY.tabs)[number]
 

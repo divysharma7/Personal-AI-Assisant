@@ -2,6 +2,7 @@
 
 import { Link as LinkIcon } from 'lucide-react'
 import { formatDuration } from './calendarUtils'
+import { hexToRgba } from '@/lib/colorUtils'
 import type { CalendarEvent } from './types'
 
 interface CalendarBlockProps {
@@ -14,19 +15,6 @@ interface CalendarBlockProps {
   compact?: boolean
   /** Optional callback when checkbox is toggled */
   onToggleComplete?: (eventId: string) => void
-}
-
-/**
- * Hex color to rgba helper.
- * Accepts "#RRGGBB" and returns rgba at specified opacity.
- */
-function hexToRgba(hex: string, alpha: number): string {
-  const clean = hex.replace('#', '')
-  if (clean.length < 6) return `rgba(120,120,140,${alpha})`
-  const r = parseInt(clean.substring(0, 2), 16)
-  const g = parseInt(clean.substring(2, 4), 16)
-  const b = parseInt(clean.substring(4, 6), 16)
-  return `rgba(${r},${g},${b},${alpha})`
 }
 
 /**
@@ -141,7 +129,7 @@ export default function CalendarBlock({
     >
       {/* Top row: checkbox + title */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
-        {/* Circle checkbox */}
+        {/* Circle checkbox with 44px touch target */}
         <button
           type="button"
           onClick={(e) => {
@@ -149,34 +137,47 @@ export default function CalendarBlock({
             onToggleComplete?.(event.id)
           }}
           style={{
-            width: 14,
-            height: 14,
-            minWidth: 14,
-            borderRadius: '50%',
-            border: event.isCompleted
-              ? 'none'
-              : `1.5px solid ${hexToRgba(event.color, 0.5)}`,
-            backgroundColor: event.isCompleted ? event.color : 'transparent',
-            cursor: 'pointer',
+            width: 44,
+            height: 44,
+            margin: -15,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
             padding: 0,
             flexShrink: 0,
           }}
           aria-label={event.isCompleted ? 'Mark incomplete' : 'Mark complete'}
         >
-          {event.isCompleted && (
-            <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
-              <path
-                d="M2 5.5L4 7.5L8 3"
-                stroke="white"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          )}
+          <span
+            style={{
+              width: 14,
+              height: 14,
+              minWidth: 14,
+              borderRadius: '50%',
+              border: event.isCompleted
+                ? 'none'
+                : `1.5px solid ${hexToRgba(event.color, 0.5)}`,
+              backgroundColor: event.isCompleted ? event.color : 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {event.isCompleted && (
+              <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
+                <path
+                  d="M2 5.5L4 7.5L8 3"
+                  stroke="white"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </span>
         </button>
 
         {/* Title */}

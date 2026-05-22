@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import TaskCard from '../TaskCard'
@@ -14,7 +15,7 @@ interface SortableTaskCardProps {
   subTaskCount?: { completed: number; total: number }
 }
 
-export function SortableTaskCard({
+function SortableTaskCardInner({
   task,
   columnId,
   onToggle,
@@ -53,3 +54,5 @@ export function SortableTaskCard({
     </div>
   )
 }
+
+export const SortableTaskCard = React.memo(SortableTaskCardInner)

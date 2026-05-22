@@ -217,7 +217,7 @@ export default function ChatPage() {
                     border: '1px solid var(--overlay-2, rgba(108,108,158,0.1))',
                     color: 'var(--text-primary)', fontSize: 14, fontWeight: 500,
                     fontFamily: 'Inter, system-ui, sans-serif',
-                    transition: 'all 150ms ease',
+                    transition: 'background-color 150ms ease-out, transform 150ms ease-out',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = 'var(--overlay-2, rgba(108,108,158,0.12))'
@@ -393,7 +393,7 @@ export default function ChatPage() {
                 color: input.trim() ? '#fff' : 'var(--text-faint)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: input.trim() ? 'pointer' : 'default',
-                border: 'none', transition: 'all 200ms ease',
+                border: 'none', transition: 'background-color 200ms ease-out, color 200ms ease-out',
               }}
             >
               <ArrowUp size={18} strokeWidth={2} />

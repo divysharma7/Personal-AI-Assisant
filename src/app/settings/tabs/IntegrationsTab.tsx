@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Calendar } from 'lucide-react'
 import { fade, ease } from '@/lib/motion'
 import GoogleCalendarSetup from '@/components/integrations/GoogleCalendarSetup'
 
@@ -10,85 +9,141 @@ interface IntegrationsTabProps {
   googleConnected: boolean
 }
 
+/* ─── Integration definitions ─── */
+const INTEGRATIONS = [
+  {
+    id: 'gmail',
+    icon: '\u{1F4E7}',
+    name: 'Gmail',
+    description: 'Convert emails into tasks',
+    badge: 'Basic',
+  },
+  {
+    id: 'google-calendar',
+    icon: '\u{1F4C5}',
+    name: 'Google Calendar',
+    description: 'Create calendar events from tasks with due dates',
+    badge: 'Basic',
+  },
+  {
+    id: 'email-forwarding',
+    icon: '\u2709\uFE0F',
+    name: 'Email forwarding',
+    description: 'Forward emails to create tasks',
+    badge: 'Basic',
+  },
+  {
+    id: 'slack',
+    icon: '\u{1F4AC}',
+    name: 'Slack',
+    description: 'Create tasks from Slack messages',
+    badge: 'Basic',
+  },
+  {
+    id: 'github',
+    icon: '\u{1F419}',
+    name: 'GitHub',
+    description: 'Receive pull requests and issues as tasks',
+    badge: 'Basic',
+  },
+] as const
+
+const badgeStyle: React.CSSProperties = {
+  backgroundColor: 'var(--bg-hover)',
+  color: 'var(--text-faint)',
+  borderRadius: 999,
+  padding: '2px 8px',
+  fontSize: 11,
+  fontWeight: 500,
+}
+
 export default function IntegrationsTab({ googleConnected }: IntegrationsTabProps) {
   const [gcalSetupOpen, setGcalSetupOpen] = useState(false)
 
   return (
     <>
-      <motion.div key="integrations" {...fade} transition={ease.normal} className="flex flex-col gap-4">
-        {/* Google Calendar — active */}
+      <motion.div key="integrations" {...fade} transition={ease.normal} className="flex flex-col">
+        {/* Header */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            Integrations
+          </h2>
+          <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
+            Supercharge your workflow and connect the tools you use every day
+          </p>
+          <a
+            href="#"
+            className="mt-1 inline-block text-sm font-medium"
+            style={{ color: 'var(--accent)' }}
+          >
+            Learn more &#x2197;
+          </a>
+        </div>
+
+        {/* Integration rows */}
         <div
-          className="flex flex-col gap-3 rounded-xl p-5"
           style={{
             backgroundColor: 'var(--bg-pane-2)',
-            border: googleConnected ? '1px solid rgba(52, 211, 153, 0.4)' : '1px solid var(--border)',
+            border: '1px solid var(--border)',
+            borderRadius: 16,
+            overflow: 'hidden',
           }}
         >
-          <div className="flex items-center gap-3">
-            <Calendar size={22} strokeWidth={1.5} style={{ color: 'var(--text-primary)' }} />
-            <div className="flex-1">
-              <span className="text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>Google Calendar</span>
-              {googleConnected && (
-                <span className="ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: 'rgba(52,211,153,0.15)', color: '#34d399' }}>Connected</span>
-              )}
-            </div>
-            <button
-              onClick={() => setGcalSetupOpen(true)}
-              className="rounded-full px-4 py-1.5 text-[13px] font-medium cursor-pointer"
-              style={{
-                backgroundColor: googleConnected ? 'rgba(52,211,153,0.15)' : 'var(--accent)',
-                color: googleConnected ? '#34d399' : '#fff',
-                border: 'none', transition: 'opacity 150ms ease',
-              }}
-            >
-              {googleConnected ? 'Manage' : 'Connect'}
-            </button>
-          </div>
-          <p className="text-[13px]" style={{ color: 'var(--text-faint)' }}>
-            Sync your tasks and events with Google Calendar. See scheduled tasks as calendar blocks.
-          </p>
-        </div>
+          {INTEGRATIONS.map((integration, idx) => {
+            const isGcal = integration.id === 'google-calendar'
+            const isConnected = isGcal && googleConnected
+            const isLast = idx === INTEGRATIONS.length - 1
 
-        {/* Alexa — coming soon */}
-        <div className="flex flex-col gap-3 rounded-xl p-5" style={{ backgroundColor: 'var(--bg-pane-2)', border: '1px solid var(--border)' }}>
-          <div className="flex items-center gap-3">
-            <span className="text-xl">🔵</span>
-            <div className="flex-1">
-              <span className="text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>Amazon Alexa</span>
-              <span className="ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: 'var(--overlay-2)', color: 'var(--text-faint)' }}>Coming soon</span>
-            </div>
-          </div>
-          <p className="text-[13px]" style={{ color: 'var(--text-faint)' }}>
-            Add tasks, check your schedule, and start focus sessions with voice commands. &quot;Alexa, what&apos;s on my LAIF today?&quot;
-          </p>
-        </div>
+            return (
+              <div
+                key={integration.id}
+                className="flex items-center gap-4 transition-colors duration-150 cursor-pointer"
+                style={{
+                  padding: '16px 24px',
+                  borderBottom: isLast ? 'none' : '1px solid var(--border)',
+                  minHeight: 64,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
+                onClick={() => {
+                  if (isGcal) setGcalSetupOpen(true)
+                }}
+              >
+                {/* Icon */}
+                <div
+                  className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"
+                  style={{ backgroundColor: 'var(--bg-hover)', fontSize: 20 }}
+                >
+                  {integration.icon}
+                </div>
 
-        {/* MCP Claude — coming soon */}
-        <div className="flex flex-col gap-3 rounded-xl p-5" style={{ backgroundColor: 'var(--bg-pane-2)', border: '1px solid var(--border)' }}>
-          <div className="flex items-center gap-3">
-            <span className="text-xl">🤖</span>
-            <div className="flex-1">
-              <span className="text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>MCP Claude Integration</span>
-              <span className="ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: 'var(--overlay-2)', color: 'var(--text-faint)' }}>Coming soon</span>
-            </div>
-          </div>
-          <p className="text-[13px]" style={{ color: 'var(--text-faint)' }}>
-            Connect LAIF as an MCP server to Claude Code and Claude Desktop. Manage tasks, query your schedule, and create habits directly from Claude.
-          </p>
-        </div>
-
-        {/* Hermes Agent — coming soon */}
-        <div className="flex flex-col gap-3 rounded-xl p-5" style={{ backgroundColor: 'var(--bg-pane-2)', border: '1px solid var(--border)' }}>
-          <div className="flex items-center gap-3">
-            <span className="text-xl">🧠</span>
-            <div className="flex-1">
-              <span className="text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>Hermes Agent</span>
-              <span className="ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: 'var(--overlay-2)', color: 'var(--text-faint)' }}>Coming soon</span>
-            </div>
-          </div>
-          <p className="text-[13px]" style={{ color: 'var(--text-faint)' }}>
-            Connect Nous Research&apos;s Hermes Agent to LAIF. A self-improving AI that learns your workflow, generates reusable skills from experience, and manages tasks across 20+ platforms including Telegram, Slack, and WhatsApp.
-          </p>
+                {/* Text */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                      {integration.name}
+                    </span>
+                    <span style={badgeStyle}>{integration.badge}</span>
+                    {isConnected && (
+                      <span
+                        className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                        style={{ backgroundColor: 'rgba(52,211,153,0.15)', color: '#34d399' }}
+                      >
+                        Connected
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-xs" style={{ color: 'var(--text-faint)' }}>
+                    {integration.description}
+                  </p>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </motion.div>
 

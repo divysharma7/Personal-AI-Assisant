@@ -219,8 +219,8 @@ export default function CalendarHeader({
             onClick={() => onNavigate(-1)}
             className="flex items-center justify-center cursor-pointer"
             style={{
-              width: 30,
-              height: 30,
+              width: 36,
+              height: 36,
               backgroundColor: 'transparent',
               border: 'none',
               color: 'var(--text-muted)',
@@ -245,7 +245,7 @@ export default function CalendarHeader({
             className="cursor-pointer"
             style={{
               position: 'relative',
-              height: 30,
+              height: 36,
               padding: '0 10px',
               fontSize: 13,
               fontWeight: 500,
@@ -288,8 +288,8 @@ export default function CalendarHeader({
             onClick={() => onNavigate(1)}
             className="flex items-center justify-center cursor-pointer"
             style={{
-              width: 30,
-              height: 30,
+              width: 36,
+              height: 36,
               backgroundColor: 'transparent',
               border: 'none',
               color: 'var(--text-muted)',

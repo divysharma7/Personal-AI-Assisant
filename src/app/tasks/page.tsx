@@ -154,7 +154,7 @@ export default function TasksPage() {
                   color: active ? '#fff' : 'var(--text-muted)',
                   border: active ? 'none' : '1px solid var(--border)',
                   cursor: 'pointer',
-                  transition: 'all 150ms ease',
+                  transition: 'background-color 150ms ease, color 150ms ease, transform 150ms ease',
                 }}
               >
                 {tab.label}

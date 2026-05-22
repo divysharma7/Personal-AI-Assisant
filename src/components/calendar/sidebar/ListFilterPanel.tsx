@@ -13,7 +13,7 @@ import {
   Palette,
   GripVertical,
 } from 'lucide-react'
-import { ease } from '@/lib/motion'
+import { ease, motionTokens } from '@/lib/motion'
 
 const PRESET_COLORS = [
   '#5DA8FF', '#6b66da', '#34d399', '#f59e0b',
@@ -204,7 +204,7 @@ function SectionHeader({ label, expanded, onToggle, trailing }: { label: string;
       >
         <motion.span
           animate={{ rotate: expanded ? 0 : -90 }}
-          transition={{ duration: 0.15 }}
+          transition={{ duration: motionTokens.duration.fast }}
           style={{ display: 'flex' }}
         >
           <ChevronDown size={12} strokeWidth={2} />
@@ -294,7 +294,7 @@ export default function ListFilterPanel({ lists, onToggleList }: ListFilterPanel
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            transition={{ duration: motionTokens.duration.normal, ease: motionTokens.easing.sharp }}
             style={{ overflow: 'hidden' }}
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -418,7 +418,7 @@ export default function ListFilterPanel({ lists, onToggleList }: ListFilterPanel
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                transition={{ duration: motionTokens.duration.normal, ease: motionTokens.easing.sharp }}
                 style={{ overflow: 'hidden' }}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>

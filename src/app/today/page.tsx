@@ -20,7 +20,6 @@ import { playCompletionSound, playCreationSound } from '@/lib/sounds'
 import { fadeSlideUp, fadeSlideDown, collapse, ease, buttonPress, taskCompleteExit } from '@/lib/motion'
 import { useFocusState } from '@/contexts/FocusContext'
 import TaskRow from '@/components/tasks/TaskRow'
-import InfoBanner from '@/components/shared/InfoBanner'
 import TimeBlockPicker from '@/components/tasks/TimeBlockPicker'
 import TaskContextMenu from '@/components/tasks/TaskContextMenu'
 

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Calendar, Check, X } from 'lucide-react'
 import { copy } from '@/lib/copy'
-import { slideFromRight, buttonPress, ease } from '@/lib/motion'
+import { slideFromRight, buttonPress, ease, springs } from '@/lib/motion'
 import { useGoogleCalendar } from '@/hooks/useGoogleCalendar'
 
 interface GoogleCalendarSetupProps {
@@ -48,7 +48,7 @@ export default function GoogleCalendarSetup({ open, onClose }: GoogleCalendarSet
           {/* Panel */}
           <motion.div
             {...slideFromRight}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            transition={springs.snappy}
             className="fixed right-0 top-0 z-50 flex h-full w-[420px] flex-col overflow-y-auto"
             style={{
               backgroundColor: 'var(--bg-pane)',

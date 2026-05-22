@@ -68,7 +68,7 @@ function DropdownButton({
             initial={{ opacity: 0, y: 4, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 4, scale: 0.95 }}
-            transition={{ duration: 0.12 }}
+            transition={{ duration: motionTokens.duration.fast }}
             style={{
               position: 'absolute',
               bottom: '100%',
@@ -316,7 +316,7 @@ export default function BatchActionBar({ selectedIds, clearSelection }: BatchAct
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
+            transition={{ duration: motionTokens.duration.fast }}
             style={{
               position: 'fixed',
               inset: 0,
@@ -332,7 +332,7 @@ export default function BatchActionBar({ selectedIds, clearSelection }: BatchAct
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              transition={{ duration: motionTokens.duration.fast }}
               onClick={e => e.stopPropagation()}
               style={{
                 width: 320,
@@ -397,7 +397,7 @@ export default function BatchActionBar({ selectedIds, clearSelection }: BatchAct
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
+            transition={{ duration: motionTokens.duration.fast }}
             style={{
               position: 'fixed',
               inset: 0,
@@ -413,7 +413,7 @@ export default function BatchActionBar({ selectedIds, clearSelection }: BatchAct
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              transition={{ duration: motionTokens.duration.fast }}
               onClick={e => e.stopPropagation()}
               style={{
                 width: 300,

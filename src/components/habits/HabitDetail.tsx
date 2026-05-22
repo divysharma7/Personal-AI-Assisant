@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Check, MoreHorizontal, Pencil, Crosshair, Smile, Archive, Trash2 } from 'lucide-react'
 import { buttonPress, ease, fadeSlideUp, fadeSlideDown } from '@/lib/motion'
 import type { Habit } from '@/hooks/useHabits'
@@ -26,6 +26,7 @@ function formatDateKey(year: number, month: number, day: number): string {
 }
 
 export default function HabitDetail({ habit, onToggleToday, onEdit, onArchive, onDelete, onStartFocus }: HabitDetailProps) {
+  const prefersReduced = useReducedMotion()
   const today = new Date()
   const [calYear, setCalYear] = useState(today.getFullYear())
   const [calMonth, setCalMonth] = useState(today.getMonth())
@@ -206,8 +207,9 @@ export default function HabitDetail({ habit, onToggleToday, onEdit, onArchive, o
             <AnimatePresence>
               {moreMenuOpen && (
                 <motion.div
-                  {...fadeSlideDown}
-                  transition={ease.normal}
+                  {...(prefersReduced ? {} : fadeSlideDown)}
+                  initial={prefersReduced ? false : fadeSlideDown.initial}
+                  transition={prefersReduced ? { duration: 0 } : ease.normal}
                   style={{
                     position: 'absolute',
                     right: 0,
@@ -336,6 +338,7 @@ export default function HabitDetail({ habit, onToggleToday, onEdit, onArchive, o
           <motion.button
             {...buttonPress}
             onClick={goToPrevMonth}
+            aria-label="Previous month"
             style={{
               width: 28,
               height: 28,
@@ -357,6 +360,7 @@ export default function HabitDetail({ habit, onToggleToday, onEdit, onArchive, o
           <motion.button
             {...buttonPress}
             onClick={goToNextMonth}
+            aria-label="Next month"
             style={{
               width: 28,
               height: 28,
@@ -453,8 +457,9 @@ export default function HabitDetail({ habit, onToggleToday, onEdit, onArchive, o
 
       {/* Monthly completion rate */}
       <motion.div
-        {...fadeSlideUp}
-        transition={ease.normal}
+        {...(prefersReduced ? {} : fadeSlideUp)}
+        initial={prefersReduced ? false : fadeSlideUp.initial}
+        transition={prefersReduced ? { duration: 0 } : ease.normal}
         style={{
           marginBottom: 28,
           padding: '20px',
@@ -464,7 +469,7 @@ export default function HabitDetail({ habit, onToggleToday, onEdit, onArchive, o
         }}
       >
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 16 }}>
-          <span style={{ fontSize: 40, fontWeight: 700, color: 'var(--accent)', lineHeight: 1 }}>
+          <span style={{ fontSize: 40, fontWeight: 700, color: 'var(--accent)', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
             {monthlyStats.rate}%
           </span>
           <span style={{ fontSize: 13, color: 'var(--text-faint)', fontWeight: 500 }}>

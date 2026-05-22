@@ -187,14 +187,14 @@ export default function WorkflowPage() {
   // ── Sub-task counts ──
   const getSubTaskCount = useCallback(
     (taskId: string) => {
-      const subTasks = tasks.filter((t) => t.parentId === taskId)
+      const subTasks = workflowTasks.filter((t) => t.parentId === taskId)
       if (subTasks.length === 0) return undefined
       return {
         completed: subTasks.filter((t) => t.status === 'done').length,
         total: subTasks.length,
       }
     },
-    [tasks]
+    [workflowTasks]
   )
 
   // ── Labels for a task ──

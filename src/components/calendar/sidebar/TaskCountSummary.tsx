@@ -11,6 +11,7 @@ import {
   ListTodo,
   ChevronDown,
 } from 'lucide-react'
+import { motionTokens } from '@/lib/motion'
 
 // -- Smart List Row --
 function SmartListRow({
@@ -108,7 +109,7 @@ function SectionHeader({ label, expanded, onToggle }: { label: string; expanded:
       >
         <motion.span
           animate={{ rotate: expanded ? 0 : -90 }}
-          transition={{ duration: 0.15 }}
+          transition={{ duration: motionTokens.duration.fast }}
           style={{ display: 'flex' }}
         >
           <ChevronDown size={12} strokeWidth={2} />
@@ -141,7 +142,7 @@ export default function TaskCountSummary({ taskCounts }: TaskCountSummaryProps) 
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            transition={{ duration: motionTokens.duration.normal, ease: motionTokens.easing.sharp }}
             style={{ overflow: 'hidden' }}
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 1, paddingBottom: 4 }}>

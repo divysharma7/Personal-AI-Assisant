@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { ChevronDown, ChevronRight, Plus, MoreHorizontal } from 'lucide-react'
@@ -37,7 +37,7 @@ interface KanbanColumnProps {
   onSetWipLimit?: (id: string, limit: number | null) => void
 }
 
-export default function KanbanColumn({
+function KanbanColumn({
   id,
   title,
   tasks,
@@ -68,7 +68,7 @@ export default function KanbanColumn({
     data: { type: 'column', columnId: id },
   })
 
-  const taskIds = tasks.map((t) => t._id)
+  const taskIds = useMemo(() => tasks.map((t) => t._id), [tasks])
   const totalCount = tasks.length + completedTasks.length
   const isOverWipLimit = wipLimit != null && wipLimit > 0 && tasks.length >= wipLimit
 
@@ -81,7 +81,7 @@ export default function KanbanColumn({
         maxWidth: sizeConfig.maxWidth,
         height: '100%',
         flexShrink: 0,
-        borderRadius: 'var(--radius-lg, 16px)',
+        borderRadius: 'var(--radius-lg, 12px)',
         backgroundColor: isOver
           ? 'var(--bg-hover, rgba(255,255,255,0.04))'
           : 'var(--bg-pane, transparent)',
@@ -127,6 +127,7 @@ export default function KanbanColumn({
             padding: '2px 7px',
             minWidth: 20,
             textAlign: 'center',
+            fontVariantNumeric: 'tabular-nums',
           }}
           title={isOverWipLimit ? `WIP limit: ${wipLimit}` : undefined}
         >
@@ -140,8 +141,8 @@ export default function KanbanColumn({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: 24,
-            height: 24,
+            width: 36,
+            height: 36,
             borderRadius: 6,
             border: 'none',
             background: 'transparent',
@@ -169,8 +170,8 @@ export default function KanbanColumn({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 24,
-                height: 24,
+                width: 36,
+                height: 36,
                 borderRadius: 6,
                 border: 'none',
                 background: 'transparent',
@@ -333,3 +334,5 @@ export default function KanbanColumn({
     </div>
   )
 }
+
+export default React.memo(KanbanColumn)

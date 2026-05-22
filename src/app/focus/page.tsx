@@ -474,7 +474,7 @@ export default function FocusPage() {
               fontFamily: 'Inter, system-ui, sans-serif',
               backgroundColor: timerMode === 'pomodoro' ? 'rgba(255,255,255,0.9)' : 'transparent',
               color: timerMode === 'pomodoro' ? '#1a1a1a' : 'rgba(255,255,255,0.6)',
-              transition: 'all 200ms ease',
+              transition: 'background-color 200ms ease, color 200ms ease, transform 200ms ease',
             }}
           >
             <Clock size={14} strokeWidth={2} />
@@ -489,7 +489,7 @@ export default function FocusPage() {
               fontFamily: 'Inter, system-ui, sans-serif',
               backgroundColor: timerMode === 'stopwatch' ? 'rgba(255,255,255,0.9)' : 'transparent',
               color: timerMode === 'stopwatch' ? '#1a1a1a' : 'rgba(255,255,255,0.6)',
-              transition: 'all 200ms ease',
+              transition: 'background-color 200ms ease, color 200ms ease, transform 200ms ease',
             }}
           >
             <Timer size={14} strokeWidth={2} />

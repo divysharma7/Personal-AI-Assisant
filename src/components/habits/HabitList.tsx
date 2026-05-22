@@ -106,8 +106,9 @@ export default function HabitList({
           <motion.button
             {...buttonPress}
             onClick={onCreateClick}
+            aria-label="Create habit"
             style={{
-              width: 28, height: 28, borderRadius: '50%',
+              width: 36, height: 36, borderRadius: '50%',
               border: '1.5px solid var(--border)', backgroundColor: 'transparent',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', color: 'var(--text-muted)',
@@ -118,8 +119,9 @@ export default function HabitList({
           <motion.button
             {...buttonPress}
             onClick={onMoreClick}
+            aria-label="More options"
             style={{
-              width: 28, height: 28, borderRadius: 6,
+              width: 36, height: 36, borderRadius: 6,
               border: 'none', backgroundColor: 'transparent',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', color: 'var(--text-muted)',
@@ -141,7 +143,7 @@ export default function HabitList({
               fontSize: 13, fontWeight: 500, cursor: 'pointer',
               backgroundColor: filter === tab ? 'var(--accent)' : 'var(--overlay-1, var(--bg-hover))',
               color: filter === tab ? '#fff' : 'var(--text-muted)',
-              textTransform: 'capitalize', transition: 'all 150ms ease',
+              textTransform: 'capitalize', transition: 'background-color 150ms ease, color 150ms ease',
             }}
           >
             {tab}
@@ -394,7 +396,7 @@ function HabitRow({
         >
           {habit.name}
         </span>
-        <span style={{ fontSize: 11, color: 'var(--text-faint)', display: 'block', marginTop: 2 }}>
+        <span style={{ fontSize: 11, color: 'var(--text-faint)', display: 'block', marginTop: 2, fontVariantNumeric: 'tabular-nums' }}>
           {totalDays > 0 && <>{'\u26A1'} {totalDays} {totalDays === 1 ? 'Day' : 'Days'}</>}
           {totalDays > 0 && habit.currentStreak > 0 && ' \u00B7 '}
           {habit.currentStreak > 0 && <>{'\uD83D\uDD25'} {habit.currentStreak} {habit.currentStreak === 1 ? 'Day' : 'Days'}</>}
@@ -416,7 +418,7 @@ function HabitRow({
           justifyContent: 'center',
           cursor: 'pointer',
           flexShrink: 0,
-          transition: 'all 150ms ease',
+          transition: 'background-color 150ms ease, border-color 150ms ease',
           padding: 0,
         }}
       >

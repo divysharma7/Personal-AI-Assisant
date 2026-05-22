@@ -356,7 +356,7 @@ export default function ArrangeTasksPanel({ open, onClose, onScheduleTask }: Arr
                 ? 'var(--accent, #5DA8FF)'
                 : 'var(--overlay-2, var(--bg-pane-2))',
               border: 'none',
-              transition: 'all 150ms ease',
+              transition: 'background-color 150ms ease, color 150ms ease, transform 150ms ease',
               whiteSpace: 'nowrap',
             }}
             onMouseEnter={(e) => {

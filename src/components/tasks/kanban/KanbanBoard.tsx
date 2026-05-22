@@ -17,6 +17,7 @@ import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortabl
 import { Plus } from 'lucide-react'
 import KanbanColumn from './KanbanColumn'
 import TaskCard from '../TaskCard'
+import { useReducedMotion } from 'framer-motion'
 import { cssTransition } from '@/lib/motion'
 import type { TaskRecord } from '@/hooks/useTasks'
 
@@ -81,6 +82,7 @@ export function KanbanBoard({
   showAddSection = false,
   onAddSection,
 }: KanbanBoardProps) {
+  const prefersReduced = useReducedMotion()
   const [activeTask, setActiveTask] = useState<TaskRecord | null>(null)
   const [overColumnId, setOverColumnId] = useState<string | null>(null)
 
@@ -283,8 +285,8 @@ export function KanbanBoard({
           <div
             style={{
               opacity: 0.85,
-              transform: 'rotate(2deg)',
-              filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.25))',
+              transform: prefersReduced ? 'none' : 'rotate(2deg)',
+              filter: prefersReduced ? 'none' : 'drop-shadow(0 8px 24px rgba(0,0,0,0.25))',
               pointerEvents: 'none',
               maxWidth: 320,
             }}

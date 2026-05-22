@@ -4,6 +4,7 @@ import { useMemo, useState, useCallback, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { fadeSlideUp, ease, stagger } from '@/lib/motion'
 import { isSameDay, isToday, isPast, formatDuration } from './calendarUtils'
+import { hexToRgba } from '@/lib/colorUtils'
 import type { CalendarEvent } from './types'
 
 interface AgendaViewProps {
@@ -15,19 +16,6 @@ const INITIAL_DAYS = 30
 const LOAD_MORE_DAYS = 30
 
 const SHORT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-
-/**
- * Hex color to rgba helper.
- * Accepts "#RRGGBB" and returns rgba at specified opacity.
- */
-function hexToRgba(hex: string, alpha: number): string {
-  const clean = hex.replace('#', '')
-  if (clean.length < 6) return `rgba(120,120,140,${alpha})`
-  const r = parseInt(clean.substring(0, 2), 16)
-  const g = parseInt(clean.substring(2, 4), 16)
-  const b = parseInt(clean.substring(4, 6), 16)
-  return `rgba(${r},${g},${b},${alpha})`
-}
 
 /**
  * Check if a calendar event is an all-day event.

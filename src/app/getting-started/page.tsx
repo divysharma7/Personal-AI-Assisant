@@ -99,7 +99,7 @@ export default function GettingStartedPage() {
                   border: done ? 'none' : '2px solid var(--overlay-3, #605f6a)',
                   backgroundColor: done ? 'var(--success, #34d399)' : 'transparent',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'all 150ms ease',
+                  transition: 'background-color 150ms ease-out, border-color 150ms ease-out, transform 150ms ease-out',
                 }}>
                   {done && <Check size={14} strokeWidth={2.5} color="#fff" />}
                 </div>
@@ -234,7 +234,7 @@ function FeatureCard({ emoji, title, desc, link }: { emoji: string; title: strin
         padding: '16px 18px', borderRadius: 14, textDecoration: 'none',
         backgroundColor: 'var(--overlay-1, rgba(108,108,158,0.06))',
         border: '1px solid var(--overlay-2, rgba(108,108,158,0.1))',
-        transition: 'all 150ms ease',
+        transition: 'background-color 150ms ease-out, border-color 150ms ease-out, transform 150ms ease-out',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.backgroundColor = 'var(--overlay-2, rgba(108,108,158,0.12))'

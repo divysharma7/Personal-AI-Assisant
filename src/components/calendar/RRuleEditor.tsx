@@ -47,7 +47,7 @@ const pillStyle = (active: boolean): React.CSSProperties => ({
   border: active ? '1px solid var(--accent)' : '1px solid transparent',
   backgroundColor: active ? 'color-mix(in srgb, var(--accent) 15%, transparent)' : 'var(--overlay-2, rgba(108,108,158,0.08))',
   color: active ? 'var(--accent)' : 'var(--text-muted)',
-  transition: 'all 150ms ease',
+  transition: 'background-color 150ms ease, color 150ms ease, border-color 150ms ease',
 })
 
 const dayBtnStyle = (active: boolean): React.CSSProperties => ({

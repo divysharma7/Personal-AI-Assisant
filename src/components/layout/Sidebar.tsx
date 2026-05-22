@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -24,7 +24,7 @@ import {
   Sun,
   CalendarRange,
 } from 'lucide-react'
-import { collapse, fadeSlideDown, buttonPress, ease } from '@/lib/motion'
+import { collapse, fadeSlideDown, buttonPress, ease, motionTokens, springs } from '@/lib/motion'
 import { useTasks } from '@/hooks/useTasks'
 import type { TaskRecord } from '@/hooks/useTasks'
 import { useWorkflows } from '@/hooks/useWorkflows'
@@ -113,17 +113,18 @@ function HabitsSection({ tasks }: { tasks: TaskRecord[] }) {
           style={{ color: 'var(--text-faint)' }}
         >
           <span className="text-[12px] font-medium">Habits</span>
-          <motion.div animate={{ rotate: open ? 0 : -90 }} transition={{ duration: 0.15 }}>
+          <motion.div animate={{ rotate: open ? 0 : -90 }} transition={{ duration: motionTokens.duration.fast }}>
             <ChevronDown size={12} strokeWidth={1.5} />
           </motion.div>
         </button>
         <button
           onClick={() => router.push('/habits')}
-          className="opacity-0 group-hover:opacity-100 transition-opacity flex h-5 w-5 items-center justify-center rounded cursor-pointer"
-          style={{ color: 'var(--text-faint)', transitionDuration: '150ms' }}
+          className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded cursor-pointer"
+          style={{ color: 'var(--text-faint)', transitionDuration: '150ms', minWidth: 44, minHeight: 44 }}
           onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)' }}
           onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-faint)' }}
           title="View all habits"
+          aria-label="View all habits"
         >
           <Flame size={12} strokeWidth={1.5} />
         </button>
@@ -156,7 +157,7 @@ function HabitsSection({ tasks }: { tasks: TaskRecord[] }) {
                       border: checked ? 'none' : `1.5px solid ${color}`,
                       backgroundColor: checked ? color : 'transparent',
                       cursor: 'pointer',
-                      transition: 'all 150ms ease',
+                      transition: 'background-color 150ms ease, border-color 150ms ease',
                     }}
                     title={checked ? 'Uncheck today' : 'Check in today'}
                   >
@@ -199,15 +200,16 @@ function WorkflowsSection() {
             style={{ color: 'var(--text-faint)' }}
           >
             <span className="text-[12px] font-medium">Workflows</span>
-            <motion.div animate={{ rotate: open ? 0 : -90 }} transition={{ duration: 0.15 }}>
+            <motion.div animate={{ rotate: open ? 0 : -90 }} transition={{ duration: motionTokens.duration.fast }}>
               <ChevronDown size={12} strokeWidth={1.5} />
             </motion.div>
           </button>
           <button
             onClick={() => setCreateOpen(true)}
             title="New Workflow"
-            className="opacity-0 group-hover:opacity-100 transition-opacity flex h-5 w-5 items-center justify-center rounded cursor-pointer"
-            style={{ color: 'var(--text-faint)', transitionDuration: '150ms' }}
+            aria-label="New Workflow"
+            className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded cursor-pointer"
+            style={{ color: 'var(--text-faint)', transitionDuration: '150ms', minWidth: 44, minHeight: 44 }}
             onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)' }}
             onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-faint)' }}
           >
@@ -260,7 +262,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   const pathname = usePathname()
   const router = useRouter()
   const { tasks } = useTasks()
-
+  const prefersReduced = useReducedMotion()
 
   const [isHovered, setIsHovered] = useState(false)
   const [avatarOpen, setAvatarOpen] = useState(false)
@@ -268,15 +270,6 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   const [userInitial, setUserInitial] = useState('U')
   const popoverRef = useRef<HTMLDivElement>(null)
   const fabPopoverRef = useRef<HTMLDivElement>(null)
-
-  // Badge counts
-  const inboxCount = tasks.filter((t) => t.status !== 'done' && t.status !== 'dropped' && !t.listId).length
-  const todayCount = tasks.filter((t) => {
-    if (t.status === 'done' || t.status === 'dropped' || !t.dueDate) return false
-    const d = new Date(t.dueDate)
-    const now = new Date()
-    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()
-  }).length
 
   // Smart list counts
   const [smartListsOpen, setSmartListsOpen] = useState(true)
@@ -353,8 +346,8 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   }
 
   const getBadgeCount = (href: string) => {
-    if (href === '/') return inboxCount
-    if (href === '/today') return todayCount
+    if (href === '/') return smartCounts.inbox
+    if (href === '/today') return smartCounts.today
     return 0
   }
 
@@ -471,9 +464,10 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
           {isHovered && (
             <>
               <motion.button
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
+                initial={prefersReduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={prefersReduced ? { duration: 0 } : { duration: motionTokens.duration.fast }}
                 {...buttonPress}
+                aria-label="Search"
                 className="flex h-7 w-7 items-center justify-center rounded-md cursor-pointer transition-sl"
                 style={{ color: 'var(--text-faint)' }}
                 onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
@@ -482,10 +476,11 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                 <Search size={16} strokeWidth={1.5} />
               </motion.button>
               <motion.button
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
+                initial={prefersReduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={prefersReduced ? { duration: 0 } : { duration: motionTokens.duration.fast }}
                 {...buttonPress}
                 onClick={onToggleCollapse}
+                aria-label="Collapse sidebar"
                 className="flex h-7 w-7 items-center justify-center rounded-md cursor-pointer transition-sl"
                 style={{ color: 'var(--text-faint)' }}
                 onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
@@ -525,7 +520,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
               {count > 0 && (
                 <span
                   className="flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-medium"
-                  style={{ backgroundColor: 'var(--overlay-2, var(--bg-hover))', color: 'var(--text-muted)' }}
+                  style={{ backgroundColor: 'var(--overlay-2, var(--bg-hover))', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}
                 >
                   {count}
                 </span>
@@ -544,14 +539,14 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
             style={{ color: 'var(--text-faint)' }}
           >
             <span className="text-[12px] font-medium">Smart Lists</span>
-            <motion.div animate={{ rotate: smartListsOpen ? 0 : -90 }} transition={{ duration: 0.15 }}>
+            <motion.div animate={{ rotate: smartListsOpen ? 0 : -90 }} transition={{ duration: motionTokens.duration.fast }}>
               <ChevronDown size={12} strokeWidth={1.5} />
             </motion.div>
           </button>
         </div>
         <AnimatePresence>
           {smartListsOpen && (
-            <motion.div {...collapse} transition={ease.normal} className="flex flex-col gap-0.5 overflow-hidden">
+            <motion.div {...collapse} transition={prefersReduced ? { duration: 0 } : ease.normal} className="flex flex-col gap-0.5 overflow-hidden">
               {SMART_LISTS.map((item) => {
                 const count = smartCounts[item.id] ?? 0
                 const isSmartActive = activeSmartFilter === item.id
@@ -561,7 +556,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                     key={item.id}
                     onClick={() => setActiveSmartFilter(isSmartActive ? null : item.id)}
                     whileHover={{ x: 2 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    transition={springs.snappy}
                     className="relative flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[14px] font-medium cursor-pointer"
                     style={{
                       color: 'var(--text-primary)',
@@ -588,7 +583,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                           backgroundColor: 'var(--overlay-2, var(--bg-hover))',
                           boxShadow: 'inset -3px 0 0 var(--accent)',
                         }}
-                        transition={{ type: 'spring', stiffness: 120, damping: 14 }}
+                        transition={springs.gentle}
                       />
                     )}
                     <Icon
@@ -611,6 +606,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                           color: item.accent || 'var(--text-muted)',
                           position: 'relative',
                           zIndex: 1,
+                          fontVariantNumeric: 'tabular-nums',
                         }}
                       >
                         {count}
@@ -651,17 +647,17 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
             onMouseEnter={(e) => { if (!fabOpen) e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
             onMouseLeave={(e) => { if (!fabOpen) e.currentTarget.style.backgroundColor = fabOpen ? 'var(--overlay-2, var(--bg-hover))' : 'transparent' }}
           >
-            <motion.div animate={{ rotate: fabOpen ? 45 : 0 }} transition={{ duration: 0.15 }}>
+            <motion.div animate={{ rotate: fabOpen ? 45 : 0 }} transition={{ duration: motionTokens.duration.fast }}>
               <Plus size={22} strokeWidth={1.5} />
             </motion.div>
           </motion.button>
           <AnimatePresence>
             {fabOpen && (
               <motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                initial={prefersReduced ? false : { opacity: 0, y: 8, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                transition={ease.normal}
+                transition={prefersReduced ? { duration: 0 } : ease.normal}
                 className="absolute bottom-full left-0 mb-3 rounded-2xl p-2"
                 style={{ minWidth: 240, backgroundColor: 'var(--bg-pane-2, var(--bg-pane))', border: '1px solid var(--overlay-2, var(--border))', boxShadow: 'var(--shadow-elevated)' }}
               >
@@ -723,10 +719,10 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
           <AnimatePresence>
             {avatarOpen && (
               <motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                initial={prefersReduced ? false : { opacity: 0, y: 8, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                transition={ease.normal}
+                transition={prefersReduced ? { duration: 0 } : ease.normal}
                 className="absolute bottom-full right-0 mb-3 w-52 rounded-2xl p-2"
                 style={{ backgroundColor: 'var(--bg-pane-2, var(--bg-pane))', border: '1px solid var(--overlay-2, var(--border))', boxShadow: 'var(--shadow-elevated)' }}
               >

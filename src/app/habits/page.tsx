@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { slideFromRight, ease } from '@/lib/motion'
 import { useHabits } from '@/hooks/useHabits'
 import type { Habit } from '@/hooks/useHabits'
@@ -16,6 +16,7 @@ import type { HabitFormData } from '@/components/habits/HabitCreationWizard'
 
 export default function HabitsPage() {
   const { habits, isLoading, createHabit, updateHabit, deleteHabit, toggleToday } = useHabits()
+  const prefersReduced = useReducedMotion()
 
   const [filter, setFilter] = useState<'active' | 'archived'>('active')
   const searchParams = useSearchParams()
@@ -156,8 +157,9 @@ export default function HabitsPage() {
           {selectedHabit ? (
             <motion.div
               key={selectedHabit._id}
-              {...slideFromRight}
-              transition={ease.normal}
+              {...(prefersReduced ? {} : slideFromRight)}
+              initial={prefersReduced ? false : slideFromRight.initial}
+              transition={prefersReduced ? { duration: 0 } : ease.normal}
               style={{ height: '100%' }}
             >
               <HabitDetail
@@ -172,10 +174,10 @@ export default function HabitsPage() {
           ) : (
             <motion.div
               key="empty"
-              initial={{ opacity: 0 }}
+              initial={prefersReduced ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={ease.normal}
+              transition={prefersReduced ? { duration: 0 } : ease.normal}
               style={{
                 height: '100%',
                 display: 'flex',

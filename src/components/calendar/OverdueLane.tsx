@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { AlertTriangle } from 'lucide-react'
-import { fadeSlideDown, ease } from '@/lib/motion'
+import { fadeSlideDown, ease, motionTokens } from '@/lib/motion'
 import type { CalendarEvent } from './types'
 
 interface OverdueLaneProps {
@@ -22,7 +22,7 @@ export default function OverdueLane({ events }: OverdueLaneProps) {
         initial={{ opacity: 0, height: 0 }}
         animate={{ opacity: 1, height: 'auto' }}
         exit={{ opacity: 0, height: 0 }}
-        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: motionTokens.duration.normal, ease: motionTokens.easing.smooth }}
         className="overflow-hidden"
       >
         <div
