@@ -9,6 +9,8 @@ import { useLists } from '@/hooks/useLists'
 import type { TaskRecord } from '@/hooks/useTasks'
 import type { ListDoc } from '@/hooks/useLists'
 import RRuleEditor from './RRuleEditor'
+import ReminderSection from './ReminderSection'
+import type { Reminder } from './ReminderSection'
 
 // ── Priority config (laif uses string priorities) ──
 
@@ -97,6 +99,7 @@ export default function TaskEditorSheet({ task, seed, open, onClose }: TaskEdito
   const [endAt, setEndAt] = useState('')
   const [isAllDay, setIsAllDay] = useState(false)
   const [rrule, setRrule] = useState<string | null>(null)
+  const [reminders, setReminders] = useState<Reminder[]>([])
 
   // Reset form when task or seed changes
   useEffect(() => {
@@ -109,6 +112,7 @@ export default function TaskEditorSheet({ task, seed, open, onClose }: TaskEdito
       setEndAt(toDateTimeLocal(task.scheduledEnd))
       setIsAllDay(false)
       setRrule(task.repeat || null)
+      setReminders(task.reminders || [])
     } else if (seed) {
       setTitle(seed.title || '')
       setDescription('')
@@ -118,6 +122,7 @@ export default function TaskEditorSheet({ task, seed, open, onClose }: TaskEdito
       setEndAt(toDateTimeLocal(seed.scheduledEnd))
       setIsAllDay(seed.isAllDay)
       setRrule(null)
+      setReminders([])
     }
   }, [task, seed])
 
@@ -158,6 +163,7 @@ export default function TaskEditorSheet({ task, seed, open, onClose }: TaskEdito
       scheduledStart: startAt ? fromDateTimeLocal(startAt) : null,
       scheduledEnd: endAt ? fromDateTimeLocal(endAt) : null,
       repeat: rrule || null,
+      reminders,
     }
 
     if (task) {
@@ -433,6 +439,12 @@ export default function TaskEditorSheet({ task, seed, open, onClose }: TaskEdito
 
               {/* RRULE editor */}
               <RRuleEditor value={rrule} onChange={setRrule} />
+
+              {/* Separator */}
+              <div style={{ height: 1, backgroundColor: 'var(--border)' }} />
+
+              {/* Reminders */}
+              <ReminderSection reminders={reminders} onChange={setReminders} />
             </div>
 
             {/* Footer: Save + Delete */}

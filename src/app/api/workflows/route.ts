@@ -4,7 +4,8 @@ import Workflow from '@/lib/models/Workflow'
 import { getAuthUserId } from '@/lib/auth'
 import { CreateWorkflowSchema, parseBody } from '@/lib/validation'
 import { getTemplateColumns } from '@/lib/workflowTemplates'
-import { apiError, api500 } from '@/lib/apiHelpers'
+import { handleApiError } from '@/lib/apiHelpers'
+import { UnauthorizedError, ValidationError } from '@/lib/errors'
 
 type LeanDoc = Record<string, unknown> & { _id: unknown }
 
@@ -12,7 +13,7 @@ export async function GET() {
   try {
     await connectDB()
     const userId = await getAuthUserId()
-    if (!userId) return apiError('Unauthorized', 401)
+    if (!userId) throw new UnauthorizedError()
 
     const workflows = await Workflow.find({ ownerId: userId, archived: false })
       .sort({ order: 1 })
@@ -22,7 +23,7 @@ export async function GET() {
       workflows.map((w) => ({ ...w, _id: String(w._id) }))
     )
   } catch (err) {
-    return api500(err)
+    return handleApiError(err)
   }
 }
 
@@ -30,11 +31,11 @@ export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => null)
     const parsed = parseBody(CreateWorkflowSchema, body)
-    if (!parsed.success) return apiError(parsed.error)
+    if (!parsed.success) throw new ValidationError(parsed.error)
 
     await connectDB()
     const userId = await getAuthUserId()
-    if (!userId) return apiError('Unauthorized', 401)
+    if (!userId) throw new UnauthorizedError()
 
     const { columns, order, ...rest } = parsed.data
 
@@ -63,6 +64,6 @@ export async function POST(req: Request) {
       { status: 201 }
     )
   } catch (err) {
-    return api500(err)
+    return handleApiError(err)
   }
 }

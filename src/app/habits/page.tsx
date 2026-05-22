@@ -31,6 +31,7 @@ export default function HabitsPage() {
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [wizardOpen, setWizardOpen] = useState(false)
   const [wizardPrefill, setWizardPrefill] = useState<{ title?: string; icon?: string; frequency?: string } | undefined>()
+  const [editingHabitId, setEditingHabitId] = useState<string | null>(null)
 
   const activeHabits = habits.filter((h) => (filter === 'active' ? !h.archived : h.archived))
 
@@ -71,20 +72,31 @@ export default function HabitsPage() {
 
   const handleCreateFromWizard = useCallback(
     async (data: HabitFormData) => {
-      await createHabit({
-        name: data.name,
-        icon: data.icon,
-        color: data.color,
-        frequency: data.frequency === 'daily' ? 'daily' : data.frequency === 'weekly' ? 'weekly' : 'custom',
-        customDays: data.weekdays,
-        completions: [],
-        currentStreak: 0,
-        bestStreak: 0,
-        archived: false,
-        order: habits.length,
-      })
+      if (editingHabitId) {
+        await updateHabit(editingHabitId, {
+          name: data.name,
+          icon: data.icon,
+          color: data.color,
+          frequency: data.frequency === 'daily' ? 'daily' : data.frequency === 'weekly' ? 'weekly' : 'custom',
+          customDays: data.weekdays,
+        })
+        setEditingHabitId(null)
+      } else {
+        await createHabit({
+          name: data.name,
+          icon: data.icon,
+          color: data.color,
+          frequency: data.frequency === 'daily' ? 'daily' : data.frequency === 'weekly' ? 'weekly' : 'custom',
+          customDays: data.weekdays,
+          completions: [],
+          currentStreak: 0,
+          bestStreak: 0,
+          archived: false,
+          order: habits.length,
+        })
+      }
     },
-    [createHabit, habits.length]
+    [createHabit, updateHabit, editingHabitId, habits.length]
   )
 
   const handleGalleryAdd = useCallback((habit: { icon: string; title: string; frequency: string }) => {
@@ -94,7 +106,7 @@ export default function HabitsPage() {
   }, [])
 
   const handleEdit = useCallback((habit: Habit) => {
-    // Open the create dialog in edit mode — for now, open the wizard with prefilled data
+    setEditingHabitId(habit._id)
     setWizardPrefill({ title: habit.name, icon: habit.icon, frequency: habit.frequency })
     setWizardOpen(true)
   }, [])
@@ -233,7 +245,7 @@ export default function HabitsPage() {
       />
       <HabitCreationWizard
         open={wizardOpen}
-        onClose={() => setWizardOpen(false)}
+        onClose={() => { setWizardOpen(false); setEditingHabitId(null) }}
         onCreate={handleCreateFromWizard}
         prefill={wizardPrefill}
       />

@@ -66,7 +66,7 @@ const LISTS = [
 ]
 
 export default function CalendarPage() {
-  const { tasks, createTask, updateTask, deleteTask } = useTasks()
+  const { tasks, createTask, updateTask } = useTasks()
   const prefersReduced = useReducedMotion()
 
   // ── Multi-select state ──
@@ -340,25 +340,6 @@ export default function CalendarPage() {
     window.addEventListener('keydown', handler, true)
     return () => window.removeEventListener('keydown', handler, true)
   }, [selectedEventIds.size])
-
-  // ── Batch actions ──
-  const handleBatchComplete = useCallback(async () => {
-    const ids = Array.from(selectedEventIds)
-    await Promise.all(ids.map(id => updateTask(id, { status: 'done', completedAt: new Date().toISOString() })))
-    setSelectedEventIds(new Set())
-  }, [selectedEventIds, updateTask])
-
-  const handleBatchDelete = useCallback(async () => {
-    const ids = Array.from(selectedEventIds)
-    await Promise.all(ids.map(id => deleteTask(id)))
-    setSelectedEventIds(new Set())
-  }, [selectedEventIds, deleteTask])
-
-  const handleBatchSetPriority = useCallback(async (priority: string) => {
-    const ids = Array.from(selectedEventIds)
-    await Promise.all(ids.map(id => updateTask(id, { priority })))
-    setSelectedEventIds(new Set())
-  }, [selectedEventIds, updateTask])
 
   const handleClearSelection = useCallback(() => {
     setSelectedEventIds(new Set())

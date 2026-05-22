@@ -38,6 +38,7 @@ export interface TaskRecord {
   labelIds?: string[]
   assigneeId?: string | null
   comments?: { text: string; createdAt?: string; authorName?: string; authorAvatar?: string }[]
+  reminders?: { id: string; type: 'before-start' | 'on-day-at' | 'absolute'; offsetMinutes?: number; timeOfDay?: string | null; absoluteTime?: string | null; sent?: boolean }[]
   repeat?: string | null
   completedAt?: string | null
   scheduledStart?: string | null

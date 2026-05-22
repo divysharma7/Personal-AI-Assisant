@@ -11,6 +11,14 @@ const TaskSchema = new Schema({
   color: { type: String, default: '#34d399' },
   umbrellas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Umbrella' }],
   comments: [{ text: { type: String, required: true }, createdAt: { type: Date, default: Date.now }, authorName: String, authorAvatar: String }],
+  reminders: [{
+    id: { type: String, required: true },
+    type: { type: String, enum: ['before-start', 'on-day-at', 'absolute'], default: 'before-start' },
+    offsetMinutes: { type: Number, default: 15 },
+    timeOfDay: { type: String, default: null },
+    absoluteTime: { type: Date, default: null },
+    sent: { type: Boolean, default: false },
+  }],
   tags: [{ type: String }],
   // Phase 3: enhanced task fields
   labelIds: [{ type: String }],

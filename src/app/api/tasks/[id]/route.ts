@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongodb'
 import TaskModel from '@/lib/models/Task'
 import { UpdateTaskSchema, parseBody } from '@/lib/validation'
-import { api404, api500 } from '@/lib/apiHelpers'
+import { handleApiError } from '@/lib/apiHelpers'
+import { NotFoundError, ValidationError } from '@/lib/errors'
 
 type LeanDoc = Record<string, unknown> & { _id: unknown }
 
@@ -70,10 +71,10 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   try {
     await connectDB()
     const task = await TaskModel.findById(params.id).lean() as LeanDoc | null
-    if (!task) return api404('Task')
+    if (!task) throw new NotFoundError('Task', params.id)
     return NextResponse.json({ ...task, _id: String(task._id), type: 'task' })
   } catch (err) {
-    return api500(err)
+    return handleApiError(err)
   }
 }
 
@@ -81,21 +82,21 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   try {
     const body = await req.json().catch(() => null)
     const parsed = parseBody(UpdateTaskSchema, body)
-    if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 })
+    if (!parsed.success) throw new ValidationError(parsed.error)
 
     await connectDB()
     const oldTask = await TaskModel.findById(params.id).lean() as LeanDoc | null
-    if (!oldTask) return api404('Task')
+    if (!oldTask) throw new NotFoundError('Task', params.id)
 
     const newActivities = buildActivities(oldTask, parsed.data as Record<string, unknown>)
     const updateOp = newActivities.length > 0
       ? { ...parsed.data, $push: { activities: { $each: newActivities } } }
       : parsed.data
     const task = await TaskModel.findByIdAndUpdate(params.id, updateOp, { new: true }).lean() as LeanDoc | null
-    if (!task) return api404('Task')
+    if (!task) throw new NotFoundError('Task', params.id)
     return NextResponse.json({ ...task, _id: String(task._id), type: 'task' })
   } catch (err) {
-    return api500(err)
+    return handleApiError(err)
   }
 }
 
@@ -103,21 +104,21 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   try {
     const body = await req.json().catch(() => null)
     const parsed = parseBody(UpdateTaskSchema, body)
-    if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 })
+    if (!parsed.success) throw new ValidationError(parsed.error)
 
     await connectDB()
     const oldTask = await TaskModel.findById(params.id).lean() as LeanDoc | null
-    if (!oldTask) return api404('Task')
+    if (!oldTask) throw new NotFoundError('Task', params.id)
 
     const newActivities = buildActivities(oldTask, parsed.data as Record<string, unknown>)
     const updateOp = newActivities.length > 0
       ? { $set: parsed.data, $push: { activities: { $each: newActivities } } }
       : { $set: parsed.data }
     const task = await TaskModel.findByIdAndUpdate(params.id, updateOp, { new: true }).lean() as LeanDoc | null
-    if (!task) return api404('Task')
+    if (!task) throw new NotFoundError('Task', params.id)
     return NextResponse.json({ ...task, _id: String(task._id), type: 'task' })
   } catch (err) {
-    return api500(err)
+    return handleApiError(err)
   }
 }
 
@@ -127,6 +128,6 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
     await TaskModel.findByIdAndDelete(params.id)
     return NextResponse.json({ success: true })
   } catch (err) {
-    return api500(err)
+    return handleApiError(err)
   }
 }

@@ -15,6 +15,15 @@ export const CreateTaskSchema = z.object({
   tags: z.array(z.string()).optional(),
   kanbanOrder: z.number().optional(),
   sectionId: z.string().optional().nullable(),
+  reminders: z.array(z.object({
+    id: z.string(),
+    type: z.enum(['before-start', 'on-day-at', 'absolute']),
+    offsetMinutes: z.number().optional(),
+    timeOfDay: z.string().nullable().optional(),
+    absoluteTime: z.string().nullable().optional(),
+    sent: z.boolean().optional(),
+  })).optional(),
+  repeat: z.string().nullable().optional(),
 })
 
 export const UpdateTaskSchema = CreateTaskSchema.partial()

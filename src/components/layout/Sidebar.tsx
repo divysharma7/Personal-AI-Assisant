@@ -682,7 +682,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                   <span className="text-[12px]" style={{ color: 'var(--text-faint)' }}>⇧⌘N</span>
                 </button>
                 <button
-                  onClick={() => { setFabOpen(false) }}
+                  onClick={() => { setFabOpen(false); router.push('/chat') }}
                   className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-[15px] font-medium transition-sl cursor-pointer"
                   style={{ color: 'var(--text-muted)' }}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
@@ -692,7 +692,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                   <span className="text-[12px]" style={{ color: 'var(--text-faint)' }}>⌃T</span>
                 </button>
                 <button
-                  onClick={() => { setFabOpen(false) }}
+                  onClick={() => { setFabOpen(false); router.push('/chat') }}
                   className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-[15px] font-medium transition-sl cursor-pointer"
                   style={{ color: 'var(--text-muted)' }}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}

@@ -32,6 +32,9 @@ export default function ChatPage() {
   useTasks()
   useHabits()
 
+  const messagesRef = useRef(messages)
+  useEffect(() => { messagesRef.current = messages }, [messages])
+
   const hasMessages = messages.length > 0
 
   /* ── Auto-scroll on new messages ── */
@@ -54,7 +57,7 @@ export default function ChatPage() {
       setMessages((prev) => [...prev, userMsg])
       setIsLoading(true)
 
-      const history = [...messages, userMsg].map((m) => ({
+      const history = [...messagesRef.current, userMsg].map((m) => ({
         role: m.role,
         content: m.content,
       }))
@@ -118,7 +121,7 @@ export default function ChatPage() {
       }
       setIsLoading(false)
     },
-    [isLoading, messages]
+    [isLoading]
   )
 
   /* ── Clear / New chat ── */
