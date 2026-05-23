@@ -13,39 +13,18 @@ interface IntegrationsTabProps {
 /* --- Integration definitions --- */
 const INTEGRATIONS = [
   {
-    id: 'gmail',
-    icon: '\u{1F4E7}',
-    name: 'Gmail',
-    description: 'Convert emails into tasks',
-    badge: 'Basic',
+    id: 'alexa',
+    icon: '🔵',
+    name: 'Alexa',
+    description: 'Manage tasks and get updates with voice commands',
+    badge: 'Voice',
   },
   {
     id: 'google-calendar',
-    icon: '\u{1F4C5}',
+    icon: '📅',
     name: 'Google Calendar',
-    description: 'Create calendar events from tasks with due dates',
-    badge: 'Basic',
-  },
-  {
-    id: 'email-forwarding',
-    icon: '\u2709\uFE0F',
-    name: 'Email forwarding',
-    description: 'Forward emails to create tasks',
-    badge: 'Basic',
-  },
-  {
-    id: 'slack',
-    icon: '\u{1F4AC}',
-    name: 'Slack',
-    description: 'Create tasks from Slack messages',
-    badge: 'Basic',
-  },
-  {
-    id: 'github',
-    icon: '\u{1F419}',
-    name: 'GitHub',
-    description: 'Receive pull requests and issues as tasks',
-    badge: 'Basic',
+    description: 'Sync calendar events and schedule tasks with due dates',
+    badge: 'Calendar',
   },
 ] as const
 
