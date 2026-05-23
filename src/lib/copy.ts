@@ -636,6 +636,19 @@ export const copy = {
       "How are my habits going?",
       "Start a focus session",
     ],
+    history: {
+      title: "Chat History",
+      newChat: "+ New Chat",
+      empty: "No previous chats",
+      emptyHint: "Start a conversation to see it here",
+      deleteConfirm: "Delete this chat?",
+      groups: {
+        today: "TODAY",
+        yesterday: "YESTERDAY",
+        previous7Days: "PREVIOUS 7 DAYS",
+        older: "OLDER",
+      },
+    },
   },
 
   // ───────── Folders ─────────

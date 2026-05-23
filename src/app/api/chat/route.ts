@@ -845,6 +845,7 @@ export async function POST(req: Request) {
   const rawMessages: { role: string; content: string }[] = Array.isArray(body.messages) ? body.messages : []
   const clientTimezone  = typeof body.timezone  === 'string' ? body.timezone  : 'UTC'
   const clientLocalDate = typeof body.localDate === 'string' ? body.localDate : new Date().toISOString()
+  const sessionId = typeof body.sessionId === 'string' ? body.sessionId : null
 
   // Stateless: only send the latest user message — prevents AI from using stale conversation data
   const lastUser = [...rawMessages].reverse().find(m => m.role === 'user')
@@ -852,10 +853,13 @@ export async function POST(req: Request) {
     ? [{ role: 'user' as const, content: sanitizeUserMsg(String(lastUser.content)) }]
     : []
 
+  const userId = await getAuthUserId()
   const encoder = new TextEncoder()
   const stream = new ReadableStream({
     async start(controller) {
+      let fullResponse = ''
       const emit: Emit = (chunk) => {
+        if (chunk.t === 'd') fullResponse += chunk.text
         try { controller.enqueue(encoder.encode(JSON.stringify(chunk) + '\n')) }
         catch { /* stream closed */ }
       }
@@ -865,6 +869,21 @@ export async function POST(req: Request) {
         const msg = e instanceof Error ? e.message : 'Unknown error'
         emit({ t: 'err', text: `Agent error: ${msg}` })
       } finally {
+        // Save messages to chat session if sessionId was provided
+        if (sessionId && userId && fullResponse) {
+          try {
+            await connectDB()
+            const ChatSessionModel = (await import('@/lib/models/ChatSession')).default
+            await ChatSessionModel.findOneAndUpdate(
+              { _id: sessionId, userId },
+              { $push: { messages: { $each: [
+                { role: 'user', content: lastUser?.content || '', timestamp: new Date() },
+                { role: 'assistant', content: fullResponse, timestamp: new Date() },
+              ] } } },
+              { new: true },
+            )
+          } catch { /* don't fail the stream for session save errors */ }
+        }
         controller.close()
       }
     },

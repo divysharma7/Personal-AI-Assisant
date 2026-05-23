@@ -9,13 +9,19 @@ import {
   TrendingUp,
   Brain,
   ArrowUp,
-  Loader2,
   ImageIcon,
   Mic,
+  MessageSquare,
 } from 'lucide-react'
 import { useTasks } from '@/hooks/useTasks'
 import { useHabits } from '@/hooks/useHabits'
-import { motionTokens, ease } from '@/lib/motion'
+import {
+  useChatSession,
+  useCreateChatSession,
+  useAppendMessages,
+} from '@/hooks/useChatSessions'
+import { motionTokens } from '@/lib/motion'
+import ChatSessionsPanel from '@/components/chat/ChatSessionsPanel'
 
 interface Message {
   id: string
@@ -36,9 +42,20 @@ export default function ChatPage() {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [userName, setUserName] = useState('there')
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
+  const [historyOpen, setHistoryOpen] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const messagesRef = useRef<Message[]>([])
+  const activeSessionIdRef = useRef<string | null>(null)
+
+  // Keep session id ref in sync
+  useEffect(() => { activeSessionIdRef.current = activeSessionId }, [activeSessionId])
+
+  // Session hooks
+  const { session: activeSession } = useChatSession(activeSessionId)
+  const { createSession } = useCreateChatSession()
+  const { appendMessages } = useAppendMessages()
 
   // Hydrate cached name from localStorage on client only
   useEffect(() => {
@@ -65,6 +82,18 @@ export default function ChatPage() {
     }).catch(() => {})
   }, [])
 
+  // Load messages when active session changes
+  useEffect(() => {
+    if (activeSession?.messages) {
+      setMessages(activeSession.messages.map((m: { role: string; content: string; timestamp: string }, i: number) => ({
+        id: `${m.role}-${i}`,
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+        timestamp: new Date(m.timestamp),
+      })))
+    }
+  }, [activeSession])
+
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
   }, [messages])
@@ -75,6 +104,11 @@ export default function ChatPage() {
     ta.style.height = 'auto'
     ta.style.height = `${Math.min(ta.scrollHeight, 140)}px`
   }, [input])
+
+  const handleNewChat = useCallback(() => {
+    setMessages([])
+    setActiveSessionId(null)
+  }, [])
 
   const handleSend = useCallback(async (text?: string) => {
     const msg = (text || input).trim()
@@ -122,11 +156,33 @@ export default function ChatPage() {
         }
       }
 
-      setMessages(prev => [...prev, {
+      const assistantMsg: Message = {
         id: `a-${Date.now()}`, role: 'assistant',
         content: fullReply || "Done! Let me know if you need anything else.",
         timestamp: new Date(),
-      }])
+      }
+      setMessages(prev => [...prev, assistantMsg])
+
+      // Persist to session
+      const currentSessionId = activeSessionIdRef.current
+      const newMessages: { role: 'user' | 'assistant'; content: string }[] = [
+        { role: userMsg.role, content: userMsg.content },
+        { role: assistantMsg.role, content: assistantMsg.content },
+      ]
+
+      if (!currentSessionId) {
+        // Create a new session with the first user message as title
+        const title = msg.length > 50 ? msg.slice(0, 50) + '...' : msg
+        try {
+          const created = await createSession(title)
+          setActiveSessionId(created._id)
+          await appendMessages(created._id, newMessages)
+        } catch { /* session save failed silently */ }
+      } else {
+        try {
+          await appendMessages(currentSessionId, newMessages)
+        } catch { /* session save failed silently */ }
+      }
     } catch {
       setMessages(prev => [...prev, {
         id: `a-${Date.now()}`, role: 'assistant',
@@ -135,7 +191,7 @@ export default function ChatPage() {
       }])
     }
     setIsLoading(false)
-  }, [input, isLoading])
+  }, [input, isLoading, createSession, appendMessages])
 
   /** Format assistant text — bold **text**, inline `code`, line breaks */
   function renderAssistant(text: string) {
@@ -156,283 +212,329 @@ export default function ChatPage() {
 
   return (
     <div style={{
-      display: 'flex', flexDirection: 'column', height: '100%',
+      display: 'flex', height: '100%', overflow: 'hidden',
       fontFamily: 'Inter, system-ui, sans-serif',
-      position: 'relative', overflow: 'hidden',
     }}>
-      {/* ── Animated gradient background — Neural Expressive inspired ── */}
-      {!hasMessages && (
-        <div style={{
-          position: 'absolute', inset: 0, zIndex: 0,
-          background: 'radial-gradient(ellipse at 30% 20%, rgba(107,102,218,0.08) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(248,79,57,0.05) 0%, transparent 50%)',
-          animation: 'chatGradientPulse 8s ease-in-out infinite',
-        }} />
-      )}
-
-      {/* ── Messages / Empty state ── */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto" style={{ position: 'relative', zIndex: 1, scrollBehavior: 'smooth' }}>
-        {!hasMessages ? (
-          /* ── Empty: centered greeting — Gemini style ── */
-          <div style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            height: '100%', padding: '0 24px', textAlign: 'center',
-          }}>
-            {/* Animated gradient icon */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: motionTokens.duration.slow, ease: motionTokens.easing.smooth }}
-              style={{
-                width: 64, height: 64, borderRadius: 20, marginBottom: 20,
-                background: 'linear-gradient(135deg, #6b66da 0%, var(--accent) 50%, #f59e0b 100%)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 8px 32px rgba(107,102,218,0.25)',
-              }}
-            >
-              <Sparkles size={32} strokeWidth={1.5} color="#fff" />
-            </motion.div>
-
-            {/* Greeting — large, gradient text */}
-            <motion.h1
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15, duration: motionTokens.duration.normal }}
-              style={{
-                fontSize: 36, fontWeight: 700, letterSpacing: '-0.03em', margin: '0 0 8px',
-                background: 'linear-gradient(135deg, var(--text-primary) 0%, var(--text-muted) 100%)',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              }}
-            >
-              Hi {userName}
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: motionTokens.duration.normal }}
-              style={{ fontSize: 16, color: 'var(--text-faint)', marginBottom: 36, maxWidth: 380 }}
-            >
-              I can help plan your day, track tasks, and keep you focused. What&apos;s on your mind?
-            </motion.p>
-
-            {/* Suggestion pills — horizontal row */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.45, duration: motionTokens.duration.normal }}
-              style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 500 }}
-            >
-              {SUGGESTIONS.map((s) => (
-                <button
-                  key={s.label}
-                  onClick={() => handleSend(s.label)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '10px 18px', borderRadius: 999, cursor: 'pointer',
-                    backgroundColor: 'var(--overlay-1, rgba(108,108,158,0.06))',
-                    border: '1px solid var(--overlay-2, rgba(108,108,158,0.1))',
-                    color: 'var(--text-primary)', fontSize: 14, fontWeight: 500,
-                    fontFamily: 'Inter, system-ui, sans-serif',
-                    transition: 'background-color 150ms ease-out, transform 150ms ease-out',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--overlay-2, rgba(108,108,158,0.12))'
-                    e.currentTarget.style.borderColor = 'var(--overlay-3, rgba(108,108,158,0.2))'
-                    e.currentTarget.style.transform = 'translateY(-1px)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--overlay-1, rgba(108,108,158,0.06))'
-                    e.currentTarget.style.borderColor = 'var(--overlay-2, rgba(108,108,158,0.1))'
-                    e.currentTarget.style.transform = 'translateY(0)'
-                  }}
-                >
-                  <s.icon size={16} strokeWidth={1.5} style={{ color: s.color }} />
-                  {s.label}
-                </button>
-              ))}
-            </motion.div>
-          </div>
-        ) : (
-          /* ── Message thread ── */
-          <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 20px 16px' }}>
-            <AnimatePresence initial={false}>
-              {messages.map((msg) => (
-                <motion.div
-                  key={msg.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: motionTokens.duration.normal, ease: motionTokens.easing.smooth }}
-                  style={{ marginBottom: 24 }}
-                >
-                  {msg.role === 'user' ? (
-                    /* User — right-aligned pill */
-                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                      <div style={{
-                        maxWidth: '70%', padding: '12px 18px', borderRadius: 22,
-                        borderBottomRightRadius: 6,
-                        backgroundColor: 'var(--accent)', color: '#fff',
-                        fontSize: 15, fontWeight: 500, lineHeight: 1.5,
-                        whiteSpace: 'pre-wrap',
-                      }}>
-                        {msg.content}
-                      </div>
-                    </div>
-                  ) : (
-                    /* Assistant — left-aligned, icon + structured text */
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                      <div style={{
-                        width: 32, height: 32, borderRadius: 10, flexShrink: 0,
-                        background: 'linear-gradient(135deg, #6b66da 0%, var(--accent) 100%)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        marginTop: 2,
-                      }}>
-                        <Sparkles size={16} strokeWidth={1.5} color="#fff" />
-                      </div>
-                      <div style={{
-                        flex: 1, fontSize: 15, fontWeight: 400, lineHeight: 1.7,
-                        color: 'var(--text-muted)',
-                      }}>
-                        {renderAssistant(msg.content)}
-                      </div>
-                    </div>
-                  )}
-                </motion.div>
-              ))}
-            </AnimatePresence>
-
-            {/* Loading — thinking animation */}
-            {isLoading && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 24 }}
-              >
-                <div style={{
-                  width: 32, height: 32, borderRadius: 10, flexShrink: 0,
-                  background: 'linear-gradient(135deg, #6b66da 0%, var(--accent) 100%)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <Sparkles size={16} strokeWidth={1.5} color="#fff" />
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 8 }}>
-                  {/* Three pulsating dots */}
-                  {[0, 1, 2].map(i => (
-                    <motion.div
-                      key={i}
-                      animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }}
-                      transition={{ duration: motionTokens.duration.crawl, repeat: Infinity, delay: i * motionTokens.duration.fast }}
-                      style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--text-faint)' }}
-                    />
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* ── Input bar — Gemini pill style, centered ── */}
-      <div style={{
-        position: 'relative', zIndex: 1,
-        padding: hasMessages ? '8px 20px 20px' : '0 20px 28px',
-        maxWidth: 680, margin: '0 auto', width: '100%',
-      }}>
-        <div style={{
-          display: 'flex', alignItems: 'flex-end', gap: 10,
-          padding: '12px 16px 12px 20px',
-          borderRadius: 28,
-          backgroundColor: 'var(--overlay-1, rgba(108,108,158,0.06))',
-          border: '1px solid var(--overlay-2, rgba(108,108,158,0.1))',
-          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-          transition: 'border-color 200ms ease, box-shadow 200ms ease',
-        }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--overlay-3, rgba(108,108,158,0.25))'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.1)' }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--overlay-2, rgba(108,108,158,0.1))'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.06)' }}
-        >
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
-            disabled={isLoading}
-            placeholder="Ask anything about your tasks..."
-            data-center={!hasMessages ? 'true' : undefined}
-            rows={1}
-            style={{
-              flex: 1, resize: 'none', background: 'transparent', outline: 'none', border: 'none',
-              fontSize: 15, fontWeight: 500, color: 'var(--text-primary)',
-              fontFamily: 'Inter, system-ui, sans-serif',
-              maxHeight: 140, minHeight: 22, lineHeight: 1.5, padding: 0,
-              textAlign: 'left',
-            }}
+      {/* ── Sessions side panel ── */}
+      <AnimatePresence>
+        {historyOpen && (
+          <ChatSessionsPanel
+            open={historyOpen}
+            onClose={() => setHistoryOpen(false)}
+            activeSessionId={activeSessionId}
+            onSelectSession={(id) => { setActiveSessionId(id); setHistoryOpen(false) }}
+            onNewChat={() => { handleNewChat(); setHistoryOpen(false) }}
           />
+        )}
+      </AnimatePresence>
 
-          {/* Action buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-            {/* Image/attach — placeholder */}
-            <button
-              style={{
-                width: 36, height: 36, borderRadius: '50%',
-                backgroundColor: 'transparent', border: 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--text-faint)', cursor: 'pointer',
-                transition: 'background-color 150ms ease',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-2)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-            >
-              <ImageIcon size={18} strokeWidth={1.5} />
-            </button>
-
-            {/* Mic — placeholder */}
-            <button
-              style={{
-                width: 36, height: 36, borderRadius: '50%',
-                backgroundColor: 'transparent', border: 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--text-faint)', cursor: 'pointer',
-                transition: 'background-color 150ms ease',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-2)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-            >
-              <Mic size={18} strokeWidth={1.5} />
-            </button>
-
-            {/* Send */}
-            <button
-              onClick={() => handleSend()}
-              disabled={!input.trim() || isLoading}
-              style={{
-                width: 36, height: 36, borderRadius: '50%',
-                backgroundColor: input.trim() ? 'var(--accent)' : 'var(--overlay-2, rgba(108,108,158,0.12))',
-                color: input.trim() ? '#fff' : 'var(--text-faint)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: input.trim() ? 'pointer' : 'default',
-                border: 'none', transition: 'background-color 200ms ease-out, color 200ms ease-out',
-              }}
-            >
-              <ArrowUp size={18} strokeWidth={2} />
-            </button>
-          </div>
+      {/* ── Main chat area ── */}
+      <div style={{
+        flex: 1, display: 'flex', flexDirection: 'column',
+        position: 'relative', overflow: 'hidden',
+      }}>
+        {/* ── History toggle button ── */}
+        <div style={{
+          position: 'absolute', top: 12, left: 12, zIndex: 10,
+        }}>
+          <button
+            onClick={() => setHistoryOpen(!historyOpen)}
+            aria-label="Chat history"
+            style={{
+              width: 36, height: 36, borderRadius: 10,
+              backgroundColor: 'var(--overlay-1, rgba(108,108,158,0.06))',
+              border: '1px solid var(--overlay-2, rgba(108,108,158,0.1))',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'var(--text-muted)', cursor: 'pointer',
+              transition: 'background-color 150ms ease, border-color 150ms ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--overlay-2, rgba(108,108,158,0.12))'
+              e.currentTarget.style.borderColor = 'var(--overlay-3, rgba(108,108,158,0.2))'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--overlay-1, rgba(108,108,158,0.06))'
+              e.currentTarget.style.borderColor = 'var(--overlay-2, rgba(108,108,158,0.1))'
+            }}
+          >
+            <MessageSquare size={18} strokeWidth={1.5} />
+          </button>
         </div>
 
-        {/* Footer note */}
-        <p style={{
-          fontSize: 11, color: 'var(--text-faint)', textAlign: 'center',
-          marginTop: 8, opacity: 0.5, fontFamily: 'Inter, system-ui, sans-serif',
-        }}>
-          LAIF AI can access your tasks, habits, and calendar
-        </p>
-      </div>
+        {/* ── Animated gradient background — Neural Expressive inspired ── */}
+        {!hasMessages && (
+          <div style={{
+            position: 'absolute', inset: 0, zIndex: 0,
+            background: 'radial-gradient(ellipse at 30% 20%, rgba(107,102,218,0.08) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(248,79,57,0.05) 0%, transparent 50%)',
+            animation: 'chatGradientPulse 8s ease-in-out infinite',
+          }} />
+        )}
 
-      {/* Gradient pulse animation */}
-      <style>{`
-        @keyframes chatGradientPulse {
-          0%, 100% { opacity: 0.6; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.02); }
-        }
-      `}</style>
+        {/* ── Messages / Empty state ── */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto" style={{ position: 'relative', zIndex: 1, scrollBehavior: 'smooth' }}>
+          {!hasMessages ? (
+            /* ── Empty: centered greeting — Gemini style ── */
+            <div style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              height: '100%', padding: '0 24px', textAlign: 'center',
+            }}>
+              {/* Animated gradient icon */}
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: motionTokens.duration.slow, ease: motionTokens.easing.smooth }}
+                style={{
+                  width: 64, height: 64, borderRadius: 20, marginBottom: 20,
+                  background: 'linear-gradient(135deg, #6b66da 0%, var(--accent) 50%, #f59e0b 100%)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: '0 8px 32px rgba(107,102,218,0.25)',
+                }}
+              >
+                <Sparkles size={32} strokeWidth={1.5} color="#fff" />
+              </motion.div>
+
+              {/* Greeting — large, gradient text */}
+              <motion.h1
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: motionTokens.duration.normal }}
+                style={{
+                  fontSize: 36, fontWeight: 700, letterSpacing: '-0.03em', margin: '0 0 8px',
+                  background: 'linear-gradient(135deg, var(--text-primary) 0%, var(--text-muted) 100%)',
+                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                }}
+              >
+                Hi {userName}
+              </motion.h1>
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3, duration: motionTokens.duration.normal }}
+                style={{ fontSize: 16, color: 'var(--text-faint)', marginBottom: 36, maxWidth: 380 }}
+              >
+                I can help plan your day, track tasks, and keep you focused. What&apos;s on your mind?
+              </motion.p>
+
+              {/* Suggestion pills — horizontal row */}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.45, duration: motionTokens.duration.normal }}
+                style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 500 }}
+              >
+                {SUGGESTIONS.map((s) => (
+                  <button
+                    key={s.label}
+                    onClick={() => handleSend(s.label)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '10px 18px', borderRadius: 999, cursor: 'pointer',
+                      backgroundColor: 'var(--overlay-1, rgba(108,108,158,0.06))',
+                      border: '1px solid var(--overlay-2, rgba(108,108,158,0.1))',
+                      color: 'var(--text-primary)', fontSize: 14, fontWeight: 500,
+                      fontFamily: 'Inter, system-ui, sans-serif',
+                      transition: 'background-color 150ms ease-out, transform 150ms ease-out',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--overlay-2, rgba(108,108,158,0.12))'
+                      e.currentTarget.style.borderColor = 'var(--overlay-3, rgba(108,108,158,0.2))'
+                      e.currentTarget.style.transform = 'translateY(-1px)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--overlay-1, rgba(108,108,158,0.06))'
+                      e.currentTarget.style.borderColor = 'var(--overlay-2, rgba(108,108,158,0.1))'
+                      e.currentTarget.style.transform = 'translateY(0)'
+                    }}
+                  >
+                    <s.icon size={16} strokeWidth={1.5} style={{ color: s.color }} />
+                    {s.label}
+                  </button>
+                ))}
+              </motion.div>
+            </div>
+          ) : (
+            /* ── Message thread ── */
+            <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 20px 16px' }}>
+              <AnimatePresence initial={false}>
+                {messages.map((msg) => (
+                  <motion.div
+                    key={msg.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: motionTokens.duration.normal, ease: motionTokens.easing.smooth }}
+                    style={{ marginBottom: 24 }}
+                  >
+                    {msg.role === 'user' ? (
+                      /* User — right-aligned pill */
+                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <div style={{
+                          maxWidth: '70%', padding: '12px 18px', borderRadius: 22,
+                          borderBottomRightRadius: 6,
+                          backgroundColor: 'var(--accent)', color: '#fff',
+                          fontSize: 15, fontWeight: 500, lineHeight: 1.5,
+                          whiteSpace: 'pre-wrap',
+                        }}>
+                          {msg.content}
+                        </div>
+                      </div>
+                    ) : (
+                      /* Assistant — left-aligned, icon + structured text */
+                      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                        <div style={{
+                          width: 32, height: 32, borderRadius: 10, flexShrink: 0,
+                          background: 'linear-gradient(135deg, #6b66da 0%, var(--accent) 100%)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          marginTop: 2,
+                        }}>
+                          <Sparkles size={16} strokeWidth={1.5} color="#fff" />
+                        </div>
+                        <div style={{
+                          flex: 1, fontSize: 15, fontWeight: 400, lineHeight: 1.7,
+                          color: 'var(--text-muted)',
+                        }}>
+                          {renderAssistant(msg.content)}
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+
+              {/* Loading — thinking animation */}
+              {isLoading && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 24 }}
+                >
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 10, flexShrink: 0,
+                    background: 'linear-gradient(135deg, #6b66da 0%, var(--accent) 100%)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Sparkles size={16} strokeWidth={1.5} color="#fff" />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 8 }}>
+                    {/* Three pulsating dots */}
+                    {[0, 1, 2].map(i => (
+                      <motion.div
+                        key={i}
+                        animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }}
+                        transition={{ duration: motionTokens.duration.crawl, repeat: Infinity, delay: i * motionTokens.duration.fast }}
+                        style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--text-faint)' }}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* ── Input bar — Gemini pill style, centered ── */}
+        <div style={{
+          position: 'relative', zIndex: 1,
+          padding: hasMessages ? '8px 20px 20px' : '0 20px 28px',
+          maxWidth: 680, margin: '0 auto', width: '100%',
+        }}>
+          <div style={{
+            display: 'flex', alignItems: 'flex-end', gap: 10,
+            padding: '12px 16px 12px 20px',
+            borderRadius: 28,
+            backgroundColor: 'var(--overlay-1, rgba(108,108,158,0.06))',
+            border: '1px solid var(--overlay-2, rgba(108,108,158,0.1))',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+            transition: 'border-color 200ms ease, box-shadow 200ms ease',
+          }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--overlay-3, rgba(108,108,158,0.25))'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.1)' }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--overlay-2, rgba(108,108,158,0.1))'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.06)' }}
+          >
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
+              disabled={isLoading}
+              placeholder="Ask anything about your tasks..."
+              data-center={!hasMessages ? 'true' : undefined}
+              rows={1}
+              style={{
+                flex: 1, resize: 'none', background: 'transparent', outline: 'none', border: 'none',
+                fontSize: 15, fontWeight: 500, color: 'var(--text-primary)',
+                fontFamily: 'Inter, system-ui, sans-serif',
+                maxHeight: 140, minHeight: 22, lineHeight: 1.5, padding: 0,
+                textAlign: 'left',
+              }}
+            />
+
+            {/* Action buttons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+              {/* Image/attach — placeholder */}
+              <button
+                style={{
+                  width: 36, height: 36, borderRadius: '50%',
+                  backgroundColor: 'transparent', border: 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'var(--text-faint)', cursor: 'pointer',
+                  transition: 'background-color 150ms ease',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-2)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+              >
+                <ImageIcon size={18} strokeWidth={1.5} />
+              </button>
+
+              {/* Mic — placeholder */}
+              <button
+                style={{
+                  width: 36, height: 36, borderRadius: '50%',
+                  backgroundColor: 'transparent', border: 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'var(--text-faint)', cursor: 'pointer',
+                  transition: 'background-color 150ms ease',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-2)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+              >
+                <Mic size={18} strokeWidth={1.5} />
+              </button>
+
+              {/* Send */}
+              <button
+                onClick={() => handleSend()}
+                disabled={!input.trim() || isLoading}
+                style={{
+                  width: 36, height: 36, borderRadius: '50%',
+                  backgroundColor: input.trim() ? 'var(--accent)' : 'var(--overlay-2, rgba(108,108,158,0.12))',
+                  color: input.trim() ? '#fff' : 'var(--text-faint)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: input.trim() ? 'pointer' : 'default',
+                  border: 'none', transition: 'background-color 200ms ease-out, color 200ms ease-out',
+                }}
+              >
+                <ArrowUp size={18} strokeWidth={2} />
+              </button>
+            </div>
+          </div>
+
+          {/* Footer note */}
+          <p style={{
+            fontSize: 11, color: 'var(--text-faint)', textAlign: 'center',
+            marginTop: 8, opacity: 0.5, fontFamily: 'Inter, system-ui, sans-serif',
+          }}>
+            LAIF AI can access your tasks, habits, and calendar
+          </p>
+        </div>
+
+        {/* Gradient pulse animation */}
+        <style>{`
+          @keyframes chatGradientPulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.02); }
+          }
+        `}</style>
+      </div>
     </div>
   )
 }

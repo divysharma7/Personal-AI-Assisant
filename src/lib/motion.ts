@@ -121,6 +121,13 @@ export const slideFromRight = {
   exit: { x: motionTokens.distance.md, opacity: 0 },
 }
 
+/** Slide from left (side panels, drawers) */
+export const slideFromLeft = {
+  initial: { x: -motionTokens.distance.md, opacity: 0 },
+  animate: { x: 0, opacity: 1 },
+  exit: { x: -motionTokens.distance.md, opacity: 0 },
+}
+
 /** Slide from bottom (mobile sheets, toasts) */
 export const slideFromBottom = {
   initial: { y: '100%' },
