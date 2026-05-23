@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { slideFromRight, ease } from '@/lib/motion'
 import { useHabits } from '@/hooks/useHabits'
@@ -19,14 +18,16 @@ export default function HabitsPage() {
   const prefersReduced = useReducedMotion()
 
   const [filter, setFilter] = useState<'active' | 'archived'>('active')
-  const searchParams = useSearchParams()
-  const preselected = searchParams.get('selected')
-  const [selectedId, setSelectedId] = useState<string | null>(preselected)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   // Sync when navigating from sidebar with ?selected=id
   useEffect(() => {
-    if (preselected) setSelectedId(preselected)
-  }, [preselected])
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const preselected = params.get('selected')
+      if (preselected) setSelectedId(preselected)
+    } catch { /* ignore */ }
+  }, [])
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [wizardOpen, setWizardOpen] = useState(false)

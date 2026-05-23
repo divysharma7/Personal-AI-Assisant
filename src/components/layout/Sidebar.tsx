@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import Link from 'next/link'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   Inbox,
   CalendarDays,
@@ -271,18 +271,28 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   const popoverRef = useRef<HTMLDivElement>(null)
   const fabPopoverRef = useRef<HTMLDivElement>(null)
 
-  const searchParams = useSearchParams()
-
   // Smart list counts
   const [smartListsOpen, setSmartListsOpen] = useState(true)
+  const [activeSmartFilter, setActiveSmartFilter] = useState<SmartFilter | null>(null)
 
-  // Derive active smart filter from the URL (no local state)
-  const activeSmartFilter: SmartFilter | null = useMemo(() => {
-    if (pathname !== '/today') return null
-    const filter = searchParams.get('filter')
-    if (filter === 'tomorrow' || filter === 'next7days' || filter === 'completed') return filter
-    return null
-  }, [pathname, searchParams])
+  // Sync active smart filter from URL on mount and pathname changes
+  useEffect(() => {
+    if (pathname !== '/today') {
+      setActiveSmartFilter(null)
+      return
+    }
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const filter = params.get('filter')
+      if (filter === 'tomorrow' || filter === 'next7days' || filter === 'completed') {
+        setActiveSmartFilter(filter)
+      } else {
+        setActiveSmartFilter(null)
+      }
+    } catch {
+      setActiveSmartFilter(null)
+    }
+  }, [pathname])
 
   const smartCounts = useMemo(() => {
     const now = new Date()

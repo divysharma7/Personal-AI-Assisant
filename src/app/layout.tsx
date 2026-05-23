@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { Suspense } from 'react'
 import { Inter, Instrument_Serif } from 'next/font/google'
 import './globals.css'
 import Providers from './providers'
@@ -49,9 +48,7 @@ export default function RootLayout({
       </head>
       <body>
         <Providers>
-          <Suspense>
-            <AppShell>{children}</AppShell>
-          </Suspense>
+          <AppShell>{children}</AppShell>
         </Providers>
       </body>
     </html>
