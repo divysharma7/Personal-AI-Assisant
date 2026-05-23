@@ -294,8 +294,10 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
     }
   }, [pathname])
 
+  const [stableNow] = useState(() => new Date())
+
   const smartCounts = useMemo(() => {
-    const now = new Date()
+    const now = stableNow
     const todayStart = startOfDay(now)
     const tomorrowStart = addDays(todayStart, 1)
     const tomorrowEnd = addDays(todayStart, 2)

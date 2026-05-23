@@ -75,10 +75,10 @@ export function SubtaskRing({
 // ── Date formatting ──────────────────────────────────────────
 
 /** Returns a human-friendly relative date string, or null for empty input */
-export function formatRelativeDate(dateStr: string | null | undefined): string | null {
+export function formatRelativeDate(dateStr: string | null | undefined, stableNow?: Date): string | null {
   if (!dateStr) return null
   const d = new Date(dateStr)
-  const now = new Date()
+  const now = new Date(stableNow ?? new Date())
   now.setHours(0, 0, 0, 0)
   const target = new Date(d)
   target.setHours(0, 0, 0, 0)

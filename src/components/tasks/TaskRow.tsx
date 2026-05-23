@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback, memo } from 'react'
+import { useState, useRef, useCallback, useMemo, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, ArrowRight, AlignJustify, Tag, Calendar } from 'lucide-react'
 import { copy } from '@/lib/copy'
@@ -67,10 +67,10 @@ function DragHandle() {
   )
 }
 
-function formatRelativeDate(dateStr: string | null | undefined): string | null {
+function formatRelativeDate(dateStr: string | null | undefined, stableNow: Date): string | null {
   if (!dateStr) return null
   const d = new Date(dateStr)
-  const now = new Date(); now.setHours(0, 0, 0, 0)
+  const now = new Date(stableNow); now.setHours(0, 0, 0, 0)
   const target = new Date(d); target.setHours(0, 0, 0, 0)
   const days = Math.round((target.getTime() - now.getTime()) / 86400000)
   if (days === 0) return 'Today'
@@ -117,9 +117,10 @@ export default memo(function TaskRow({
   const [priorityHovered, setPriorityHovered] = useState(false)
   const [popoverPos, setPopoverPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const inputRef = useRef<HTMLInputElement>(null)
+  const [stableNow] = useState(() => new Date())
   const done = task.status === 'done' || isCompleting
-  const dateStr = formatRelativeDate(task.dueDate ?? null)
-  const overdue = task.dueDate ? new Date(task.dueDate) < new Date(new Date().toDateString()) : false
+  const dateStr = formatRelativeDate(task.dueDate ?? null, stableNow)
+  const overdue = useMemo(() => task.dueDate ? new Date(task.dueDate) < new Date(stableNow.toDateString()) : false, [task.dueDate, stableNow])
   const hasSubs = subTaskCount && subTaskCount.total > 0
   const hasNotes = !!task.description
   const priorityColor = PRIORITY_COLORS[task.priority] || PRIORITY_COLORS.low

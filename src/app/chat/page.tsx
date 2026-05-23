@@ -35,19 +35,18 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [userName, setUserName] = useState(() => {
-    // Try to get cached name synchronously to avoid flash
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = localStorage.getItem('laif-user-name')
-        if (cached) return cached
-      } catch { /* ignore */ }
-    }
-    return 'there'
-  })
+  const [userName, setUserName] = useState('there')
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const messagesRef = useRef<Message[]>([])
+
+  // Hydrate cached name from localStorage on client only
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem('laif-user-name')
+      if (cached) setUserName(cached)
+    } catch { /* ignore */ }
+  }, [])
 
   // Keep ref in sync to avoid stale closure on rapid sends
   useEffect(() => { messagesRef.current = messages }, [messages])

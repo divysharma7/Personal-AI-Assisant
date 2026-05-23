@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/mongodb'
 import ListGroupModel from '@/lib/models/ListGroup'
 import ListModel from '@/lib/models/List'
 import { getAuthUserId } from '@/lib/auth'
+import { handleApiError } from '@/lib/apiHelpers'
 
 type LeanDoc = Record<string, unknown> & { _id: unknown }
 
@@ -10,41 +11,49 @@ export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  await connectDB()
-  const userId = await getAuthUserId()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    await connectDB()
+    const userId = await getAuthUserId()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await req.json()
-  const allowed = ['title', 'order', 'collapsed']
-  const update: Record<string, unknown> = {}
-  for (const key of allowed) {
-    if (key in body) update[key] = body[key]
+    const body = await req.json()
+    const allowed = ['title', 'order', 'collapsed']
+    const update: Record<string, unknown> = {}
+    for (const key of allowed) {
+      if (key in body) update[key] = body[key]
+    }
+
+    const doc = await ListGroupModel.findOneAndUpdate(
+      { _id: params.id, ownerId: userId },
+      { $set: update },
+      { new: true }
+    ).lean() as LeanDoc | null
+
+    if (!doc) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return NextResponse.json({ ...doc, _id: String(doc._id) })
+  } catch (err) {
+    return handleApiError(err)
   }
-
-  const doc = await ListGroupModel.findOneAndUpdate(
-    { _id: params.id, ownerId: userId },
-    { $set: update },
-    { new: true }
-  ).lean() as LeanDoc | null
-
-  if (!doc) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  return NextResponse.json({ ...doc, _id: String(doc._id) })
 }
 
 export async function DELETE(
   _req: Request,
   { params }: { params: { id: string } }
 ) {
-  await connectDB()
-  const userId = await getAuthUserId()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    await connectDB()
+    const userId = await getAuthUserId()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Un-group child lists by clearing their groupId
-  await ListModel.updateMany(
-    { groupId: params.id, ownerId: userId },
-    { $set: { groupId: null } }
-  )
+    // Un-group child lists by clearing their groupId
+    await ListModel.updateMany(
+      { groupId: params.id, ownerId: userId },
+      { $set: { groupId: null } }
+    )
 
-  await ListGroupModel.findOneAndDelete({ _id: params.id, ownerId: userId })
-  return NextResponse.json({ ok: true })
+    await ListGroupModel.findOneAndDelete({ _id: params.id, ownerId: userId })
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    return handleApiError(err)
+  }
 }

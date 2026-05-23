@@ -25,42 +25,42 @@ import TaskContextMenu from '@/components/tasks/TaskContextMenu'
 
 // ── Date helpers ──────────────────────────────────────────────
 
-function startOfToday(): Date {
-  const d = new Date()
+function startOfDay(ref: Date): Date {
+  const d = new Date(ref)
   d.setHours(0, 0, 0, 0)
   return d
 }
 
-function endOfToday(): Date {
-  const d = new Date()
+function endOfDay(ref: Date): Date {
+  const d = new Date(ref)
   d.setHours(23, 59, 59, 999)
   return d
 }
 
-function startOfTomorrow(): Date {
-  const d = startOfToday()
+function startOfNextDay(ref: Date): Date {
+  const d = startOfDay(ref)
   d.setDate(d.getDate() + 1)
   return d
 }
 
-function endOfTomorrow(): Date {
-  const d = startOfTomorrow()
+function endOfNextDay(ref: Date): Date {
+  const d = startOfNextDay(ref)
   d.setHours(23, 59, 59, 999)
   return d
 }
 
-function isOverdue(dateStr: string): boolean {
-  return new Date(dateStr) < startOfToday()
+function isOverdue(dateStr: string, ref: Date): boolean {
+  return new Date(dateStr) < startOfDay(ref)
 }
 
-function isToday(dateStr: string): boolean {
+function isToday(dateStr: string, ref: Date): boolean {
   const d = new Date(dateStr)
-  return d >= startOfToday() && d <= endOfToday()
+  return d >= startOfDay(ref) && d <= endOfDay(ref)
 }
 
-function isTomorrow(dateStr: string): boolean {
+function isTomorrow(dateStr: string, ref: Date): boolean {
   const d = new Date(dateStr)
-  return d >= startOfTomorrow() && d <= endOfTomorrow()
+  return d >= startOfNextDay(ref) && d <= endOfNextDay(ref)
 }
 
 function formatTimeSlot(start: string, end: string): string {
@@ -106,18 +106,19 @@ interface TaskGroup {
 function groupTasks(
   tasks: TaskRecord[],
   groupBy: GroupByOption,
-  labelMap: Map<string, string>
+  labelMap: Map<string, string>,
+  referenceDate: Date
 ): TaskGroup[] {
   if (groupBy === 'none') {
     return [{ key: 'all', label: 'All tasks', tasks }]
   }
 
   if (groupBy === 'dueDate') {
-    const overdue = tasks.filter((t) => t.dueDate && isOverdue(t.dueDate))
+    const overdue = tasks.filter((t) => t.dueDate && isOverdue(t.dueDate, referenceDate))
       .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
-    const today = tasks.filter((t) => t.dueDate && isToday(t.dueDate))
-    const tomorrow = tasks.filter((t) => t.dueDate && isTomorrow(t.dueDate))
-    const later = tasks.filter((t) => t.dueDate && !isOverdue(t.dueDate) && !isToday(t.dueDate) && !isTomorrow(t.dueDate))
+    const today = tasks.filter((t) => t.dueDate && isToday(t.dueDate, referenceDate))
+    const tomorrow = tasks.filter((t) => t.dueDate && isTomorrow(t.dueDate, referenceDate))
+    const later = tasks.filter((t) => t.dueDate && !isOverdue(t.dueDate, referenceDate) && !isToday(t.dueDate, referenceDate) && !isTomorrow(t.dueDate, referenceDate))
     const noDue = tasks.filter((t) => !t.dueDate)
 
     const groups: TaskGroup[] = []
@@ -206,6 +207,7 @@ function groupTasks(
 // ── Component ─────────────────────────────────────────────────
 
 export default function TodayPage() {
+  const [stableNow] = useState(() => new Date())
   const { tasks, isLoading, createTask, toggleComplete, updateTask, deleteTask } = useTasks()
   const { labels } = useLabels()
   const { connected: googleConnected, syncTask } = useGoogleCalendar()
@@ -263,8 +265,8 @@ export default function TodayPage() {
 
   // Group tasks
   const taskGroups = useMemo(
-    () => groupTasks(incompleteTasks, groupBy, labelMap),
-    [incompleteTasks, groupBy, labelMap]
+    () => groupTasks(incompleteTasks, groupBy, labelMap, stableNow),
+    [incompleteTasks, groupBy, labelMap, stableNow]
   )
 
   const hasAnyTasks = incompleteTasks.length > 0
@@ -325,7 +327,7 @@ export default function TodayPage() {
       title,
       priority: 'medium',
       status: 'todo',
-      dueDate: endOfToday().toISOString(),
+      dueDate: endOfDay(stableNow).toISOString(),
     })
     playCreationSound()
     setNewTaskTitle('')

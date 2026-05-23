@@ -84,13 +84,13 @@ export default function StreakCelebration({
     onDismiss()
   }, [onDismiss])
 
-  if (!celebrationEnabled || !isMilestone) return null
-
-  const confettiParticles = Array.from({ length: 30 }, (_, i) => ({
+  const confettiParticles = useMemo(() => Array.from({ length: 30 }, (_, i) => ({
     id: i,
     delay: Math.random() * 0.3,
     x: (Math.random() - 0.5) * 100,
-  }))
+  })), [])
+
+  if (!celebrationEnabled || !isMilestone) return null
 
   return (
     <AnimatePresence>

@@ -2,36 +2,45 @@ import { NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongodb'
 import EventModel from '@/lib/models/Event'
 import { scheduleNotification } from '@/lib/posthook'
+import { handleApiError } from '@/lib/apiHelpers'
 
 type LeanDoc = Record<string, unknown> & { _id: unknown }
 
 export async function GET() {
-  await connectDB()
-  const events = await EventModel.find().sort({ startDate: 1 }).lean() as LeanDoc[]
-  return NextResponse.json(events.map(e => ({ ...e, _id: String(e._id), type: 'event' })))
+  try {
+    await connectDB()
+    const events = await EventModel.find().sort({ startDate: 1 }).lean() as LeanDoc[]
+    return NextResponse.json(events.map(e => ({ ...e, _id: String(e._id), type: 'event' })))
+  } catch (err) {
+    return handleApiError(err)
+  }
 }
 
 export async function POST(req: Request) {
-  await connectDB()
-  const body = await req.json()
-  const event = await EventModel.create(body)
-  const plain = event.toObject() as LeanDoc
+  try {
+    await connectDB()
+    const body = await req.json()
+    const event = await EventModel.create(body)
+    const plain = event.toObject() as LeanDoc
 
-  // Schedule a notification using the notifyBefore value from the form (null = no notification)
-  const minutesBefore = typeof body.notifyBefore === 'number' ? body.notifyBefore : null
-  if (plain.startDate && minutesBefore !== null) {
-    const hook = await scheduleNotification({
-      id:            String(plain._id),
-      type:          'event',
-      fireAt:        new Date(plain.startDate as string),
-      minutesBefore,
-    }).catch(err => { console.error('[posthook] schedule error:', err); return null })
+    // Schedule a notification using the notifyBefore value from the form (null = no notification)
+    const minutesBefore = typeof body.notifyBefore === 'number' ? body.notifyBefore : null
+    if (plain.startDate && minutesBefore !== null) {
+      const hook = await scheduleNotification({
+        id:            String(plain._id),
+        type:          'event',
+        fireAt:        new Date(plain.startDate as string),
+        minutesBefore,
+      }).catch(err => { console.error('[posthook] schedule error:', err); return null })
 
-    // Store hook ID so it can be cancelled before re-scheduling
-    if (hook?.id) {
-      await EventModel.findByIdAndUpdate(plain._id, { posthookId: hook.id })
+      // Store hook ID so it can be cancelled before re-scheduling
+      if (hook?.id) {
+        await EventModel.findByIdAndUpdate(plain._id, { posthookId: hook.id })
+      }
     }
-  }
 
-  return NextResponse.json({ ...plain, _id: String(plain._id), type: 'event' }, { status: 201 })
+    return NextResponse.json({ ...plain, _id: String(plain._id), type: 'event' }, { status: 201 })
+  } catch (err) {
+    return handleApiError(err)
+  }
 }

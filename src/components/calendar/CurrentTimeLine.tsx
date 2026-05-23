@@ -6,7 +6,7 @@ import { timeToGridRow } from './calendarUtils'
 /**
  * CurrentTimeLine — 2px accent line spanning the time grid with a pulsing dot.
  * Updates position every 60 seconds via setInterval.
- * Pulsing dot syncs to Date.now() % 4000 heartbeat.
+ * Pulsing dot uses CSS animation for hydration-safe rendering.
  */
 export default function CurrentTimeLine() {
   const [now, setNow] = useState(() => new Date())
@@ -24,42 +24,46 @@ export default function CurrentTimeLine() {
   // Position within the 96-row grid (each row = 15 min = 1.04167% of 24h)
   const gridRow = timeToGridRow(now)
 
-  // Pulsing opacity synced to heartbeat: Date.now() % 4000
-  const heartbeat = (Date.now() % 4000) / 4000
-  const pulseOpacity = 0.6 + 0.4 * Math.sin(heartbeat * Math.PI * 2)
-
   return (
-    <div
-      className="cal-time-indicator"
-      style={{
-        gridRow: `${gridRow} / ${gridRow + 1}`,
-        alignSelf: 'center',
-        display: 'flex',
-        alignItems: 'center',
-        pointerEvents: 'none',
-      }}
-    >
-      {/* Pulsing dot */}
+    <>
+      <style>{`
+        @keyframes calDotPulse {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
+        }
+      `}</style>
       <div
-        className="cal-dot-pulse"
+        className="cal-time-indicator"
         style={{
-          width: 8,
-          height: 8,
-          borderRadius: '50%',
-          backgroundColor: 'var(--accent)',
-          marginLeft: -4,
-          flexShrink: 0,
-          opacity: pulseOpacity,
+          gridRow: `${gridRow} / ${gridRow + 1}`,
+          alignSelf: 'center',
+          display: 'flex',
+          alignItems: 'center',
+          pointerEvents: 'none',
         }}
-      />
-      {/* Line */}
-      <div
-        style={{
-          flex: 1,
-          height: 2,
-          backgroundColor: 'var(--accent)',
-        }}
-      />
-    </div>
+      >
+        {/* Pulsing dot — CSS animation avoids hydration mismatch from Date.now() */}
+        <div
+          className="cal-dot-pulse"
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            backgroundColor: 'var(--accent)',
+            marginLeft: -4,
+            flexShrink: 0,
+            animation: 'calDotPulse 4s ease-in-out infinite',
+          }}
+        />
+        {/* Line */}
+        <div
+          style={{
+            flex: 1,
+            height: 2,
+            backgroundColor: 'var(--accent)',
+          }}
+        />
+      </div>
+    </>
   )
 }

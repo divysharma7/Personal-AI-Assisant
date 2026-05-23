@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus } from 'lucide-react'
 import { copy } from '@/lib/copy'
@@ -13,12 +13,6 @@ import TaskRow from '@/components/tasks/TaskRow'
 
 type FilterTab = 'forMe' | 'upcoming' | 'done'
 
-function startOfToday(): Date {
-  const d = new Date()
-  d.setHours(0, 0, 0, 0)
-  return d
-}
-
 export default function TasksPage() {
   const { tasks, createTask, toggleComplete, updateTask, isLoading } = useTasks()
   const { labels } = useLabels()
@@ -26,21 +20,21 @@ export default function TasksPage() {
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const [stableNow] = useState(() => new Date())
 
   // ── Filter tasks per active filter ───────────────────────────────────────
-  const filteredTasks = (() => {
+  const filteredTasks = useMemo(() => {
     switch (activeFilter) {
       case 'forMe':
         return tasks.filter((t) => t.status !== 'done' && t.status !== 'dropped')
       case 'upcoming': {
-        const now = new Date()
-        const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+        const thirtyDays = new Date(stableNow.getTime() + 30 * 24 * 60 * 60 * 1000)
         return tasks.filter(
           (t) =>
             t.status !== 'done' &&
             t.status !== 'dropped' &&
             t.dueDate &&
-            new Date(t.dueDate) > now &&
+            new Date(t.dueDate) > stableNow &&
             new Date(t.dueDate) <= thirtyDays
         ).sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
       }
@@ -55,7 +49,7 @@ export default function TasksPage() {
       default:
         return tasks
     }
-  })()
+  }, [tasks, activeFilter, stableNow])
 
   // ── Sub-task counts ──────────────────────────────────────────────────────
   const getSubTaskCount = useCallback(

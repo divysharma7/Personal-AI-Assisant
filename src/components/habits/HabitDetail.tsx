@@ -27,9 +27,9 @@ function formatDateKey(year: number, month: number, day: number): string {
 
 export default function HabitDetail({ habit, onToggleToday, onEdit, onArchive, onDelete, onStartFocus }: HabitDetailProps) {
   const prefersReduced = useReducedMotion()
-  const today = new Date()
-  const [calYear, setCalYear] = useState(today.getFullYear())
-  const [calMonth, setCalMonth] = useState(today.getMonth())
+  const [today] = useState(() => new Date())
+  const [calYear, setCalYear] = useState(() => today.getFullYear())
+  const [calMonth, setCalMonth] = useState(() => today.getMonth())
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [emojiSubOpen, setEmojiSubOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
@@ -88,7 +88,7 @@ export default function HabitDetail({ habit, onToggleToday, onEdit, onArchive, o
     const completionSet = new Set(habit.completions)
     let achieved = 0
 
-    const todayDate = new Date()
+    const todayDate = today
     const todayKey = formatDateKey(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate())
 
     for (let d = 1; d <= daysInMonth; d++) {
@@ -106,13 +106,13 @@ export default function HabitDetail({ habit, onToggleToday, onEdit, onArchive, o
     const rate = scheduledDays > 0 ? Math.round((achieved / scheduledDays) * 100) : 0
 
     return { achieved, scheduledDays, rate, daysInMonth }
-  }, [calYear, calMonth, calendarData, habit.completions])
+  }, [calYear, calMonth, calendarData, habit.completions, today])
 
   // Bar chart data for the month
   const barData = useMemo(() => {
     const { daysInMonth } = calendarData
     const completionSet = new Set(habit.completions)
-    const todayDate = new Date()
+    const todayDate = today
     const todayKey = formatDateKey(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate())
 
     const bars: { day: number; completed: boolean; isToday: boolean; isFuture: boolean }[] = []
@@ -126,14 +126,13 @@ export default function HabitDetail({ habit, onToggleToday, onEdit, onArchive, o
       })
     }
     return bars
-  }, [calYear, calMonth, calendarData, habit.completions])
+  }, [calYear, calMonth, calendarData, habit.completions, today])
 
   const completionSet = useMemo(() => new Set(habit.completions), [habit.completions])
 
   const todayKey = useMemo(() => {
-    const t = new Date()
-    return formatDateKey(t.getFullYear(), t.getMonth(), t.getDate())
-  }, [])
+    return formatDateKey(today.getFullYear(), today.getMonth(), today.getDate())
+  }, [today])
 
   const isCheckedToday = completionSet.has(todayKey)
 

@@ -5,6 +5,7 @@ import TaskModel from '@/lib/models/Task'
 import { getAuthUserId } from '@/lib/auth'
 import { callOpenRouterJSON } from '@/lib/ai'
 import { MEMORY_TYPES, type MemoryType } from '@/types'
+import { handleApiError } from '@/lib/apiHelpers'
 
 type LeanDoc = Record<string, unknown> & { _id: unknown }
 
@@ -92,61 +93,69 @@ function sanitizeAttrs(v: unknown): Record<string, string> {
 // ─── Handlers ────────────────────────────────────────────────────────────────
 
 export async function GET() {
-  await connectDB()
-  const userId = await getAuthUserId()
-  const filter: Record<string, unknown> = userId ? { userId } : {}
-  const memories = await MemoryModel.find(filter).sort({ createdAt: -1 }).lean() as LeanDoc[]
-  return NextResponse.json(memories.map(m => ({ ...m, _id: String(m._id) })))
+  try {
+    await connectDB()
+    const userId = await getAuthUserId()
+    const filter: Record<string, unknown> = userId ? { userId } : {}
+    const memories = await MemoryModel.find(filter).sort({ createdAt: -1 }).lean() as LeanDoc[]
+    return NextResponse.json(memories.map(m => ({ ...m, _id: String(m._id) })))
+  } catch (err) {
+    return handleApiError(err)
+  }
 }
 
 export async function POST(req: Request) {
-  await connectDB()
-  const userId = await getAuthUserId()
-  const body = await req.json().catch(() => ({}))
+  try {
+    await connectDB()
+    const userId = await getAuthUserId()
+    const body = await req.json().catch(() => ({}))
 
-  let parsed: Partial<LeanDoc>
+    let parsed: Partial<LeanDoc>
 
-  if (typeof body.text === 'string' && body.text.trim()) {
-    // Natural language → AI parse (with fallback)
-    const aiResult = await parseWithAI(body.text.trim())
-    parsed = aiResult ?? fallbackParse(body.text.trim())
-  } else {
-    // Structured input from manual form
-    parsed = body
-  }
+    if (typeof body.text === 'string' && body.text.trim()) {
+      // Natural language → AI parse (with fallback)
+      const aiResult = await parseWithAI(body.text.trim())
+      parsed = aiResult ?? fallbackParse(body.text.trim())
+    } else {
+      // Structured input from manual form
+      parsed = body
+    }
 
-  // Validate and sanitize
-  const type = MEMORY_TYPES.includes(parsed.type as MemoryType) ? (parsed.type as MemoryType) : 'general'
-  const title = sanitizeStr(parsed.title, 300) || sanitizeStr(body.text, 100) || 'Untitled'
-  const description = sanitizeStr(parsed.description, 1000) || undefined
-  const attributes = sanitizeAttrs(parsed.attributes)
-  const status = sanitizeStr(parsed.status, 50) || undefined
-  const priority = ['low', 'medium', 'high'].includes(String(parsed.priority)) ? String(parsed.priority) : undefined
+    // Validate and sanitize
+    const type = MEMORY_TYPES.includes(parsed.type as MemoryType) ? (parsed.type as MemoryType) : 'general'
+    const title = sanitizeStr(parsed.title, 300) || sanitizeStr(body.text, 100) || 'Untitled'
+    const description = sanitizeStr(parsed.description, 1000) || undefined
+    const attributes = sanitizeAttrs(parsed.attributes)
+    const status = sanitizeStr(parsed.status, 50) || undefined
+    const priority = ['low', 'medium', 'high'].includes(String(parsed.priority)) ? String(parsed.priority) : undefined
 
-  let linkedTaskId: string | undefined
+    let linkedTaskId: string | undefined
 
-  // If type is task, also create a calendar task
-  if (type === 'task') {
-    const task = await TaskModel.create({
-      title,
-      description,
-      dueDate: attributes.due ? new Date(attributes.due) : undefined,
-      priority: priority ?? 'medium',
-      status: 'todo',
-      color: '#34d399',
+    // If type is task, also create a calendar task
+    if (type === 'task') {
+      const task = await TaskModel.create({
+        title,
+        description,
+        dueDate: attributes.due ? new Date(attributes.due) : undefined,
+        priority: priority ?? 'medium',
+        status: 'todo',
+        color: '#34d399',
+        ...(userId ? { userId } : {}),
+      })
+      linkedTaskId = String(task._id)
+    }
+
+    const memory = await MemoryModel.create({
+      type, title, description, attributes, status, priority,
+      linkedTaskId,
       ...(userId ? { userId } : {}),
     })
-    linkedTaskId = String(task._id)
+
+    return NextResponse.json(
+      { ...memory.toObject(), _id: String(memory._id), linkedTaskId },
+      { status: 201 }
+    )
+  } catch (err) {
+    return handleApiError(err)
   }
-
-  const memory = await MemoryModel.create({
-    type, title, description, attributes, status, priority,
-    linkedTaskId,
-    ...(userId ? { userId } : {}),
-  })
-
-  return NextResponse.json(
-    { ...memory.toObject(), _id: String(memory._id), linkedTaskId },
-    { status: 201 }
-  )
 }

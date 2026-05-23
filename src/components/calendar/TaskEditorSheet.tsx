@@ -8,7 +8,8 @@ import { useTasks } from '@/hooks/useTasks'
 import { useLists } from '@/hooks/useLists'
 import type { TaskRecord } from '@/hooks/useTasks'
 import type { ListDoc } from '@/hooks/useLists'
-import RRuleEditor from './RRuleEditor'
+import dynamic from 'next/dynamic'
+const RRuleEditor = dynamic(() => import('./RRuleEditor'), { ssr: false })
 import ReminderSection from './ReminderSection'
 import type { Reminder } from './ReminderSection'
 

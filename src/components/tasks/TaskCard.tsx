@@ -1,6 +1,6 @@
 'use client'
 
-import { memo } from 'react'
+import { memo, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Repeat, MessageCircle } from 'lucide-react'
 import { checkBounce } from '@/lib/motion'
@@ -35,11 +35,12 @@ export default memo(function TaskCard({
   isDragging = false,
   isOverlay = false,
 }: TaskCardProps) {
+  const [stableNow] = useState(() => new Date())
   const done = task.status === 'done'
-  const dateStr = formatRelativeDate(task.dueDate ?? null)
-  const overdue =
+  const dateStr = formatRelativeDate(task.dueDate ?? null, stableNow)
+  const overdue = useMemo(() =>
     task.dueDate != null &&
-    new Date(task.dueDate) < new Date(new Date().toDateString())
+    new Date(task.dueDate) < new Date(stableNow.toDateString()), [task.dueDate, stableNow])
   const hasSubs = subTaskCount != null && subTaskCount.total > 0
   const priorityColor = PRIORITY_COLORS[task.priority] || PRIORITY_COLORS.low
 

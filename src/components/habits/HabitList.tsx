@@ -20,8 +20,7 @@ interface HabitListProps {
   onToggleToday?: (habit: Habit) => void
 }
 
-function getLast7Days(): { dateStr: string; dayName: string; dateNum: number; isToday: boolean }[] {
-  const today = new Date()
+function getLast7Days(today: Date): { dateStr: string; dayName: string; dateNum: number; isToday: boolean }[] {
   const result: { dateStr: string; dayName: string; dateNum: number; isToday: boolean }[] = []
   for (let i = 6; i >= 0; i--) {
     const d = subDays(today, i)
@@ -58,7 +57,8 @@ export default function HabitList({
   isLoading,
   onToggleToday,
 }: HabitListProps) {
-  const last7 = useMemo(() => getLast7Days(), [])
+  const [stableToday] = useState(() => new Date())
+  const last7 = useMemo(() => getLast7Days(stableToday), [stableToday])
   const last7DateStrs = useMemo(() => last7.map((d) => d.dateStr), [last7])
   const grouped = useMemo(() => groupHabits(habits), [habits])
   const hasMultipleGroups = grouped.size > 1
