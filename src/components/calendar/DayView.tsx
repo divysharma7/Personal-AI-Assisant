@@ -12,7 +12,7 @@ import CalendarBlock from './CalendarBlock'
 import DraggableBlock from './DraggableBlock'
 import DroppableSlot from './DroppableSlot'
 import CurrentTimeLine from './CurrentTimeLine'
-import CalendarEmpty from './CalendarEmpty'
+// CalendarEmpty removed — always show time grid so users can click slots
 import CapacityBar from './CapacityBar'
 import HiddenHoursDivider from './week/HiddenHoursDivider'
 import type { CalendarEvent } from './types'
@@ -54,7 +54,7 @@ export default function DayView({ date, events }: DayViewProps) {
 
   const [showEarlyHours, setShowEarlyHours] = useState(false)
   const [showLateHours, setShowLateHours] = useState(false)
-  const [newTaskSlot, setNewTaskSlot] = useState<number | null>(null)
+  // Inline input removed — slot clicks now open QuickAddPopover via event
 
   const dayEvents = useMemo(
     () => events.filter((ev) => ev.start && isSameDay(new Date(ev.start), date) && !ev.isHabit && !isAllDay(ev)),
@@ -102,31 +102,27 @@ export default function DayView({ date, events }: DayViewProps) {
     return map
   }, [dayEvents])
 
-  const handleSlotClick = useCallback((row: number) => {
-    setNewTaskSlot(row)
-  }, [])
+  const handleSlotClick = useCallback((row: number, e: React.MouseEvent) => {
+    const slotIndex = row - 1
+    const hour = Math.floor(slotIndex / 4)
+    const minute = (slotIndex % 4) * 15
+    const start = new Date(date)
+    start.setHours(hour, minute, 0, 0)
+    const end = new Date(start)
+    end.setMinutes(end.getMinutes() + 60)
 
-  const handleNewTaskKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Escape') {
-        setNewTaskSlot(null)
-        return
-      }
-      if (e.key === 'Enter') {
-        const title = (e.target as HTMLInputElement).value.trim()
-        if (title && newTaskSlot !== null) {
-          const slotIndex = newTaskSlot - 1 // convert from 1-indexed grid row to 0-indexed slot
-          window.dispatchEvent(
-            new CustomEvent('laif:create-calendar-task', {
-              detail: { title, slotIndex, dayISO },
-            })
-          )
-        }
-        setNewTaskSlot(null)
-      }
-    },
-    [newTaskSlot, dayISO]
-  )
+    window.dispatchEvent(
+      new CustomEvent('laif:slot-click', {
+        detail: {
+          scheduledStart: start.toISOString(),
+          scheduledEnd: end.toISOString(),
+          isAllDay: false,
+          anchor: { x: e.clientX, y: e.clientY },
+        },
+      })
+    )
+  }, [date])
+
 
   const handleDragTop = useCallback(
     (newHour: number) => {
@@ -210,9 +206,7 @@ export default function DayView({ date, events }: DayViewProps) {
 
       {/* Time grid */}
       <div className="flex-1 overflow-y-auto">
-        {dayEvents.length === 0 && !newTaskSlot ? (
-          <CalendarEmpty />
-        ) : (
+        {(
           <div
             className="cal-grid relative"
             style={{
@@ -285,7 +279,7 @@ export default function DayView({ date, events }: DayViewProps) {
                     <div
                       className="h-full w-full"
                       style={{ minHeight: 16 }}
-                      onClick={() => handleSlotClick(actualRow)}
+                      onClick={(e) => handleSlotClick(actualRow, e)}
                     />
                   </DroppableSlot>
                 </div>
@@ -351,46 +345,6 @@ export default function DayView({ date, events }: DayViewProps) {
               )
             })}
 
-            {/* Inline new task input */}
-            {newTaskSlot !== null && (() => {
-              const visibleSlot = toLocalRow(newTaskSlot)
-              if (visibleSlot < 1 + topDividerRows || visibleSlot > totalGridRows - bottomDividerRows) return null
-              return (
-                <div
-                  style={{
-                    gridColumn: '2 / 3',
-                    gridRow: `${visibleSlot} / ${visibleSlot + 4}`,
-                    padding: '0 4px',
-                    zIndex: 15,
-                  }}
-                >
-                  <div
-                    style={{
-                      height: '100%',
-                      borderRadius: 8,
-                      backgroundColor: 'color-mix(in srgb, var(--accent) 15%, transparent)',
-                      border: '2px solid var(--accent)',
-                      display: 'flex', alignItems: 'flex-start',
-                      padding: '6px 10px',
-                    }}
-                  >
-                    <input
-                      autoFocus
-                      placeholder="Type task name, press Enter..."
-                      style={{
-                        width: '100%',
-                        background: 'transparent', border: 'none', outline: 'none',
-                        fontSize: 13, fontWeight: 600,
-                        color: 'var(--text-primary)',
-                        fontFamily: 'Inter, system-ui, sans-serif',
-                      }}
-                      onBlur={() => setNewTaskSlot(null)}
-                      onKeyDown={handleNewTaskKeyDown}
-                    />
-                  </div>
-                </div>
-              )
-            })()}
 
             {/* Current time indicator */}
             {showToday && (

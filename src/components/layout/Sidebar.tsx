@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import {
   Inbox,
   CalendarDays,
@@ -65,8 +65,8 @@ const NAV_ITEMS = [
   { label: 'Tasks', icon: CheckCircle2, href: '/tasks' },
 ] as const
 
-/* ── Profile menu items — features moved from sidebar ── */
-const PROFILE_NAV = [
+/* ── Features nav — visible in expanded sidebar ── */
+const FEATURES_NAV = [
   { label: 'Habits', icon: Flame, href: '/habits' },
   { label: 'Calendar', icon: Calendar, href: '/calendar' },
   { label: 'Focus', icon: Target, href: '/focus' },
@@ -271,9 +271,18 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   const popoverRef = useRef<HTMLDivElement>(null)
   const fabPopoverRef = useRef<HTMLDivElement>(null)
 
+  const searchParams = useSearchParams()
+
   // Smart list counts
   const [smartListsOpen, setSmartListsOpen] = useState(true)
-  const [activeSmartFilter, setActiveSmartFilter] = useState<SmartFilter | null>(null)
+
+  // Derive active smart filter from the URL (no local state)
+  const activeSmartFilter: SmartFilter | null = useMemo(() => {
+    if (pathname !== '/today') return null
+    const filter = searchParams.get('filter')
+    if (filter === 'tomorrow' || filter === 'next7days' || filter === 'completed') return filter
+    return null
+  }, [pathname, searchParams])
 
   const smartCounts = useMemo(() => {
     const now = new Date()
@@ -341,6 +350,8 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   }, [router])
 
   const isActive = (href: string) => {
+    // When a smart filter is active, deactivate regular nav items
+    if (activeSmartFilter) return false
     if (href === '/') return pathname === '/'
     return pathname.startsWith(href)
   }
@@ -355,7 +366,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   if (collapsed) {
     const COLLAPSED_NAV = [
       ...NAV_ITEMS.map((item) => ({ label: item.label, icon: item.icon, href: item.href })),
-      ...PROFILE_NAV.map((item) => ({ label: item.label, icon: item.icon, href: item.href })),
+      ...FEATURES_NAV.map((item) => ({ label: item.label, icon: item.icon, href: item.href })),
     ]
 
     return (
@@ -467,6 +478,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                 initial={prefersReduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={prefersReduced ? { duration: 0 } : { duration: motionTokens.duration.fast }}
                 {...buttonPress}
+                onClick={() => router.push('/tasks')}
                 aria-label="Search"
                 className="flex h-7 w-7 items-center justify-center rounded-md cursor-pointer transition-sl"
                 style={{ color: 'var(--text-faint)' }}
@@ -554,7 +566,13 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                 return (
                   <motion.button
                     key={item.id}
-                    onClick={() => setActiveSmartFilter(isSmartActive ? null : item.id)}
+                    onClick={() => {
+                      if (isSmartActive) {
+                        router.push('/today')
+                      } else {
+                        router.push(`/today?filter=${item.id}`)
+                      }
+                    }}
                     whileHover={{ x: 2 }}
                     transition={springs.snappy}
                     className="relative flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[14px] font-medium cursor-pointer"
@@ -618,6 +636,35 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
+
+      {/* ── Features section ── */}
+      <div className="mt-4">
+        <div className="mb-1 px-2.5">
+          <span className="text-[12px] font-medium" style={{ color: 'var(--text-faint)' }}>Features</span>
+        </div>
+        <nav className="flex flex-col gap-0.5">
+          {FEATURES_NAV.map((item) => {
+            const active = pathname.startsWith(item.href)
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[14px] font-medium no-underline transition-sl"
+                style={{
+                  color: 'var(--text-primary)',
+                  backgroundColor: active ? 'var(--overlay-2, var(--bg-hover))' : 'transparent',
+                  boxShadow: active ? 'inset -3px 0 0 var(--accent)' : 'none',
+                }}
+                onMouseEnter={(e) => { if (!active) e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = active ? 'var(--overlay-2, var(--bg-hover))' : 'transparent' }}
+              >
+                <item.icon size={16} strokeWidth={1.5} style={{ color: active ? 'var(--accent)' : 'var(--text-muted)' }} />
+                <span className="truncate">{item.label}</span>
+              </Link>
+            )
+          })}
+        </nav>
       </div>
 
       {/* ── Workflows section ── */}
@@ -726,23 +773,6 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                 className="absolute bottom-full right-0 mb-3 w-52 rounded-2xl p-2"
                 style={{ backgroundColor: 'var(--bg-pane-2, var(--bg-pane))', border: '1px solid var(--overlay-2, var(--border))', boxShadow: 'var(--shadow-elevated)' }}
               >
-                {/* Feature links */}
-                {PROFILE_NAV.map((item) => (
-                  <button
-                    key={item.href}
-                    onClick={() => { setAvatarOpen(false); router.push(item.href) }}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] font-medium transition-sl cursor-pointer"
-                    style={{ color: pathname.startsWith(item.href) ? 'var(--accent)' : 'var(--text-primary)' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                  >
-                    <item.icon size={16} strokeWidth={1.5} style={{ color: 'var(--text-muted)' }} />
-                    {item.label}
-                  </button>
-                ))}
-
-                <div className="mx-2 my-1.5 h-px" style={{ backgroundColor: 'var(--border)' }} />
-
                 <button
                   onClick={() => { setAvatarOpen(false); router.push('/settings') }}
                   className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] font-medium transition-sl cursor-pointer"

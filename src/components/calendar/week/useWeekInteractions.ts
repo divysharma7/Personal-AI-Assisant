@@ -76,11 +76,32 @@ export function useWeekInteractions(
     }
   }, [scrollContainerRef, effectiveFirst, effectiveCount])
 
-  /* -- Click-to-create handler -- */
-  const handleSlotClick = useCallback((colIndex: number, actualRow: number) => {
+  /* -- Click-to-create handler — now dispatches slot-click event for QuickAddPopover -- */
+  const handleSlotClick = useCallback((colIndex: number, actualRow: number, e?: React.MouseEvent) => {
     if (isDragCreating.current) return
-    setNewTaskSlot({ col: colIndex, row: actualRow })
-  }, [])
+    const slotIndex = actualRow - 1
+    const hour = Math.floor(slotIndex / 4)
+    const minute = (slotIndex % 4) * 15
+    const day = weekDays[colIndex]
+    const start = new Date(day)
+    start.setHours(hour, minute, 0, 0)
+    const end = new Date(start)
+    end.setMinutes(end.getMinutes() + 60)
+
+    window.dispatchEvent(
+      new CustomEvent('laif:slot-click', {
+        detail: {
+          scheduledStart: start.toISOString(),
+          scheduledEnd: end.toISOString(),
+          isAllDay: false,
+          anchor: {
+            x: e?.clientX ?? window.innerWidth / 2,
+            y: e?.clientY ?? 200,
+          },
+        },
+      })
+    )
+  }, [weekDays])
 
   const handleNewTaskKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {

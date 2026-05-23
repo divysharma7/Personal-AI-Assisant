@@ -26,6 +26,16 @@ function DraggableTaskRow({ event }: { event: CalendarEvent }) {
     data: dragData,
   })
 
+  const handleClick = () => {
+    if (!isDragging) {
+      window.dispatchEvent(
+        new CustomEvent('laif:detail-task', {
+          detail: { taskId: event.id },
+        })
+      )
+    }
+  }
+
   return (
     <motion.div
       ref={setNodeRef}
@@ -38,6 +48,7 @@ function DraggableTaskRow({ event }: { event: CalendarEvent }) {
         color: 'var(--text-primary)',
         opacity: isDragging ? 0.4 : 1,
       }}
+      onClick={handleClick}
       onMouseEnter={(e) => {
         e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))'
       }}

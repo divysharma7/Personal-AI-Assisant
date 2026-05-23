@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useCallback } from 'react'
 import {
   isSameDay,
   isToday,
@@ -45,7 +45,6 @@ const LAST_VISIBLE_ROW = 84
 const VISIBLE_ROW_COUNT = LAST_VISIBLE_ROW - FIRST_VISIBLE_ROW + 1
 
 export default function ThreeDayView({ date, events }: ThreeDayViewProps) {
-  const [newTaskSlot, setNewTaskSlot] = useState<{ col: number; row: number } | null>(null)
 
   // Center on the given date: yesterday, today, tomorrow
   const threeDays = useMemo(() => {
@@ -97,32 +96,30 @@ export default function ThreeDayView({ date, events }: ThreeDayViewProps) {
     })
   }, [threeDays, eventsByDay])
 
-  const handleSlotClick = useCallback((colIndex: number, actualRow: number) => {
-    setNewTaskSlot({ col: colIndex, row: actualRow })
-  }, [])
+  const handleSlotClick = useCallback((colIndex: number, actualRow: number, e?: React.MouseEvent) => {
+    const slotIndex = actualRow - 1
+    const hour = Math.floor(slotIndex / 4)
+    const minute = (slotIndex % 4) * 15
+    const day = threeDays[colIndex]
+    const start = new Date(day)
+    start.setHours(hour, minute, 0, 0)
+    const end = new Date(start)
+    end.setMinutes(end.getMinutes() + 60)
 
-  const handleNewTaskKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Escape') {
-        setNewTaskSlot(null)
-        return
-      }
-      if (e.key === 'Enter') {
-        const title = (e.target as HTMLInputElement).value.trim()
-        if (title && newTaskSlot !== null) {
-          const slotIndex = newTaskSlot.row - 1
-          const dayISO = threeDays[newTaskSlot.col].toISOString().split('T')[0]
-          window.dispatchEvent(
-            new CustomEvent('laif:create-calendar-task', {
-              detail: { title, slotIndex, dayISO },
-            })
-          )
-        }
-        setNewTaskSlot(null)
-      }
-    },
-    [newTaskSlot, threeDays]
-  )
+    window.dispatchEvent(
+      new CustomEvent('laif:slot-click', {
+        detail: {
+          scheduledStart: start.toISOString(),
+          scheduledEnd: end.toISOString(),
+          isAllDay: false,
+          anchor: {
+            x: e?.clientX ?? window.innerWidth / 2,
+            y: e?.clientY ?? 200,
+          },
+        },
+      })
+    )
+  }, [threeDays])
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -320,7 +317,7 @@ export default function ThreeDayView({ date, events }: ThreeDayViewProps) {
                     <div
                       style={{ minHeight: 12 }}
                       className="h-full w-full"
-                      onClick={() => handleSlotClick(colIndex, actualRow)}
+                      onClick={(e) => handleSlotClick(colIndex, actualRow, e)}
                     />
                   </DroppableSlot>
                 </div>
@@ -377,50 +374,7 @@ export default function ThreeDayView({ date, events }: ThreeDayViewProps) {
             })
           )}
 
-          {/* Inline new task input */}
-          {newTaskSlot !== null && (() => {
-            const visibleSlot = newTaskSlot.row - FIRST_VISIBLE_ROW + 1
-            if (visibleSlot < 1 || visibleSlot > VISIBLE_ROW_COUNT) return null
-            return (
-              <div
-                style={{
-                  gridColumn: `${newTaskSlot.col + 2} / ${newTaskSlot.col + 3}`,
-                  gridRow: `${visibleSlot} / ${visibleSlot + 4}`,
-                  padding: '0 2px',
-                  zIndex: 15,
-                }}
-              >
-                <div
-                  style={{
-                    height: '100%',
-                    borderRadius: 8,
-                    backgroundColor: 'color-mix(in srgb, var(--accent) 15%, transparent)',
-                    border: '2px solid var(--accent)',
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    padding: '6px 10px',
-                  }}
-                >
-                  <input
-                    autoFocus
-                    placeholder="Type task name, press Enter..."
-                    style={{
-                      width: '100%',
-                      background: 'transparent',
-                      border: 'none',
-                      outline: 'none',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: 'var(--text-primary)',
-                      fontFamily: 'Inter, system-ui, sans-serif',
-                    }}
-                    onBlur={() => setNewTaskSlot(null)}
-                    onKeyDown={handleNewTaskKeyDown}
-                  />
-                </div>
-              </div>
-            )
-          })()}
+          {/* Inline input removed — slot clicks now open QuickAddPopover via event */}
 
           {/* Current time indicator */}
           {threeDays.map((day, colIndex) => {

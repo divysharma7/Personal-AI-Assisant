@@ -35,7 +35,16 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [userName, setUserName] = useState('there')
+  const [userName, setUserName] = useState(() => {
+    // Try to get cached name synchronously to avoid flash
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('laif-user-name')
+        if (cached) return cached
+      } catch { /* ignore */ }
+    }
+    return 'there'
+  })
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const messagesRef = useRef<Message[]>([])
@@ -49,7 +58,11 @@ export default function ChatPage() {
 
   useEffect(() => {
     fetch('/api/auth/me').then(r => r.ok ? r.json() : null).then(d => {
-      if (d?.name) setUserName(d.name.split(' ')[0])
+      if (d?.name) {
+        const firstName = d.name.split(' ')[0]
+        setUserName(firstName)
+        try { localStorage.setItem('laif-user-name', firstName) } catch { /* ignore */ }
+      }
     }).catch(() => {})
   }, [])
 
@@ -123,7 +136,7 @@ export default function ChatPage() {
       }])
     }
     setIsLoading(false)
-  }, [input, isLoading, messages])
+  }, [input, isLoading])
 
   /** Format assistant text — bold **text**, inline `code`, line breaks */
   function renderAssistant(text: string) {

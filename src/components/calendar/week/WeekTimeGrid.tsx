@@ -81,12 +81,9 @@ export default function WeekTimeGrid({ weekDays, eventsByDay }: WeekTimeGridProp
   const allEvents = useMemo(() => eventsByDay.flat(), [eventsByDay])
 
   const {
-    newTaskSlot,
-    setNewTaskSlot,
     dragCreate,
     resizingEvent,
     handleSlotClick,
-    handleNewTaskKeyDown,
     handleGridMouseDown,
     handleResizeStart,
   } = useWeekInteractions(weekDays, allEvents, scrollContainerRef, visibleRange)
@@ -261,7 +258,7 @@ export default function WeekTimeGrid({ weekDays, eventsByDay }: WeekTimeGridProp
                   <div
                     style={{ minHeight: 16 }}
                     className="h-full w-full"
-                    onClick={() => handleSlotClick(colIndex, actualRow)}
+                    onClick={(e) => handleSlotClick(colIndex, actualRow, e)}
                   />
                 </DroppableSlot>
               </div>
@@ -449,50 +446,7 @@ export default function WeekTimeGrid({ weekDays, eventsByDay }: WeekTimeGridProp
           )
         })()}
 
-        {/* Inline new task input */}
-        {newTaskSlot !== null && (() => {
-          const visibleSlot = toLocalRow(newTaskSlot.row)
-          if (visibleSlot < 1 + topDividerRows || visibleSlot > totalGridRows - bottomDividerRows) return null
-          return (
-            <div
-              style={{
-                gridColumn: `${newTaskSlot.col + 2} / ${newTaskSlot.col + 3}`,
-                gridRow: `${visibleSlot} / ${visibleSlot + 4}`,
-                padding: '0 2px',
-                zIndex: 15,
-              }}
-            >
-              <div
-                style={{
-                  height: '100%',
-                  borderRadius: 8,
-                  backgroundColor: 'color-mix(in srgb, var(--accent) 15%, transparent)',
-                  border: '2px solid var(--accent)',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  padding: '6px 10px',
-                }}
-              >
-                <input
-                  autoFocus
-                  placeholder="Type task name, press Enter..."
-                  style={{
-                    width: '100%',
-                    background: 'transparent',
-                    border: 'none',
-                    outline: 'none',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: 'var(--text-primary)',
-                    fontFamily: 'Inter, system-ui, sans-serif',
-                  }}
-                  onBlur={() => setNewTaskSlot(null)}
-                  onKeyDown={handleNewTaskKeyDown}
-                />
-              </div>
-            </div>
-          )
-        })()}
+        {/* Inline input removed — slot clicks now open QuickAddPopover via event */}
 
         {/* Current time indicator */}
         {weekDays.map((day, colIndex) => {

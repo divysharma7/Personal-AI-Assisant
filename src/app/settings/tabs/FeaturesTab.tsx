@@ -55,15 +55,19 @@ function Toggle({ on, onToggle, label }: { on: boolean; onToggle: () => void; la
 
 /* ─── Dropdown select ─── */
 const selectStyle: React.CSSProperties = {
-  backgroundColor: 'var(--bg-hover)',
+  backgroundColor: 'var(--bg-hover, rgba(108,108,158,0.08))',
   color: 'var(--text-primary)',
   borderRadius: 999,
   padding: '10px 36px 10px 16px',
-  border: 'none',
+  border: '1px solid var(--border, rgba(108,108,158,0.12))',
   outline: 'none',
   fontSize: 14,
+  WebkitAppearance: 'none',
   appearance: 'none',
   cursor: 'pointer',
+  position: 'relative' as const,
+  zIndex: 1,
+  minWidth: 160,
 }
 
 function themeToLabel(t: Theme): string {

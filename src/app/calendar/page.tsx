@@ -187,7 +187,22 @@ export default function CalendarPage() {
     setQuickAddText(''); setQuickAddOpen(false)
   }, [quickAddText, createTask, currentDate])
 
-  // ── Slot creation from DayView / WeekView ──
+  // ── Slot click → open QuickAddPopover ──
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as {
+        scheduledStart: string
+        scheduledEnd: string
+        isAllDay: boolean
+        anchor: { x: number; y: number }
+      }
+      setSlotQuickAdd(detail)
+    }
+    window.addEventListener('laif:slot-click', handler)
+    return () => window.removeEventListener('laif:slot-click', handler)
+  }, [])
+
+  // ── Slot creation from DayView / WeekView (drag-to-create, etc.) ──
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail

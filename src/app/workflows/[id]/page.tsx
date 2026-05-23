@@ -228,7 +228,7 @@ export default function WorkflowPage() {
   const handleAddTask = useCallback(
     async (columnId: string) => {
       await createTask({
-        title: '',
+        title: 'New task',
         priority: 'medium',
         status: 'todo',
         sectionId: columnId,

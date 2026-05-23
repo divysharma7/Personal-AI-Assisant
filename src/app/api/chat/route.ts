@@ -294,6 +294,7 @@ async function toolAddTask(args: Record<string, unknown>) {
     priority: sanitizeEnum(args.priority, ['low', 'medium', 'high'], 'medium'),
     status:   sanitizeEnum(args.status,   ['todo', 'in-progress', 'done'], 'todo'),
     color: '#34d399',
+    userId,
     createdBy: userId,
   })
   if (!doc?._id) throw new Error('DB write failed — no document returned')

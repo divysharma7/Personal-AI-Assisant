@@ -73,13 +73,17 @@ export default function InboxPage() {
   const handleNewTask = useCallback(async () => {
     const title = newTaskTitle.trim()
     if (!title) return
-    await createTask({
-      title,
-      priority: 'medium',
-      status: 'backlog',
-    })
     setNewTaskTitle('')
-    inputRef.current?.blur()
+    try {
+      await createTask({
+        title,
+        priority: 'medium',
+        status: 'backlog',
+      })
+    } catch {
+      // Restore on failure
+      setNewTaskTitle(title)
+    }
   }, [newTaskTitle, createTask])
 
   const handleToggleTask = useCallback(
