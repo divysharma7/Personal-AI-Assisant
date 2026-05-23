@@ -1,7 +1,7 @@
 {
   "interactionModel": {
     "languageModel": {
-      "invocationName": "laif",
+      "invocationName": "my life assistant",
       "intents": [
         {
           "name": "AddTaskIntent",
