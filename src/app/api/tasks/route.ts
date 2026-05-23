@@ -27,8 +27,10 @@ export async function POST(req: Request) {
     if (!parsed.success) throw new ValidationError(parsed.error)
 
     await connectDB()
+    const userId = await getAuthUserId()
     const taskData = {
       ...parsed.data,
+      ...(userId ? { userId } : {}),
       activities: [{ action: 'created', detail: 'Task created', timestamp: new Date() }],
     }
     const task = await TaskModel.create(taskData)
