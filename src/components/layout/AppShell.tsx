@@ -225,18 +225,12 @@ export default function AppShell({ children }: { children: ReactNode }) {
           transition: 'flex 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={pathname}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: motionTokens.duration.fast, ease: motionTokens.easing.sharp }}
-            className="flex flex-1 flex-col"
-          >
-            {children}
-          </motion.div>
-        </AnimatePresence>
+        {/* No AnimatePresence keyed on pathname — it destroys the React tree
+            on every route change, causing webpack chunk errors and React Query
+            teardown races. Next.js App Router handles transitions internally. */}
+        <div className="flex flex-1 flex-col">
+          {children}
+        </div>
       </main>
 
       {/* Right: Artwork pane OR Detail panel */}
