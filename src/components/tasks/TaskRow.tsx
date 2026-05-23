@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback, useMemo, memo } from 'react'
+import { useState, useRef, useCallback, useMemo, memo, forwardRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, ArrowRight, AlignJustify, Tag, Calendar } from 'lucide-react'
 import { copy } from '@/lib/copy'
@@ -104,10 +104,10 @@ interface TaskRowProps {
   isCompleting?: boolean
 }
 
-export default memo(function TaskRow({
+export default memo(forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow({
   task, onToggle, onOpenDetail, onUpdate, isSelected, isDetailOpen,
   subTaskCount, labels = [], onTitleChange, isCompleting = false,
-}: TaskRowProps) {
+}: TaskRowProps, ref) {
   const [hovered, setHovered] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editVal, setEditVal] = useState(task.title)
@@ -134,6 +134,7 @@ export default memo(function TaskRow({
 
   return (
     <div
+      ref={ref}
       data-task-id={task._id}
       role="listitem"
       tabIndex={0}
@@ -394,4 +395,4 @@ export default memo(function TaskRow({
       </div>
     </div>
   )
-})
+}))
