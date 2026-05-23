@@ -327,7 +327,7 @@ export default function ChatPage() {
       }}>
         <div style={{
           display: 'flex', alignItems: 'flex-end', gap: 10,
-          padding: '12px 8px 12px 20px',
+          padding: '12px 16px 12px 20px',
           borderRadius: 28,
           backgroundColor: 'var(--overlay-1, rgba(108,108,158,0.06))',
           border: '1px solid var(--overlay-2, rgba(108,108,158,0.1))',
@@ -351,7 +351,7 @@ export default function ChatPage() {
               fontSize: 15, fontWeight: 500, color: 'var(--text-primary)',
               fontFamily: 'Inter, system-ui, sans-serif',
               maxHeight: 140, minHeight: 22, lineHeight: 1.5, padding: 0,
-              textAlign: hasMessages ? 'left' : 'center',
+              textAlign: 'left',
             }}
           />
 
