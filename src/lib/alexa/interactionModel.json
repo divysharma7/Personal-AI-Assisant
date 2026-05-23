@@ -1,0 +1,166 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "laif",
+      "intents": [
+        {
+          "name": "AddTaskIntent",
+          "slots": [{ "name": "taskName", "type": "AMAZON.SearchQuery" }],
+          "samples": [
+            "add a task called {taskName}",
+            "create a task {taskName}",
+            "add {taskName} to my tasks",
+            "new task {taskName}",
+            "remember to {taskName}",
+            "add {taskName}"
+          ]
+        },
+        {
+          "name": "ListTodayTasksIntent",
+          "samples": [
+            "what's on my today list",
+            "today's tasks",
+            "what do I have today",
+            "show my today tasks",
+            "what's due today"
+          ]
+        },
+        {
+          "name": "ListInboxIntent",
+          "samples": [
+            "what's in my inbox",
+            "show my inbox",
+            "inbox tasks",
+            "list inbox",
+            "what tasks do I have"
+          ]
+        },
+        {
+          "name": "CompleteTaskIntent",
+          "slots": [{ "name": "taskName", "type": "AMAZON.SearchQuery" }],
+          "samples": [
+            "mark {taskName} as done",
+            "complete {taskName}",
+            "finish {taskName}",
+            "I finished {taskName}",
+            "{taskName} is done"
+          ]
+        },
+        {
+          "name": "OverdueTasksIntent",
+          "samples": [
+            "what's overdue",
+            "show overdue tasks",
+            "any overdue tasks",
+            "what did I miss",
+            "overdue items"
+          ]
+        },
+        {
+          "name": "SetPriorityIntent",
+          "slots": [
+            { "name": "taskName", "type": "AMAZON.SearchQuery" },
+            { "name": "priority", "type": "PRIORITY_TYPE" }
+          ],
+          "samples": [
+            "set {taskName} to {priority} priority",
+            "change {taskName} priority to {priority}",
+            "make {taskName} {priority} priority",
+            "{taskName} is {priority} priority"
+          ]
+        },
+        {
+          "name": "DailyBriefingIntent",
+          "samples": [
+            "daily briefing",
+            "what's my day look like",
+            "give me my briefing",
+            "morning briefing",
+            "how's my day",
+            "what's on my plate"
+          ]
+        },
+        {
+          "name": "LogHabitIntent",
+          "slots": [{ "name": "habitName", "type": "AMAZON.SearchQuery" }],
+          "samples": [
+            "log my {habitName}",
+            "check in {habitName}",
+            "I did my {habitName}",
+            "mark {habitName} habit done",
+            "log {habitName}"
+          ]
+        },
+        {
+          "name": "HabitStreakIntent",
+          "slots": [{ "name": "habitName", "type": "AMAZON.SearchQuery" }],
+          "samples": [
+            "what's my {habitName} streak",
+            "how's my {habitName} going",
+            "{habitName} streak",
+            "how many days of {habitName}"
+          ]
+        },
+        {
+          "name": "CalendarTodayIntent",
+          "samples": [
+            "what's on my calendar",
+            "what's on my calendar today",
+            "show my schedule",
+            "any meetings today",
+            "today's calendar",
+            "what's scheduled"
+          ]
+        },
+        {
+          "name": "WorkflowStatusIntent",
+          "slots": [{ "name": "workflowName", "type": "AMAZON.SearchQuery" }],
+          "samples": [
+            "what's in my {workflowName} board",
+            "show {workflowName} workflow",
+            "status of {workflowName}",
+            "{workflowName} board status"
+          ]
+        },
+        {
+          "name": "MoveTaskIntent",
+          "slots": [
+            { "name": "taskName", "type": "AMAZON.SearchQuery" },
+            { "name": "columnName", "type": "AMAZON.SearchQuery" }
+          ],
+          "samples": [
+            "move {taskName} to {columnName}",
+            "change {taskName} status to {columnName}",
+            "put {taskName} in {columnName}"
+          ]
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        }
+      ],
+      "types": [
+        {
+          "name": "PRIORITY_TYPE",
+          "values": [
+            { "name": { "value": "high" } },
+            { "name": { "value": "medium" } },
+            { "name": { "value": "low" } }
+          ]
+        }
+      ]
+    }
+  }
+}
