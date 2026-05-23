@@ -374,17 +374,6 @@ export default memo(forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow({
 
       {/* ── Right cluster — fixed positions, no layout shift ── */}
       <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, marginLeft: 16, marginTop: 2 }}>
-        {/* Avatar — always in place */}
-        <div style={{
-          width: 32, height: 32, borderRadius: '50%', overflow: 'hidden',
-          backgroundColor: 'var(--avatar-bg, #6b7280)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 12, fontWeight: 700, color: '#fff',
-          fontFamily: 'Inter, system-ui, sans-serif',
-        }}>
-          {task.createdBy ? task.createdBy.charAt(0).toUpperCase() : 'U'}
-        </div>
-
         {/* Arrow / notes icon — fixed 28px slot, content swaps on hover */}
         <div
           onClick={(e) => { e.stopPropagation(); onOpenDetail(task._id) }}

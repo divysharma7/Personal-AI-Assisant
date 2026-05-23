@@ -21,7 +21,6 @@ import { useWorkflows } from '@/hooks/useWorkflows'
 import BlockEditor from '@/components/editor/BlockEditor'
 import DatePopover from '@/components/popovers/DatePopover'
 import PriorityPopover from '@/components/popovers/PriorityPopover'
-import AssigneePopover from '@/components/popovers/AssigneePopover'
 import TaskOverflowMenu from '@/components/tasks/TaskOverflowMenu'
 import TaskActivities from '@/components/tasks/TaskActivities'
 import type { JSONContent } from '@tiptap/react'
@@ -75,13 +74,11 @@ export default function TaskDetailPanel({
   const subTaskInputRef = useRef<HTMLInputElement>(null)
   const [showDatePopover, setShowDatePopover] = useState(false)
   const [showPriorityPopover, setShowPriorityPopover] = useState(false)
-  const [showAssigneePopover, setShowAssigneePopover] = useState(false)
   const [showOverflow, setShowOverflow] = useState(false)
   const [showActivities, setShowActivities] = useState(false)
   const commentInputRef = useRef<HTMLInputElement>(null)
   const dateChipRef = useRef<HTMLButtonElement>(null)
   const priorityChipRef = useRef<HTMLButtonElement>(null)
-  const assigneeRef = useRef<HTMLButtonElement>(null)
   const overflowRef = useRef<HTMLButtonElement>(null)
 
   const isCompleted = task.status === 'done'
@@ -165,13 +162,6 @@ export default function TaskDetailPanel({
     [onUpdate, task._id]
   )
 
-  const handleAssigneeSelect = useCallback(
-    (assigneeId: string | null) => {
-      onUpdate(task._id, { assigneeId })
-      setShowAssigneePopover(false)
-    },
-    [onUpdate, task._id]
-  )
 
   return (
     <motion.div
@@ -322,36 +312,16 @@ export default function TaskDetailPanel({
                 {task.title}
               </h2>
 
-              {/* Assignee avatar */}
-              <div className="relative">
-                <motion.button
-                  {...buttonPress}
-                  ref={assigneeRef}
-                  onClick={() => setShowAssigneePopover(!showAssigneePopover)}
-                  className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full cursor-pointer"
-                  style={{
-                    backgroundColor: task.assigneeId ? 'var(--accent)' : 'var(--bg-hover)',
-                    color: task.assigneeId ? '#fff' : 'var(--text-faint)',
-                  }}
-                >
-                  {task.assigneeId ? (
-                    <span className="text-xs font-bold">
-                      {task.assigneeId.charAt(0).toUpperCase()}
-                    </span>
-                  ) : (
-                    <User size={14} strokeWidth={1.5} />
-                  )}
-                </motion.button>
-                {showAssigneePopover && (
-                  <div className="absolute right-0 top-10 z-50">
-                    <AssigneePopover
-                      selectedId={task.assigneeId || null}
-                      onSelect={handleAssigneeSelect}
-                      onClose={() => setShowAssigneePopover(false)}
-                    />
-                  </div>
-                )}
-              </div>
+              {/* Workflow status (replaces assignee — single user app) */}
+              {workflow && (
+                <StatusBadge
+                  workflowName={workflow.name}
+                  workflowIcon={workflow.icon}
+                  workflowColor={workflow.color}
+                  columnName={column?.title}
+                  size="sm"
+                />
+              )}
             </div>
           )}
 
