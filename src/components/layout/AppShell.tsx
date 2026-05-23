@@ -9,7 +9,6 @@ import { copy } from '@/lib/copy'
 import { fade, ease, motionTokens } from '@/lib/motion'
 import { useFocusState } from '@/contexts/FocusContext'
 import { useTasks } from '@/hooks/useTasks'
-import { useLabels } from '@/hooks/useLabels'
 import type { TaskRecord } from '@/hooks/useTasks'
 import DetailPanelStack from '@/components/tasks/DetailPanelStack'
 
@@ -45,7 +44,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   const { focus } = useFocusState()
   const { tasks, updateTask, deleteTask, createTask } = useTasks()
-  const { labels, createLabel } = useLabels()
 
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 1024)
@@ -53,6 +51,15 @@ export default function AppShell({ children }: { children: ReactNode }) {
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
   }, [])
+
+  // Close panels when navigating to workflow pages (full-viewport layout)
+  useEffect(() => {
+    if (pathname.startsWith('/workflows')) {
+      setDetailTaskId(null)
+      setPanelStack([])
+      setSidebarCollapsed(true)
+    }
+  }, [pathname])
 
   // Listen for detail-task events from InboxPage
   useEffect(() => {
@@ -136,13 +143,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
       })
     },
     [tasks, updateTask]
-  )
-
-  const handleCreateLabel = useCallback(
-    async (name: string) => {
-      await createLabel(name)
-    },
-    [createLabel]
   )
 
   const handleCreateSubTask = useCallback(
@@ -253,9 +253,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
               onUpdate={handleUpdateTask}
               onDelete={handleDeleteTask}
               onAddComment={handleAddComment}
-              labels={labels}
-              allLabels={labels}
-              onCreateLabel={handleCreateLabel}
               allTasks={tasks}
               onCreateSubTask={handleCreateSubTask}
             />

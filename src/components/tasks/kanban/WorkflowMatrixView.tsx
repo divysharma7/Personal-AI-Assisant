@@ -28,9 +28,7 @@ interface WorkflowMatrixViewProps {
   tasks: TaskRecord[]
   onToggleTask: (id: string) => void
   onOpenDetail: (id: string) => void
-  labels: { _id: string; name: string; color?: string }[]
   getSubTaskCount: (id: string) => { completed: number; total: number } | undefined
-  getLabelsForTask: (task: TaskRecord) => { _id: string; name: string; color?: string }[]
   onMoveTask: (taskId: string, toColumnId: string, newOrder: number) => void
 }
 
@@ -44,9 +42,7 @@ function MatrixDropZone({
   isOver,
   onToggleTask,
   onOpenDetail,
-  labels,
   getSubTaskCount,
-  getLabelsForTask,
 }: {
   id: string
   title: string
@@ -55,9 +51,7 @@ function MatrixDropZone({
   isOver: boolean
   onToggleTask: (id: string) => void
   onOpenDetail: (id: string) => void
-  labels: { _id: string; name: string; color?: string }[]
   getSubTaskCount: (id: string) => { completed: number; total: number } | undefined
-  getLabelsForTask: (task: TaskRecord) => { _id: string; name: string; color?: string }[]
 }) {
   const { setNodeRef } = useDroppable({
     id: `column-${id}`,
@@ -142,7 +136,6 @@ function MatrixDropZone({
               columnId={id}
               onToggle={onToggleTask}
               onOpenDetail={onOpenDetail}
-              labels={getLabelsForTask(task)}
               subTaskCount={getSubTaskCount(task._id)}
             />
           ))}
@@ -173,9 +166,7 @@ export default function WorkflowMatrixView({
   tasks,
   onToggleTask,
   onOpenDetail,
-  labels,
   getSubTaskCount,
-  getLabelsForTask,
   onMoveTask,
 }: WorkflowMatrixViewProps) {
   const [activeTask, setActiveTask] = useState<TaskRecord | null>(null)
@@ -308,9 +299,7 @@ export default function WorkflowMatrixView({
             isOver={overColumnId === col.id}
             onToggleTask={onToggleTask}
             onOpenDetail={onOpenDetail}
-            labels={labels}
             getSubTaskCount={getSubTaskCount}
-            getLabelsForTask={getLabelsForTask}
           />
         ))}
       </div>
@@ -331,7 +320,6 @@ export default function WorkflowMatrixView({
               isOverlay
               onToggle={onToggleTask}
               onOpenDetail={onOpenDetail}
-              labels={getLabelsForTask(activeTask)}
               subTaskCount={getSubTaskCount(activeTask._id)}
             />
           </div>

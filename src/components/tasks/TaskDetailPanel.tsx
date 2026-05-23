@@ -7,7 +7,6 @@ import {
   Check,
   MoreVertical,
   Calendar,
-  Tag,
   AlignJustify,
   User,
   BarChart3,
@@ -18,9 +17,9 @@ import { AnimatePresence } from 'framer-motion'
 import { slideFromRight, buttonPress, checkBounce, spring, ease } from '@/lib/motion'
 import { playCompletionSound } from '@/lib/sounds'
 import type { TaskRecord } from '@/hooks/useTasks'
+import { useWorkflows } from '@/hooks/useWorkflows'
 import BlockEditor from '@/components/editor/BlockEditor'
 import DatePopover from '@/components/popovers/DatePopover'
-import LabelPopover from '@/components/popovers/LabelPopover'
 import PriorityPopover from '@/components/popovers/PriorityPopover'
 import AssigneePopover from '@/components/popovers/AssigneePopover'
 import TaskOverflowMenu from '@/components/tasks/TaskOverflowMenu'
@@ -47,9 +46,6 @@ interface TaskDetailPanelProps {
   onDelete?: (id: string) => void
   comments?: TaskComment[]
   onAddComment?: (taskId: string, text: string) => void
-  labels?: { _id: string; name: string }[]
-  allLabels?: { _id: string; name: string }[]
-  onCreateLabel?: (name: string) => void
   breadcrumb?: string | null
   onBreadcrumbClick?: () => void
   onOpenSubTask?: (taskId: string) => void
@@ -64,9 +60,6 @@ export default function TaskDetailPanel({
   onDelete,
   comments = [],
   onAddComment,
-  labels = [],
-  allLabels = [],
-  onCreateLabel,
   breadcrumb,
   onBreadcrumbClick,
   onOpenSubTask,
@@ -80,19 +73,22 @@ export default function TaskDetailPanel({
   const [isAddingSubTask, setIsAddingSubTask] = useState(false)
   const subTaskInputRef = useRef<HTMLInputElement>(null)
   const [showDatePopover, setShowDatePopover] = useState(false)
-  const [showLabelPopover, setShowLabelPopover] = useState(false)
   const [showPriorityPopover, setShowPriorityPopover] = useState(false)
   const [showAssigneePopover, setShowAssigneePopover] = useState(false)
   const [showOverflow, setShowOverflow] = useState(false)
   const [showActivities, setShowActivities] = useState(false)
   const commentInputRef = useRef<HTMLInputElement>(null)
   const dateChipRef = useRef<HTMLButtonElement>(null)
-  const labelChipRef = useRef<HTMLButtonElement>(null)
   const priorityChipRef = useRef<HTMLButtonElement>(null)
   const assigneeRef = useRef<HTMLButtonElement>(null)
   const overflowRef = useRef<HTMLButtonElement>(null)
 
   const isCompleted = task.status === 'done'
+
+  // Workflow status
+  const { workflows } = useWorkflows()
+  const workflow = task.workflowId ? workflows.find(w => w._id === task.workflowId) : null
+  const column = workflow?.columns?.find(c => c.id === task.sectionId)
 
   const handleToggleComplete = useCallback(() => {
     const newStatus = isCompleted ? 'todo' : 'done'
@@ -158,17 +154,6 @@ export default function TaskDetailPanel({
       setShowDatePopover(false)
     },
     [onUpdate, task._id]
-  )
-
-  const handleLabelToggle = useCallback(
-    (labelId: string) => {
-      const current = task.labelIds || []
-      const next = current.includes(labelId)
-        ? current.filter((id) => id !== labelId)
-        : [...current, labelId]
-      onUpdate(task._id, { labelIds: next })
-    },
-    [onUpdate, task._id, task.labelIds]
   )
 
   const handlePrioritySelect = useCallback(
@@ -441,50 +426,24 @@ export default function TaskDetailPanel({
               )}
             </div>
 
-            {/* Label chips */}
-            {labels.map((label) => (
+            {/* Workflow status pill */}
+            {workflow && (
               <span
-                key={label._id}
-                className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium"
                 style={{
-                  backgroundColor: 'var(--bg-hover)',
-                  color: 'var(--text-primary)',
-                  textDecoration: isCompleted ? 'line-through' : 'none',
-                  textDecorationColor: 'var(--accent)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '3px 10px',
+                  borderRadius: 999,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  backgroundColor: 'color-mix(in srgb, var(--accent) 12%, transparent)',
+                  color: 'var(--accent)',
                 }}
               >
-                <Tag size={12} strokeWidth={1.5} />
-                {label.name}
+                {workflow.icon} {workflow.name}{column ? ` \u2192 ${column.title}` : ''}
               </span>
-            ))}
-
-            {/* Add label chip */}
-            <div className="relative">
-              <motion.button
-                {...buttonPress}
-                ref={labelChipRef}
-                onClick={() => setShowLabelPopover(!showLabelPopover)}
-                className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors duration-150 cursor-pointer"
-                style={{
-                  backgroundColor: 'var(--bg-hover)',
-                  color: 'var(--text-faint)',
-                }}
-              >
-                <Tag size={12} strokeWidth={1.5} />
-                Label
-              </motion.button>
-              {showLabelPopover && (
-                <div className="absolute left-0 top-9 z-50">
-                  <LabelPopover
-                    appliedIds={task.labelIds || []}
-                    allLabels={allLabels}
-                    onToggle={handleLabelToggle}
-                    onCreate={onCreateLabel}
-                    onClose={() => setShowLabelPopover(false)}
-                  />
-                </div>
-              )}
-            </div>
+            )}
 
             {/* List chip */}
             {task.listId && (

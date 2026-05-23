@@ -38,9 +38,7 @@ export interface KanbanBoardProps {
   onToggleTask: (id: string) => void
   onOpenDetail: (id: string) => void
   onAddTask: (columnId: string) => void
-  labels: { _id: string; name: string; color?: string }[]
   getSubTaskCount: (id: string) => { completed: number; total: number } | undefined
-  getLabelsForTask: (task: TaskRecord) => { _id: string; name: string; color?: string }[]
   showColumnMenus?: boolean
   onRenameColumn?: (id: string) => void
   onDeleteColumn?: (id: string) => void
@@ -71,9 +69,7 @@ export function KanbanBoard({
   onToggleTask,
   onOpenDetail,
   onAddTask,
-  labels,
   getSubTaskCount,
-  getLabelsForTask,
   showColumnMenus = false,
   onRenameColumn,
   onDeleteColumn,
@@ -229,9 +225,7 @@ export function KanbanBoard({
               onToggleTask={onToggleTask}
               onOpenDetail={onOpenDetail}
               onAddTask={onAddTask}
-              labels={labels}
               getSubTaskCount={getSubTaskCount}
-              getLabelsForTask={getLabelsForTask}
               showColumnMenu={showColumnMenus}
               onRenameColumn={onRenameColumn}
               onDeleteColumn={onDeleteColumn}
@@ -296,7 +290,6 @@ export function KanbanBoard({
               isOverlay
               onToggle={onToggleTask}
               onOpenDetail={onOpenDetail}
-              labels={getLabelsForTask(activeTask)}
               subTaskCount={getSubTaskCount(activeTask._id)}
             />
           </div>

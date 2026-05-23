@@ -6,7 +6,6 @@ import { Plus } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import { useTasks } from '@/hooks/useTasks'
 import type { TaskRecord } from '@/hooks/useTasks'
-import { useLabels } from '@/hooks/useLabels'
 import { playCompletionSound } from '@/lib/sounds'
 import { fadeSlideUp, buttonPress, stagger, ease } from '@/lib/motion'
 import TaskRow from '@/components/tasks/TaskRow'
@@ -15,7 +14,6 @@ type FilterTab = 'forMe' | 'upcoming' | 'done'
 
 export default function TasksPage() {
   const { tasks, createTask, toggleComplete, updateTask, isLoading } = useTasks()
-  const { labels } = useLabels()
   const [activeFilter, setActiveFilter] = useState<FilterTab>('forMe')
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null)
@@ -62,15 +60,6 @@ export default function TasksPage() {
       }
     },
     [tasks]
-  )
-
-  // ── Labels for a task ────────────────────────────────────────────────────
-  const getLabelsForTask = useCallback(
-    (task: TaskRecord) => {
-      if (!task.labelIds || task.labelIds.length === 0) return []
-      return labels.filter((l) => task.labelIds?.includes(l._id))
-    },
-    [labels]
   )
 
   // ── Handlers ─────────────────────────────────────────────────────────────
@@ -212,7 +201,6 @@ export default function TasksPage() {
                   isSelected={false}
                   isDetailOpen={detailTaskId === task._id}
                   subTaskCount={getSubTaskCount(task._id)}
-                  labels={getLabelsForTask(task)}
                   onTitleChange={handleTitleChange}
                 />
               ))}

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useMemo, memo, forwardRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, ArrowRight, AlignJustify, Tag, Calendar } from 'lucide-react'
+import { Check, ArrowRight, AlignJustify, Calendar } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import { checkBounce } from '@/lib/motion'
 import type { TaskRecord } from '@/hooks/useTasks'
@@ -96,7 +96,6 @@ interface TaskRowProps {
   isSelected: boolean
   isDetailOpen: boolean
   subTaskCount?: { completed: number; total: number }
-  labels?: { _id: string; name: string }[]
   onTitleChange?: (id: string, title: string) => void
   onSchedule?: () => void
   showScheduleIcon?: boolean
@@ -106,7 +105,7 @@ interface TaskRowProps {
 
 export default memo(forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow({
   task, onToggle, onOpenDetail, onUpdate, isSelected, isDetailOpen,
-  subTaskCount, labels = [], onTitleChange, isCompleting = false,
+  subTaskCount, onTitleChange, isCompleting = false,
 }: TaskRowProps, ref) {
   const [hovered, setHovered] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -224,7 +223,7 @@ export default memo(forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow({
         )}
 
         {/* Meta row */}
-        {(hasSubs || dateStr || labels.length > 0) && (
+        {(hasSubs || dateStr) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 5, flexWrap: 'wrap' }}>
             {/* Subtask ring + count */}
             {hasSubs && (
@@ -350,12 +349,6 @@ export default memo(forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow({
               </div>
             )}
 
-            {labels.map((l) => (
-              <span key={l._id} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, color: 'var(--text-faint)' }}>
-                <Tag size={12} strokeWidth={1.5} />
-                {l.name}
-              </span>
-            ))}
           </div>
         )}
       </div>

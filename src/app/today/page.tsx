@@ -14,7 +14,6 @@ import {
 import { copy } from '@/lib/copy'
 import { useTasks } from '@/hooks/useTasks'
 import type { TaskRecord } from '@/hooks/useTasks'
-import { useLabels } from '@/hooks/useLabels'
 import { useGoogleCalendar } from '@/hooks/useGoogleCalendar'
 import { playCompletionSound, playCreationSound } from '@/lib/sounds'
 import { fadeSlideUp, fadeSlideDown, collapse, ease, buttonPress, taskCompleteExit } from '@/lib/motion'
@@ -77,7 +76,7 @@ function formatFocusTime(seconds: number): string {
 
 // ── Grouping logic ────────────────────────────────────────────
 
-type GroupByOption = 'none' | 'dueDate' | 'priority' | 'alphabetical' | 'creationDate' | 'list' | 'label'
+type GroupByOption = 'none' | 'dueDate' | 'priority' | 'alphabetical' | 'creationDate' | 'list'
 
 const GROUP_OPTIONS: { value: GroupByOption; label: string }[] = [
   { value: 'none', label: 'None' },
@@ -86,7 +85,6 @@ const GROUP_OPTIONS: { value: GroupByOption; label: string }[] = [
   { value: 'creationDate', label: 'Creation date' },
   { value: 'dueDate', label: 'Due date' },
   { value: 'list', label: 'List' },
-  { value: 'label', label: 'Label' },
 ]
 
 const PRIORITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 }
@@ -106,7 +104,6 @@ interface TaskGroup {
 function groupTasks(
   tasks: TaskRecord[],
   groupBy: GroupByOption,
-  labelMap: Map<string, string>,
   referenceDate: Date
 ): TaskGroup[] {
   if (groupBy === 'none') {
@@ -179,28 +176,6 @@ function groupTasks(
     }))
   }
 
-  if (groupBy === 'label') {
-    const groups = new Map<string, TaskRecord[]>()
-    const noLabel: TaskRecord[] = []
-    for (const t of tasks) {
-      if (!t.labelIds || t.labelIds.length === 0) {
-        noLabel.push(t)
-      } else {
-        for (const lid of t.labelIds) {
-          if (!groups.has(lid)) groups.set(lid, [])
-          groups.get(lid)!.push(t)
-        }
-      }
-    }
-    const result: TaskGroup[] = Array.from(groups.entries()).map(([lid, items]) => ({
-      key: lid,
-      label: labelMap.get(lid) || lid,
-      tasks: items,
-    }))
-    if (noLabel.length > 0) result.push({ key: 'none', label: 'No label', tasks: noLabel })
-    return result
-  }
-
   return [{ key: 'all', label: 'All', tasks }]
 }
 
@@ -209,7 +184,6 @@ function groupTasks(
 export default function TodayPage() {
   const [stableNow] = useState(() => new Date())
   const { tasks, isLoading, createTask, toggleComplete, updateTask, deleteTask } = useTasks()
-  const { labels } = useLabels()
   const { connected: googleConnected, syncTask } = useGoogleCalendar()
   const { focus } = useFocusState()
 
@@ -245,12 +219,6 @@ export default function TodayPage() {
 
   // Habit data
 
-  // Label map for grouping
-  const labelMap = useMemo(
-    () => new Map(labels.map((l) => [l._id, l.name])),
-    [labels]
-  )
-
   // Filter tasks
   const incompleteTasks = useMemo(
     () =>
@@ -265,8 +233,8 @@ export default function TodayPage() {
 
   // Group tasks
   const taskGroups = useMemo(
-    () => groupTasks(incompleteTasks, groupBy, labelMap, stableNow),
-    [incompleteTasks, groupBy, labelMap, stableNow]
+    () => groupTasks(incompleteTasks, groupBy, stableNow),
+    [incompleteTasks, groupBy, stableNow]
   )
 
   const hasAnyTasks = incompleteTasks.length > 0
@@ -309,15 +277,6 @@ export default function TodayPage() {
       }
     },
     [tasks]
-  )
-
-  // Labels for a task
-  const getLabelsForTask = useCallback(
-    (task: TaskRecord) => {
-      if (!task.labelIds || task.labelIds.length === 0) return []
-      return labels.filter((l) => task.labelIds?.includes(l._id))
-    },
-    [labels]
   )
 
   const handleNewTask = useCallback(async () => {
@@ -477,7 +436,6 @@ export default function TodayPage() {
             isSelected={false}
             isDetailOpen={detailTaskId === task._id}
             subTaskCount={getSubTaskCount(task._id)}
-            labels={getLabelsForTask(task)}
             onTitleChange={handleTitleChange}
             onSchedule={() => setTimeBlockTaskId(task._id)}
             showScheduleIcon
@@ -500,7 +458,6 @@ export default function TodayPage() {
         isSelected={false}
         isDetailOpen={detailTaskId === task._id}
         subTaskCount={getSubTaskCount(task._id)}
-        labels={getLabelsForTask(task)}
         onTitleChange={handleTitleChange}
         onSchedule={() => setTimeBlockTaskId(task._id)}
         showScheduleIcon

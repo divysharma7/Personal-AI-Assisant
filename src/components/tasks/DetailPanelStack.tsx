@@ -1,6 +1,5 @@
 'use client'
 
-import { useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, MoreVertical } from 'lucide-react'
 import { slideFromRight, spring, ease } from '@/lib/motion'
@@ -21,9 +20,6 @@ interface DetailPanelStackProps {
   onUpdate: (id: string, data: Partial<TaskRecord>) => void
   onDelete?: (id: string) => void
   onAddComment?: (taskId: string, text: string) => void
-  labels?: { _id: string; name: string }[]
-  allLabels?: { _id: string; name: string }[]
-  onCreateLabel?: (name: string) => void
   allTasks?: TaskRecord[]
   onCreateSubTask?: (data: Partial<TaskRecord>) => void
 }
@@ -40,9 +36,6 @@ export default function DetailPanelStack({
   onUpdate,
   onDelete,
   onAddComment,
-  labels = [],
-  allLabels = [],
-  onCreateLabel,
   allTasks = [],
   onCreateSubTask,
 }: DetailPanelStackProps) {
@@ -52,14 +45,6 @@ export default function DetailPanelStack({
   const collapsedCount = visibleStart // number of entries collapsed into the "+N" tab
   const strips = stack.slice(visibleStart, activeIndex) // entries shown as strips
   const activeEntry = stack[activeIndex]
-
-  const getLabelsForTask = useCallback(
-    (task: TaskRecord) => {
-      if (!task.labelIds || task.labelIds.length === 0) return []
-      return labels.filter((l) => task.labelIds?.includes(l._id))
-    },
-    [labels]
-  )
 
   if (!activeEntry) return null
 
@@ -148,9 +133,6 @@ export default function DetailPanelStack({
         onDelete={onDelete}
         comments={activeEntry.comments}
         onAddComment={onAddComment}
-        labels={getLabelsForTask(activeEntry.task)}
-        allLabels={allLabels}
-        onCreateLabel={onCreateLabel}
         breadcrumb={activeIndex > 0 ? stack[activeIndex - 1].task.title : null}
         onBreadcrumbClick={activeIndex > 0 ? onPopTask : undefined}
         onOpenSubTask={onPushTask}

@@ -24,9 +24,7 @@ interface KanbanColumnProps {
   onToggleTask: (id: string) => void
   onOpenDetail: (id: string) => void
   onAddTask: (columnId: string) => void
-  labels: { _id: string; name: string; color?: string }[]
   getSubTaskCount: (id: string) => { completed: number; total: number } | undefined
-  getLabelsForTask: (task: TaskRecord) => { _id: string; name: string; color?: string }[]
   showColumnMenu?: boolean
   onRenameColumn?: (id: string) => void
   onDeleteColumn?: (id: string) => void
@@ -45,9 +43,7 @@ function KanbanColumn({
   onToggleTask,
   onOpenDetail,
   onAddTask,
-  labels,
   getSubTaskCount,
-  getLabelsForTask,
   showColumnMenu = false,
   onRenameColumn,
   onDeleteColumn,
@@ -225,7 +221,6 @@ function KanbanColumn({
               columnId={id}
               onToggle={onToggleTask}
               onOpenDetail={onOpenDetail}
-              labels={getLabelsForTask(task)}
               subTaskCount={getSubTaskCount(task._id)}
             />
           ))}
@@ -290,8 +285,7 @@ function KanbanColumn({
                   columnId={id}
                   onToggle={onToggleTask}
                   onOpenDetail={onOpenDetail}
-                  labels={getLabelsForTask(task)}
-                  subTaskCount={getSubTaskCount(task._id)}
+                      subTaskCount={getSubTaskCount(task._id)}
                 />
               ))}
             </div>

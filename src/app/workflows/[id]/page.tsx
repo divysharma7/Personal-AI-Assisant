@@ -4,7 +4,6 @@ import { useCallback, useMemo, useState } from 'react'
 import { useParams, notFound } from 'next/navigation'
 import { useTasks } from '@/hooks/useTasks'
 import type { TaskRecord } from '@/hooks/useTasks'
-import { useLabels } from '@/hooks/useLabels'
 import { useWorkflow } from '@/hooks/useWorkflows'
 import { useKanbanSections } from '@/hooks/useKanbanSections'
 import { playCompletionSound } from '@/lib/sounds'
@@ -126,7 +125,6 @@ export default function WorkflowPage() {
   const { id } = useParams<{ id: string }>()
   const { workflow, isLoading: workflowLoading } = useWorkflow(id)
   const { tasks, toggleComplete, updateTask, createTask } = useTasks()
-  const { labels } = useLabels()
   const { reorderTask } = useKanbanSections()
 
   const [viewOptionsOpen, setViewOptionsOpen] = useState(false)
@@ -193,15 +191,6 @@ export default function WorkflowPage() {
       }
     },
     [workflowTasks]
-  )
-
-  // ── Labels for a task ──
-  const getLabelsForTask = useCallback(
-    (task: TaskRecord) => {
-      if (!task.labelIds || task.labelIds.length === 0) return []
-      return labels.filter((l) => task.labelIds?.includes(l._id))
-    },
-    [labels]
   )
 
   // ── Toggle handler ──
@@ -304,9 +293,7 @@ export default function WorkflowPage() {
             tasks={workflowTasks}
             onToggleTask={handleToggleTask}
             onOpenDetail={handleOpenDetail}
-            labels={labels}
             getSubTaskCount={getSubTaskCount}
-            getLabelsForTask={getLabelsForTask}
             onMoveTask={handleMoveTask}
           />
         ) : (
@@ -316,9 +303,7 @@ export default function WorkflowPage() {
             onToggleTask={handleToggleTask}
             onOpenDetail={handleOpenDetail}
             onAddTask={handleAddTask}
-            labels={labels}
             getSubTaskCount={getSubTaskCount}
-            getLabelsForTask={getLabelsForTask}
             showColumnMenus
           />
         )}

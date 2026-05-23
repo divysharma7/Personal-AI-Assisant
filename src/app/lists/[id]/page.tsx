@@ -14,7 +14,6 @@ import {
 import { copy } from '@/lib/copy'
 import { useList, useLists } from '@/hooks/useLists'
 import { useTasks } from '@/hooks/useTasks'
-import { useLabels } from '@/hooks/useLabels'
 import { playCompletionSound } from '@/lib/sounds'
 import { fadeSlideUp, collapse, stagger, buttonPress, ease } from '@/lib/motion'
 import TaskRow from '@/components/tasks/TaskRow'
@@ -26,7 +25,6 @@ export default function ListPage() {
   const { list, isLoading } = useList(id)
   const { updateList } = useLists()
   const { tasks, createTask, toggleComplete, updateTask } = useTasks()
-  const { labels } = useLabels()
 
   const [tipDismissed, setTipDismissed] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
@@ -63,15 +61,6 @@ export default function ListPage() {
       }
     },
     [tasks]
-  )
-
-  // Labels for a task
-  const getLabelsForTask = useCallback(
-    (task: typeof tasks[0]) => {
-      if (!task.labelIds || task.labelIds.length === 0) return []
-      return labels.filter((l) => task.labelIds?.includes(l._id))
-    },
-    [labels]
   )
 
   // Create task in this list
@@ -289,7 +278,6 @@ export default function ListPage() {
                     isSelected={false}
                     isDetailOpen={detailTaskId === task._id}
                     subTaskCount={getSubTaskCount(task._id)}
-                    labels={getLabelsForTask(task)}
                     onTitleChange={handleTitleChange}
                     draggable
                   />
@@ -340,7 +328,6 @@ export default function ListPage() {
                     isSelected={false}
                     isDetailOpen={detailTaskId === task._id}
                     subTaskCount={getSubTaskCount(task._id)}
-                    labels={getLabelsForTask(task)}
                     onTitleChange={handleTitleChange}
                   />
                 ))}

@@ -19,7 +19,6 @@ import {
 import { copy } from '@/lib/copy'
 import { useTasks } from '@/hooks/useTasks'
 import type { TaskRecord } from '@/hooks/useTasks'
-import { useLabels } from '@/hooks/useLabels'
 import { useTaskKeyboard } from '@/hooks/useTaskKeyboard'
 import { playCompletionSound } from '@/lib/sounds'
 import { fadeSlideUp, taskComplete, collapse, buttonPress, stagger, ease } from '@/lib/motion'
@@ -33,7 +32,6 @@ export default function InboxPage() {
   useEffect(() => { setMounted(true) }, [])
 
   const { tasks, isLoading, createTask, updateTask, deleteTask, toggleComplete } = useTasks()
-  const { labels, createLabel } = useLabels()
   const { connected: googleConnected, syncTask } = useGoogleCalendar()
   const [tipDismissed, setTipDismissed] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
@@ -59,15 +57,6 @@ export default function InboxPage() {
       }
     },
     [tasks]
-  )
-
-  // Labels for a task
-  const getLabelsForTask = useCallback(
-    (task: TaskRecord) => {
-      if (!task.labelIds || task.labelIds.length === 0) return []
-      return labels.filter((l) => task.labelIds?.includes(l._id))
-    },
-    [labels]
   )
 
   const handleNewTask = useCallback(async () => {
@@ -266,7 +255,6 @@ export default function InboxPage() {
               isSelected={selectedIndex === index}
               isDetailOpen={detailTaskId === task._id}
               subTaskCount={getSubTaskCount(task._id)}
-              labels={getLabelsForTask(task)}
               onTitleChange={handleTitleChange}
               onSchedule={() => setTimeBlockTaskId(task._id)}
               showScheduleIcon
@@ -324,7 +312,6 @@ export default function InboxPage() {
                     isSelected={false}
                     isDetailOpen={detailTaskId === task._id}
                     subTaskCount={getSubTaskCount(task._id)}
-                    labels={getLabelsForTask(task)}
                     onTitleChange={handleTitleChange}
                   />
                 ))}

@@ -11,7 +11,6 @@ interface SortableTaskCardProps {
   columnId: string
   onToggle: (id: string) => void
   onOpenDetail: (id: string) => void
-  labels?: { _id: string; name: string; color?: string }[]
   subTaskCount?: { completed: number; total: number }
 }
 
@@ -20,7 +19,6 @@ function SortableTaskCardInner({
   columnId,
   onToggle,
   onOpenDetail,
-  labels,
   subTaskCount,
 }: SortableTaskCardProps) {
   const {
@@ -48,7 +46,6 @@ function SortableTaskCardInner({
         isDragging={isDragging}
         onToggle={onToggle}
         onOpenDetail={onOpenDetail}
-        labels={labels}
         subTaskCount={subTaskCount}
       />
     </div>

@@ -18,7 +18,6 @@ interface TaskCardProps {
   task: TaskRecord
   onToggle: (id: string) => void
   onOpenDetail: (id: string) => void
-  labels?: { _id: string; name: string; color?: string }[]
   subTaskCount?: { completed: number; total: number }
   isDragging?: boolean
   isOverlay?: boolean
@@ -30,7 +29,6 @@ export default memo(function TaskCard({
   task,
   onToggle,
   onOpenDetail,
-  labels = [],
   subTaskCount,
   isDragging = false,
   isOverlay = false,
@@ -138,38 +136,6 @@ export default memo(function TaskCard({
           {task.title || 'Untitled'}
         </span>
       </div>
-
-      {/* ── Labels row ── */}
-      {labels.length > 0 && (
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 4,
-            marginTop: 8,
-          }}
-        >
-          {labels.map((label) => (
-            <span
-              key={label._id}
-              style={{
-                fontSize: 10,
-                fontWeight: 500,
-                lineHeight: 1,
-                padding: '3px 6px',
-                borderRadius: 999,
-                backgroundColor: label.color
-                  ? `${label.color}22`
-                  : 'var(--overlay-2, rgba(108,108,158,0.12))',
-                color: label.color || 'var(--text-muted)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {label.name}
-            </span>
-          ))}
-        </div>
-      )}
 
       {/* ── Bottom meta row ── */}
       {(dateStr || hasSubs || task.repeat) && (

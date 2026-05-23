@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Check } from 'lucide-react'
 import { scaleIn, buttonPress, ease, cssTransition } from '@/lib/motion'
 import { copy } from '@/lib/copy'
-import { useLabels } from '@/hooks/useLabels'
 import { useWorkflows } from '@/hooks/useWorkflows'
 import { useRouter } from 'next/navigation'
 
@@ -41,14 +40,12 @@ interface CreateWorkflowDialogProps {
 
 export default function CreateWorkflowDialog({ open, onClose }: CreateWorkflowDialogProps) {
   const router = useRouter()
-  const { labels } = useLabels()
   const { createWorkflow } = useWorkflows()
 
   const [name, setName] = useState('')
   const [icon, setIcon] = useState(EMOJI_GRID[0])
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateType>('kanban')
-  const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([])
   const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0])
 
   // Reset state when dialog opens
@@ -58,7 +55,6 @@ export default function CreateWorkflowDialog({ open, onClose }: CreateWorkflowDi
       setIcon(EMOJI_GRID[0])
       setShowEmojiPicker(false)
       setSelectedTemplate('kanban')
-      setSelectedLabelIds([])
       setSelectedColor(PRESET_COLORS[0])
     }
   }, [open])
@@ -73,12 +69,6 @@ export default function CreateWorkflowDialog({ open, onClose }: CreateWorkflowDi
     return () => window.removeEventListener('keydown', handler)
   }, [open, onClose])
 
-  const toggleLabel = useCallback((labelId: string) => {
-    setSelectedLabelIds((prev) =>
-      prev.includes(labelId) ? prev.filter((id) => id !== labelId) : [...prev, labelId]
-    )
-  }, [])
-
   const handleCreate = useCallback(async () => {
     if (!name.trim()) return
     const result = await createWorkflow({
@@ -86,13 +76,12 @@ export default function CreateWorkflowDialog({ open, onClose }: CreateWorkflowDi
       icon,
       color: selectedColor,
       templateType: selectedTemplate,
-      labelIds: selectedLabelIds,
     })
     onClose()
     if (result?._id) {
       router.push(`/workflows/${result._id}`)
     }
-  }, [name, icon, selectedColor, selectedTemplate, selectedLabelIds, createWorkflow, onClose, router])
+  }, [name, icon, selectedColor, selectedTemplate, createWorkflow, onClose, router])
 
   const wfCopy = copy.workflows
   const tplCopy = wfCopy.templates
@@ -345,63 +334,7 @@ export default function CreateWorkflowDialog({ open, onClose }: CreateWorkflowDi
                 </div>
               </div>
 
-              {/* Section 3: Labels */}
-              <div>
-                <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', margin: '0 0 4px 0' }}>
-                  {wfCopy.labelsLabel}
-                </h3>
-                <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '0 0 10px 0' }}>
-                  {wfCopy.labelsHint}
-                </p>
-                {labels.length > 0 ? (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {labels.map((label) => {
-                      const isActive = selectedLabelIds.includes(label._id)
-                      return (
-                        <button
-                          key={label._id}
-                          onClick={() => toggleLabel(label._id)}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 5,
-                            padding: '5px 10px',
-                            borderRadius: 16,
-                            border: isActive
-                              ? '1.5px solid var(--accent, #6366f1)'
-                              : '1px solid var(--border)',
-                            backgroundColor: isActive
-                              ? 'var(--accent-soft, rgba(99,102,241,0.08))'
-                              : 'transparent',
-                            fontSize: 12,
-                            fontWeight: 500,
-                            color: isActive ? 'var(--accent, #6366f1)' : 'var(--text-primary)',
-                            cursor: 'pointer',
-                            transition: cssTransition.fast,
-                          }}
-                        >
-                          <span
-                            style={{
-                              width: 8,
-                              height: 8,
-                              borderRadius: '50%',
-                              backgroundColor: label.color || 'var(--text-muted)',
-                              flexShrink: 0,
-                            }}
-                          />
-                          {label.name}
-                        </button>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>
-                    {wfCopy.noLabels}
-                  </p>
-                )}
-              </div>
-
-              {/* Section 4: Color */}
+              {/* Section 3: Color */}
               <div>
                 <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', margin: '0 0 10px 0' }}>
                   {wfCopy.colorLabel}
