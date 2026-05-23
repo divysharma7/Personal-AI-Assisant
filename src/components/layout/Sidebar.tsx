@@ -21,42 +21,12 @@ import {
   BarChart3,
   Target,
   MessageCircle,
-  Sun,
-  CalendarRange,
 } from 'lucide-react'
 import { collapse, fadeSlideDown, buttonPress, ease, motionTokens, springs } from '@/lib/motion'
 import { useTasks } from '@/hooks/useTasks'
 import type { TaskRecord } from '@/hooks/useTasks'
 import { useWorkflows } from '@/hooks/useWorkflows'
 import { CreateWorkflowDialog } from '@/components/tasks/kanban/CreateWorkflowDialog'
-
-/* ── Smart list definitions ── */
-type SmartFilter = 'inbox' | 'today' | 'tomorrow' | 'next7days' | 'completed'
-
-interface SmartListDef {
-  id: SmartFilter
-  label: string
-  icon: typeof Inbox
-  accent?: string
-}
-
-const SMART_LISTS: SmartListDef[] = [
-  { id: 'tomorrow', label: 'Tomorrow', icon: Sun },
-  { id: 'next7days', label: 'Next 7 Days', icon: CalendarRange },
-  { id: 'completed', label: 'Completed', icon: CheckCircle2, accent: '#34d399' },
-]
-
-function startOfDay(date: Date): Date {
-  const d = new Date(date)
-  d.setHours(0, 0, 0, 0)
-  return d
-}
-
-function addDays(date: Date, days: number): Date {
-  const d = new Date(date)
-  d.setDate(d.getDate() + days)
-  return d
-}
 
 /* ── Primary nav — 5 items matching Superlist screenshot ── */
 const NAV_ITEMS = [
@@ -271,70 +241,16 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   const popoverRef = useRef<HTMLDivElement>(null)
   const fabPopoverRef = useRef<HTMLDivElement>(null)
 
-  // Smart list counts
-  const [smartListsOpen, setSmartListsOpen] = useState(true)
-  const [activeSmartFilter, setActiveSmartFilter] = useState<SmartFilter | null>(null)
 
-  // Sync active smart filter from URL on mount and pathname changes
-  useEffect(() => {
-    if (pathname !== '/today') {
-      setActiveSmartFilter(null)
-      return
-    }
-    try {
-      const params = new URLSearchParams(window.location.search)
-      const filter = params.get('filter')
-      if (filter === 'tomorrow' || filter === 'next7days' || filter === 'completed') {
-        setActiveSmartFilter(filter)
-      } else {
-        setActiveSmartFilter(null)
-      }
-    } catch {
-      setActiveSmartFilter(null)
-    }
-  }, [pathname])
-
-  const [stableNow] = useState(() => new Date())
-
-  const smartCounts = useMemo(() => {
-    const now = stableNow
-    const todayStart = startOfDay(now)
-    const tomorrowStart = addDays(todayStart, 1)
-    const tomorrowEnd = addDays(todayStart, 2)
-    const next7End = addDays(todayStart, 7)
-    const thirtyDaysAgo = addDays(todayStart, -30)
-
-    let inbox = 0
-    let today = 0
-    let tomorrow = 0
-    let next7days = 0
-    let completed = 0
-
-    for (const task of tasks) {
-      const isDone = task.status === 'done'
-      const isDropped = task.status === 'dropped'
-
-      if (isDone) {
-        const completedAt = task.completedAt ? new Date(task.completedAt) : null
-        if (completedAt && completedAt >= thirtyDaysAgo) completed++
-        continue
-      }
-
-      if (isDropped) continue
-
-      // Incomplete tasks
-      if (!task.listId) inbox++
-
-      const dateVal = task.scheduledStart || task.dueDate
-      if (dateVal) {
-        const d = new Date(dateVal)
-        if (d >= todayStart && d < tomorrowStart) today++
-        if (d >= tomorrowStart && d < tomorrowEnd) tomorrow++
-        if (d >= todayStart && d < next7End) next7days++
-      }
-    }
-
-    return { inbox, today, tomorrow, next7days, completed }
+  // Badge counts for primary nav
+  const inboxCount = useMemo(() => tasks.filter(t => t.status !== 'done' && t.status !== 'dropped' && !t.listId).length, [tasks])
+  const todayCount = useMemo(() => {
+    const now = new Date()
+    return tasks.filter(t => {
+      if (t.status === 'done' || t.status === 'dropped' || !t.dueDate) return false
+      const d = new Date(t.dueDate)
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()
+    }).length
   }, [tasks])
 
   useEffect(() => {
@@ -363,14 +279,13 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
 
   const isActive = (href: string) => {
     // When a smart filter is active, deactivate regular nav items
-    if (activeSmartFilter) return false
     if (href === '/') return pathname === '/'
     return pathname.startsWith(href)
   }
 
   const getBadgeCount = (href: string) => {
-    if (href === '/') return smartCounts.inbox
-    if (href === '/today') return smartCounts.today
+    if (href === '/') return inboxCount
+    if (href === '/today') return todayCount
     return 0
   }
 
@@ -553,102 +468,6 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
           )
         })}
       </nav>
-
-      {/* ── Smart Lists section ── */}
-      <div className="mt-4">
-        <div className="group mb-1 flex items-center justify-between px-2.5">
-          <button
-            onClick={() => setSmartListsOpen(!smartListsOpen)}
-            className="flex items-center gap-1 cursor-pointer"
-            style={{ color: 'var(--text-faint)' }}
-          >
-            <span className="text-[12px] font-medium">Smart Lists</span>
-            <motion.div animate={{ rotate: smartListsOpen ? 0 : -90 }} transition={{ duration: motionTokens.duration.fast }}>
-              <ChevronDown size={12} strokeWidth={1.5} />
-            </motion.div>
-          </button>
-        </div>
-        <AnimatePresence>
-          {smartListsOpen && (
-            <motion.div {...collapse} transition={prefersReduced ? { duration: 0 } : ease.normal} className="flex flex-col gap-0.5 overflow-hidden">
-              {SMART_LISTS.map((item) => {
-                const count = smartCounts[item.id] ?? 0
-                const isSmartActive = activeSmartFilter === item.id
-                const Icon = item.icon
-                return (
-                  <motion.button
-                    key={item.id}
-                    onClick={() => {
-                      if (isSmartActive) {
-                        router.push('/today')
-                      } else {
-                        router.push(`/today?filter=${item.id}`)
-                      }
-                    }}
-                    whileHover={{ x: 2 }}
-                    transition={springs.snappy}
-                    className="relative flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[14px] font-medium cursor-pointer"
-                    style={{
-                      color: 'var(--text-primary)',
-                      backgroundColor: 'transparent',
-                      border: 'none',
-                      width: '100%',
-                      textAlign: 'left',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSmartActive) e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))'
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSmartActive) e.currentTarget.style.backgroundColor = 'transparent'
-                    }}
-                  >
-                    {/* Active indicator with layoutId */}
-                    {isSmartActive && (
-                      <motion.div
-                        layoutId="smart-list-active"
-                        style={{
-                          position: 'absolute',
-                          inset: 0,
-                          borderRadius: 8,
-                          backgroundColor: 'var(--overlay-2, var(--bg-hover))',
-                          boxShadow: 'inset -3px 0 0 var(--accent)',
-                        }}
-                        transition={springs.gentle}
-                      />
-                    )}
-                    <Icon
-                      size={16}
-                      strokeWidth={1.5}
-                      style={{
-                        color: isSmartActive ? (item.accent || 'var(--accent)') : 'var(--text-muted)',
-                        position: 'relative',
-                        zIndex: 1,
-                      }}
-                    />
-                    <span style={{ flex: 1, position: 'relative', zIndex: 1 }}>{item.label}</span>
-                    {count > 0 && (
-                      <span
-                        className="flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-medium"
-                        style={{
-                          backgroundColor: item.accent
-                            ? `color-mix(in srgb, ${item.accent} 15%, transparent)`
-                            : 'var(--overlay-2, var(--bg-hover))',
-                          color: item.accent || 'var(--text-muted)',
-                          position: 'relative',
-                          zIndex: 1,
-                          fontVariantNumeric: 'tabular-nums',
-                        }}
-                      >
-                        {count}
-                      </span>
-                    )}
-                  </motion.button>
-                )
-              })}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
 
       {/* ── Features section ── */}
       <div className="mt-4">
