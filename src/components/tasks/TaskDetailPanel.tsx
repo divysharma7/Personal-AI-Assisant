@@ -30,6 +30,7 @@ import FocusSection from './detail/FocusSection'
 import PriorityBars from './detail/PriorityBars'
 import SubTaskRow from './detail/SubTaskRow'
 import StatusBadge from '@/components/shared/StatusBadge'
+import { hexToRgba } from '@/lib/colorUtils'
 
 interface TaskComment {
   _id?: string
@@ -312,15 +313,21 @@ export default function TaskDetailPanel({
                 {task.title}
               </h2>
 
-              {/* Workflow status (replaces assignee — single user app) */}
+              {/* Workflow name badge (glass style) */}
               {workflow && (
-                <StatusBadge
-                  workflowName={workflow.name}
-                  workflowIcon={workflow.icon}
-                  workflowColor={workflow.color}
-                  columnName={column?.title}
-                  size="sm"
-                />
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  padding: '5px 12px', borderRadius: 10,
+                  fontSize: 13, fontWeight: 500,
+                  backgroundColor: hexToRgba(workflow.color, 0.1),
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                  border: `1px solid ${hexToRgba(workflow.color, 0.15)}`,
+                  color: workflow.color,
+                }}>
+                  <span style={{ fontSize: 14 }}>{workflow.icon}</span>
+                  {workflow.name}
+                </span>
               )}
             </div>
           )}
@@ -397,15 +404,16 @@ export default function TaskDetailPanel({
               )}
             </div>
 
-            {/* Workflow status badge */}
-            {workflow && (
+            {/* Status badge (column only, interactive) */}
+            {workflow && column && (
               <StatusBadge
-                workflowName={workflow.name}
-                workflowIcon={workflow.icon}
+                workflowName=""
+                workflowIcon=""
                 workflowColor={workflow.color}
-                columnName={column?.title}
+                columnName={column.title}
                 columnId={task.sectionId ?? undefined}
                 size="md"
+                compact
                 interactive
                 columns={workflow.columns?.map(c => ({ id: c.id, title: c.title }))}
                 onColumnChange={(newColumnId) => onUpdate(task._id, { sectionId: newColumnId })}
