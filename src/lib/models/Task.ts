@@ -2,6 +2,7 @@ import mongoose, { Schema, models } from 'mongoose'
 
 const TaskSchema = new Schema({
   userId: { type: String, index: true },
+  workflowId: { type: String, index: true, default: null },
   type: { type: String, default: 'task' },
   title: { type: String, required: true },
   description: String,

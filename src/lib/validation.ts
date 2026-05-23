@@ -15,6 +15,7 @@ export const CreateTaskSchema = z.object({
   tags: z.array(z.string()).optional(),
   kanbanOrder: z.number().optional(),
   sectionId: z.string().optional().nullable(),
+  workflowId: z.string().optional().nullable(),
   reminders: z.array(z.object({
     id: z.string(),
     type: z.enum(['before-start', 'on-day-at', 'absolute']),

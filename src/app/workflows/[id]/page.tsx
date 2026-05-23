@@ -131,12 +131,10 @@ export default function WorkflowPage() {
 
   const [viewOptionsOpen, setViewOptionsOpen] = useState(false)
 
-  // ── Filter tasks by label intersection ──
+  // ── Filter tasks belonging to this workflow ──
   const workflowTasks = useMemo(() => {
-    if (!workflow?.labelIds?.length) return []
-    return tasks.filter((t) =>
-      t.labelIds?.some((lid) => workflow.labelIds.includes(lid))
-    )
+    if (!workflow?._id) return []
+    return tasks.filter((t) => t.workflowId === workflow._id)
   }, [tasks, workflow])
 
   // ── Build column definitions for KanbanBoard ──
@@ -232,7 +230,7 @@ export default function WorkflowPage() {
         priority: 'medium',
         status: 'todo',
         sectionId: columnId,
-        labelIds: workflow?.labelIds ?? [],
+        workflowId: workflow?._id ?? null,
       })
     },
     [createTask, workflow]

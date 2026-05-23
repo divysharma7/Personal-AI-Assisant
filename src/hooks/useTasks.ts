@@ -66,6 +66,7 @@ export interface TaskRecord {
   // Kanban fields
   kanbanOrder?: number
   sectionId?: string | null
+  workflowId?: string | null
   // Activity log
   activities?: Array<{ action: string; detail?: string; timestamp: string }>
 }
