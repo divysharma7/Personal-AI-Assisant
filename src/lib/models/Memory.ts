@@ -2,6 +2,7 @@ import mongoose, { Schema, models } from 'mongoose'
 import { MEMORY_TYPES } from '@/types'
 
 const MemorySchema = new Schema({
+  userId:      { type: String, index: true },
   type:        { type: String, enum: MEMORY_TYPES, required: true },
   title:       { type: String, required: true },
   description: String,

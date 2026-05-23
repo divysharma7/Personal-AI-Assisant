@@ -2,13 +2,13 @@ import { NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongodb'
 import MemoryModel from '@/lib/models/Memory'
 import TaskModel from '@/lib/models/Task'
+import { getAuthUserId } from '@/lib/auth'
+import { callOpenRouterJSON } from '@/lib/ai'
 import { MEMORY_TYPES, type MemoryType } from '@/types'
 
 type LeanDoc = Record<string, unknown> & { _id: unknown }
 
 // ─── AI Parser ──────────────────────────────────────────────────────────────
-
-const MODEL = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free'
 
 const PARSE_SYSTEM = `You are a memory classifier. Parse user input into a JSON memory object.
 Return ONLY valid JSON — no markdown, no explanation, just the JSON object.
@@ -37,37 +37,13 @@ Detection rules:
 Extract real attribute values mentioned in the text. Keep title short and clean.`
 
 async function parseWithAI(text: string): Promise<Partial<LeanDoc> | null> {
-  const key = process.env.OPENROUTER_API_KEY
-  if (!key) return null
-
-  try {
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${key}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://pim.app',
-        'X-Title': 'PIM',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          { role: 'system', content: PARSE_SYSTEM },
-          { role: 'user', content: text.slice(0, 500) },
-        ],
-        max_tokens: 300,
-        temperature: 0.1,
-        response_format: { type: 'json_object' },
-      }),
-    })
-
-    if (!res.ok) return null
-    const data = await res.json()
-    const content = data?.choices?.[0]?.message?.content ?? ''
-    return JSON.parse(content)
-  } catch {
-    return null
-  }
+  return callOpenRouterJSON(
+    [
+      { role: 'system', content: PARSE_SYSTEM },
+      { role: 'user', content: text.slice(0, 500) },
+    ],
+    { maxTokens: 300, temperature: 0.1 },
+  )
 }
 
 /** Simple regex fallback when AI is unavailable */
@@ -117,12 +93,15 @@ function sanitizeAttrs(v: unknown): Record<string, string> {
 
 export async function GET() {
   await connectDB()
-  const memories = await MemoryModel.find().sort({ createdAt: -1 }).lean() as LeanDoc[]
+  const userId = await getAuthUserId()
+  const filter: Record<string, unknown> = userId ? { userId } : {}
+  const memories = await MemoryModel.find(filter).sort({ createdAt: -1 }).lean() as LeanDoc[]
   return NextResponse.json(memories.map(m => ({ ...m, _id: String(m._id) })))
 }
 
 export async function POST(req: Request) {
   await connectDB()
+  const userId = await getAuthUserId()
   const body = await req.json().catch(() => ({}))
 
   let parsed: Partial<LeanDoc>
@@ -155,6 +134,7 @@ export async function POST(req: Request) {
       priority: priority ?? 'medium',
       status: 'todo',
       color: '#34d399',
+      ...(userId ? { userId } : {}),
     })
     linkedTaskId = String(task._id)
   }
@@ -162,6 +142,7 @@ export async function POST(req: Request) {
   const memory = await MemoryModel.create({
     type, title, description, attributes, status, priority,
     linkedTaskId,
+    ...(userId ? { userId } : {}),
   })
 
   return NextResponse.json(

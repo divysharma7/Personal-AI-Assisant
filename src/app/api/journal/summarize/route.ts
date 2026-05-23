@@ -2,10 +2,9 @@ import { NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongodb'
 import JournalEntry from '@/lib/models/JournalEntry'
 import type { IJournalEntry } from '@/lib/models/JournalEntry'
+import { callOpenRouterJSON, isAIConfigured } from '@/lib/ai'
 
 const EMPTY_DOC = '{"type":"doc","content":[{"type":"paragraph"}]}'
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY
-const MODEL = process.env.OPENROUTER_MODEL ?? 'meta-llama/llama-3.3-70b-instruct:free'
 
 // Recursively extract plain text from a Tiptap JSON node
 function extractText(node: any): string {
@@ -39,28 +38,18 @@ export async function GET(req: Request) {
 
   if (!text) return NextResponse.json({ summary: '', todos: [] })
 
-  if (!OPENROUTER_API_KEY) {
+  if (!isAIConfigured()) {
     return NextResponse.json({ summary: '', todos: [] })
   }
 
-  let summary     = ''
-  let todos:       string[] = []
-  let todayItems:  string[] = []
+  let summary = ''
+  let todos: string[] = []
+  let todayItems: string[] = []
 
-  try {
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://pim.app',
-        'X-Title': 'PIM',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [{
-          role: 'user',
-          content: `You are a personal productivity assistant reviewing someone's journal entry from yesterday.
+  const parsed = await callOpenRouterJSON<{ summary?: string; todos?: string[]; today?: string[] }>(
+    [{
+      role: 'user',
+      content: `You are a personal productivity assistant reviewing someone's journal entry from yesterday.
 
 Provide three things:
 1. "summary" — a concise 2-3 sentence recap of the key themes, activities, decisions, and feelings from yesterday
@@ -72,22 +61,15 @@ Respond ONLY with valid JSON — no markdown, no extra text:
 
 Journal entry:
 ${text}`,
-        }],
-        max_tokens: 550,
-        temperature: 0.2,
-        response_format: { type: 'json_object' },
-      }),
-    })
+    }],
+    { maxTokens: 550, temperature: 0.2 },
+  )
 
-    if (res.ok) {
-      const data   = await res.json()
-      const raw    = data?.choices?.[0]?.message?.content ?? '{}'
-      const parsed = JSON.parse(raw)
-      summary    = typeof parsed.summary === 'string' ? parsed.summary : ''
-      todos      = Array.isArray(parsed.todos) ? parsed.todos.filter((t: any) => typeof t === 'string') : []
-      todayItems = Array.isArray(parsed.today) ? parsed.today.filter((t: any) => typeof t === 'string') : []
-    }
-  } catch { /* return empty on any AI error */ }
+  if (parsed) {
+    summary = typeof parsed.summary === 'string' ? parsed.summary : ''
+    todos = Array.isArray(parsed.todos) ? parsed.todos.filter((t: unknown) => typeof t === 'string') : []
+    todayItems = Array.isArray(parsed.today) ? parsed.today.filter((t: unknown) => typeof t === 'string') : []
+  }
 
   // Always persist — even an empty result marks summary_fetched so AI won't re-run
   await JournalEntry.findOneAndUpdate(

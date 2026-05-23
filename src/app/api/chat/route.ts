@@ -20,8 +20,8 @@ export type StreamChunk =
   | { t: 'err'; text: string }
   | { t: 'contact_ref'; id: string; name: string; role?: string }
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY
-const MODEL = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct:free'
+import { isAIConfigured } from '@/lib/ai'
+
 const MAX_ITER = 6
 
 // ─── Sanitization ──────────────────────────────────────────────────────────
@@ -768,32 +768,17 @@ function parseCalls(text: string): { calls: ParsedCall[]; parseErrors: number } 
 
 // System prompt is built dynamically per-request via buildSystemPrompt() from @/lib/agentPrompt
 
-// ─── AI call ───────────────────────────────────────────────────────────────
+// ─── AI call (uses shared utility) ────────────────────────────────────────
+
+import { callOpenRouter } from '@/lib/ai'
 
 async function callAI(messages: { role: string; content: string }[]): Promise<string> {
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': 'https://pim.app',
-      'X-Title': 'PIM',
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages,
-      max_tokens: 700,
-      temperature: 0.3,
-    }),
-  })
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText)
-    throw new Error(`AI API error ${res.status}: ${text.slice(0, 200)}`)
-  }
-
-  const data = await res.json()
-  return data?.choices?.[0]?.message?.content ?? ''
+  const result = await callOpenRouter(
+    messages.map(m => ({ role: m.role as 'system' | 'user' | 'assistant', content: m.content })),
+    { maxTokens: 700, temperature: 0.3 },
+  )
+  if (!result) throw new Error('AI call failed — check OPENROUTER_API_KEY')
+  return result
 }
 
 async function runAgentLoop(
@@ -848,7 +833,7 @@ async function runAgentLoop(
 // ─── Route handler ─────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
-  if (!OPENROUTER_API_KEY) {
+  if (!isAIConfigured()) {
     return new Response(
       JSON.stringify({ t: 'err', text: 'OpenRouter API key not configured. Add OPENROUTER_API_KEY to .env.local' }) + '\n',
       { status: 503, headers: { 'Content-Type': 'application/x-ndjson' } }
