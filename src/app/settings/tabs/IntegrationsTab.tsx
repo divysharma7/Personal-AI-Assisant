@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { fade, ease } from '@/lib/motion'
 import GoogleCalendarSetup from '@/components/integrations/GoogleCalendarSetup'
-import { MCP_TOOLS } from '@/mcp/server'
+import { MCP_TOOLS } from '@/mcp/tools'
 
 interface IntegrationsTabProps {
   googleConnected: boolean
