@@ -29,7 +29,6 @@ import { formatRelativeTime } from '@/lib/dateUtils'
 import FocusSection from './detail/FocusSection'
 import PriorityBars from './detail/PriorityBars'
 import SubTaskRow from './detail/SubTaskRow'
-import StatusBadge from '@/components/shared/StatusBadge'
 import { hexToRgba } from '@/lib/colorUtils'
 
 interface TaskComment {
@@ -77,6 +76,7 @@ export default function TaskDetailPanel({
   const [showPriorityPopover, setShowPriorityPopover] = useState(false)
   const [showOverflow, setShowOverflow] = useState(false)
   const [showActivities, setShowActivities] = useState(false)
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const commentInputRef = useRef<HTMLInputElement>(null)
   const dateChipRef = useRef<HTMLButtonElement>(null)
   const priorityChipRef = useRef<HTMLButtonElement>(null)
@@ -404,20 +404,62 @@ export default function TaskDetailPanel({
               )}
             </div>
 
-            {/* Status badge (column only, interactive) */}
+            {/* Status chip (matches priority chip pattern) */}
             {workflow && column && (
-              <StatusBadge
-                workflowName=""
-                workflowIcon=""
-                workflowColor={workflow.color}
-                columnName={column.title}
-                columnId={task.sectionId ?? undefined}
-                size="md"
-                compact
-                interactive
-                columns={workflow.columns?.map(c => ({ id: c.id, title: c.title }))}
-                onColumnChange={(newColumnId) => onUpdate(task._id, { sectionId: newColumnId })}
-              />
+              <div className="relative">
+                <motion.button
+                  {...buttonPress}
+                  onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium cursor-pointer"
+                  style={{
+                    backgroundColor: 'var(--bg-hover)',
+                    color: workflow.color,
+                    transitionProperty: 'background-color, transform',
+                    transitionDuration: '150ms',
+                  }}
+                >
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: workflow.color, flexShrink: 0 }} />
+                  {column.title}
+                </motion.button>
+                {showStatusDropdown && (
+                  <div
+                    style={{
+                      position: 'absolute', left: 0, top: 36, zIndex: 50,
+                      minWidth: 160, borderRadius: 12, padding: 4,
+                      backgroundColor: 'var(--bg-pane)', border: '1px solid var(--border)',
+                      boxShadow: 'var(--shadow-elevated)',
+                    }}
+                  >
+                    {workflow.columns?.map((col, i) => {
+                      const isActive = col.id === task.sectionId
+                      return (
+                        <button
+                          key={col.id}
+                          onClick={() => {
+                            onUpdate(task._id, { sectionId: col.id })
+                            setShowStatusDropdown(false)
+                          }}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                            padding: '8px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                            backgroundColor: isActive ? 'var(--overlay-2, var(--bg-hover))' : 'transparent',
+                            color: isActive ? workflow.color : 'var(--text-primary)',
+                            fontSize: 13, fontWeight: isActive ? 600 : 400,
+                            transitionProperty: 'background-color',
+                            transitionDuration: '120ms',
+                          }}
+                          onMouseEnter={e => { if (!isActive) e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
+                          onMouseLeave={e => { if (!isActive) e.currentTarget.style.backgroundColor = 'transparent' }}
+                        >
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: workflow.color, flexShrink: 0 }} />
+                          <span style={{ flex: 1 }}>{col.title}</span>
+                          <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>{i + 1}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
             )}
 
             {/* List chip */}
