@@ -30,6 +30,7 @@ import { formatRelativeTime } from '@/lib/dateUtils'
 import FocusSection from './detail/FocusSection'
 import PriorityBars from './detail/PriorityBars'
 import SubTaskRow from './detail/SubTaskRow'
+import StatusBadge from '@/components/shared/StatusBadge'
 
 interface TaskComment {
   _id?: string
@@ -426,23 +427,19 @@ export default function TaskDetailPanel({
               )}
             </div>
 
-            {/* Workflow status pill */}
+            {/* Workflow status badge */}
             {workflow && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '3px 10px',
-                  borderRadius: 999,
-                  fontSize: 12,
-                  fontWeight: 500,
-                  backgroundColor: 'color-mix(in srgb, var(--accent) 12%, transparent)',
-                  color: 'var(--accent)',
-                }}
-              >
-                {workflow.icon} {workflow.name}{column ? ` \u2192 ${column.title}` : ''}
-              </span>
+              <StatusBadge
+                workflowName={workflow.name}
+                workflowIcon={workflow.icon}
+                workflowColor={workflow.color}
+                columnName={column?.title}
+                columnId={task.sectionId ?? undefined}
+                size="md"
+                interactive
+                columns={workflow.columns?.map(c => ({ id: c.id, title: c.title }))}
+                onColumnChange={(newColumnId) => onUpdate(task._id, { sectionId: newColumnId })}
+              />
             )}
 
             {/* List chip */}

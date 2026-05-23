@@ -6,8 +6,10 @@ import { Check, ArrowRight, AlignJustify, Calendar } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import { checkBounce } from '@/lib/motion'
 import type { TaskRecord } from '@/hooks/useTasks'
+import { useWorkflows } from '@/hooks/useWorkflows'
 import DatePopover from '@/components/popovers/DatePopover'
 import PriorityPopover from '@/components/popovers/PriorityPopover'
+import StatusBadge from '@/components/shared/StatusBadge'
 
 // ── Custom SVG Icons matching Superlist exactly ──
 
@@ -124,6 +126,11 @@ export default memo(forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow({
   const hasNotes = !!task.description
   const priorityColor = PRIORITY_COLORS[task.priority] || PRIORITY_COLORS.low
 
+  // Workflow lookup for status badge
+  const { workflows } = useWorkflows()
+  const workflow = task.workflowId ? workflows.find(w => w._id === task.workflowId) : null
+  const workflowColumn = workflow?.columns?.find(c => c.id === task.sectionId)
+
   const submitTitle = useCallback(() => {
     setEditing(false)
     const t = editVal.trim()
@@ -223,8 +230,20 @@ export default memo(forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow({
         )}
 
         {/* Meta row */}
-        {(hasSubs || dateStr) && (
+        {(hasSubs || dateStr || workflow) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 5, flexWrap: 'wrap' }}>
+            {/* Workflow status badge (compact) */}
+            {workflow && (
+              <StatusBadge
+                workflowName={workflow.name}
+                workflowIcon={workflow.icon}
+                workflowColor={workflow.color}
+                columnName={workflowColumn?.title}
+                size="sm"
+                compact
+              />
+            )}
+
             {/* Subtask ring + count */}
             {hasSubs && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13, color: 'var(--text-faint)', fontFamily: 'Inter, system-ui, sans-serif' }}>
