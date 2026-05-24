@@ -29,7 +29,7 @@ Available tools:
 - get_habit_stats: Get habit check-in statistics, streaks, and completion rates. Optional "habitName" to filter.
 - postpone_tasks: Postpone all overdue tasks by a number of days. Optional "days" (default 1).
 
-Workflows are kanban-style boards with columns. Each workflow has labels (labelIds) that connect tasks to it.
+Workflows are kanban-style boards with columns. Tasks connect to workflows via workflowId.
 Habits are tasks with isHabit: true. They track completions, streaks, and goals.
 
 When the user asks about their workflows, boards, or pipelines, use list_workflows.

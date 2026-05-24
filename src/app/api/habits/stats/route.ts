@@ -31,7 +31,7 @@ export async function GET() {
   const timezone = (user?.timezone as string) || 'UTC'
 
   const habits = await TaskModel.find({
-    createdBy: userId,
+    userId,
     isHabit: true,
   }).lean() as LeanDoc[]
 

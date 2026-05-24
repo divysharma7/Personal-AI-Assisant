@@ -1,6 +1,7 @@
 import mongoose, { Schema, models } from 'mongoose'
 
 const HabitSchema = new Schema({
+  userId: { type: String, required: true, index: true },
   name: { type: String, required: true },
   description: String,
   frequency: {

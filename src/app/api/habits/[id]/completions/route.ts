@@ -33,7 +33,7 @@ export async function GET(
 
   const habit = await TaskModel.findOne({
     _id: id,
-    createdBy: userId,
+    userId,
     isHabit: true,
   }).lean() as LeanDoc | null
 

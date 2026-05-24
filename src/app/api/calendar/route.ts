@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongodb'
+import { getAuthUserId } from '@/lib/auth'
 import EventModel from '@/lib/models/Event'
 import TaskModel from '@/lib/models/Task'
 import ReminderModel from '@/lib/models/Reminder'
@@ -27,6 +28,9 @@ type LeanDoc = Record<string, unknown> & { _id: unknown }
  */
 export async function GET(req: Request) {
   try {
+    const userId = await getAuthUserId()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     const { searchParams } = new URL(req.url)
     const startParam = searchParams.get('start')
     const endParam = searchParams.get('end')
@@ -52,6 +56,7 @@ export async function GET(req: Request) {
 
     // Fetch events where startDate overlaps [start, end]
     const events = await EventModel.find({
+      userId,
       startDate: { $lte: end },
       endDate: { $gte: start },
     })
@@ -60,6 +65,7 @@ export async function GET(req: Request) {
 
     // Fetch tasks with dueDate within [start, end]
     const tasks = await TaskModel.find({
+      userId,
       dueDate: { $gte: start, $lte: end },
     })
       .sort({ dueDate: 1 })
@@ -67,6 +73,7 @@ export async function GET(req: Request) {
 
     // Fetch reminders where reminderDate within [start, end]
     const reminders = await ReminderModel.find({
+      userId,
       reminderDate: { $gte: start, $lte: end },
     })
       .sort({ reminderDate: 1 })

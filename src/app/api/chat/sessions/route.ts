@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongodb'
 import ChatSession from '@/lib/models/ChatSession'
 import { getAuthUserId } from '@/lib/auth'
-import { apiError, api500 } from '@/lib/apiHelpers'
+import { handleApiError } from '@/lib/apiHelpers'
+import { CreateChatSessionSchema, parseBody } from '@/lib/validation'
 
 type LeanDoc = Record<string, unknown> & { _id: unknown }
 
@@ -10,7 +11,7 @@ export async function GET() {
   try {
     await connectDB()
     const userId = await getAuthUserId()
-    if (!userId) return apiError('Unauthorized', 401)
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const sessions = await ChatSession.find({ userId })
       .sort({ updatedAt: -1 })
@@ -27,20 +28,20 @@ export async function GET() {
       })),
     })
   } catch (err) {
-    return api500(err)
+    return handleApiError(err)
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json().catch(() => null)
-    const title = typeof body?.title === 'string' && body.title.trim()
-      ? body.title.trim()
-      : 'New chat'
+    const body = await req.json().catch(() => ({}))
+    const parsed = parseBody(CreateChatSessionSchema, body)
+    if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 })
+    const title = parsed.data.title?.trim() || 'New chat'
 
     await connectDB()
     const userId = await getAuthUserId()
-    if (!userId) return apiError('Unauthorized', 401)
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const session = await ChatSession.create({ userId, title })
     const plain = session.toObject() as LeanDoc
@@ -56,6 +57,6 @@ export async function POST(req: Request) {
       { status: 201 },
     )
   } catch (err) {
-    return api500(err)
+    return handleApiError(err)
   }
 }

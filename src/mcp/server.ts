@@ -31,7 +31,7 @@ type ToolName = (typeof MCP_TOOLS)[number]['name']
 
 async function listTasks(userId: string, params: Record<string, unknown>) {
   await connectDB()
-  const filter: Record<string, unknown> = { createdBy: userId, isHabit: { $ne: true } }
+  const filter: Record<string, unknown> = { userId, isHabit: { $ne: true } }
   if (params.status) filter.status = params.status
   if (params.priority) filter.priority = params.priority
   const limit = typeof params.limit === 'number' ? Math.min(params.limit, 100) : 20
@@ -47,7 +47,7 @@ async function createTask(userId: string, params: Record<string, unknown>) {
   }
   const doc: Record<string, unknown> = {
     title,
-    createdBy: userId,
+    userId,
     status: 'todo',
   }
   if (params.priority) doc.priority = params.priority
@@ -62,7 +62,7 @@ async function completeTask(userId: string, params: Record<string, unknown>) {
   const taskId = params.taskId as string
   if (!taskId) return { error: 'taskId is required' }
   const task = await TaskModel.findOneAndUpdate(
-    { _id: taskId, createdBy: userId },
+    { _id: taskId, userId },
     { status: 'done', completedAt: new Date() },
     { new: true },
   ).lean()
@@ -72,7 +72,7 @@ async function completeTask(userId: string, params: Record<string, unknown>) {
 
 async function listHabits(userId: string) {
   await connectDB()
-  const habits = await TaskModel.find({ createdBy: userId, isHabit: true })
+  const habits = await TaskModel.find({ userId, isHabit: true })
     .sort({ updatedAt: -1 })
     .lean()
   return { habits, count: habits.length }
@@ -83,7 +83,7 @@ async function checkInHabit(userId: string, params: Record<string, unknown>) {
   const habitId = params.habitId as string
   if (!habitId) return { error: 'habitId is required' }
   const dateStr = (params.date as string) || new Date().toISOString().slice(0, 10)
-  const habit = await TaskModel.findOne({ _id: habitId, createdBy: userId, isHabit: true })
+  const habit = await TaskModel.findOne({ _id: habitId, userId, isHabit: true })
   if (!habit) return { error: 'Habit not found' }
 
   // Check if already checked in for this date
@@ -118,7 +118,7 @@ async function getCalendar(userId: string, params: Record<string, unknown>) {
   const start = new Date(startDate)
   const end = new Date(endDate)
   const events = await TaskModel.find({
-    createdBy: userId,
+    userId,
     scheduledStart: { $gte: start, $lte: end },
   })
     .sort({ scheduledStart: 1 })
@@ -133,19 +133,19 @@ async function getStats(userId: string) {
   const todayEnd = new Date(todayStart.getTime() + 86400000)
 
   const [totalTasks, completedToday, overdue, totalHabits] = await Promise.all([
-    TaskModel.countDocuments({ createdBy: userId, isHabit: { $ne: true } }),
+    TaskModel.countDocuments({ userId, isHabit: { $ne: true } }),
     TaskModel.countDocuments({
-      createdBy: userId,
+      userId,
       status: 'done',
       completedAt: { $gte: todayStart, $lt: todayEnd },
     }),
     TaskModel.countDocuments({
-      createdBy: userId,
+      userId,
       isHabit: { $ne: true },
       status: { $nin: ['done', 'dropped'] },
       dueDate: { $lt: todayStart },
     }),
-    TaskModel.countDocuments({ createdBy: userId, isHabit: true }),
+    TaskModel.countDocuments({ userId, isHabit: true }),
   ])
 
   return {

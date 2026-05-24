@@ -4,6 +4,7 @@ import ListGroupModel from '@/lib/models/ListGroup'
 import ListModel from '@/lib/models/List'
 import { getAuthUserId } from '@/lib/auth'
 import { handleApiError } from '@/lib/apiHelpers'
+import { UpdateListGroupSchema, parseBody } from '@/lib/validation'
 
 type LeanDoc = Record<string, unknown> & { _id: unknown }
 
@@ -17,15 +18,12 @@ export async function PATCH(
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await req.json()
-    const allowed = ['title', 'order', 'collapsed']
-    const update: Record<string, unknown> = {}
-    for (const key of allowed) {
-      if (key in body) update[key] = body[key]
-    }
+    const parsed = parseBody(UpdateListGroupSchema, body)
+    if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 })
 
     const doc = await ListGroupModel.findOneAndUpdate(
       { _id: params.id, ownerId: userId },
-      { $set: update },
+      { $set: parsed.data },
       { new: true }
     ).lean() as LeanDoc | null
 

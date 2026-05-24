@@ -127,8 +127,8 @@ export default function FocusPage() {
   const [activeSounds, setActiveSounds] = useState<Set<string>>(new Set())
   const [autoStart, setAutoStart] = useState(false)
   const [autoStartMsg, setAutoStartMsg] = useState('')
-  const [quote] = useState(() => QUOTES[Math.floor(Math.random() * QUOTES.length)])
-  const [now, setNow] = useState(new Date())
+  const [quote, setQuote] = useState(QUOTES[0])
+  const [now, setNow] = useState<Date | null>(null)
 
   // Timer refs
   const startTimeRef = useRef(0)
@@ -139,8 +139,10 @@ export default function FocusPage() {
   const oscillatorsRef = useRef<Map<string, { osc: OscillatorNode; gain: GainNode; ctx: AudioContext }>>(new Map())
   const notifPermissionRef = useRef(false)
 
-  // Live clock
+  // Live clock + random quote (client-only to avoid hydration mismatch)
   useEffect(() => {
+    setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)])
+    setNow(new Date())
     const id = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(id)
   }, [])
@@ -437,7 +439,7 @@ export default function FocusPage() {
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 14, fontWeight: 600, opacity: 0.8 }}>
-            {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {now ? now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
           </span>
           <button
             onClick={() => document.documentElement.requestFullscreen?.()}

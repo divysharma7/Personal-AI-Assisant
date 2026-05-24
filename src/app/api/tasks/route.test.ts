@@ -23,7 +23,6 @@ describe('Task Creation Validation', () => {
       description: 'A detailed description',
       estimatedEffort: 60,
       parentId: 'parent-123',
-      labelIds: ['label-1', 'label-2'],
       tags: ['urgent', 'work'],
       kanbanOrder: 3,
       sectionId: 'section-xyz',
@@ -84,15 +83,15 @@ describe('Task Creation Validation', () => {
     }
   })
 
-  it('accepts task with labelIds', () => {
+  it('accepts task with tags', () => {
     const data = {
-      title: 'Labeled task',
-      labelIds: ['label-a', 'label-b', 'label-c'],
+      title: 'Tagged task',
+      tags: ['urgent', 'work', 'review'],
     }
     const result = CreateTaskSchema.safeParse(data)
     expect(result.success).toBe(true)
     if (result.success) {
-      expect(result.data.labelIds).toEqual(['label-a', 'label-b', 'label-c'])
+      expect(result.data.tags).toEqual(['urgent', 'work', 'review'])
     }
   })
 

@@ -15,7 +15,6 @@ const WorkflowSchema = new Schema({
   ownerId: { type: String, required: true },
   templateType: { type: String, enum: ['kanban', 'sprint', 'sales', 'content', 'matrix', 'custom'], default: 'kanban' },
   columns: { type: [WorkflowColumnSchema], default: [] },
-  labelIds: [{ type: String }],
   order: { type: Number, default: 0 },
   archived: { type: Boolean, default: false },
 }, { timestamps: true })

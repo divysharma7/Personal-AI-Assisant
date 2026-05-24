@@ -1,22 +1,25 @@
 import { NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongodb'
+import { getAuthUserId } from '@/lib/auth'
 import ReminderModel from '@/lib/models/Reminder'
 import { scheduleNotification, cancelNotification } from '@/lib/posthook'
 import { handleApiError } from '@/lib/apiHelpers'
+import { ReminderSnoozeSchema, parseBody } from '@/lib/validation'
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   try {
+    const userId = await getAuthUserId()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     await connectDB()
 
-    const { snoozeMinutes } = await req.json() as { snoozeMinutes: number }
-    if (!snoozeMinutes || snoozeMinutes <= 0) {
-      return NextResponse.json({ error: 'snoozeMinutes must be a positive number' }, { status: 400 })
-    }
+    const body = await req.json()
+    const parsed = parseBody(ReminderSnoozeSchema, body)
+    if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 })
 
-    const newTime = new Date(Date.now() + snoozeMinutes * 60 * 1000)
+    const newTime = new Date(Date.now() + parsed.data.snoozeMinutes * 60 * 1000)
 
     // Fetch first to get existing posthookId
-    const existing = await ReminderModel.findById(params.id).lean() as Record<string, unknown> & { _id: unknown, posthookId?: string } | null
+    const existing = await ReminderModel.findOne({ _id: params.id, userId }).lean() as Record<string, unknown> & { _id: unknown, posthookId?: string } | null
     if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     // Cancel old hook before scheduling a new one

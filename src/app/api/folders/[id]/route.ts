@@ -1,21 +1,24 @@
 import { NextResponse } from 'next/server'
 import { getAuthUserId } from '@/lib/auth'
 import { updateFolder, deleteFolder } from '@/lib/services/folderService'
+import { UpdateFolderSchema, parseBody } from '@/lib/validation'
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   const userId = await getAuthUserId()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json().catch(() => ({}))
+  const parsed = parseBody(UpdateFolderSchema, body)
+  if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 })
 
   try {
     const result = await updateFolder(params.id, userId, {
-      title: body.title,
-      icon: body.icon,
-      coverImageUrl: body.coverImageUrl,
-      isPrivate: body.isPrivate,
-      groupId: body.groupId,
-      groupTitle: body.groupTitle,
+      title: parsed.data.title,
+      icon: parsed.data.icon,
+      coverImageUrl: parsed.data.coverImageUrl,
+      isPrivate: parsed.data.isPrivate,
+      groupId: parsed.data.groupId,
+      groupTitle: parsed.data.groupTitle,
     })
 
     return NextResponse.json(result)

@@ -3,23 +3,14 @@ import { getAuthUserId } from '@/lib/auth'
 import { connectDB } from '@/lib/mongodb'
 import FocusSession from '@/lib/models/FocusSession'
 import TaskModel from '@/lib/models/Task'
+import { FocusSessionActionSchema, parseBody } from '@/lib/validation'
 
 type LeanDoc = Record<string, unknown> & { _id: unknown }
-
-interface ActionBody {
-  action: 'pause' | 'resume' | 'extend' | 'complete' | 'cancel'
-  additionalMin?: number
-  endedReason?: 'timer_ended' | 'user_completed' | 'user_cancelled'
-  postSessionNote?: string
-}
 
 function serialize(doc: LeanDoc) {
   return { ...doc, _id: String(doc._id) }
 }
 
-/**
- * PATCH /api/focus/sessions/[id] — Session lifecycle actions
- */
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -28,11 +19,10 @@ export async function PATCH(
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
-  const body = (await req.json()) as ActionBody
-
-  if (!body.action) {
-    return NextResponse.json({ error: 'action is required' }, { status: 400 })
-  }
+  const body = await req.json()
+  const parsed = parseBody(FocusSessionActionSchema, body)
+  if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 })
+  const { action, additionalMin, endedReason, postSessionNote } = parsed.data
 
   await connectDB()
 
@@ -48,7 +38,7 @@ export async function PATCH(
   const now = new Date()
   const update: Record<string, unknown> = {}
 
-  switch (body.action) {
+  switch (action) {
     case 'pause': {
       // Idempotent: only set pausedAt if not already paused
       if (session.pausedAt) {
@@ -74,10 +64,10 @@ export async function PATCH(
     }
 
     case 'extend': {
-      const additionalMin = body.additionalMin ?? 15
+      const extendMin = additionalMin ?? 15
       // Idempotent: we always allow extending
-      update.extendedByMin = (session.extendedByMin as number || 0) + additionalMin
-      update.plannedDurationMin = (session.plannedDurationMin as number || 25) + additionalMin
+      update.extendedByMin = (session.extendedByMin as number || 0) + extendMin
+      update.plannedDurationMin = (session.plannedDurationMin as number || 25) + extendMin
       // If session was completed, set it back to extended
       if (session.status === 'completed') {
         update.status = 'extended'
@@ -110,10 +100,10 @@ export async function PATCH(
       update.actualDurationMin = Math.max(0, actualDurationMin)
       update.totalPausedMs = totalPaused
       update.pausedAt = null
-      update.endedReason = body.endedReason ?? 'user_completed'
+      update.endedReason = endedReason ?? 'user_completed'
 
-      if (body.postSessionNote) {
-        update.postSessionNote = body.postSessionNote.slice(0, 200)
+      if (postSessionNote) {
+        update.postSessionNote = postSessionNote.slice(0, 200)
       }
 
       // Update linked task's actualEffort
@@ -164,8 +154,8 @@ export async function PATCH(
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   }
 
-  const updated = await FocusSession.findByIdAndUpdate(
-    id,
+  const updated = await FocusSession.findOneAndUpdate(
+    { _id: id, userId },
     { $set: update },
     { new: true },
   ).lean() as LeanDoc

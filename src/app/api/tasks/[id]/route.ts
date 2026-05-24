@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongodb'
+import { getAuthUserId } from '@/lib/auth'
 import TaskModel from '@/lib/models/Task'
 import { UpdateTaskSchema, parseBody } from '@/lib/validation'
 import { handleApiError } from '@/lib/apiHelpers'
@@ -69,8 +70,10 @@ function buildActivities(oldDoc: LeanDoc, updates: Record<string, unknown>): Act
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   try {
+    const userId = await getAuthUserId()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     await connectDB()
-    const task = await TaskModel.findById(params.id).lean() as LeanDoc | null
+    const task = await TaskModel.findOne({ _id: params.id, userId }).lean() as LeanDoc | null
     if (!task) throw new NotFoundError('Task', params.id)
     return NextResponse.json({ ...task, _id: String(task._id), type: 'task' })
   } catch (err) {
@@ -80,19 +83,21 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
+    const userId = await getAuthUserId()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const body = await req.json().catch(() => null)
     const parsed = parseBody(UpdateTaskSchema, body)
     if (!parsed.success) throw new ValidationError(parsed.error)
 
     await connectDB()
-    const oldTask = await TaskModel.findById(params.id).lean() as LeanDoc | null
+    const oldTask = await TaskModel.findOne({ _id: params.id, userId }).lean() as LeanDoc | null
     if (!oldTask) throw new NotFoundError('Task', params.id)
 
     const newActivities = buildActivities(oldTask, parsed.data as Record<string, unknown>)
     const updateOp = newActivities.length > 0
       ? { ...parsed.data, $push: { activities: { $each: newActivities } } }
       : parsed.data
-    const task = await TaskModel.findByIdAndUpdate(params.id, updateOp, { new: true }).lean() as LeanDoc | null
+    const task = await TaskModel.findOneAndUpdate({ _id: params.id, userId }, updateOp, { new: true }).lean() as LeanDoc | null
     if (!task) throw new NotFoundError('Task', params.id)
     return NextResponse.json({ ...task, _id: String(task._id), type: 'task' })
   } catch (err) {
@@ -102,19 +107,21 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   try {
+    const userId = await getAuthUserId()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const body = await req.json().catch(() => null)
     const parsed = parseBody(UpdateTaskSchema, body)
     if (!parsed.success) throw new ValidationError(parsed.error)
 
     await connectDB()
-    const oldTask = await TaskModel.findById(params.id).lean() as LeanDoc | null
+    const oldTask = await TaskModel.findOne({ _id: params.id, userId }).lean() as LeanDoc | null
     if (!oldTask) throw new NotFoundError('Task', params.id)
 
     const newActivities = buildActivities(oldTask, parsed.data as Record<string, unknown>)
     const updateOp = newActivities.length > 0
       ? { $set: parsed.data, $push: { activities: { $each: newActivities } } }
       : { $set: parsed.data }
-    const task = await TaskModel.findByIdAndUpdate(params.id, updateOp, { new: true }).lean() as LeanDoc | null
+    const task = await TaskModel.findOneAndUpdate({ _id: params.id, userId }, updateOp, { new: true }).lean() as LeanDoc | null
     if (!task) throw new NotFoundError('Task', params.id)
     return NextResponse.json({ ...task, _id: String(task._id), type: 'task' })
   } catch (err) {
@@ -124,8 +131,10 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
   try {
+    const userId = await getAuthUserId()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     await connectDB()
-    await TaskModel.findByIdAndDelete(params.id)
+    await TaskModel.findOneAndDelete({ _id: params.id, userId })
     return NextResponse.json({ success: true })
   } catch (err) {
     return handleApiError(err)

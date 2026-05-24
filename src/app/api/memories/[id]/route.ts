@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongodb'
+import { getAuthUserId } from '@/lib/auth'
 import MemoryModel from '@/lib/models/Memory'
 import { MEMORY_TYPES, type MemoryType } from '@/types'
 import { handleApiError } from '@/lib/apiHelpers'
@@ -19,6 +20,8 @@ function sanitizeAttrs(v: unknown): Record<string, string> {
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
+    const userId = await getAuthUserId()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     await connectDB()
     const body = await req.json().catch(() => ({}))
 
@@ -31,7 +34,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     if (['low','medium','high'].includes(body.priority)) update.priority = body.priority
     if (Array.isArray(body.tags)) update.tags = (body.tags as unknown[]).filter(t => typeof t === 'string').map(String).slice(0, 20)
 
-    const updated = await MemoryModel.findByIdAndUpdate(params.id, update, { new: true }).lean() as LeanDoc | null
+    const updated = await MemoryModel.findOneAndUpdate({ _id: params.id, userId }, update, { new: true }).lean() as LeanDoc | null
     if (!updated) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     return NextResponse.json({ ...updated, _id: String(updated._id) })
   } catch (err) {
@@ -41,8 +44,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
   try {
+    const userId = await getAuthUserId()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     await connectDB()
-    await MemoryModel.findByIdAndDelete(params.id)
+    await MemoryModel.findOneAndDelete({ _id: params.id, userId })
     return NextResponse.json({ success: true })
   } catch (err) {
     return handleApiError(err)

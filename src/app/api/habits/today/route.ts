@@ -24,7 +24,7 @@ export async function GET() {
 
     // Find all habits owned by this user
     const habits = await TaskModel.find({
-      createdBy: userId,
+      userId,
       isHabit: true,
     }).lean() as LeanDoc[]
 

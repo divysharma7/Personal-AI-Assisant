@@ -2,11 +2,16 @@ import { NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongodb'
 import ContactModel from '@/lib/models/Contact'
 import { handleApiError } from '@/lib/apiHelpers'
+import { getAuthUserId } from '@/lib/auth'
+import { CreateContactSchema, parseBody } from '@/lib/validation'
 
 export async function GET() {
   try {
+    const userId = await getAuthUserId()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     await connectDB()
-    const contacts = await ContactModel.find({}).sort({ name: 1 }).lean()
+    const contacts = await ContactModel.find({ userId }).sort({ name: 1 }).lean()
     return NextResponse.json(contacts)
   } catch (err) {
     return handleApiError(err)
@@ -15,24 +20,15 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json().catch(() => ({}))
-    const { name, role, phone, email, company, address, notes, tags } = body
+    const userId = await getAuthUserId()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    if (!name?.trim()) {
-      return NextResponse.json({ error: 'name is required' }, { status: 400 })
-    }
+    const body = await req.json().catch(() => ({}))
+    const parsed = parseBody(CreateContactSchema, body)
+    if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 })
 
     await connectDB()
-    const contact = await ContactModel.create({
-      name:    name.trim(),
-      role:    role?.trim()    || undefined,
-      phone:   phone?.trim()   || undefined,
-      email:   email?.trim()   || undefined,
-      company: company?.trim() || undefined,
-      address: address?.trim() || undefined,
-      notes:   notes?.trim()   || undefined,
-      tags:    Array.isArray(tags) ? tags.map((t: string) => t.trim()).filter(Boolean) : [],
-    })
+    const contact = await ContactModel.create({ ...parsed.data, userId })
 
     return NextResponse.json(contact, { status: 201 })
   } catch (err) {

@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/mongodb'
 import ListModel from '@/lib/models/List'
 import { getAuthUserId } from '@/lib/auth'
 import { handleApiError } from '@/lib/apiHelpers'
+import { CreateListSchema, parseBody } from '@/lib/validation'
 
 type LeanDoc = Record<string, unknown> & { _id: unknown }
 
@@ -30,19 +31,22 @@ export async function POST(req: Request) {
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await req.json()
+    const parsed = parseBody(CreateListSchema, body)
+    if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 })
+
     const doc = await ListModel.create({
-      type: body.type || 'standard',
-      title: body.title || '',
-      icon: body.icon || '',
-      coverImageUrl: body.coverImageUrl || '',
-      groupId: body.groupId || null,
+      type: parsed.data.type || 'standard',
+      title: parsed.data.title || '',
+      icon: parsed.data.icon || '',
+      coverImageUrl: parsed.data.coverImageUrl || '',
+      groupId: parsed.data.groupId || null,
       ownerId: userId,
       isPrivate: true,
       collaborators: [],
       pinnedToFavorites: false,
       hideCompletedTasks: false,
-      blocks: body.blocks || null,
-      isInbox: body.isInbox || false,
+      blocks: parsed.data.blocks || null,
+      isInbox: parsed.data.isInbox || false,
     })
 
     const plain = doc.toObject() as LeanDoc

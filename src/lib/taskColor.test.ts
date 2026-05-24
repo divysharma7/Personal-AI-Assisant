@@ -5,7 +5,6 @@ import type { TaskRecord } from '@/hooks/useTasks'
 function makeTask(overrides: Partial<TaskRecord> = {}): TaskRecord {
   return {
     _id: 'task-1',
-    type: 'task',
     title: 'Test Task',
     priority: 'none',
     status: 'active',

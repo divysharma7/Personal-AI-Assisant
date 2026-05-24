@@ -31,7 +31,6 @@ export const copy = {
     sectionTools: "Tools",
     browseAll: "Browse all",
     newListTooltip: "New list",
-    upgradeCta: "Upgrade",
     fab: {
       newTask: "New task",
       newTaskShortcut: "\u2303N",
@@ -274,7 +273,6 @@ export const copy = {
     tabs: {
       profile: "Profile",
       features: "Features",
-      subscriptions: "Subscriptions",
       integrations: "Integrations",
       notifications: "Notifications",
       labels: "Labels",
@@ -300,37 +298,25 @@ export const copy = {
       soundsToggle: "Enable sound effects",
       talkLabel: "Talk",
       talkLanguage: "Language",
-      talkComingSoon: "Coming soon",
+      talkComingSoon: "In development",
       meetingNotesLabel: "Meeting notes",
       meetingNotesToggle: "Show meetings at the top of the Today view",
     },
-    subscriptions: {
-      planName: "Personal Free",
-      planFeatures: [
-        "5 shared lists",
-        "5 collaborators per list",
-        "500MB storage",
-      ],
-      upgradeCta: "Upgrade to Pro",
-    },
     integrations: {
-      free: [
+      available: [
         { name: "Gmail", description: "Import emails as tasks" },
         { name: "Google Calendar", description: "Sync your calendar events" },
         { name: "Microsoft To Do", description: "Import your Microsoft tasks" },
         { name: "Email forwarding", description: "Forward emails to create tasks" },
-      ],
-      pro: [
         { name: "Slack", description: "Create tasks from Slack messages" },
         { name: "GitHub", description: "Link issues and pull requests" },
         { name: "Linear", description: "Sync issues bidirectionally" },
         { name: "Figma", description: "Attach design files to tasks" },
       ],
       connectCta: "Connect",
-      proBadge: "Pro",
     },
     notifications: {
-      comingSoon: "Notification preferences coming soon",
+      comingSoon: "Notification preferences will be available with the mobile app",
     },
     labels: {
       title: "Labels",
@@ -750,7 +736,7 @@ export const copy = {
     timesPerWeek: "times per week",
     everyNDays: "Every",
     days: "days",
-    reminderHint: "Reminders deliver via mobile app (coming soon)",
+    reminderHint: "Reminders deliver via browser notifications",
     defaultList: "Personal Habits",
   },
 

@@ -43,7 +43,7 @@ const UserSchema = new Schema({
   },
   // Calendar preferences
   calendarPreferences: {
-    defaultView: { type: String, enum: ['day', 'week', 'month'], default: 'day' },
+    defaultView: { type: String, enum: ['day', '3day', 'week', 'multiweek', 'month', 'year', 'agenda'], default: 'week' },
     weekStartsOn: { type: Number, enum: [0, 1, 6], default: 1 },
     hiddenHoursStart: { type: Number, default: 21 },
     hiddenHoursEnd: { type: Number, default: 7 },

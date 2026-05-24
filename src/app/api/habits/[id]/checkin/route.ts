@@ -4,22 +4,12 @@ import { connectDB } from '@/lib/mongodb'
 import TaskModel from '@/lib/models/Task'
 import { computeStreak, computeBestStreak } from '@/lib/services/streakService'
 import { scheduleStreakMilestone } from '@/lib/services/notificationService'
+import { HabitCheckinSchema, parseBody } from '@/lib/validation'
 
 type LeanDoc = Record<string, unknown> & { _id: unknown }
 
-interface CheckinBody {
-  date: string         // 'YYYY-MM-DD'
-  status: 'achieved' | 'unachieved' | 'skipped' | 'frozen'
-  value?: number
-  reason?: string
-}
-
 const STREAK_MILESTONES = [3, 7, 14, 30, 60, 100, 365]
 
-/**
- * POST /api/habits/[id]/checkin
- * Idempotent check-in for a habit on a given date.
- */
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -28,26 +18,15 @@ export async function POST(
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
-  const body = (await req.json()) as CheckinBody
-
-  if (!body.date || !body.status) {
-    return NextResponse.json({ error: 'date and status are required' }, { status: 400 })
-  }
-
-  // Validate date format
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
-    return NextResponse.json({ error: 'date must be YYYY-MM-DD' }, { status: 400 })
-  }
-
-  if (!['achieved', 'unachieved', 'skipped', 'frozen'].includes(body.status)) {
-    return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
-  }
+  const body = await req.json()
+  const parsed = parseBody(HabitCheckinSchema, body)
+  if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 })
 
   await connectDB()
 
   const habit = await TaskModel.findOne({
     _id: id,
-    createdBy: userId,
+    userId,
     isHabit: true,
   }).lean() as LeanDoc | null
 
@@ -58,12 +37,12 @@ export async function POST(
   const completions = (habit.completions as Array<{ date: string; status: string; value?: number; reason?: string; loggedAt?: Date }>) ?? []
 
   // Idempotent: remove existing entry for this date, then add new one
-  const filtered = completions.filter((c) => c.date !== body.date)
+  const filtered = completions.filter((c) => c.date !== parsed.data.date)
   filtered.push({
-    date: body.date,
-    status: body.status,
-    value: body.value,
-    reason: body.reason,
+    date: parsed.data.date,
+    status: parsed.data.status,
+    value: parsed.data.value,
+    reason: parsed.data.reason,
     loggedAt: new Date(),
   })
 
@@ -71,8 +50,8 @@ export async function POST(
   filtered.sort((a, b) => a.date.localeCompare(b.date))
 
   // Update the habit with new completions
-  const updated = await TaskModel.findByIdAndUpdate(
-    id,
+  const updated = await TaskModel.findOneAndUpdate(
+    { _id: id, userId },
     {
       $set: {
         completions: filtered,
@@ -87,12 +66,13 @@ export async function POST(
   const bestStreak = computeBestStreak(updated as never)
 
   // Update streak fields
-  await TaskModel.findByIdAndUpdate(id, {
-    $set: { streakCurrent: currentStreak, streakBest: bestStreak },
-  })
+  await TaskModel.findOneAndUpdate(
+    { _id: id, userId },
+    { $set: { streakCurrent: currentStreak, streakBest: bestStreak } },
+  )
 
   // Check for streak milestones and schedule notifications
-  if (body.status === 'achieved') {
+  if (parsed.data.status === 'achieved') {
     for (const milestone of STREAK_MILESTONES) {
       if (currentStreak === milestone) {
         await scheduleStreakMilestone(userId, id, milestone)

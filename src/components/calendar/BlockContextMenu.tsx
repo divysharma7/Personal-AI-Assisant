@@ -73,7 +73,6 @@ export default function BlockContextMenu({
       scheduledStart: task.scheduledStart,
       scheduledEnd: task.scheduledEnd,
       estimatedEffort: task.estimatedEffort,
-      labelIds: task.labelIds,
       listId: task.listId,
     })
     onClose()

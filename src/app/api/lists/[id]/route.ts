@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/mongodb'
 import ListModel from '@/lib/models/List'
 import { getAuthUserId } from '@/lib/auth'
 import { handleApiError } from '@/lib/apiHelpers'
+import { UpdateListSchema, parseBody } from '@/lib/validation'
 
 type LeanDoc = Record<string, unknown> & { _id: unknown }
 
@@ -38,20 +39,12 @@ export async function PATCH(
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await req.json()
-
-    // Only allow updating specific fields
-    const allowed = [
-      'title', 'icon', 'coverImageUrl', 'pinnedToFavorites',
-      'hideCompletedTasks', 'groupId', 'isPrivate', 'collaborators', 'type',
-    ]
-    const update: Record<string, unknown> = {}
-    for (const key of allowed) {
-      if (key in body) update[key] = body[key]
-    }
+    const parsed = parseBody(UpdateListSchema, body)
+    if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 })
 
     const doc = await ListModel.findOneAndUpdate(
       { _id: params.id, ownerId: userId, deletedAt: null },
-      { $set: update },
+      { $set: parsed.data },
       { new: true }
     ).lean() as LeanDoc | null
 

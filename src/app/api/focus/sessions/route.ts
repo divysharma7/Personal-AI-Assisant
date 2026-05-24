@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/mongodb'
 import FocusSession from '@/lib/models/FocusSession'
 import TaskModel from '@/lib/models/Task'
 import { handleApiError } from '@/lib/apiHelpers'
+import { CreateFocusSessionSchema, parseBody } from '@/lib/validation'
 
 type LeanDoc = Record<string, unknown> & { _id: unknown }
 
@@ -11,9 +12,6 @@ function serialize(doc: LeanDoc) {
   return { ...doc, _id: String(doc._id) }
 }
 
-/**
- * POST /api/focus/sessions — Start a new focus session
- */
 export async function POST(req: Request) {
   try {
     const userId = await getAuthUserId()
@@ -35,11 +33,13 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json().catch(() => ({}))
+    const parsed = parseBody(CreateFocusSessionSchema, body)
+    if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 })
     const {
       taskId = null,
       plannedDurationMin = 25,
       plannedBreakMin = 5,
-    } = body as { taskId?: string | null; plannedDurationMin?: number; plannedBreakMin?: number }
+    } = parsed.data
 
     // If taskId provided, snapshot the task title
     let taskTitleSnapshot: string | null = null
@@ -67,10 +67,6 @@ export async function POST(req: Request) {
   }
 }
 
-/**
- * GET /api/focus/sessions — List sessions with optional filters
- * Query: ?from=&to=&taskId=&limit=
- */
 export async function GET(req: Request) {
   try {
     const userId = await getAuthUserId()

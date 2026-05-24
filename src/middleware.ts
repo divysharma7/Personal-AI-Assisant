@@ -19,6 +19,7 @@ const PUBLIC_PREFIXES = [
   '/api/auth/logout',
   '/api/posthook_listener',
   '/api/devices/register',
+  '/api/alexa',
   '/_next',
   '/favicon',
 ]
@@ -53,10 +54,6 @@ function resolveToken(request: NextRequest): string | undefined {
 }
 
 export async function middleware(request: NextRequest) {
-  // TEMPORARY: auth bypassed for frontend-only development
-  return NextResponse.next()
-
-  /* Re-enable when backend is connected:
   const { pathname } = request.nextUrl
 
   if (isPublic(pathname)) return NextResponse.next()
@@ -64,6 +61,7 @@ export async function middleware(request: NextRequest) {
   const token = resolveToken(request)
 
   if (!token) {
+    if (process.env.NODE_ENV === 'development') return NextResponse.next()
     return pathname.startsWith('/api/')
       ? NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       : NextResponse.redirect(new URL('/login', request.url))
@@ -73,13 +71,13 @@ export async function middleware(request: NextRequest) {
     await jwtVerify(token, SECRET)
     return NextResponse.next()
   } catch {
+    if (process.env.NODE_ENV === 'development') return NextResponse.next()
     const res = pathname.startsWith('/api/')
       ? NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       : NextResponse.redirect(new URL('/login', request.url))
     res.cookies.delete(COOKIE_NAME)
     return res
   }
-  */
 }
 
 export const config = {

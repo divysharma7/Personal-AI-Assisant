@@ -22,7 +22,6 @@ export interface HabitFrequency {
 
 export interface TaskRecord {
   _id: string
-  type: string
   title: string
   description?: string
   notes?: object | null
@@ -35,8 +34,6 @@ export interface TaskRecord {
   depth?: number
   path?: string
   order?: number
-  labelIds?: string[]
-  assigneeId?: string | null
   comments?: { text: string; createdAt?: string; authorName?: string; authorAvatar?: string }[]
   reminders?: { id: string; type: 'before-start' | 'on-day-at' | 'absolute'; offsetMinutes?: number; timeOfDay?: string | null; absoluteTime?: string | null; sent?: boolean }[]
   repeat?: string | null
@@ -48,7 +45,6 @@ export interface TaskRecord {
   googleEventId?: string | null
   calendarSynced?: boolean
   listId?: string | null
-  createdBy?: string | null
   createdAt?: string
   updatedAt?: string
   // Habit fields
@@ -93,7 +89,10 @@ export function useTasks() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
-      if (!res.ok) throw new Error('Failed to create task')
+      if (!res.ok) {
+        const err = await res.json().catch(() => null)
+        throw new Error(err?.error?.message || err?.error || 'Failed to create task')
+      }
       return res.json() as Promise<TaskRecord>
     },
     onMutate: async (data) => {

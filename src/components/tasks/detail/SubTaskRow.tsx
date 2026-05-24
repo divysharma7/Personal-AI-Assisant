@@ -171,7 +171,7 @@ export default function SubTaskRow({ sub, subDone, subDateStr, subOverdue, subPr
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 11, fontWeight: 700, color: '#fff', fontFamily: 'Inter, system-ui, sans-serif',
         }}>
-          {sub.createdBy ? sub.createdBy.charAt(0).toUpperCase() : 'U'}
+          {'U'}
         </div>
         {hovered && (
           <div

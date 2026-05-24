@@ -1,6 +1,7 @@
 import mongoose, { Schema, models } from 'mongoose'
 
 const PomodoroSessionSchema = new Schema({
+  userId: { type: String, required: true, index: true },
   taskId: { type: mongoose.Schema.Types.ObjectId, ref: 'Task', default: null },
   taskTitle: { type: String, default: '' },
   type: { type: String, enum: ['focus', 'break'], required: true },

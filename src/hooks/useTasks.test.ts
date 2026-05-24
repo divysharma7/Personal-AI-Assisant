@@ -192,7 +192,6 @@ describe('useTasks - createTask', () => {
       dueDate: '2026-06-01T00:00:00Z',
       description: 'Description here',
       listId: 'list-456',
-      labelIds: ['l1', 'l2'],
       scheduledStart: '2026-06-01T09:00:00Z',
       scheduledEnd: '2026-06-01T10:00:00Z',
     }

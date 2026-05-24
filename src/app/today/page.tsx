@@ -363,7 +363,6 @@ export default function TodayPage() {
         priority: task.priority,
         status: 'todo',
         dueDate: task.dueDate,
-        labelIds: task.labelIds,
         description: task.description,
         listId: task.listId,
       })
@@ -755,7 +754,6 @@ export default function TodayPage() {
             setContextMenu(null)
           }}
           onRemoveAssignee={() => {
-            updateTask(contextMenu.task._id, { assigneeId: null })
             setContextMenu(null)
           }}
           onAddLabels={() => {

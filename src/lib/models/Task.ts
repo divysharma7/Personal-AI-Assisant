@@ -3,7 +3,6 @@ import mongoose, { Schema, models } from 'mongoose'
 const TaskSchema = new Schema({
   userId: { type: String, index: true },
   workflowId: { type: String, index: true, default: null },
-  type: { type: String, default: 'task' },
   title: { type: String, required: true },
   description: String,
   notes: { type: mongoose.Schema.Types.Mixed, default: null },
@@ -11,7 +10,6 @@ const TaskSchema = new Schema({
   priority: { type: String, enum: ['low', 'medium', 'high', null], default: 'medium' },
   status: { type: String, enum: ['backlog', 'todo', 'in-progress', 'done', 'dropped'], default: 'backlog' },
   color: { type: String, default: '#34d399' },
-  umbrellas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Umbrella' }],
   comments: [{ text: { type: String, required: true }, createdAt: { type: Date, default: Date.now }, authorName: String, authorAvatar: String }],
   reminders: [{
     id: { type: String, required: true },
@@ -22,13 +20,9 @@ const TaskSchema = new Schema({
     sent: { type: Boolean, default: false },
   }],
   tags: [{ type: String }],
-  // Phase 3: enhanced task fields
-  labelIds: [{ type: String }],
-  assigneeId: { type: String, default: null },
   repeat: { type: String, enum: ['daily', 'weekdays', 'weekly', 'monthly', 'yearly', null], default: null },
   completedAt: { type: Date, default: null },
   listId: { type: String, default: null },
-  createdBy: { type: String, default: null },
   // Calendar & scheduling fields
   scheduledStart: { type: Date, default: null },
   scheduledEnd: { type: Date, default: null },
@@ -76,5 +70,7 @@ const TaskSchema = new Schema({
 }, { timestamps: true })
 
 TaskSchema.index({ parentId: 1, order: 1 })
+TaskSchema.index({ sectionId: 1 })
+TaskSchema.index({ scheduledStart: 1 })
 
 export default models.Task || mongoose.model('Task', TaskSchema)

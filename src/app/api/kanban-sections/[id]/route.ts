@@ -3,7 +3,8 @@ import { connectDB } from '@/lib/mongodb'
 import KanbanSection from '@/lib/models/KanbanSection'
 import TaskModel from '@/lib/models/Task'
 import { getAuthUserId } from '@/lib/auth'
-import { apiError, api404, api500 } from '@/lib/apiHelpers'
+import { handleApiError } from '@/lib/apiHelpers'
+import { CreateKanbanSectionSchema, parseBody } from '@/lib/validation'
 
 type LeanDoc = Record<string, unknown> & { _id: unknown }
 
@@ -13,22 +14,23 @@ export async function PUT(
 ) {
   try {
     const body = await req.json().catch(() => null)
-    if (!body?.title) return apiError('title is required')
+    const parsed = parseBody(CreateKanbanSectionSchema, body)
+    if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 })
 
     await connectDB()
     const userId = await getAuthUserId()
-    if (!userId) return apiError('Unauthorized', 401)
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const section = await KanbanSection.findOneAndUpdate(
       { _id: params.id, userId },
-      { $set: { title: body.title } },
+      { $set: { title: parsed.data.title } },
       { new: true }
     ).lean() as LeanDoc | null
 
-    if (!section) return api404('KanbanSection')
+    if (!section) return NextResponse.json({ error: 'KanbanSection not found' }, { status: 404 })
     return NextResponse.json({ ...section, _id: String(section._id) })
   } catch (err) {
-    return api500(err)
+    return handleApiError(err)
   }
 }
 
@@ -39,14 +41,14 @@ export async function DELETE(
   try {
     await connectDB()
     const userId = await getAuthUserId()
-    if (!userId) return apiError('Unauthorized', 401)
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const section = await KanbanSection.findOneAndDelete({
       _id: params.id,
       userId,
     }).lean() as LeanDoc | null
 
-    if (!section) return api404('KanbanSection')
+    if (!section) return NextResponse.json({ error: 'KanbanSection not found' }, { status: 404 })
 
     // Clear sectionId on all tasks that referenced this section
     await TaskModel.updateMany(
@@ -56,6 +58,6 @@ export async function DELETE(
 
     return NextResponse.json({ ok: true })
   } catch (err) {
-    return api500(err)
+    return handleApiError(err)
   }
 }

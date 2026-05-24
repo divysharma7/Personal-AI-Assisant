@@ -20,7 +20,6 @@ export interface WorkflowDoc {
   ownerId: string
   templateType: string
   columns: WorkflowColumn[]
-  labelIds: string[]
   order: number
   archived: boolean
   createdAt: string
@@ -33,7 +32,6 @@ interface CreateWorkflowInput {
   icon?: string
   color?: string
   columns?: WorkflowColumn[]
-  labelIds?: string[]
   order?: number
 }
 
@@ -88,7 +86,6 @@ export function useWorkflows() {
         ownerId: '',
         templateType: data.templateType,
         columns: data.columns ?? [],
-        labelIds: data.labelIds ?? [],
         order: data.order ?? maxOrder + 1,
         archived: false,
         createdAt: new Date().toISOString(),

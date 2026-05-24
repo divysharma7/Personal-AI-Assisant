@@ -73,10 +73,10 @@ function groupByPriority(tasks: TaskRecord[]): TaskGroup[] {
 function groupByTags(tasks: TaskRecord[]): TaskGroup[] {
   const map = new Map<string, TaskRecord[]>()
   for (const t of tasks) {
-    const labels = t.labelIds && t.labelIds.length > 0 ? t.labelIds : ['untagged']
-    for (const label of labels) {
-      if (!map.has(label)) map.set(label, [])
-      map.get(label)!.push(t)
+    const taskTags = t.tags && t.tags.length > 0 ? t.tags : ['untagged']
+    for (const tag of taskTags) {
+      if (!map.has(tag)) map.set(tag, [])
+      map.get(tag)!.push(t)
     }
   }
   return Array.from(map.entries()).map(([key, items]) => ({

@@ -165,17 +165,17 @@ async function toolFetchData(args: Record<string, unknown>, timezone?: string) {
 
   const [events, tasks, reminders, notes, memories] = await Promise.all([
     what.includes('events')
-      ? EventModel.find(df ? { startDate: { $gte: df.start, $lte: df.end } } : {})
+      ? EventModel.find({ userId, ...(df ? { startDate: { $gte: df.start, $lte: df.end } } : {}) })
           .sort({ startDate: 1 }).limit(30).lean() as Promise<LeanDoc[]>
       : Promise.resolve([]),
 
     what.includes('tasks')
-      ? TaskModel.find(df ? { dueDate: { $gte: df.start, $lte: df.end } } : {})
+      ? TaskModel.find({ userId, ...(df ? { dueDate: { $gte: df.start, $lte: df.end } } : {}) })
           .sort({ dueDate: 1 }).limit(30).lean() as Promise<LeanDoc[]>
       : Promise.resolve([]),
 
     what.includes('reminders')
-      ? ReminderModel.find(df ? { reminderDate: { $gte: df.start, $lte: df.end } } : {})
+      ? ReminderModel.find({ userId, ...(df ? { reminderDate: { $gte: df.start, $lte: df.end } } : {}) })
           .sort({ reminderDate: 1 }).limit(30).lean() as Promise<LeanDoc[]>
       : Promise.resolve([]),
 
@@ -224,6 +224,7 @@ async function toolCheckAvailability(args: Record<string, unknown>) {
 
   await connectDB()
   const conflicts = await EventModel.find({
+    userId,
     startDate: { $lt: end },
     endDate:   { $gt: start },
   }).lean() as LeanDoc[]
@@ -251,6 +252,7 @@ async function toolAddEvent(args: Record<string, unknown>) {
   if (endDate <= startDate) endDate = new Date(startDate.getTime() + 60 * 60 * 1000)
   await connectDB()
   const doc = await EventModel.create({
+    userId,
     title,
     description: sanitizeStr(args.description, 1000) || undefined,
     startDate, endDate,
@@ -295,7 +297,6 @@ async function toolAddTask(args: Record<string, unknown>) {
     status:   sanitizeEnum(args.status,   ['todo', 'in-progress', 'done'], 'todo'),
     color: '#34d399',
     userId,
-    createdBy: userId,
   })
   if (!doc?._id) throw new Error('DB write failed — no document returned')
   return { success: true, title, id: String(doc._id) }
@@ -330,6 +331,7 @@ async function toolAddReminder(args: Record<string, unknown>) {
   const reminderDate = new Date(sanitizeDate(args.reminderDate))
   await connectDB()
   const doc = await ReminderModel.create({
+    userId,
     title,
     description: sanitizeStr(args.description, 1000) || undefined,
     reminderDate,
@@ -395,7 +397,6 @@ async function toolListWorkflows() {
         title: c.title,
         order: c.order,
       })) : [],
-      labelIds: Array.isArray(w.labelIds) ? w.labelIds as string[] : [],
     })),
     total: workflows.length,
   }
@@ -421,7 +422,6 @@ async function toolCreateWorkflow(args: Record<string, unknown>) {
     ownerId: userId,
     templateType,
     columns,
-    labelIds: [],
   })
   if (!doc?._id) throw new Error('DB write failed — no document returned')
   return { success: true, name, id: String(doc._id), templateType }
@@ -448,16 +448,18 @@ async function toolMoveTaskToWorkflow(args: Record<string, unknown>) {
   const task = await TaskModel.findById(taskId).lean() as LeanDoc | null
   if (!task) return { success: false, error: `No task found with id "${taskId}"` }
 
-  const workflowLabelIds = Array.isArray(workflow.labelIds) ? workflow.labelIds as string[] : []
-  const existingLabelIds = Array.isArray(task.labelIds) ? task.labelIds as string[] : []
-  const mergedLabelIds = Array.from(new Set([...existingLabelIds, ...workflowLabelIds]))
+  const firstColumnId = Array.isArray(workflow.columns) && workflow.columns.length > 0
+    ? (workflow.columns as Array<{ id: string }>)[0].id
+    : null
 
-  await TaskModel.findByIdAndUpdate(taskId, { labelIds: mergedLabelIds })
+  await TaskModel.findByIdAndUpdate(taskId, {
+    workflowId: String(workflow._id),
+    sectionId: firstColumnId,
+  })
   return {
     success: true,
     taskTitle: String(task.title),
     workflowName: String(workflow.name),
-    labelsAdded: workflowLabelIds.length,
   }
 }
 
@@ -472,7 +474,7 @@ async function toolGetCalendarSummary(args: Record<string, unknown>, timezone?: 
 
   await connectDB()
   const tasks = await TaskModel.find({
-    createdBy: userId,
+    userId,
     scheduledStart: { $gte: startDate, $lte: endDate },
   }).sort({ scheduledStart: 1 }).lean() as LeanDoc[]
 
@@ -503,7 +505,7 @@ async function toolGetHabitStats(args: Record<string, unknown>) {
   if (!userId) throw new Error('Not authenticated')
   await connectDB()
 
-  const filter: Record<string, unknown> = { isHabit: true, createdBy: userId }
+  const filter: Record<string, unknown> = { isHabit: true, userId }
   if (args.habitName && typeof args.habitName === 'string') {
     filter.title = { $regex: new RegExp(sanitizeStr(args.habitName, 200), 'i') }
   }
@@ -546,7 +548,7 @@ async function toolPostponeTasks(args: Record<string, unknown>) {
   now.setHours(0, 0, 0, 0)
 
   const overdueTasks = await TaskModel.find({
-    createdBy: userId,
+    userId,
     dueDate: { $lt: now },
     status: { $nin: ['done', 'dropped'] },
   }).lean() as LeanDoc[]

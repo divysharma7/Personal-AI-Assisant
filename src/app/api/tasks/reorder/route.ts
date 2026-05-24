@@ -2,37 +2,38 @@ import { NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongodb'
 import TaskModel from '@/lib/models/Task'
 import { getAuthUserId } from '@/lib/auth'
-import { apiError, api404, api500 } from '@/lib/apiHelpers'
+import { handleApiError } from '@/lib/apiHelpers'
+import { TaskReorderSchema, parseBody } from '@/lib/validation'
 
 type LeanDoc = Record<string, unknown> & { _id: unknown }
 
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => null)
-    if (!body?.taskId) return apiError('taskId is required')
-    if (typeof body.kanbanOrder !== 'number') return apiError('kanbanOrder must be a number')
+    const parsed = parseBody(TaskReorderSchema, body)
+    if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 })
 
     await connectDB()
     const userId = await getAuthUserId()
-    if (!userId) return apiError('Unauthorized', 401)
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const update: Record<string, unknown> = {
-      kanbanOrder: body.kanbanOrder,
+      kanbanOrder: parsed.data.kanbanOrder,
     }
 
-    if ('sectionId' in body) update.sectionId = body.sectionId ?? null
-    if ('status' in body) update.status = body.status
-    if ('dueDate' in body) update.dueDate = body.dueDate ?? null
+    if (parsed.data.sectionId !== undefined) update.sectionId = parsed.data.sectionId ?? null
+    if (parsed.data.status !== undefined) update.status = parsed.data.status
+    if (parsed.data.dueDate !== undefined) update.dueDate = parsed.data.dueDate ?? null
 
-    const task = await TaskModel.findByIdAndUpdate(
-      body.taskId,
+    const task = await TaskModel.findOneAndUpdate(
+      { _id: parsed.data.taskId, userId },
       { $set: update },
       { new: true }
     ).lean() as LeanDoc | null
 
-    if (!task) return api404('Task')
+    if (!task) return NextResponse.json({ error: 'Task not found' }, { status: 404 })
     return NextResponse.json({ ...task, _id: String(task._id), type: 'task' })
   } catch (err) {
-    return api500(err)
+    return handleApiError(err)
   }
 }

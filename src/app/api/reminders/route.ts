@@ -1,15 +1,19 @@
 import { NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongodb'
+import { getAuthUserId } from '@/lib/auth'
 import ReminderModel from '@/lib/models/Reminder'
 import { scheduleNotification } from '@/lib/posthook'
 import { handleApiError } from '@/lib/apiHelpers'
+import { CreateReminderSchema, parseBody } from '@/lib/validation'
 
 type LeanDoc = Record<string, unknown> & { _id: unknown }
 
 export async function GET() {
   try {
+    const userId = await getAuthUserId()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     await connectDB()
-    const reminders = await ReminderModel.find().sort({ reminderDate: 1 }).lean() as LeanDoc[]
+    const reminders = await ReminderModel.find({ userId }).sort({ reminderDate: 1 }).lean() as LeanDoc[]
     return NextResponse.json(reminders.map(r => ({ ...r, _id: String(r._id), type: 'reminder' })))
   } catch (err) {
     return handleApiError(err)
@@ -18,12 +22,15 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
+    const userId = await getAuthUserId()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     await connectDB()
     const body = await req.json()
-    const reminder = await ReminderModel.create(body)
+    const parsed = parseBody(CreateReminderSchema, body)
+    if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 })
+    const reminder = await ReminderModel.create({ ...parsed.data, userId })
     const plain = reminder.toObject() as LeanDoc
 
-    // Schedule notification to fire exactly at reminder time
     if (plain.reminderDate) {
       const hook = await scheduleNotification({
         id:     String(plain._id),

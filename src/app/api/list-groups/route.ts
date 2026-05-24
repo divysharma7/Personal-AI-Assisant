@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/mongodb'
 import ListGroupModel from '@/lib/models/ListGroup'
 import { getAuthUserId } from '@/lib/auth'
 import { handleApiError } from '@/lib/apiHelpers'
+import { CreateListGroupSchema, parseBody } from '@/lib/validation'
 
 type LeanDoc = Record<string, unknown> & { _id: unknown }
 
@@ -29,13 +30,12 @@ export async function POST(req: Request) {
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await req.json()
-    if (!body.title?.trim()) {
-      return NextResponse.json({ error: 'title required' }, { status: 400 })
-    }
+    const parsed = parseBody(CreateListGroupSchema, body)
+    if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 })
 
     const count = await ListGroupModel.countDocuments({ ownerId: userId })
     const doc = await ListGroupModel.create({
-      title: body.title.trim(),
+      title: parsed.data.title,
       ownerId: userId,
       order: count,
       collapsed: false,

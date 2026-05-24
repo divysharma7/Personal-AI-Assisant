@@ -237,7 +237,6 @@ export default function TaskDetailPanel({
                       priority: task.priority,
                       status: 'todo',
                       dueDate: task.dueDate,
-                      labelIds: task.labelIds,
                     })
                   }
                   setShowOverflow(false)
@@ -634,7 +633,7 @@ export default function TaskDetailPanel({
                 <span className="text-xs" style={{ color: 'var(--text-faint)' }}>Reminder</span>
                 <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
                   {(task as TaskRecord & { habitData?: { reminderTime?: string } }).habitData?.reminderTime ?? '8:00 PM'}
-                  <span className="ml-1 text-[10px]" style={{ color: 'var(--text-faint)' }}>(coming soon)</span>
+                  <span className="ml-1 text-[10px]" style={{ color: 'var(--text-faint)' }}>(browser only)</span>
                 </span>
               </div>
             </div>
@@ -674,7 +673,7 @@ export default function TaskDetailPanel({
           style={{ color: 'var(--text-faint)' }}
         >
           {copy.task.createdBy(
-            task.createdBy || 'You',
+            'You',
             formatRelativeTime(task.createdAt)
           )}
         </p>
