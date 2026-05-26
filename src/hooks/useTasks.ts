@@ -1,4 +1,6 @@
 'use client'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+
 
 import { useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -68,7 +70,7 @@ export interface TaskRecord {
 }
 
 async function fetchTasks(): Promise<TaskRecord[]> {
-  const res = await fetch('/api/tasks')
+  const res = await fetch(`${API_BASE}/api/tasks`)
   if (!res.ok) throw new Error('Failed to fetch tasks')
   return res.json()
 }
@@ -84,7 +86,7 @@ export function useTasks() {
   // Create
   const createMutation = useMutation({
     mutationFn: async (data: Partial<TaskRecord>) => {
-      const res = await fetch('/api/tasks', {
+      const res = await fetch(`${API_BASE}/api/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -113,7 +115,7 @@ export function useTasks() {
   // Update
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<TaskRecord> }) => {
-      const res = await fetch(`/api/tasks/${id}`, {
+      const res = await fetch(`${API_BASE}/api/tasks/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -140,7 +142,7 @@ export function useTasks() {
   // Delete
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await fetch(`/api/tasks/${id}`, { method: 'DELETE' })
+      await fetch(`${API_BASE}/api/tasks/${id}`, { method: 'DELETE' })
     },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: TASKS_KEY })

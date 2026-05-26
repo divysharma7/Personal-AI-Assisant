@@ -1,4 +1,6 @@
 'use client'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -21,7 +23,7 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: username.trim(), password }),

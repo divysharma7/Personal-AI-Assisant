@@ -1,4 +1,6 @@
 'use client'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'

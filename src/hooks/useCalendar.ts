@@ -1,4 +1,6 @@
 'use client'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+
 
 import { useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -56,19 +58,19 @@ async function fetchCalendarEvents(
   include: IncludeSource[],
 ): Promise<CalendarEvent[]> {
   const params = new URLSearchParams({ from, to, include: include.join(',') })
-  const res = await fetch(`/api/calendar/events?${params}`)
+  const res = await fetch(`${API_BASE}/api/calendar/events?${params}`)
   if (!res.ok) throw new Error('Failed to fetch calendar events')
   return res.json()
 }
 
 async function fetchUnscheduledTasks(): Promise<TaskRecord[]> {
-  const res = await fetch('/api/calendar/unscheduled')
+  const res = await fetch(`${API_BASE}/api/calendar/unscheduled`)
   if (!res.ok) throw new Error('Failed to fetch unscheduled tasks')
   return res.json()
 }
 
 async function fetchOverdueTasks(): Promise<TaskRecord[]> {
-  const res = await fetch('/api/calendar/overdue')
+  const res = await fetch(`${API_BASE}/api/calendar/overdue`)
   if (!res.ok) throw new Error('Failed to fetch overdue tasks')
   return res.json()
 }
@@ -78,13 +80,13 @@ async function fetchCalendarCapacity(
   to: string,
 ): Promise<Record<string, DayCapacity>> {
   const params = new URLSearchParams({ from, to })
-  const res = await fetch(`/api/calendar/capacity?${params}`)
+  const res = await fetch(`${API_BASE}/api/calendar/capacity?${params}`)
   if (!res.ok) throw new Error('Failed to fetch calendar capacity')
   return res.json()
 }
 
 async function fetchCalendarPreferences(): Promise<CalendarPreferences> {
-  const res = await fetch('/api/users/me/calendar-preferences')
+  const res = await fetch(`${API_BASE}/api/users/me/calendar-preferences`)
   if (!res.ok) throw new Error('Failed to fetch calendar preferences')
   return res.json()
 }
@@ -146,7 +148,7 @@ export function useScheduleTask() {
 
   const mutation = useMutation({
     mutationFn: async ({ id, scheduledStart, scheduledEnd }: { id: string; scheduledStart: string; scheduledEnd?: string }) => {
-      const res = await fetch(`/api/tasks/${id}/schedule`, {
+      const res = await fetch(`${API_BASE}/api/tasks/${id}/schedule`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scheduledStart, scheduledEnd }),
@@ -179,7 +181,7 @@ export function useUnscheduleTask() {
 
   const mutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/tasks/${id}/unschedule`, {
+      const res = await fetch(`${API_BASE}/api/tasks/${id}/unschedule`, {
         method: 'PATCH',
       })
       if (!res.ok) throw new Error('Failed to unschedule task')
@@ -215,7 +217,7 @@ export function useCalendarPreferences() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: Partial<CalendarPreferences>) => {
-      const res = await fetch('/api/users/me/calendar-preferences', {
+      const res = await fetch(`${API_BASE}/api/users/me/calendar-preferences`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

@@ -1,4 +1,6 @@
 'use client'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+
 
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -47,7 +49,7 @@ export default function OnboardingPage() {
     setLoading(true)
     try {
       // Update profile with onboarding data
-      await fetch('/api/auth/me', {
+      await fetch(`${API_BASE}/api/auth/me`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

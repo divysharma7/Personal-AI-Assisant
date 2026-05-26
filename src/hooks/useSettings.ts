@@ -1,4 +1,6 @@
 'use client'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+
 
 import { useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -27,13 +29,13 @@ export interface UserProfile {
 }
 
 async function fetchCalendarPreferences(): Promise<CalendarPreferences> {
-  const res = await fetch('/api/users/me/calendar-preferences')
+  const res = await fetch(`${API_BASE}/api/users/me/calendar-preferences`)
   if (!res.ok) throw new Error('Failed to fetch settings')
   return res.json()
 }
 
 async function fetchUserProfile(): Promise<UserProfile> {
-  const res = await fetch('/api/auth/me')
+  const res = await fetch(`${API_BASE}/api/auth/me`)
   if (!res.ok) throw new Error('Failed to fetch user')
   return res.json()
 }
@@ -62,7 +64,7 @@ export function useUpdateSettings() {
 
   const mutation = useMutation({
     mutationFn: async (data: Partial<CalendarPreferences>) => {
-      const res = await fetch('/api/users/me/calendar-preferences', {
+      const res = await fetch(`${API_BASE}/api/users/me/calendar-preferences`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

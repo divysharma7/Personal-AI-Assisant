@@ -1,4 +1,6 @@
 'use client'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { ListDoc } from '@/hooks/useLists'

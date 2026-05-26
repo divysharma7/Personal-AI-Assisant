@@ -1,4 +1,6 @@
 'use client'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+
 
 import { useState, useEffect } from 'react'
 import { Check, ArrowRight, Sparkles } from 'lucide-react'
@@ -17,7 +19,7 @@ export default function GettingStartedPage() {
   const [userName, setUserName] = useState('')
 
   useEffect(() => {
-    fetch('/api/auth/me').then(r => r.ok ? r.json() : null).then(d => {
+    fetch(`${API_BASE}/api/auth/me`).then(r => r.ok ? r.json() : null).then(d => {
       if (d?.name) setUserName(d.name.split(' ')[0])
     }).catch(() => {})
   }, [])

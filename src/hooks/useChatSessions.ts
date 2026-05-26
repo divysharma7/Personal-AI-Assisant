@@ -1,4 +1,6 @@
 'use client'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+
 
 import { useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -33,14 +35,14 @@ const SESSIONS_KEY = ['chat-sessions'] as const
 // ── Fetchers ────────────────────────────────────────────────────────────────
 
 async function fetchSessions(): Promise<ChatSessionSummary[]> {
-  const res = await fetch('/api/chat/sessions')
+  const res = await fetch(`${API_BASE}/api/chat/sessions`)
   if (!res.ok) throw new Error('Failed to fetch chat sessions')
   const data = await res.json()
   return data.sessions
 }
 
 async function fetchSession(id: string): Promise<ChatSessionFull> {
-  const res = await fetch(`/api/chat/sessions/${id}`)
+  const res = await fetch(`${API_BASE}/api/chat/sessions/${id}`)
   if (!res.ok) throw new Error('Failed to fetch chat session')
   return res.json()
 }
@@ -71,7 +73,7 @@ export function useCreateChatSession() {
 
   const mutation = useMutation({
     mutationFn: async (title?: string) => {
-      const res = await fetch('/api/chat/sessions', {
+      const res = await fetch(`${API_BASE}/api/chat/sessions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title }),
@@ -97,7 +99,7 @@ export function useDeleteChatSession() {
 
   const mutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/chat/sessions/${id}`, { method: 'DELETE' })
+      const res = await fetch(`${API_BASE}/api/chat/sessions/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Failed to delete chat session')
     },
     onMutate: async (id) => {
@@ -131,7 +133,7 @@ export function useAppendMessages() {
       id: string
       messages: { role: 'user' | 'assistant'; content: string }[]
     }) => {
-      const res = await fetch(`/api/chat/sessions/${id}`, {
+      const res = await fetch(`${API_BASE}/api/chat/sessions/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages }),

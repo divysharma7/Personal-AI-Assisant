@@ -1,4 +1,6 @@
 'use client'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+
 
 import { useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -12,7 +14,7 @@ interface GCalStatus {
 }
 
 async function fetchStatus(): Promise<GCalStatus> {
-  const res = await fetch('/api/integrations/google/status')
+  const res = await fetch(`${API_BASE}/api/integrations/google/status`)
   if (!res.ok) return { connected: false, calendarId: 'primary' }
   return res.json()
 }
@@ -29,7 +31,7 @@ export function useGoogleCalendar() {
 
   const disconnectMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/integrations/google/disconnect', { method: 'POST' })
+      const res = await fetch(`${API_BASE}/api/integrations/google/disconnect`, { method: 'POST' })
       if (!res.ok) throw new Error('Failed to disconnect')
     },
     onSettled: () => {
@@ -39,7 +41,7 @@ export function useGoogleCalendar() {
 
   const syncMutation = useMutation({
     mutationFn: async (taskId: string) => {
-      const res = await fetch('/api/integrations/google/sync', {
+      const res = await fetch(`${API_BASE}/api/integrations/google/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ taskId }),
@@ -54,7 +56,7 @@ export function useGoogleCalendar() {
 
   const unsyncMutation = useMutation({
     mutationFn: async (taskId: string) => {
-      const res = await fetch('/api/integrations/google/unsync', {
+      const res = await fetch(`${API_BASE}/api/integrations/google/unsync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ taskId }),

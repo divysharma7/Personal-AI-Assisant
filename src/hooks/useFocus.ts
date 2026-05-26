@@ -1,4 +1,6 @@
 'use client'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+
 
 import { useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -68,13 +70,13 @@ const FOCUS_KEYS = {
 // ── Fetchers ───────────────────────────────────────────────────
 
 async function fetchActiveSession(): Promise<FocusSession | null> {
-  const res = await fetch('/api/focus/sessions/active')
+  const res = await fetch(`${API_BASE}/api/focus/sessions/active`)
   if (!res.ok) throw new Error('Failed to fetch active session')
   return res.json()
 }
 
 async function fetchStats(): Promise<FocusStats> {
-  const res = await fetch('/api/focus/stats')
+  const res = await fetch(`${API_BASE}/api/focus/stats`)
   if (!res.ok) throw new Error('Failed to fetch focus stats')
   return res.json()
 }
@@ -93,7 +95,7 @@ async function fetchHistory(filters?: FocusHistoryFilters): Promise<FocusSession
 }
 
 async function fetchPreferences(): Promise<FocusPreferences> {
-  const res = await fetch('/api/users/me/focus-preferences')
+  const res = await fetch(`${API_BASE}/api/users/me/focus-preferences`)
   if (!res.ok) throw new Error('Failed to fetch focus preferences')
   return res.json()
 }
@@ -132,7 +134,7 @@ export function useStartSession() {
       plannedDurationMin?: number
       plannedBreakMin?: number
     }) => {
-      const res = await fetch('/api/focus/sessions', {
+      const res = await fetch(`${API_BASE}/api/focus/sessions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ taskId, plannedDurationMin, plannedBreakMin }),
@@ -178,7 +180,7 @@ export function useSessionAction() {
       endedReason?: 'timer_ended' | 'user_completed' | 'user_cancelled'
       postSessionNote?: string
     }) => {
-      const res = await fetch(`/api/focus/sessions/${id}`, {
+      const res = await fetch(`${API_BASE}/api/focus/sessions/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, additionalMin, endedReason, postSessionNote }),
@@ -252,7 +254,7 @@ export function useFocusPreferences() {
 
   const updateMutation = useMutation({
     mutationFn: async (updates: Partial<FocusPreferences>) => {
-      const res = await fetch('/api/users/me/focus-preferences', {
+      const res = await fetch(`${API_BASE}/api/users/me/focus-preferences`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),

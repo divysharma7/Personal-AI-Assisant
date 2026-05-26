@@ -1,4 +1,6 @@
 'use client'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
@@ -254,7 +256,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   }, [tasks])
 
   useEffect(() => {
-    fetch('/api/auth/me')
+    fetch(`${API_BASE}/api/auth/me`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.name) setUserInitial(data.name.charAt(0).toUpperCase())
@@ -273,7 +275,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   }, [avatarOpen, fabOpen])
 
   const handleSignOut = useCallback(async () => {
-    await fetch('/api/auth/logout', { method: 'POST' })
+    await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST' })
     router.push('/login')
   }, [router])
 

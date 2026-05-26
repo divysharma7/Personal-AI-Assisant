@@ -1,4 +1,6 @@
 'use client'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+
 
 import {
   createContext,
@@ -45,7 +47,7 @@ export default function FocusProvider({ children }: { children: ReactNode }) {
   // Poll for active session every 30 seconds
   const pollActiveSession = useCallback(async () => {
     try {
-      const res = await fetch('/api/focus/sessions/active')
+      const res = await fetch(`${API_BASE}/api/focus/sessions/active`)
       if (res.ok) {
         const data = await res.json()
         if (data && data.startedAt) {
@@ -114,7 +116,7 @@ export default function FocusProvider({ children }: { children: ReactNode }) {
   const startSession = useCallback(
     async (taskId: string, taskTitle: string) => {
       try {
-        const res = await fetch('/api/pomodoro', {
+        const res = await fetch(`${API_BASE}/api/pomodoro`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

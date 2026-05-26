@@ -1,4 +1,6 @@
 'use client'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -73,7 +75,7 @@ export default function ChatPage() {
   const hasMessages = messages.length > 0
 
   useEffect(() => {
-    fetch('/api/auth/me').then(r => r.ok ? r.json() : null).then(d => {
+    fetch(`${API_BASE}/api/auth/me`).then(r => r.ok ? r.json() : null).then(d => {
       if (d?.name) {
         const firstName = d.name.split(' ')[0]
         setUserName(firstName)
@@ -122,7 +124,7 @@ export default function ChatPage() {
     const history = [...messagesRef.current, userMsg].map(m => ({ role: m.role, content: m.content }))
 
     try {
-      const res = await fetch('/api/chat', {
+      const res = await fetch(`${API_BASE}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

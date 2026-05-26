@@ -1,4 +1,6 @@
 'use client'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+
 import { useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format, subDays, eachDayOfInterval, isToday } from 'date-fns'
@@ -21,7 +23,7 @@ export interface Habit {
 const HABITS_KEY = ['habits'] as const
 
 async function fetchHabits(): Promise<Habit[]> {
-  const res = await fetch('/api/habits')
+  const res = await fetch(`${API_BASE}/api/habits`)
   if (!res.ok) throw new Error('Failed to fetch habits')
   return res.json()
 }
@@ -57,7 +59,7 @@ export function useHabits() {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<Habit>) => {
-      const res = await fetch('/api/habits', {
+      const res = await fetch(`${API_BASE}/api/habits`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -70,7 +72,7 @@ export function useHabits() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Habit> }) => {
-      const res = await fetch(`/api/habits/${id}`, {
+      const res = await fetch(`${API_BASE}/api/habits/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -90,7 +92,7 @@ export function useHabits() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await fetch(`/api/habits/${id}`, { method: 'DELETE' })
+      await fetch(`${API_BASE}/api/habits/${id}`, { method: 'DELETE' })
     },
     onMutate: async (id) => {
       await qc.cancelQueries({ queryKey: HABITS_KEY })
