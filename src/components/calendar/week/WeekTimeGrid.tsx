@@ -523,34 +523,7 @@ export default function WeekTimeGrid({ weekDays, eventsByDay }: WeekTimeGridProp
       </div>
 
       {/* Inline styles for hover effects and transitions */}
-      <style jsx>{`
-        .week-slot:hover {
-          background-color: var(--overlay-1, rgba(108,108,158,0.04)) !important;
-        }
-        .cal-block {
-          border-radius: 8px;
-          transition: transform 100ms ease, box-shadow 100ms ease, filter 100ms ease;
-        }
-        .cal-block:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-          filter: brightness(0.97);
-        }
-        .resize-handle-pill {
-          opacity: 0;
-        }
-        .cal-block:hover .resize-handle-pill,
-        div:hover > .resize-handle-pill {
-          opacity: 1 !important;
-        }
-        @keyframes dot-pulse {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.4); opacity: 0.7; }
-        }
-        .cal-dot-pulse {
-          animation: dot-pulse 2s ease-in-out infinite;
-        }
-      `}</style>
+      <style>{".week-slot:hover { background-color: var(--overlay-1, rgba(108,108,158,0.04)) !important; } .cal-block { border-radius: 8px; transition: transform 100ms ease, box-shadow 100ms ease, filter 100ms ease; } .cal-block:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); filter: brightness(0.97); } .resize-handle-pill { opacity: 0; } .cal-block:hover .resize-handle-pill, div:hover > .resize-handle-pill { opacity: 1 !important; } @keyframes dot-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.4); opacity: 0.7; } } .cal-dot-pulse { animation: dot-pulse 2s ease-in-out infinite; }"}</style>
     </div>
   )
 }

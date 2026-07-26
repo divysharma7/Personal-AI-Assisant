@@ -1,7 +1,5 @@
 'use client'
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
-
-
+import { http } from '@/lib/api/client'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { ListDoc } from '@/hooks/useLists'
 
@@ -31,17 +29,6 @@ interface CreateFolderResponse {
   created: { list: boolean; group: boolean }
 }
 
-// ── Fetch helper ────────────────────────────────────────────────────────────
-
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init)
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Request failed' }))
-    throw new Error(err.error || 'Request failed')
-  }
-  return res.json()
-}
-
 // ── Query keys ──────────────────────────────────────────────────────────────
 
 const folderKeys = {
@@ -65,11 +52,7 @@ export function useFolders() {
 
   const createMutation = useMutation({
     mutationFn: (input: CreateFolderInput) =>
-      fetchJson<CreateFolderResponse>('/api/folders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(input),
-      }),
+      http.post<CreateFolderResponse>('/api/folders', input),
     onSuccess: (result) => {
       // Add to lists cache optimistically
       queryClient.setQueryData<ListDoc[]>(listKeys.all, (old) =>
@@ -85,11 +68,7 @@ export function useFolders() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, ...updates }: { id: string } & UpdateFolderInput) =>
-      fetchJson<ListDoc>(`/api/folders/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
-      }),
+      http.patch<ListDoc>(`/api/folders/${id}`, updates),
     onMutate: async ({ id, ...updates }) => {
       await queryClient.cancelQueries({ queryKey: listKeys.all })
       const previousLists = queryClient.getQueryData<ListDoc[]>(listKeys.all)
@@ -113,9 +92,7 @@ export function useFolders() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) =>
-      fetchJson<{ deleted: boolean; folderId: string }>(`/api/folders/${id}`, {
-        method: 'DELETE',
-      }),
+      http.del<{ deleted: boolean; folderId: string }>(`/api/folders/${id}`),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: listKeys.all })
       const previousLists = queryClient.getQueryData<ListDoc[]>(listKeys.all)
@@ -139,11 +116,7 @@ export function useFolders() {
 
   const moveTaskMutation = useMutation({
     mutationFn: ({ taskId, folderId }: { taskId: string; folderId: string }) =>
-      fetchJson(`/api/folders/${folderId}/tasks`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ taskId }),
-      }),
+      http.patch(`/api/folders/${folderId}/tasks`, { taskId }),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.all })
       queryClient.invalidateQueries({ queryKey: folderKeys.all })

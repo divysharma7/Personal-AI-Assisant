@@ -1,7 +1,5 @@
 'use client'
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
-
-
+import { http } from '@/lib/api/client'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -48,17 +46,6 @@ const workflowKeys = {
   detail: (id: string) => ['workflows', id] as const,
 }
 
-// ── Fetch helper ────────────────────────────────────────────────────────────
-
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init)
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Request failed' }))
-    throw new Error(err.error || 'Request failed')
-  }
-  return res.json()
-}
-
 // ── Hook: useWorkflows ─────────────────────────────────────────────────────
 
 export function useWorkflows() {
@@ -66,16 +53,12 @@ export function useWorkflows() {
 
   const workflowsQuery = useQuery<WorkflowDoc[]>({
     queryKey: workflowKeys.all,
-    queryFn: () => fetchJson<WorkflowDoc[]>('/api/workflows'),
+    queryFn: () => http.get<WorkflowDoc[]>('/api/workflows'),
   })
 
   const createMutation = useMutation({
     mutationFn: (data: CreateWorkflowInput) =>
-      fetchJson<WorkflowDoc>('/api/workflows', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      }),
+      http.post<WorkflowDoc>('/api/workflows', data),
     onMutate: async (data) => {
       await queryClient.cancelQueries({ queryKey: workflowKeys.all })
       const prev = queryClient.getQueryData<WorkflowDoc[]>(workflowKeys.all)
@@ -108,11 +91,7 @@ export function useWorkflows() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, ...data }: UpdateWorkflowInput & { id: string }) =>
-      fetchJson<WorkflowDoc>(`/api/workflows/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      }),
+      http.put<WorkflowDoc>(`/api/workflows/${id}`, data),
     onMutate: async ({ id, ...data }) => {
       await queryClient.cancelQueries({ queryKey: workflowKeys.all })
       const prev = queryClient.getQueryData<WorkflowDoc[]>(workflowKeys.all)
@@ -131,9 +110,7 @@ export function useWorkflows() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) =>
-      fetchJson<{ ok: boolean }>(`/api/workflows/${id}`, {
-        method: 'DELETE',
-      }),
+      http.del<{ ok: boolean }>(`/api/workflows/${id}`),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: workflowKeys.all })
       const prev = queryClient.getQueryData<WorkflowDoc[]>(workflowKeys.all)
@@ -168,17 +145,13 @@ export function useWorkflow(id: string | null) {
 
   const workflowQuery = useQuery<WorkflowDoc>({
     queryKey: workflowKeys.detail(id!),
-    queryFn: () => fetchJson<WorkflowDoc>(`/api/workflows/${id}`),
+    queryFn: () => http.get<WorkflowDoc>(`/api/workflows/${id}`),
     enabled: !!id,
   })
 
   const updateColumnsMutation = useMutation({
     mutationFn: (columns: WorkflowColumn[]) =>
-      fetchJson<WorkflowDoc>(`/api/workflows/${id}/columns`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ columns }),
-      }),
+      http.put<WorkflowDoc>(`/api/workflows/${id}/columns`, { columns }),
     onMutate: async (columns) => {
       const key = workflowKeys.detail(id!)
       await queryClient.cancelQueries({ queryKey: key })
@@ -201,11 +174,7 @@ export function useWorkflow(id: string | null) {
 
   const addColumnMutation = useMutation({
     mutationFn: (data: { title: string; color?: string | null; wipLimit?: number | null }) =>
-      fetchJson<WorkflowDoc>(`/api/workflows/${id}/columns`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      }),
+      http.post<WorkflowDoc>(`/api/workflows/${id}/columns`, data),
     onMutate: async (data) => {
       const key = workflowKeys.detail(id!)
       await queryClient.cancelQueries({ queryKey: key })

@@ -2,7 +2,7 @@
 
 import { useCallback, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 import {
   Plus,
   Search,
@@ -50,7 +50,7 @@ function formatRelativeDate(dateStr: string): string {
 }
 
 export default function ListsDirectoryPage() {
-  const router = useRouter()
+  const navigate = useNavigate()
   const { lists, createList, updateList, isCreating } = useLists()
   const { deleteFolder } = useFolders()
   const [activeFilter, setActiveFilter] = useState<ListFilter>('all')
@@ -106,9 +106,9 @@ export default function ListsDirectoryPage() {
     if (isCreating) return
     try {
       const newList = await createList({ title: '', icon: '' })
-      router.push(`/lists/${newList._id}`)
+      navigate(`/lists/${newList._id}`)
     } catch {}
-  }, [createList, isCreating, router])
+  }, [createList, isCreating, navigate])
 
   const handleToggleStar = useCallback(
     (e: React.MouseEvent, listId: string, currentValue: boolean) => {
@@ -144,7 +144,7 @@ export default function ListsDirectoryPage() {
         {...fadeSlideUp}
         transition={ease.normal}
         animate={isDeleting ? { opacity: 0, x: -20, height: 0 } : { opacity: 1, x: 0 }}
-        onClick={() => router.push(`/lists/${list._id}`)}
+        onClick={() => navigate(`/lists/${list._id}`)}
         onMouseEnter={() => setHoveredListId(list._id)}
         onMouseLeave={() => setHoveredListId(null)}
         className="group relative flex items-center gap-3 rounded-xl px-4 py-3 transition-colors duration-150 cursor-pointer"

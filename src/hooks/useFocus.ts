@@ -1,7 +1,5 @@
 'use client'
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
-
-
+import { http } from '@/lib/api/client'
 import { useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
@@ -69,35 +67,27 @@ const FOCUS_KEYS = {
 
 // ── Fetchers ───────────────────────────────────────────────────
 
-async function fetchActiveSession(): Promise<FocusSession | null> {
-  const res = await fetch(`${API_BASE}/api/focus/sessions/active`)
-  if (!res.ok) throw new Error('Failed to fetch active session')
-  return res.json()
+function fetchActiveSession(): Promise<FocusSession | null> {
+  return http.get<FocusSession | null>('/api/focus/sessions/active')
 }
 
-async function fetchStats(): Promise<FocusStats> {
-  const res = await fetch(`${API_BASE}/api/focus/stats`)
-  if (!res.ok) throw new Error('Failed to fetch focus stats')
-  return res.json()
+function fetchStats(): Promise<FocusStats> {
+  return http.get<FocusStats>('/api/focus/stats')
 }
 
-async function fetchHistory(filters?: FocusHistoryFilters): Promise<FocusSession[]> {
+function fetchHistory(filters?: FocusHistoryFilters): Promise<FocusSession[]> {
   const params = new URLSearchParams()
   if (filters?.from) params.set('from', filters.from)
   if (filters?.to) params.set('to', filters.to)
   if (filters?.taskId) params.set('taskId', filters.taskId)
   if (filters?.limit) params.set('limit', String(filters.limit))
 
-  const url = `/api/focus/sessions${params.toString() ? `?${params}` : ''}`
-  const res = await fetch(url)
-  if (!res.ok) throw new Error('Failed to fetch focus history')
-  return res.json()
+  const path = `/api/focus/sessions${params.toString() ? `?${params}` : ''}`
+  return http.get<FocusSession[]>(path)
 }
 
-async function fetchPreferences(): Promise<FocusPreferences> {
-  const res = await fetch(`${API_BASE}/api/users/me/focus-preferences`)
-  if (!res.ok) throw new Error('Failed to fetch focus preferences')
-  return res.json()
+function fetchPreferences(): Promise<FocusPreferences> {
+  return http.get<FocusPreferences>('/api/users/me/focus-preferences')
 }
 
 // ── Hooks ──────────────────────────────────────────────────────
@@ -134,16 +124,7 @@ export function useStartSession() {
       plannedDurationMin?: number
       plannedBreakMin?: number
     }) => {
-      const res = await fetch(`${API_BASE}/api/focus/sessions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ taskId, plannedDurationMin, plannedBreakMin }),
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Failed to start session' }))
-        throw new Error(err.error ?? 'Failed to start session')
-      }
-      return res.json() as Promise<FocusSession>
+      return http.post<FocusSession>('/api/focus/sessions', { taskId, plannedDurationMin, plannedBreakMin })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: FOCUS_KEYS.active })
@@ -180,16 +161,7 @@ export function useSessionAction() {
       endedReason?: 'timer_ended' | 'user_completed' | 'user_cancelled'
       postSessionNote?: string
     }) => {
-      const res = await fetch(`${API_BASE}/api/focus/sessions/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, additionalMin, endedReason, postSessionNote }),
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Action failed' }))
-        throw new Error(err.error ?? 'Action failed')
-      }
-      return res.json() as Promise<FocusSession>
+      return http.patch<FocusSession>(`/api/focus/sessions/${id}`, { action, additionalMin, endedReason, postSessionNote })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: FOCUS_KEYS.active })
@@ -254,13 +226,7 @@ export function useFocusPreferences() {
 
   const updateMutation = useMutation({
     mutationFn: async (updates: Partial<FocusPreferences>) => {
-      const res = await fetch(`${API_BASE}/api/users/me/focus-preferences`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
-      })
-      if (!res.ok) throw new Error('Failed to update preferences')
-      return res.json() as Promise<FocusPreferences>
+      return http.patch<FocusPreferences>('/api/users/me/focus-preferences', updates)
     },
     onSuccess: (data) => {
       queryClient.setQueryData(FOCUS_KEYS.preferences, data)

@@ -1,4 +1,6 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+import { env } from '@/config/env'
+
+const API_BASE = env.VITE_API_URL
 
 export class ApiError extends Error {
   constructor(

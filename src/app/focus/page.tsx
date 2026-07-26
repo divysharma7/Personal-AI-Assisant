@@ -4,9 +4,9 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Pause, Play, SkipForward, Maximize, CloudRain,
-  Music, StickyNote, Clock, X, Volume2, Timer,
+  Music, StickyNote, Clock, X, Volume2, Timer, Target,
 } from 'lucide-react'
-import { motionTokens } from '@/lib/motion'
+import { fadeSlideUp, ease, motionTokens } from '@/lib/motion'
 
 // ── Scenes ──
 const SCENES = [
@@ -589,8 +589,8 @@ export default function FocusPage() {
         </div>
       </div>
 
-      {/* Session stats strip */}
-      {completedSessions.length > 0 && (
+      {/* Session stats strip / Empty state */}
+      {completedSessions.length > 0 ? (
         <div style={{
           position: 'relative', zIndex: 10,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -608,6 +608,21 @@ export default function FocusPage() {
             })()}
           </span>
         </div>
+      ) : (
+        <motion.div
+          {...fadeSlideUp}
+          transition={ease.normal}
+          className="flex flex-col items-center justify-center py-20 text-center"
+          style={{ position: 'relative', zIndex: 10 }}
+        >
+          <Target size={48} strokeWidth={1} style={{ color: 'var(--text-faint)', opacity: 0.3 }} />
+          <h3 className="mt-4 text-lg font-medium" style={{ color: 'var(--text-primary)' }}>
+            No focus sessions
+          </h3>
+          <p className="mt-1 max-w-xs text-sm" style={{ color: 'var(--text-muted)' }}>
+            Start a pomodoro session to begin tracking your focus time
+          </p>
+        </motion.div>
       )}
 
       {/* Bottom controls */}

@@ -253,6 +253,22 @@ export default function StatisticsPage() {
       </div>
 
       {/* Tab content */}
+      {allTasks.length === 0 && activeHabits.length === 0 ? (
+        <motion.div
+          {...fadeSlideUp}
+          transition={ease.normal}
+          className="flex flex-col items-center justify-center py-20 text-center"
+        >
+          <BarChart3 size={48} strokeWidth={1} style={{ color: 'var(--text-faint)', opacity: 0.3 }} />
+          <h3 className="mt-4 text-lg font-medium" style={{ color: 'var(--text-primary)' }}>
+            No data yet
+          </h3>
+          <p className="mt-1 max-w-xs text-sm" style={{ color: 'var(--text-muted)' }}>
+            Complete some tasks and habits to see your statistics
+          </p>
+        </motion.div>
+      ) : (
+      <>
       {tab === 'overview' && (
         <motion.div {...fadeSlideUp} transition={ease.normal} className="flex flex-col gap-4">
           {/* Summary strip */}
@@ -390,6 +406,8 @@ export default function StatisticsPage() {
             </div>
           </Card>
         </motion.div>
+      )}
+      </>
       )}
     </div>
   )

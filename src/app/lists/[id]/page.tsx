@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useRef, useState, useEffect, useMemo } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   SlidersHorizontal,

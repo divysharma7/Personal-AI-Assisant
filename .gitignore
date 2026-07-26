@@ -39,6 +39,15 @@ next-env.d.ts
 # Vercel
 .vercel
 
+# Build output
+dist/
+
+# Separate backend repo (cloned, has own git history)
+laif-api/
+
+# Command Code tool config
+.commandcode/
+
 # Misc
 .cache/
 

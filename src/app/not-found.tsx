@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { Link } from 'react-router-dom'
 
 export default function NotFound() {
   return (
@@ -13,7 +13,7 @@ export default function NotFound() {
         This page doesn&apos;t exist.
       </p>
       <Link
-        href="/"
+        to="/"
         className="rounded-full px-6 py-2.5 text-sm font-medium text-white"
         style={{ backgroundColor: 'var(--accent)' }}
       >

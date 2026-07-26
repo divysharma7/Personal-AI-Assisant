@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ChevronLeft, Columns3, MoreHorizontal } from 'lucide-react'
 import { buttonPress, cssTransition } from '@/lib/motion'
@@ -28,7 +28,7 @@ export default function WorkflowHeader({
   onEditName,
   onOpenViewOptions,
 }: WorkflowHeaderProps) {
-  const router = useRouter()
+  const navigate = useNavigate()
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(workflow.name)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -93,7 +93,7 @@ export default function WorkflowHeader({
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <motion.button
           {...buttonPress}
-          onClick={() => router.push('/tasks')}
+          onClick={() => navigate('/tasks')}
           style={iconBtnStyle}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))'

@@ -1,7 +1,5 @@
 'use client'
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
-
-
+import { http } from '@/lib/api/client'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 
@@ -53,17 +51,6 @@ const listKeys = {
   groups: ['list-groups'] as const,
 }
 
-// ── Fetch helpers ───────────────────────────────────────────────────────────
-
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init)
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Request failed' }))
-    throw new Error(err.error || 'Request failed')
-  }
-  return res.json()
-}
-
 // ── Hook: useLists ──────────────────────────────────────────────────────────
 
 export function useLists() {
@@ -71,16 +58,12 @@ export function useLists() {
 
   const listsQuery = useQuery<ListDoc[]>({
     queryKey: listKeys.all,
-    queryFn: () => fetchJson<ListDoc[]>('/api/lists'),
+    queryFn: () => http.get<ListDoc[]>('/api/lists'),
   })
 
   const createMutation = useMutation({
     mutationFn: (data: Partial<ListDoc>) =>
-      fetchJson<ListDoc>('/api/lists', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      }),
+      http.post<ListDoc>('/api/lists', data),
     onSuccess: (newList) => {
       queryClient.setQueryData<ListDoc[]>(listKeys.all, (old) =>
         old ? [newList, ...old] : [newList]
@@ -90,11 +73,7 @@ export function useLists() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, ...data }: { id: string } & Partial<ListDoc>) =>
-      fetchJson<ListDoc>(`/api/lists/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      }),
+      http.patch<ListDoc>(`/api/lists/${id}`, data),
     onMutate: async ({ id, ...data }) => {
       await queryClient.cancelQueries({ queryKey: listKeys.all })
       await queryClient.cancelQueries({ queryKey: listKeys.detail(id) })
@@ -133,7 +112,7 @@ export function useLists() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) =>
-      fetchJson<{ ok: boolean }>(`/api/lists/${id}`, { method: 'DELETE' }),
+      http.del<{ ok: boolean }>(`/api/lists/${id}`),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: listKeys.all })
       const previous = queryClient.getQueryData<ListDoc[]>(listKeys.all)
@@ -172,17 +151,13 @@ export function useList(id: string | undefined) {
 
   const query = useQuery<ListDoc>({
     queryKey: listKeys.detail(id ?? ''),
-    queryFn: () => fetchJson<ListDoc>(`/api/lists/${id}`),
+    queryFn: () => http.get<ListDoc>(`/api/lists/${id}`),
     enabled: !!id,
   })
 
   const updateBlocks = useMutation({
     mutationFn: (blocks: unknown) =>
-      fetchJson<ListDoc>(`/api/lists/${id}/blocks`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ blocks }),
-      }),
+      http.patch<ListDoc>(`/api/lists/${id}/blocks`, { blocks }),
     onMutate: async (blocks) => {
       if (!id) return
       await queryClient.cancelQueries({ queryKey: listKeys.detail(id) })
@@ -225,16 +200,12 @@ export function useListGroups() {
 
   const query = useQuery<ListGroupDoc[]>({
     queryKey: listKeys.groups,
-    queryFn: () => fetchJson<ListGroupDoc[]>('/api/list-groups'),
+    queryFn: () => http.get<ListGroupDoc[]>('/api/list-groups'),
   })
 
   const createGroup = useMutation({
     mutationFn: (data: { title: string }) =>
-      fetchJson<ListGroupDoc>('/api/list-groups', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      }),
+      http.post<ListGroupDoc>('/api/list-groups', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: listKeys.groups })
     },
@@ -242,11 +213,7 @@ export function useListGroups() {
 
   const updateGroup = useMutation({
     mutationFn: ({ id, ...data }: { id: string } & Partial<ListGroupDoc>) =>
-      fetchJson<ListGroupDoc>(`/api/list-groups/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      }),
+      http.patch<ListGroupDoc>(`/api/list-groups/${id}`, data),
     onMutate: async ({ id, ...data }) => {
       await queryClient.cancelQueries({ queryKey: listKeys.groups })
       const previous = queryClient.getQueryData<ListGroupDoc[]>(listKeys.groups)
@@ -267,7 +234,7 @@ export function useListGroups() {
 
   const deleteGroup = useMutation({
     mutationFn: (id: string) =>
-      fetchJson<{ ok: boolean }>(`/api/list-groups/${id}`, { method: 'DELETE' }),
+      http.del<{ ok: boolean }>(`/api/list-groups/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: listKeys.groups })
       queryClient.invalidateQueries({ queryKey: listKeys.all })

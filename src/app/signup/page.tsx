@@ -1,16 +1,18 @@
 'use client'
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+import { env } from '@/config/env'
+const API_BASE = env.VITE_API_URL
 
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useRouter } from 'next/navigation'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import { fadeSlideUp, buttonPress, ease } from '@/lib/motion'
 
 export default function SignupPage() {
-  const router = useRouter()
+  const navigate = useNavigate()
+  const location = useLocation()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -41,7 +43,8 @@ export default function SignupPage() {
         return
       }
 
-      router.push('/onboarding')
+      const from = (location.state as { from?: string })?.from || '/onboarding'
+      navigate(from)
     } catch {
       setError('Something went wrong')
       setLoading(false)
@@ -182,7 +185,7 @@ export default function SignupPage() {
         >
           {copy.auth.signup.loginPrompt}{' '}
           <button
-            onClick={() => router.push('/login')}
+            onClick={() => navigate('/login')}
             className="cursor-pointer font-medium underline transition-colors duration-150"
             style={{ color: '#5DA8FF' }}
           >

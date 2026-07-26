@@ -1,7 +1,5 @@
 'use client'
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
-
-
+import { http } from '@/lib/api/client'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { TaskRecord } from './useTasks'
 
@@ -32,17 +30,6 @@ const sectionKeys = {
 
 const TASKS_KEY = ['tasks'] as const
 
-// ── Fetch helper ────────────────────────────────────────────────────────────
-
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init)
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Request failed' }))
-    throw new Error(err.error || 'Request failed')
-  }
-  return res.json()
-}
-
 // ── Hook: useKanbanSections ─────────────────────────────────────────────────
 
 export function useKanbanSections() {
@@ -50,16 +37,12 @@ export function useKanbanSections() {
 
   const sectionsQuery = useQuery<KanbanSectionDoc[]>({
     queryKey: sectionKeys.all,
-    queryFn: () => fetchJson<KanbanSectionDoc[]>('/api/kanban-sections'),
+    queryFn: () => http.get<KanbanSectionDoc[]>('/api/kanban-sections'),
   })
 
   const createMutation = useMutation({
     mutationFn: (data: { title: string }) =>
-      fetchJson<KanbanSectionDoc>('/api/kanban-sections', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      }),
+      http.post<KanbanSectionDoc>('/api/kanban-sections', data),
     onMutate: async (data) => {
       await queryClient.cancelQueries({ queryKey: sectionKeys.all })
       const prev = queryClient.getQueryData<KanbanSectionDoc[]>(sectionKeys.all)
@@ -87,11 +70,7 @@ export function useKanbanSections() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, title }: { id: string; title: string }) =>
-      fetchJson<KanbanSectionDoc>(`/api/kanban-sections/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title }),
-      }),
+      http.put<KanbanSectionDoc>(`/api/kanban-sections/${id}`, { title }),
     onMutate: async ({ id, title }) => {
       await queryClient.cancelQueries({ queryKey: sectionKeys.all })
       const prev = queryClient.getQueryData<KanbanSectionDoc[]>(sectionKeys.all)
@@ -110,9 +89,7 @@ export function useKanbanSections() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) =>
-      fetchJson<{ ok: boolean }>(`/api/kanban-sections/${id}`, {
-        method: 'DELETE',
-      }),
+      http.del<{ ok: boolean }>(`/api/kanban-sections/${id}`),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: sectionKeys.all })
       const prev = queryClient.getQueryData<KanbanSectionDoc[]>(sectionKeys.all)
@@ -132,11 +109,7 @@ export function useKanbanSections() {
 
   const reorderMutation = useMutation({
     mutationFn: (payload: ReorderPayload) =>
-      fetchJson<TaskRecord>('/api/tasks/reorder', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      }),
+      http.post<TaskRecord>('/api/tasks/reorder', payload),
     onMutate: async (payload) => {
       await queryClient.cancelQueries({ queryKey: TASKS_KEY })
       const prev = queryClient.getQueryData<TaskRecord[]>(TASKS_KEY)

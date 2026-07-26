@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 import { copy } from '@/lib/copy'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useGoogleCalendar } from '@/hooks/useGoogleCalendar'
 import { buttonPress, fade, ease } from '@/lib/motion'
 import { useSettings, useUpdateSettings, useUserProfile } from '@/hooks/useSettings'
+import { http } from '@/lib/api/client'
 
 import ProfileTab from './tabs/ProfileTab'
 import DateTimeTab from './tabs/DateTimeTab'
@@ -31,7 +32,7 @@ const TABS: { key: SettingsTab; label: string }[] = [
 ]
 
 export default function SettingsPage() {
-  const router = useRouter()
+  const navigate = useNavigate()
   const { theme, setTheme } = useTheme()
   const { connected: googleConnected } = useGoogleCalendar()
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile')
@@ -81,8 +82,7 @@ export default function SettingsPage() {
   }, [showCalToast, updateApiSettings])
 
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then((r) => (r.ok ? r.json() : null))
+    http.get<{ name?: string; username?: string }>('/api/auth/me')
       .then((data) => {
         if (data?.name) {
           const parts = data.name.split(' ')
@@ -112,9 +112,9 @@ export default function SettingsPage() {
   }, [apiPrefs])
 
   const handleSignOut = useCallback(async () => {
-    await fetch('/api/auth/logout', { method: 'POST' })
-    router.push('/login')
-  }, [router])
+    await http.post('/api/auth/logout')
+    navigate('/login')
+  }, [navigate])
 
   return (
     <div className="flex flex-col px-6 py-5">

@@ -1,5 +1,6 @@
 'use client'
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+import { env } from '@/config/env'
+const API_BASE = env.VITE_API_URL
 
 
 import {
@@ -11,7 +12,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 
 export interface FocusState {
   isActive: boolean
@@ -40,7 +41,7 @@ const FocusContext = createContext<FocusContextValue | undefined>(undefined)
 
 export default function FocusProvider({ children }: { children: ReactNode }) {
   const [focus, setFocus] = useState<FocusState>(DEFAULT_STATE)
-  const router = useRouter()
+  const navigate = useNavigate()
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -136,13 +137,13 @@ export default function FocusProvider({ children }: { children: ReactNode }) {
             totalSeconds: 1500,
             theme: 'aurora',
           })
-          router.push('/focus')
+          navigate('/focus')
         }
       } catch {
         // Failed silently
       }
     },
-    [router]
+    [navigate]
   )
 
   return (

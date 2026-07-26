@@ -1,6 +1,6 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useState, useCallback, type ReactNode } from 'react'
 import Sidebar from './Sidebar'
@@ -10,6 +10,7 @@ import { fade, ease, motionTokens } from '@/lib/motion'
 import { useFocusState } from '@/contexts/FocusContext'
 import { useTasks } from '@/hooks/useTasks'
 import type { TaskRecord } from '@/hooks/useTasks'
+import { useGlobalShortcuts } from '@/hooks/useGlobalShortcuts'
 import DetailPanelStack from '@/components/tasks/DetailPanelStack'
 
 const SHELL_EXCLUDED = ['/login', '/signup', '/onboarding']
@@ -36,14 +37,23 @@ function DesktopOnlyNotice() {
 }
 
 export default function AppShell({ children }: { children: ReactNode }) {
-  const pathname = usePathname()
+  const { pathname } = useLocation()
   const [isDesktop, setIsDesktop] = useState(true)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try { return localStorage.getItem('laif-sidebar-collapsed') === 'true' }
+    catch { return false }
+  })
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null)
   const [panelStack, setPanelStack] = useState<string[]>([])
 
   const { focus } = useFocusState()
   const { tasks, updateTask, deleteTask, createTask } = useTasks()
+  useGlobalShortcuts()
+
+  useEffect(() => {
+    try { localStorage.setItem('laif-sidebar-collapsed', String(sidebarCollapsed)) }
+    catch { /* ignore */ }
+  }, [sidebarCollapsed])
 
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 1024)
@@ -225,10 +235,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
           transition: 'flex 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
-        {/* No AnimatePresence keyed on pathname — it destroys the React tree
-            on every route change, causing webpack chunk errors and React Query
-            teardown races. Next.js App Router handles transitions internally. */}
-        <div className="flex flex-1 flex-col">
+        {/* CSS-only page transition — safe, no React tree destruction */}
+        <div key={pathname} className="page-transition-enter flex flex-1 flex-col">
           {children}
         </div>
       </main>

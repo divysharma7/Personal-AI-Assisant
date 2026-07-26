@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Trash2 } from 'lucide-react'
 import { slideFromRight, ease, motionTokens } from '@/lib/motion'
@@ -8,8 +8,7 @@ import { useTasks } from '@/hooks/useTasks'
 import { useLists } from '@/hooks/useLists'
 import type { TaskRecord } from '@/hooks/useTasks'
 import type { ListDoc } from '@/hooks/useLists'
-import dynamic from 'next/dynamic'
-const RRuleEditor = dynamic(() => import('./RRuleEditor'), { ssr: false })
+const RRuleEditor = lazy(() => import('./RRuleEditor'))
 import ReminderSection from './ReminderSection'
 import type { Reminder } from './ReminderSection'
 
@@ -439,7 +438,9 @@ export default function TaskEditorSheet({ task, seed, open, onClose }: TaskEdito
               <div style={{ height: 1, backgroundColor: 'var(--border)' }} />
 
               {/* RRULE editor */}
-              <RRuleEditor value={rrule} onChange={setRrule} />
+              <Suspense fallback={null}>
+                <RRuleEditor value={rrule} onChange={setRrule} />
+              </Suspense>
 
               {/* Separator */}
               <div style={{ height: 1, backgroundColor: 'var(--border)' }} />

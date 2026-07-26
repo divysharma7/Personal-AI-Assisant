@@ -6,7 +6,7 @@ import { X, Check } from 'lucide-react'
 import { scaleIn, buttonPress, ease, cssTransition } from '@/lib/motion'
 import { copy } from '@/lib/copy'
 import { useWorkflows } from '@/hooks/useWorkflows'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 
 const PRESET_COLORS = [
   '#5DA8FF', '#6b66da', '#34d399', '#f59e0b',
@@ -39,7 +39,7 @@ interface CreateWorkflowDialogProps {
 }
 
 export default function CreateWorkflowDialog({ open, onClose }: CreateWorkflowDialogProps) {
-  const router = useRouter()
+  const navigate = useNavigate()
   const { createWorkflow } = useWorkflows()
 
   const [name, setName] = useState('')
@@ -79,9 +79,9 @@ export default function CreateWorkflowDialog({ open, onClose }: CreateWorkflowDi
     })
     onClose()
     if (result?._id) {
-      router.push(`/workflows/${result._id}`)
+      navigate(`/workflows/${result._id}`)
     }
-  }, [name, icon, selectedColor, selectedTemplate, createWorkflow, onClose, router])
+  }, [name, icon, selectedColor, selectedTemplate, createWorkflow, onClose, navigate])
 
   const wfCopy = copy.workflows
   const tplCopy = wfCopy.templates

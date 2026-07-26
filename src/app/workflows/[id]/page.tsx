@@ -1,7 +1,10 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
-import { useParams, notFound } from 'next/navigation'
+import { useParams } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { fadeSlideUp, ease } from '@/lib/motion'
+import { LayoutGrid } from 'lucide-react'
 import { useTasks } from '@/hooks/useTasks'
 import type { TaskRecord } from '@/hooks/useTasks'
 import { useWorkflow } from '@/hooks/useWorkflows'
@@ -123,7 +126,7 @@ function WorkflowNotFound() {
 
 export default function WorkflowPage() {
   const { id } = useParams<{ id: string }>()
-  const { workflow, isLoading: workflowLoading } = useWorkflow(id)
+  const { workflow, isLoading: workflowLoading } = useWorkflow(id ?? null)
   const { tasks, toggleComplete, updateTask, createTask } = useTasks()
   const { reorderTask } = useKanbanSections()
 
@@ -287,7 +290,21 @@ export default function WorkflowPage() {
           flexDirection: 'column',
         }}
       >
-        {isMatrix ? (
+        {workflowTasks.length === 0 ? (
+          <motion.div
+            {...fadeSlideUp}
+            transition={ease.normal}
+            className="flex flex-col items-center justify-center py-20 text-center"
+          >
+            <LayoutGrid size={48} strokeWidth={1} style={{ color: 'var(--text-faint)', opacity: 0.3 }} />
+            <h3 className="mt-4 text-lg font-medium" style={{ color: 'var(--text-primary)' }}>
+              Empty board
+            </h3>
+            <p className="mt-1 max-w-xs text-sm" style={{ color: 'var(--text-muted)' }}>
+              Add tasks to this workflow to get started
+            </p>
+          </motion.div>
+        ) : isMatrix ? (
           <WorkflowMatrixView
             columns={matrixColumns}
             tasks={workflowTasks}

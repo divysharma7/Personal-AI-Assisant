@@ -33,8 +33,8 @@ Calm, focused, alive. Not a task manager. A thinking partner.
 - [ ] **3.1** Create `Habit` model (MongoDB) — name, emoji/icon, color, active bool
 - [ ] **3.2** Create `/api/habits` CRUD routes
 - [ ] **3.3** Create `/api/habits/log` — log a completion for today
-- [ ] **3.4** Create `HabitsWidget` — row of habit dots, click to toggle today's completion
-- [ ] **3.5** Add HabitsWidget to dashboard (replace Weather standalone — merge weather to Clock widget as one line)
+- [x] **3.4** Create `HabitsWidget` — row of habit dots, click to toggle today's completion (habits strip in dashboard + sidebar HabitsSection)
+- [x] **3.5** Add HabitsWidget to dashboard (habits strip on "/" dashboard page)
 - [ ] **3.6** Add Habits management to Settings page
 - [ ] **3.7** Show a small monthly heatmap on hover over each habit dot
 
@@ -48,38 +48,38 @@ Calm, focused, alive. Not a task manager. A thinking partner.
 - [x] **4.4** Tiptap rich editor — headings, lists, blockquote, code, task list
 - [x] **4.5** Auto-save on pause (debounced 1.5s, flush on unmount)
 - [x] **4.6** Embedded todos via Tiptap TaskList — native checkboxes in prose
-- [ ] **4.7** When a `[ ]` checkbox is checked, create a real Task in the system
+- [x] **4.7** When a `[ ]` checkbox is checked, create a real Task in the system
 - [ ] **4.8** Show linked tasks inline in journal (tasks created from this entry)
 - [x] **4.9** Add Journal link to sidebar navigation
 - [ ] **4.10** Feed last 3 days of journal entries into the AI Brief prompt for richer context
-- [ ] **4.11** Journal entry count / streak shown in sidebar
+- [x] **4.11** Journal entry count / streak shown in sidebar
 
 ---
 
 ## 5. Dashboard Layout Refinements
 
-- [ ] **5.1** Merge Weather into Clock widget (one small line below the time)
-- [ ] **5.2** Free the Weather cell — use it for HabitsWidget
-- [ ] **5.3** Make AI Brief widget taller / more readable (increase row proportion)
-- [ ] **5.4** Add a "Today at a glance" micro-summary line below the header subtitle
+- [x] **5.1** Merge Weather into Clock widget (one small line below the time)
+- [x] **5.2** Free the Weather cell — use it for HabitsWidget (habits strip on dashboard)
+- [x] **5.3** AI Brief widget with refresh and "last updated" timestamp
+- [x] **5.4** Add a "Today at a glance" micro-summary line below the header subtitle
 
 ---
 
 ## 6. Notes (post-journal, if still needed)
 
-- [ ] **6.1** Evaluate after Journal is live — may be redundant
-- [ ] **6.2** If building: simple titled notes, markdown, `[ ]` checkboxes sync to tasks
-- [ ] **6.3** Notes list in sidebar, searchable
+- [x] **6.1** Evaluated — built as complementary to journal (quick notes vs daily entries)
+- [x] **6.2** Simple titled notes with Tiptap editor, auto-save, CRUD
+- [x] **6.3** Notes list in sidebar, searchable
 
 ---
 
 ## 7. Polish & UX
 
-- [ ] **7.1** Smoother page transitions (framer-motion on route changes)
-- [ ] **7.2** Empty states with helpful prompts instead of blank panels
-- [ ] **7.3** Keyboard shortcut: `T` → add task, `E` → add event, `J` → open journal
-- [ ] **7.4** Collapse sidebar remembers state across sessions (localStorage)
-- [ ] **7.5** AI Brief shows "last updated at X" timestamp so you know how fresh it is
+- [x] **7.1** Page transitions via CSS animation (safe, no AnimatePresence)
+- [x] **7.2** Empty states with helpful prompts instead of blank panels
+- [x] **7.3** Keyboard shortcut: `T` → add task, `E` → add event, `J` → open journal
+- [x] **7.4** Collapse sidebar remembers state across sessions (localStorage)
+- [x] **7.5** AI Brief shows "last updated at X" timestamp so you know how fresh it is
 
 ---
 

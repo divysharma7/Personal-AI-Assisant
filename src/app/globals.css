@@ -511,6 +511,16 @@ h1, h2, h3 { text-wrap: balance; }
   animation: cal-dot-pulse 4s ease-in-out infinite;
 }
 
+/* ─── Page transitions ─── */
+.page-transition-enter {
+  animation: pageEnter 200ms ease-out;
+}
+
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ─── Reduced motion ─── */
 @media (prefers-reduced-motion: reduce) {
   *,

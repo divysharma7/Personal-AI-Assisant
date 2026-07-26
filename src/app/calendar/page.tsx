@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { ease, motionTokens, getDirectionalVariants } from '@/lib/motion'
+import { fadeSlideUp, ease, motionTokens, getDirectionalVariants } from '@/lib/motion'
 import { useTasks } from '@/hooks/useTasks'
 import type { TaskRecord } from '@/hooks/useTasks'
 import CalendarHeader from '@/components/calendar/CalendarHeader'
@@ -29,6 +29,7 @@ import type { QuickAddData } from '@/components/calendar/QuickAddPopover'
 import BatchActionBar from '@/components/calendar/BatchActionBar'
 import { isSameDay } from '@/components/calendar/calendarUtils'
 import type { CalendarViewMode, CalendarEvent } from '@/components/calendar/types'
+import { Calendar } from 'lucide-react'
 
 // ── Priority colors (use CSS vars with fallback) ──
 const PRIORITY_COLORS: Record<string, string> = {
@@ -472,6 +473,22 @@ export default function CalendarPage() {
 
           {/* Overdue lane */}
           {overdue.length > 0 && <OverdueLane events={overdue} />}
+
+          {tasks.length === 0 && (
+            <motion.div
+              {...fadeSlideUp}
+              transition={ease.normal}
+              className="flex flex-col items-center justify-center py-20 text-center"
+            >
+              <Calendar size={48} strokeWidth={1} style={{ color: 'var(--text-faint)', opacity: 0.3 }} />
+              <h3 className="mt-4 text-lg font-medium" style={{ color: 'var(--text-primary)' }}>
+                Nothing scheduled
+              </h3>
+              <p className="mt-1 max-w-xs text-sm" style={{ color: 'var(--text-muted)' }}>
+                Drag on the calendar or schedule a task to see events here
+              </p>
+            </motion.div>
+          )}
 
           {/* Views — with directional slide transitions */}
           <div className="flex flex-1 overflow-hidden">

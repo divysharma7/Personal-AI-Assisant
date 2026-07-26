@@ -1,10 +1,11 @@
 'use client'
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+import { env } from '@/config/env'
+const API_BASE = env.VITE_API_URL
 
 
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useRouter } from 'next/navigation'
+import { useNavigate } from 'react-router-dom'
 import { X, Check } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import { fade, fadeSlideUp, scaleIn, buttonPress, spring, ease } from '@/lib/motion'
@@ -12,7 +13,7 @@ import { fade, fadeSlideUp, scaleIn, buttonPress, spring, ease } from '@/lib/mot
 type Step = 1 | 2 | 3
 
 export default function OnboardingPage() {
-  const router = useRouter()
+  const navigate = useNavigate()
   const [step, setStep] = useState<Step>(1)
 
   // Step 1
@@ -59,11 +60,11 @@ export default function OnboardingPage() {
         }),
       }).catch(() => {})
 
-      router.push('/')
+      navigate('/')
     } catch {
-      router.push('/')
+      navigate('/')
     }
-  }, [name, emailsOptIn, router])
+  }, [name, emailsOptIn, navigate])
 
   const anyOptionSelected = selectedOptions.some(Boolean)
 

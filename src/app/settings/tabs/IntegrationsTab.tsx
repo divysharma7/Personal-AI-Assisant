@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { fade, ease } from '@/lib/motion'
 import GoogleCalendarSetup from '@/components/integrations/GoogleCalendarSetup'
 import { MCP_TOOLS } from '@/mcp/tools'
+import { http } from '@/lib/api/client'
 
 interface IntegrationsTabProps {
   googleConnected: boolean
@@ -48,9 +49,8 @@ function McpServerCard() {
 
   // Fetch current MCP state
   useEffect(() => {
-    fetch('/api/users/me/mcp')
-      .then((r) => r.json())
-      .then((data: { mcpEnabled: boolean; mcpApiKey: string | null }) => {
+    http.get<{ mcpEnabled: boolean; mcpApiKey: string | null }>('/api/users/me/mcp')
+      .then((data) => {
         setMcpEnabled(data.mcpEnabled)
         setMcpApiKey(data.mcpApiKey)
       })
@@ -61,12 +61,7 @@ function McpServerCard() {
   const handleToggle = useCallback(async () => {
     setToggling(true)
     try {
-      const res = await fetch('/api/users/me/mcp', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled: !mcpEnabled }),
-      })
-      const data = (await res.json()) as { mcpEnabled: boolean; mcpApiKey: string | null }
+      const data = await http.patch<{ mcpEnabled: boolean; mcpApiKey: string | null }>('/api/users/me/mcp', { enabled: !mcpEnabled })
       setMcpEnabled(data.mcpEnabled)
       setMcpApiKey(data.mcpApiKey)
     } catch {

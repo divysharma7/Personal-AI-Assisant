@@ -1,16 +1,18 @@
 'use client'
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+import { env } from '@/config/env'
+const API_BASE = env.VITE_API_URL
 
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useRouter } from 'next/navigation'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import { ease } from '@/lib/motion'
 
 export default function LoginPage() {
-  const router = useRouter()
+  const navigate = useNavigate()
+  const location = useLocation()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -36,7 +38,8 @@ export default function LoginPage() {
         return
       }
 
-      router.push('/')
+      const from = (location.state as { from?: string })?.from || '/'
+      navigate(from)
     } catch {
       setError('Something went wrong')
       setLoading(false)
@@ -74,7 +77,7 @@ export default function LoginPage() {
         >
           <span
             style={{
-              fontFamily: 'var(--font-display), serif',
+              fontFamily: "'Instrument Serif', serif",
               fontSize: 80,
               letterSpacing: '0.15em',
               color: 'var(--accent)',
@@ -222,7 +225,7 @@ export default function LoginPage() {
           >
             {copy.auth.login.signupPrompt}{' '}
             <button
-              onClick={() => router.push('/signup')}
+              onClick={() => navigate('/signup')}
               className="cursor-pointer font-medium underline transition-colors duration-150"
               style={{ color: 'var(--info)' }}
             >
@@ -233,15 +236,7 @@ export default function LoginPage() {
       </div>
 
       {/* Aurora animation styles */}
-      <style jsx>{`
-        .login-aurora-glow {
-          animation: login-aurora-float 6s ease-in-out infinite;
-        }
-        @keyframes login-aurora-float {
-          0%, 100% { transform: translate(-10%, -10%) scale(1); }
-          50% { transform: translate(10%, 10%) scale(1.15); }
-        }
-      `}</style>
+      <style>{".login-aurora-glow { animation: login-aurora-float 6s ease-in-out infinite; } @keyframes login-aurora-float { 0%, 100% { transform: translate(-10%, -10%) scale(1); } 50% { transform: translate(10%, 10%) scale(1.15); } }"}</style>
     </div>
   )
 }

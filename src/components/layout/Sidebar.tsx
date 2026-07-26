@@ -1,11 +1,11 @@
 'use client'
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || ''
+import { env } from '@/config/env'
+const API_BASE = env.VITE_API_URL
 
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import {
   Inbox,
   CalendarDays,
@@ -23,6 +23,8 @@ import {
   BarChart3,
   Target,
   MessageCircle,
+  BookOpen,
+  StickyNote,
 } from 'lucide-react'
 import { collapse, fadeSlideDown, buttonPress, ease, motionTokens, springs } from '@/lib/motion'
 import { useTasks } from '@/hooks/useTasks'
@@ -42,6 +44,8 @@ const FEATURES_NAV = [
   { label: 'Habits', icon: Flame, href: '/habits' },
   { label: 'Calendar', icon: Calendar, href: '/calendar' },
   { label: 'Focus', icon: Target, href: '/focus' },
+  { label: 'Journal', icon: BookOpen, href: '/journal' },
+  { label: 'Notes', icon: StickyNote, href: '/notes' },
   { label: 'Statistics', icon: BarChart3, href: '/statistics' },
   { label: 'Chat', icon: MessageCircle, href: '/chat' },
 ] as const
@@ -49,7 +53,7 @@ const FEATURES_NAV = [
 /* ── Habits inline section ── */
 function HabitsSection({ tasks }: { tasks: TaskRecord[] }) {
   const [open, setOpen] = useState(true)
-  const router = useRouter()
+  const navigate = useNavigate()
   const habits = useMemo(() => tasks.filter((t) => t.isHabit && t.status !== 'dropped'), [tasks])
   const { updateTask } = useTasks()
 
@@ -90,7 +94,7 @@ function HabitsSection({ tasks }: { tasks: TaskRecord[] }) {
           </motion.div>
         </button>
         <button
-          onClick={() => router.push('/habits')}
+          onClick={() => navigate('/habits')}
           className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded cursor-pointer"
           style={{ color: 'var(--text-faint)', transitionDuration: '150ms', minWidth: 44, minHeight: 44 }}
           onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)' }}
@@ -113,7 +117,7 @@ function HabitsSection({ tasks }: { tasks: TaskRecord[] }) {
                   key={habit._id}
                   className="flex items-center gap-2 rounded-lg px-2.5 py-1 text-[13px] font-medium cursor-pointer"
                   style={{ color: 'var(--text-primary)' }}
-                  onClick={() => router.push(`/habits?selected=${habit._id}`)}
+                  onClick={() => navigate(`/habits?selected=${habit._id}`)}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
@@ -151,7 +155,7 @@ function HabitsSection({ tasks }: { tasks: TaskRecord[] }) {
 
 /* ── Workflows inline section ── */
 function WorkflowsSection() {
-  const pathname = usePathname()
+  const { pathname } = useLocation()
   const [open, setOpen] = useState(true)
   const [createOpen, setCreateOpen] = useState(false)
   const { workflows } = useWorkflows()
@@ -196,7 +200,7 @@ function WorkflowsSection() {
                 return (
                   <Link
                     key={wf._id}
-                    href={`/workflows/${wf._id}`}
+                    to={`/workflows/${wf._id}`}
                     className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[14px] font-medium no-underline transition-sl"
                     style={{
                       color: 'var(--text-primary)',
@@ -231,8 +235,8 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
-  const pathname = usePathname()
-  const router = useRouter()
+  const { pathname } = useLocation()
+  const navigate = useNavigate()
   const { tasks } = useTasks()
   const prefersReduced = useReducedMotion()
 
@@ -240,6 +244,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   const [avatarOpen, setAvatarOpen] = useState(false)
   const [fabOpen, setFabOpen] = useState(false)
   const [userInitial, setUserInitial] = useState('U')
+  const [journalStreak, setJournalStreak] = useState(0)
   const popoverRef = useRef<HTMLDivElement>(null)
   const fabPopoverRef = useRef<HTMLDivElement>(null)
 
@@ -265,6 +270,27 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
       .catch(() => {})
   }, [])
 
+  // Journal streak computation
+  useEffect(() => {
+    fetch(`${API_BASE}/api/journal`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((entries: { date?: string }[]) => {
+        if (!entries?.length) { setJournalStreak(0); return }
+        const dates = new Set(entries.map((e) => e.date?.split('T')[0]).filter(Boolean))
+        let streak = 0
+        const today = new Date()
+        for (let i = 0; i < 365; i++) {
+          const d = new Date(today)
+          d.setDate(d.getDate() - i)
+          const key = d.toISOString().split('T')[0]
+          if (dates.has(key)) streak++
+          else if (i > 0) break
+        }
+        setJournalStreak(streak)
+      })
+      .catch(() => {})
+  }, [])
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (avatarOpen && popoverRef.current && !popoverRef.current.contains(e.target as Node)) setAvatarOpen(false)
@@ -276,8 +302,8 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
 
   const handleSignOut = useCallback(async () => {
     await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST' })
-    router.push('/login')
-  }, [router])
+    navigate('/login')
+  }, [navigate])
 
   const isActive = (href: string) => {
     // When a smart filter is active, deactivate regular nav items
@@ -330,7 +356,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                to={item.href}
                 title={item.label}
                 className="flex items-center justify-center rounded-lg no-underline"
                 style={{
@@ -407,7 +433,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                 initial={prefersReduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 transition={prefersReduced ? { duration: 0 } : { duration: motionTokens.duration.fast }}
                 {...buttonPress}
-                onClick={() => router.push('/tasks')}
+                onClick={() => navigate('/tasks')}
                 aria-label="Search"
                 className="flex h-7 w-7 items-center justify-center rounded-md cursor-pointer transition-sl"
                 style={{ color: 'var(--text-faint)' }}
@@ -442,7 +468,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
           return (
             <Link
               key={item.href}
-              href={item.href}
+              to={item.href}
               className="group relative flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[14px] font-semibold transition-sl no-underline"
               style={{
                 backgroundColor: active ? 'var(--overlay-2, var(--bg-hover))' : 'transparent',
@@ -482,7 +508,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                to={item.href}
                 className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[14px] font-medium no-underline transition-sl"
                 style={{
                   color: 'var(--text-primary)',
@@ -494,6 +520,14 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
               >
                 <item.icon size={16} strokeWidth={1.5} style={{ color: active ? 'var(--accent)' : 'var(--text-muted)' }} />
                 <span className="truncate">{item.label}</span>
+                {item.href === '/journal' && journalStreak > 0 && (
+                  <span
+                    className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-medium"
+                    style={{ backgroundColor: 'var(--overlay-2, var(--bg-hover))', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}
+                  >
+                    {journalStreak}
+                  </span>
+                )}
               </Link>
             )
           })}
@@ -562,7 +596,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                   <span className="text-[12px]" style={{ color: 'var(--text-faint)' }}>⇧⌘N</span>
                 </button>
                 <button
-                  onClick={() => { setFabOpen(false); router.push('/chat') }}
+                  onClick={() => { setFabOpen(false); navigate('/chat') }}
                   className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-[15px] font-medium transition-sl cursor-pointer"
                   style={{ color: 'var(--text-muted)' }}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
@@ -572,7 +606,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                   <span className="text-[12px]" style={{ color: 'var(--text-faint)' }}>⌃T</span>
                 </button>
                 <button
-                  onClick={() => { setFabOpen(false); router.push('/chat') }}
+                  onClick={() => { setFabOpen(false); navigate('/chat') }}
                   className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-[15px] font-medium transition-sl cursor-pointer"
                   style={{ color: 'var(--text-muted)' }}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
@@ -607,7 +641,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
                 style={{ backgroundColor: 'var(--bg-pane-2, var(--bg-pane))', border: '1px solid var(--overlay-2, var(--border))', boxShadow: 'var(--shadow-elevated)' }}
               >
                 <button
-                  onClick={() => { setAvatarOpen(false); router.push('/settings') }}
+                  onClick={() => { setAvatarOpen(false); navigate('/settings') }}
                   className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] font-medium transition-sl cursor-pointer"
                   style={{ color: 'var(--text-primary)' }}
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
