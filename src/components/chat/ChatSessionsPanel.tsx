@@ -63,7 +63,7 @@ const GROUP_ORDER: DateGroup[] = ['today', 'yesterday', 'previous7Days', 'older'
 const c = copy.chat.history
 
 export default function ChatSessionsPanel({
-  open,
+  open: _open,
   onClose,
   activeSessionId,
   onSelectSession,

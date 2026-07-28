@@ -1,5 +1,7 @@
 # LAIF — Coding Agent Execution Plan
 
+> **⚠️ NOTE:** Contacts, Notes, and Journal features have been **removed from the product**. Tasks referencing these features (TASK 01 notes/contacts/journal scoping, TASK 02 contacts/notes/journal validation, TASK 05 notes/contacts/journal isolation tests, TASK 06 notes CRUD, TASK 17 journal context, TASK 20D notes/journal typing, TASK 26C journal linked tasks, TASK 28 journal/notes core flows) are N/A or should be skipped. The security fixes they targeted are no longer needed since the routes no longer exist.
+
 > **Purpose:** Give a coding agent a safe, dependency-ordered plan to take LAIF from “feature-rich but partially hardened” to production-ready v1.0.
 >
 > **Repos**
@@ -83,9 +85,9 @@ Acceptance criteria:
 The coding agent must treat these as release blockers:
 
 ## Security
-- Notes user-scoped.
-- Contacts user-scoped.
-- Journal entries user-scoped.
+- ~~Notes user-scoped.~~ N/A — feature removed
+- ~~Contacts user-scoped.~~ N/A — feature removed
+- ~~Journal entries user-scoped.~~ N/A — feature removed
 - Mutable backend inputs validated.
 - User A cannot access User B data.
 - No production `DEV_USER_ID` bypass.

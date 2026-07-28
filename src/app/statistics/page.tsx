@@ -2,25 +2,15 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  Check,
-  Flame,
-  Target,
-  Clock,
   BarChart3,
-  TrendingUp,
-  Calendar,
-  ListChecks,
   Timer,
+  Check,
 } from 'lucide-react'
 import { buttonPress, fadeSlideUp, ease } from '@/lib/motion'
 import { useTasks } from '@/hooks/useTasks'
 import { useHabits } from '@/hooks/useHabits'
 
 type StatsTab = 'overview' | 'task' | 'focus'
-type Period = 'daily' | 'weekly' | 'monthly'
 
 const TABS: { key: StatsTab; label: string }[] = [
   { key: 'overview', label: 'Overview' },
@@ -160,9 +150,8 @@ function Card({ title, children, rightControl }: { title: string; children: Reac
 export default function StatisticsPage() {
   const [tab, setTab] = useState<StatsTab>('overview')
   const { tasks } = useTasks()
-  const { habits, weekCompletions, todayStr: getTodayStr } = useHabits()
+  const { habits } = useHabits()
 
-  const todayStr = getTodayStr()
 
   // Compute stats from real data
   const allTasks = tasks

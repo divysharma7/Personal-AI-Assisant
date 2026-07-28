@@ -12,10 +12,8 @@
 type ListType =
   | "standard"
   | "habit"
-  | "journal"
-  | "notes"
-  | "reading"
-  | "contacts";
+  | "reading";
+  // REMOVED: "journal", "notes", "contacts" — features removed from product
 
 type Priority = "high" | "medium" | "low" | null;
 
@@ -383,7 +381,7 @@ Z-index: 9000 (above modals and popovers).
 - "Onboarding complete" flag: `User.acceptedTermsAt != null`.
 - Sidebar group collapse states: stored on `ListGroup.collapsed` (per-user).
 - "Tools section collapsed" preference: new field on User; default `true` for new users, `false` for existing users (so they don't lose their accustomed surface).
-- The migration from Habits/Journal/Notes/Memories/Contacts entities into Lists runs as a one-shot script on deploy. Old routes 301-redirect to the migrated Lists for 30 days, then 404.
+- The migration from Habits/Memories entities into Lists runs as a one-shot script on deploy. Old routes 301-redirect to the migrated Lists for 30 days, then 404. (Journal/Notes/Contacts — features removed, no migration needed)
 
 ---
 

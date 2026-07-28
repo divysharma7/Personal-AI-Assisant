@@ -13,7 +13,7 @@
 | 3 | **Alexa: No Application ID verification** | HIGH | `src/app/api/alexa/route.ts:39-49` | Never checks `body.session.application.applicationId` against expected Skill ID. Any Alexa skill (or forged request) can hit this endpoint. |
 | 4 | **Alexa: No userId scoping** | HIGH | `src/lib/alexa/intentHandlers.ts` (all handlers) | Intent handlers (AddTask, CompleteTask, LogHabit, etc.) operate without userId. Any request creates/modifies data for the hardcoded/default user. |
 | 5 | **No rate limiting anywhere** | HIGH | Entire codebase | Zero rate limiting on any endpoint. Login brute-force, signup spam, chat API abuse (OpenRouter token burn), and Alexa spam are all unthrottled. |
-| 6 | **DELETE routes missing userId filter** | HIGH | `contacts/[id]/route.ts:25`, `memories/[id]/route.ts:45`, `notes/[id]/route.ts:23`, `tasks/[id]/route.ts:128`, `habits/[id]/route.ts:34` | 5 DELETE routes use `findByIdAndDelete(params.id)` without userId filter. Any authenticated user can delete any other user's data by guessing the MongoDB ObjectId. |
+| 6 | **DELETE routes missing userId filter** | HIGH | `memories/[id]/route.ts:45`, `tasks/[id]/route.ts:128`, `habits/[id]/route.ts:34` | ~~5~~ 3 DELETE routes use `findByIdAndDelete(params.id)` without userId filter. Any authenticated user can delete any other user's data by guessing the MongoDB ObjectId. (`contacts/[id]`, `notes/[id]` N/A — feature removed) |
 | 7 | **MCP GET endpoint exposes tool schema without auth** | MEDIUM | `src/app/api/mcp/route.ts:58-66` | `GET /api/mcp` lists all tool names, descriptions, and parameter schemas to unauthenticated callers. Information disclosure — helps attackers craft valid tool calls. |
 | 8 | **JWT cookie: sameSite=lax instead of strict** | MEDIUM | `src/app/api/auth/login/route.ts:44`, `signup/route.ts:46` | `sameSite: 'lax'` allows cookies on top-level GET navigations from external sites. Use `'strict'` unless Google Calendar OAuth redirect requires `'lax'` — verify before changing. |
 | 9 | **No CORS configuration** | MEDIUM | `src/middleware.ts` (absent) | No `Access-Control-Allow-Origin` headers set. Next.js defaults to same-origin for API routes, but MCP and Alexa endpoints are designed for cross-origin use. Explicit CORS policy needed. |
@@ -57,9 +57,9 @@ Five routes delete documents by `_id` alone — no ownership check:
 
 | Route | Model | Risk |
 |-------|-------|------|
-| `DELETE /api/contacts/[id]` | Contact | Any user deletes any contact |
+| ~~`DELETE /api/contacts/[id]`~~ | ~~Contact~~ | N/A — feature removed |
 | `DELETE /api/memories/[id]` | Memory | Any user deletes any memory |
-| `DELETE /api/notes/[id]` | Note | Any user deletes any note |
+| ~~`DELETE /api/notes/[id]`~~ | ~~Note~~ | N/A — feature removed |
 | `DELETE /api/tasks/[id]` | Task | Any user deletes any task |
 | `DELETE /api/habits/[id]` | Habit (legacy) | Any user deletes any habit |
 
@@ -86,7 +86,7 @@ Zero rate limiting anywhere in the codebase. No middleware, no per-route limits,
 
 ```
 1. CRITICAL  — Alexa signature verification         ✅ FIXED: route disabled (returns 404)
-2. HIGH      — Add userId filter to 5 DELETE routes  ✅ FIXED: contacts, memories, notes, tasks, habits
+2. HIGH      — Add userId filter to 5 DELETE routes  ✅ FIXED: memories, tasks, habits (contacts, notes — N/A, feature removed)
 3. HIGH      — Rate limiting on login/signup/chat    ⏳ OPEN — deploy gate for week 2
 4. HIGH      — Alexa App ID + userId scoping         ✅ FIXED: route disabled entirely
 5. MEDIUM    — Security headers                      ⏳ OPEN

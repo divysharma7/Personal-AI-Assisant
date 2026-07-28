@@ -67,12 +67,6 @@ function formatTimeSlot(start: string, end: string): string {
   return `${fmt(new Date(start))} - ${fmt(new Date(end))}`
 }
 
-function formatFocusTime(seconds: number): string {
-  const m = Math.floor(seconds / 60)
-  const s = seconds % 60
-  return `${m}:${s.toString().padStart(2, '0')}`
-}
-
 // ── Grouping logic ────────────────────────────────────────────
 
 type GroupByOption = 'none' | 'dueDate' | 'priority' | 'alphabetical' | 'creationDate' | 'list'
@@ -86,7 +80,6 @@ const GROUP_OPTIONS: { value: GroupByOption; label: string }[] = [
   { value: 'list', label: 'List' },
 ]
 
-const PRIORITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 }
 const PRIORITY_COLORS: Record<string, string> = {
   high: '#ef4444',
   medium: '#f59e0b',
@@ -184,7 +177,7 @@ export default function TodayPage() {
   const [stableNow] = useState(() => new Date())
   const { tasks, isLoading, createTask, toggleComplete, updateTask, deleteTask } = useTasks()
   const { connected: googleConnected, syncTask } = useGoogleCalendar()
-  const { focus } = useFocusState()
+  useFocusState()
 
   // Grouping
   const [groupBy, setGroupBy] = useState<GroupByOption>('dueDate')

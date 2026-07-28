@@ -1,5 +1,7 @@
 # Superlist Design Rebuild — Definitive Plan
 
+> **Note:** The Journal feature has been **removed from the product**. References to Journal in this plan are historical and should be skipped during implementation.
+
 Based on 159 actual Superlist screenshots (Mobbin capture, March 2024).
 
 ---

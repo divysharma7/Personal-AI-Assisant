@@ -2,8 +2,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Pause, Play, SkipForward, Maximize, CloudRain,
-  Music, StickyNote, Clock, X, Volume2, Timer, Target,
+  SkipForward, Maximize, CloudRain,
+  Music, Clock, X, Timer, Target,
 } from 'lucide-react'
 import { fadeSlideUp, ease, motionTokens } from '@/lib/motion'
 
@@ -61,9 +61,6 @@ const PRESETS = [
   { name: 'Deep Work', focus: 90, short: 15, long: 45 },
 ]
 
-// ── Tags ──
-const TAGS = ['Study', 'Work', 'Exercise', 'Reading', 'Creative', 'Personal']
-
 type Mode = 'focus' | 'shortBreak' | 'longBreak'
 
 function formatTime(s: number): string {
@@ -102,7 +99,7 @@ function playCompletionSound() {
 export default function FocusPage() {
   // Timer state
   const [mode, setMode] = useState<Mode>('focus')
-  const [preset, setPreset] = useState(PRESETS[0])
+  const [preset] = useState(PRESETS[0])
   const [remaining, setRemaining] = useState(25 * 60)
   const [total, setTotal] = useState(25 * 60)
   const [isRunning, setIsRunning] = useState(false)
@@ -120,9 +117,6 @@ export default function FocusPage() {
   const [scene, setScene] = useState(SCENES[0])
   const [showSounds, setShowSounds] = useState(false)
   const [showScenes, setShowScenes] = useState(false)
-  const [showPresets, setShowPresets] = useState(false)
-  const [showTags, setShowTags] = useState(false)
-  const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [activeSounds, setActiveSounds] = useState<Set<string>>(new Set())
   const [autoStart, setAutoStart] = useState(false)
   const [autoStartMsg, setAutoStartMsg] = useState('')
@@ -299,7 +293,7 @@ export default function FocusPage() {
         map.delete(label)
       }
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [activeSounds])
 
   // Cleanup all oscillators on unmount

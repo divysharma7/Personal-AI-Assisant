@@ -1,5 +1,5 @@
 
-import { useRef, useEffect, useMemo } from 'react'
+import { useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface LiquidThemeProps {
@@ -64,7 +64,7 @@ function lerpPaths(pathA: string, pathB: string, t: number): string {
 
 export default function LiquidTheme({
   remainingSeconds,
-  totalSeconds,
+  totalSeconds: _totalSeconds,
   isRunning,
   isPaused,
   isBreak,

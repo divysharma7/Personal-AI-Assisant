@@ -89,7 +89,7 @@ function ContextMenu({
   x,
   y,
   listId,
-  listName,
+  listName: _listName,
   onRename,
   onChangeColor,
   onHide,

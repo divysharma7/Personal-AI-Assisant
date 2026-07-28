@@ -2,9 +2,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  SlidersHorizontal,
-  MoreVertical,
-  X,
   Plus,
   Calendar,
   ChevronDown,
@@ -15,13 +12,11 @@ import {
 import { format, isToday as checkIsToday } from 'date-fns'
 import { copy } from '@/lib/copy'
 import { useTasks } from '@/hooks/useTasks'
-import type { TaskRecord } from '@/hooks/useTasks'
 import { useHabits } from '@/hooks/useHabits'
 import { useTaskKeyboard } from '@/hooks/useTaskKeyboard'
 import { playCompletionSound } from '@/lib/sounds'
-import { fadeSlideUp, taskComplete, collapse, buttonPress, stagger, ease } from '@/lib/motion'
+import { fadeSlideUp, collapse, buttonPress, stagger, ease } from '@/lib/motion'
 import TaskRow from '@/components/tasks/TaskRow'
-import VoiceCapture from '@/components/tasks/VoiceCapture'
 import TimeBlockPicker from '@/components/tasks/TimeBlockPicker'
 import { useGoogleCalendar } from '@/hooks/useGoogleCalendar'
 import { useFocusState } from '@/contexts/FocusContext'
@@ -37,14 +32,13 @@ function getGreeting(): string {
 }
 
 export default function InboxPage() {
-  const [mounted, setMounted] = useState(false)
+  const [, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
   const { tasks, isLoading, createTask, updateTask, deleteTask, toggleComplete } = useTasks()
   const { habits, toggleToday: toggleHabitToday } = useHabits()
   const { connected: googleConnected, syncTask } = useGoogleCalendar()
   const { focus } = useFocusState()
-  const [tipDismissed, setTipDismissed] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [newTaskFocused, setNewTaskFocused] = useState(false)
   const [doneOpen, setDoneOpen] = useState(false)
@@ -75,7 +69,6 @@ export default function InboxPage() {
   )
 
   const todayTasks = useMemo(() => {
-    const now = new Date()
     return tasks.filter((t) => {
       if (t.status === 'done' || t.status === 'dropped') return false
       if (t.dueDate) {
@@ -160,17 +153,6 @@ export default function InboxPage() {
       await updateTask(taskId, { title })
     },
     [updateTask]
-  )
-
-  const handleVoiceTranscript = useCallback(
-    async (text: string) => {
-      await createTask({
-        title: text,
-        priority: 'medium',
-        status: 'backlog',
-      })
-    },
-    [createTask]
   )
 
   const handleTimeBlockSave = useCallback(

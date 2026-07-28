@@ -64,19 +64,19 @@
 | `/workflows/[id]/columns` | POST | ✓ | ✓ | ✓ handleApiError | ✓ | Raw data | Zod validated |
 | `/kanban-sections` | GET | ✓ | — | ✓ handleApiError | ✓ | Raw data | — |
 | `/kanban-sections/[id]` | PATCH, DEL | ✓ | ✗ | ✓ handleApiError | ✓ | Raw data | — |
-| `/contacts` | GET, POST | ✓ | ✗ | ✓ handleApiError | ✓ 201 | Raw data | — |
-| `/contacts/[id]` | PUT, DEL | ✓ | ✗ | ✓ handleApiError | ✓ | Raw data | Fixed in this session |
+| ~~`/contacts`~~ | ~~GET, POST~~ | — | — | — | — | — | **REMOVED** — feature removed from product |
+| ~~`/contacts/[id]`~~ | ~~PUT, DEL~~ | — | — | — | — | — | **REMOVED** — feature removed from product |
 | `/memories` | GET, POST | ✓ | ✗ | ✓ handleApiError | ✓ 201 | Raw data | — |
 | `/memories/[id]` | PUT, DEL | ✓ | ✗ | ✓ handleApiError | ✓ | Raw data | Fixed in this session |
-| `/notes` | GET, POST | ✓ | ✗ | ✓ handleApiError | ✓ 201 | Raw data | — |
-| `/notes/[id]` | PUT, DEL | ✓ | ✗ | ✓ handleApiError | ✓ | Raw data | Fixed in this session |
+| ~~`/notes`~~ | ~~GET, POST~~ | — | — | — | — | — | **REMOVED** — feature removed from product |
+| ~~`/notes/[id]`~~ | ~~PUT, DEL~~ | — | — | — | — | — | **REMOVED** — feature removed from product |
 | `/chat` | POST | ✓ | ✗ | ✓ handleApiError | ✓ | NDJSON stream | Streaming response |
 | `/chat/sessions` | GET, POST | ✓ | ✗ | ✓ handleApiError | ✓ 201 | Raw data | — |
 | `/chat/sessions/[id]` | GET, DEL | ✓ | ✗ | ✓ handleApiError | ✓ | Raw data | Uses userId filter |
 | `/list-groups` | GET, POST | ✓ | ✗ | ✓ handleApiError | ✓ 201 | Raw data | — |
 | `/list-groups/[id]` | PATCH, DEL | ✓ | ✗ | ✓ handleApiError | ✓ | Raw data | Uses ownerId |
-| `/journal` | POST | ✓ | ✗ | ✓ handleApiError | ✓ | Raw data | — |
-| `/journal/summarize` | POST | ✓ | ✗ | ✓ handleApiError | ✓ | Raw data | — |
+| ~~`/journal`~~ | ~~POST~~ | — | — | — | — | — | **REMOVED** — feature removed from product |
+| ~~`/journal/summarize`~~ | ~~POST~~ | — | — | — | — | — | **REMOVED** — feature removed from product |
 | `/notifications` | GET | ✓ | — | ✓ handleApiError | ✓ | Raw data | — |
 | `/push/subscribe` | POST | ✓ | ✗ | ✓ handleApiError | ✓ | Raw data | — |
 | `/devices/register` | POST | — | ✗ | ✓ handleApiError | ✓ | Raw data | Public route |
@@ -99,7 +99,7 @@
 
 | Dimension | Pass | Fail | Rate |
 |-----------|------|------|------|
-| Auth (on non-public routes) | 70 | 5 | 93% |
+| Auth (on non-public routes) | 64 | 5 | 93% (6 removed routes: contacts, notes, journal — N/A) |
 | Zod validation (on write routes) | 7 | ~45 | 13% |
 | Error handling (handleApiError) | 74 | 5 | 94% |
 | Status codes | 76 | 3 | 96% |
@@ -167,7 +167,7 @@ Rules:
 
 ```
 1. HIGH — Add auth to /habits GET/POST, /tasks/[id]/indent, /outdent, /reparent
-2. HIGH — Add Zod schemas for habit, focus, calendar, list, contact, note, memory writes
+2. HIGH — Add Zod schemas for habit, focus, calendar, list, memory writes (contact, note — N/A, feature removed)
 3. LOW  — Migrate /tasks/reorder to handleApiError
 4. LOW  — Remove public GET from /mcp (or require auth)
 ```

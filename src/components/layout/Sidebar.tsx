@@ -23,7 +23,7 @@ import {
   Target,
   MessageCircle,
 } from 'lucide-react'
-import { collapse, fadeSlideDown, buttonPress, ease, motionTokens, springs } from '@/lib/motion'
+import { collapse, buttonPress, ease, motionTokens } from '@/lib/motion'
 import { useTasks } from '@/hooks/useTasks'
 import type { TaskRecord } from '@/hooks/useTasks'
 import { useWorkflows } from '@/hooks/useWorkflows'

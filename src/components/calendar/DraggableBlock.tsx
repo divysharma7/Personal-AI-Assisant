@@ -1,5 +1,5 @@
 
-import { type ReactNode, useCallback, useRef, useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import type { CalendarDragData } from './CalendarDndProvider'
@@ -24,8 +24,7 @@ export default function DraggableBlock({
   isReadOnly = false,
   children,
 }: DraggableBlockProps) {
-  const [isResizing, setIsResizing] = useState(false)
-  const resizeRef = useRef<HTMLDivElement>(null)
+  const [isResizing] = useState(false)
 
   const dragData: CalendarDragData = {
     taskId: id,
@@ -51,7 +50,7 @@ export default function DraggableBlock({
     attributes: resizeAttrs,
     listeners: resizeListeners,
     setNodeRef: setResizeRef,
-    isDragging: isResizeDragging,
+    isDragging: _isResizeDragging,
   } = useDraggable({
     id: `resize-${id}`,
     data: {

@@ -3,7 +3,7 @@ const API_BASE = env.VITE_API_URL
 
 
 import { useState, useEffect } from 'react'
-import { Check, ArrowRight, Sparkles } from 'lucide-react'
+import { Check, Sparkles } from 'lucide-react'
 
 const CHECKLIST = [
   { text: 'Check off this task to see how it works', tip: 'Click the checkbox on the left. Done feels good.' },

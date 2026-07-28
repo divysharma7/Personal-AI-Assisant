@@ -17,9 +17,6 @@ export default function CurrentTimeLine() {
     return () => clearInterval(interval)
   }, [])
 
-  // More granular row: use exact minutes, not just 15-min slots
-  const totalMinutes = now.getHours() * 60 + now.getMinutes()
-  const percentOfDay = totalMinutes / (24 * 60)
   // Position within the 96-row grid (each row = 15 min = 1.04167% of 24h)
   const gridRow = timeToGridRow(now)
 

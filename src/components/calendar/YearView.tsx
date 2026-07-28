@@ -1,6 +1,6 @@
 
 import { useMemo, useState, useCallback } from 'react'
-import { isSameDay, isToday, startOfWeek } from './calendarUtils'
+import { isToday } from './calendarUtils'
 import type { CalendarEvent } from './types'
 
 interface YearViewProps {
@@ -128,14 +128,6 @@ export default function YearView({ date, events, onDayClick, onMonthClick, onWee
       return completedCountMap[key] || 0
     },
     [completedCountMap]
-  )
-
-  const getTotalCount = useCallback(
-    (d: Date): number => {
-      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
-      return totalCountMap[key] || 0
-    },
-    [totalCountMap]
   )
 
   const formatTooltipDate = useCallback((d: Date): string => {

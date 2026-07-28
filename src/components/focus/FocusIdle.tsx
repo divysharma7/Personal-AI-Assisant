@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Clock, Play } from 'lucide-react'
-import { fade, fadeSlideUp, ease, buttonPress, spring } from '@/lib/motion'
+import { fade, fadeSlideUp, ease, buttonPress } from '@/lib/motion'
 import type { FocusTheme } from './FocusClock'
 
 interface MockTask {

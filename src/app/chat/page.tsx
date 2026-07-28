@@ -15,8 +15,6 @@ import {
   Mic,
   MessageSquare,
 } from 'lucide-react'
-import { useTasks } from '@/hooks/useTasks'
-import { useHabits } from '@/hooks/useHabits'
 import {
   useChatSession,
   useCreateChatSession,
@@ -69,9 +67,6 @@ export default function ChatPage() {
 
   // Keep ref in sync to avoid stale closure on rapid sends
   useEffect(() => { messagesRef.current = messages }, [messages])
-  const { tasks } = useTasks()
-  const { habits } = useHabits()
-
   const hasMessages = messages.length > 0
 
   useEffect(() => {

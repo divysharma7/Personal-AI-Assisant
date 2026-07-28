@@ -19,7 +19,6 @@ import {
   type DragOverEvent,
   closestCenter,
   type CollisionDetection,
-  type DroppableContainer,
   pointerWithin,
 } from '@dnd-kit/core'
 import { useTasks } from '@/hooks/useTasks'

@@ -43,7 +43,7 @@ export default function MinimalTheme({
   remainingSeconds,
   totalSeconds,
   isRunning,
-  isPaused,
+  isPaused: _isPaused,
   isBreak,
 }: MinimalThemeProps) {
   const digits = formatDigits(remainingSeconds)

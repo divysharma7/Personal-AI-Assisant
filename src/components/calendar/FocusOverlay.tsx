@@ -60,7 +60,6 @@ function FocusBar({ session }: { session: FocusSession }) {
 
   // Each slot = 16px (minimum), compute top offset
   const topPx = startRow * 16
-  const spanSlots = Math.max(1, Math.ceil(durationMin / 15))
 
   const formatDuration = (min: number) => {
     const h = Math.floor(min / 60)

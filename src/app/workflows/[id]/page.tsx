@@ -4,7 +4,6 @@ import { motion } from 'framer-motion'
 import { fadeSlideUp, ease } from '@/lib/motion'
 import { LayoutGrid } from 'lucide-react'
 import { useTasks } from '@/hooks/useTasks'
-import type { TaskRecord } from '@/hooks/useTasks'
 import { useWorkflow } from '@/hooks/useWorkflows'
 import { useKanbanSections } from '@/hooks/useKanbanSections'
 import { playCompletionSound } from '@/lib/sounds'
@@ -125,7 +124,7 @@ function WorkflowNotFound() {
 export default function WorkflowPage() {
   const { id } = useParams<{ id: string }>()
   const { workflow, isLoading: workflowLoading } = useWorkflow(id ?? null)
-  const { tasks, toggleComplete, updateTask, createTask } = useTasks()
+  const { tasks, toggleComplete, createTask } = useTasks()
   const { reorderTask } = useKanbanSections()
 
   const [viewOptionsOpen, setViewOptionsOpen] = useState(false)

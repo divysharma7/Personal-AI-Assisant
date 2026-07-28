@@ -42,7 +42,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     try { return localStorage.getItem('laif-sidebar-collapsed') === 'true' }
     catch { return false }
   })
-  const [detailTaskId, setDetailTaskId] = useState<string | null>(null)
+  const [, setDetailTaskId] = useState<string | null>(null)
   const [panelStack, setPanelStack] = useState<string[]>([])
 
   const { focus } = useFocusState()

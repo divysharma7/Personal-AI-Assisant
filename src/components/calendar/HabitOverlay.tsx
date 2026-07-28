@@ -1,7 +1,6 @@
 
 import { Flame } from 'lucide-react'
 import { useHabits, type Habit } from '@/hooks/useHabits'
-import { format } from 'date-fns'
 
 interface HabitOverlayProps {
   /** Whether the user has enabled habits on calendar */

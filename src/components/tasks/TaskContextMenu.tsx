@@ -1,5 +1,5 @@
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import {
   User,
@@ -54,7 +54,7 @@ export default function TaskContextMenu({
   onRemovePriority,
   onAddLabels,
   onMoveToList,
-  onCopyLink,
+  onCopyLink: _onCopyLink,
   onDuplicate,
   onDelete,
 }: TaskContextMenuProps) {
@@ -177,7 +177,7 @@ export default function TaskContextMenu({
         boxShadow: 'var(--shadow-elevated)',
       }}
     >
-      {items.map((item, i) => (
+      {items.map((item, _i) => (
         <div key={item.label}>
           <button
             onClick={() => {

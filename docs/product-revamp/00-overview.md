@@ -8,7 +8,9 @@
 
 LAIF Web is a personal productivity app organized around **Lists**. A List is a rich document that holds prose, headings, lists, images, file attachments, tags, and inline task blocks. Tasks have sub-tasks, due dates, priorities, assignees, comments, and nested detail panels.
 
-**Reference:** Superlist (Mar 2024 design), 66 screens reviewed total. The UX copy and component spec are taken verbatim from those screens; only the brand name changes (Superlist → LAIF) and LAIF's unique features (AI Chat, Pomodoro, Stats, Journal, Habits) are folded in as List types or Tools.
+**Reference:** Superlist (Mar 2024 design), 66 screens reviewed total. The UX copy and component spec are taken verbatim from those screens; only the brand name changes (Superlist → LAIF) and LAIF's unique features (AI Chat, Pomodoro, Stats, Habits) are folded in as List types or Tools.
+
+> **Note:** Journal, Notes, and Contacts features have been **removed from the product**. References to them below and in other phase docs are historical.
 
 **Out of scope:** Mobile. A separate Flutter app covers phones/tablets. On the web, below 1024px viewport, render a "best on desktop" notice rather than a responsive collapse.
 
@@ -73,7 +75,7 @@ Up to 3 right-pane panels can stack (parent → task → sub-task). Earlier pane
 
 ## 3. Core concepts (one-paragraph each)
 
-**List** — a rich document. Has a type (`standard` / `habit` / `journal` / `notes` / `reading` / `contacts`). Body is a block editor; blocks include task, paragraph, heading, bullet/numbered list, divider, tip, image, attachment.
+**List** — a rich document. Has a type (`standard` / `habit` / `reading`). Body is a block editor; blocks include task, paragraph, heading, bullet/numbered list, divider, tip, image, attachment. (~~`journal`~~ / ~~`notes`~~ / ~~`contacts`~~ — types removed)
 
 **Task** — a block that's also a top-level entity. Has title, body (its own block editor), due date, priority, labels, assignee, comments, sub-tasks, completion state.
 
@@ -83,7 +85,7 @@ Up to 3 right-pane panels can stack (parent → task → sub-task). Earlier pane
 
 **Detail panels stack** — opening a sub-task from inside a task's detail panel slides in a new panel; the parent collapses to a vertical strip. Up to 3 stacked panels visible.
 
-**Lists as everything** — Old LAIF's Habits / Journal / Notes / Memories / Contacts become List **types**, not separate pages. Data migrates 1:1 into starter Lists of the matching type.
+**Lists as everything** — Old LAIF's Habits / Memories become List **types**, not separate pages. Data migrates 1:1 into starter Lists of the matching type. (Journal, Notes, Contacts — features removed, no migration needed)
 
 **Tools is the relegated drawer** — Focus Timer, Stats, Calendar live under a collapsible "Tools" section in the sidebar. Default-closed for new users.
 

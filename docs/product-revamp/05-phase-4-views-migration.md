@@ -1,8 +1,10 @@
 # Phase 4 — Views & Migration
 
+> **⚠️ NOTE:** Journal, Notes, and Contacts features have been **removed from the product**. Sections 4.2 (Journal), 4.3 (Notes), and 4.5 (Contacts) below are N/A. Only Habits and Memories migration remain relevant.
+
 > **Load with:** `00-overview.md` + `01-design-system.md` + `99-reference.md` + this file.
 >
-> **Goal:** Finish the surface area. Today/Tasks/AI Chat get the Superlist treatment. Old LAIF features (Habits, Journal, Notes, Memories, Contacts) migrate into List types. Tools section (Pomodoro/Stats/Calendar) gets the visual refresh and moves under `/tools/*`.
+> **Goal:** Finish the surface area. Today/Tasks/AI Chat get the Superlist treatment. Old LAIF features (Habits, Memories) migrate into List types. Tools section (Pomodoro/Stats/Calendar) gets the visual refresh and moves under `/tools/*`.
 >
 > **Effort:** ~6 days.
 >

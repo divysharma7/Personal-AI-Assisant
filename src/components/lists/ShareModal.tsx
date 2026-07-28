@@ -196,7 +196,7 @@ export default function ShareModal({
 
 function CollaboratorRow({
   collaborator,
-  listTitle,
+  listTitle: _listTitle,
   onRemove,
 }: {
   collaborator: ListCollaborator

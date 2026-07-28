@@ -9,9 +9,11 @@
 
 ## 1. What Is LAIF?
 
-LAIF is a **personal productivity web application** — think of it as a Notion + Todoist + Headspace hybrid. It combines task management, calendar, habits tracking, journaling, AI chat assistant, focus/pomodoro timer, and kanban workflows into a single interface.
+LAIF is a **personal productivity web application** — think of it as a Notion + Todoist + Headspace hybrid. It combines task management, calendar, habits tracking, AI chat assistant, focus/pomodoro timer, and kanban workflows into a single interface.
 
-**Target user:** Single user (themselves), managing their daily life — tasks, habits, calendar, journaling, focus sessions.
+> **Note:** Contacts, Notes, and Journal features have been removed from the product. References to them in this document are historical.
+
+**Target user:** Single user (themselves), managing their daily life — tasks, habits, calendar, focus sessions.
 
 **Tech stack:**
 - **Frontend:** Vite + React 18 + TypeScript + Tailwind CSS + React Router v7 + React Query + Framer Motion
@@ -34,11 +36,11 @@ LAIF is a **personal productivity web application** — think of it as a Notion 
 | **Color & Theming** | ✅ 100% | Dark/light themes, ocean-midnight palette, CSS custom properties |
 | **Focus Mode (Pomodoro)** | ✅ 100% | Timer with 3 visual themes (aurora/minimal/liquid), breathing ring, task picker, sound effects |
 | **Habits Strip** | ✅ 100% | Dashboard habits dots, sidebar habits section with check-in toggle, standalone habits page with CRUD |
-| **Daily Journal** | ✅ 95% | Full page with date nav, mini calendar, Tiptap editor, auto-save, checkbox→task creation, sidebar streak badge |
+| **Daily Journal** | ❌ REMOVED | Feature removed from product |
 | **Dashboard** | ✅ 100% | Greeting header, real-time clock, weather (wttr.in), AI Brief widget, today's tasks, habits strip, inbox section |
-| **Notes** | ✅ 100% | Two-panel list + Tiptap editor, search, CRUD, auto-save |
-| **Keyboard Shortcuts** | ✅ 100% | T (new task), E (calendar), J (journal), Ctrl+K (search), Ctrl+N (new task), arrow keys, space/enter |
-| **Sidebar** | ✅ 100% | Collapse persistence via localStorage, badge counts, journal streak, workflows section, habits section |
+| **Notes** | ❌ REMOVED | Feature removed from product |
+| **Keyboard Shortcuts** | ✅ 100% | T (new task), E (calendar), Ctrl+K (search), Ctrl+N (new task), arrow keys, space/enter |
+| **Sidebar** | ✅ 100% | Collapse persistence via localStorage, badge counts, workflows section, habits section |
 | **Page Transitions** | ✅ 100% | CSS-based fade+slide animation (safe, no framer-motion tree destruction) |
 | **Empty States** | ✅ 100% | Added to calendar, focus, statistics, workflows pages |
 | **Calendar** | ✅ 100% | 7 views (Day, 3-Day, Week, Month, Year heatmap, Agenda), drag-to-create, click-to-create, keyboard shortcut `q` |
@@ -51,11 +53,11 @@ LAIF is a **personal productivity web application** — think of it as a Notion 
 
 | Feature | Status | Details |
 |---------|--------|---------|
-| **API Routes** | ✅ 25 modules | Tasks, habits, focus, calendar, events, lists, folders, workflows, kanban, contacts, notes, memories, reminders, list-groups, pomodoro, journal, chat, notifications, push, users, integrations, mcp, alexa, auth, devices |
-| **Mongoose Models** | ✅ 21 models | Task, Habit, Note, Event, User, FocusSession, ChatSession, Workflow, List, ListGroup, JournalEntry, Reminder, Contact, Memory, KanbanSection, PomodoroSession, Device, NotificationSchedule, WebPushSubscription, ExternalCalendarEvent, NoteFolder |
+| **API Routes** | ✅ 22 modules | Tasks, habits, focus, calendar, events, lists, folders, workflows, kanban, memories, reminders, list-groups, pomodoro, chat, notifications, push, users, integrations, mcp, alexa, auth, devices (contacts, notes, journal removed) |
+| **Mongoose Models** | ✅ 17 models | Task, Habit, Event, User, FocusSession, ChatSession, Workflow, List, ListGroup, Reminder, Memory, KanbanSection, PomodoroSession, Device, NotificationSchedule, WebPushSubscription, ExternalCalendarEvent (Note, Contact, JournalEntry, NoteFolder removed) |
 | **Auth Middleware** | ✅ | Cookie/Bearer/API-key resolution, dev bypass with DEV_USER_ID |
 | **Error Handling** | ✅ | Typed AppError hierarchy, Zod error surfacing, request-id logging |
-| **Zod Validation** | ⚠️ 17/22 routes | 5 routes missing validation (memories, users partial, contacts/notes/journal GET) |
+| **Zod Validation** | ⚠️ 14/19 routes | 5 routes missing validation (memories, users partial) |
 | **Notification Service** | ✅ | Timezone-aware scheduling, frequency patterns (daily/weekly/interval), 30-day rolling window |
 | **Streak Service** | ✅ | Consecutive day computation for habits |
 | **Folder Service** | ✅ | Task organization into folders |
@@ -64,16 +66,9 @@ LAIF is a **personal productivity web application** — think of it as a Notion 
 
 ## 3. What's NOT Done (The Real Work)
 
-### 3.1 — CRITICAL: Backend Security Holes
+### 3.1 — ~~CRITICAL: Backend Security Holes~~ RESOLVED (features removed)
 
-**Problem:** Three route files (`notes.ts`, `contacts.ts`, `journal.ts`) query MongoDB **without filtering by userId**. This means if two users exist, User A can read/write User B's notes, contacts, and journal entries.
-
-**Why it matters:** This is a data leak. Even though the app is currently single-user, fixing this is a prerequisite for any multi-user future or production deployment.
-
-**Fix:** Add `{ userId: req.userId! }` to all `find()`, `findOne()`, `updateOne()`, `deleteOne()` calls in these 3 files.
-
-**Effort:** ~1 hour  
-**Risk:** Low — mechanical change, same pattern used in 20+ other route files
+> **Note:** The contacts, notes, and journal routes that had user-scoping issues have been removed from the product. Remaining route files should still be audited for proper userId scoping.
 
 ---
 
@@ -85,7 +80,7 @@ LAIF is a **personal productivity web application** — think of it as a Notion 
 
 **What needs testing (priority order):**
 1. Auth flow (login → cookie → protected route)
-2. CRUD operations for core entities (tasks, habits, notes)
+2. CRUD operations for core entities (tasks, habits)
 3. The 14 AI chat tool functions
 4. Zod validation (reject bad input)
 5. User-scoping (User A can't see User B's data)
@@ -139,9 +134,9 @@ LAIF is a **personal productivity web application** — think of it as a Notion 
 |-------|---------------|
 | `memories.ts` | No validation at all — passes `req.body` directly to Mongoose |
 | `users.ts` | Only validates focus preferences; calendar prefs and MCP prefs are unchecked |
-| `contacts.ts` (GET) | No userId filter — returns ALL contacts |
-| `notes.ts` (GET) | No userId filter — returns ALL notes |
-| `journal.ts` (GET) | No userId filter — returns ALL journal entries |
+| ~~`contacts.ts` (GET)~~ | REMOVED — feature removed from product |
+| ~~`notes.ts` (GET)~~ | REMOVED — feature removed from product |
+| ~~`journal.ts` (GET)~~ | REMOVED — feature removed from product |
 
 **Why it matters:** Without validation, the API silently accepts malformed data. Mongoose drops unknown fields but doesn't enforce nested invariants (e.g., habit frequency must have a valid type).
 
@@ -172,8 +167,8 @@ LAIF is a **personal productivity web application** — think of it as a Notion 
 |------|------|--------|
 | 3.6 | Habits management tab in Settings page | ~1 hour |
 | 3.7 | Monthly heatmap on hover over habit dots | ~2 hours |
-| 4.8 | Show linked tasks inline in journal entries | ~3 hours |
-| 4.10 | Feed journal into AI Brief prompt | Blocked by 3.3 (AI chat) |
+| ~~4.8~~ | ~~Show linked tasks inline in journal entries~~ | REMOVED |
+| ~~4.10~~ | ~~Feed journal into AI Brief prompt~~ | REMOVED |
 
 **Why they matter:** These are polish items. The app is fully functional without them. They improve the experience but aren't blockers.
 
@@ -210,14 +205,10 @@ LAIF is a **personal productivity web application** — think of it as a Notion 
 ## 4. Dependency Map
 
 ```
-3.3 (AI Chat) ──blocks──→ 4.10 (Journal→AI Brief)
+3.3 (AI Chat) ──blocks──→ Frontend AI Brief widget actually working
        │
-       └──blocks──→ Frontend AI Brief widget actually working
-                        │
-3.2 (Tests) ──should run before──→ 3.1 (Security fixes)
-       │                              │
-       └──should run before──→ 3.5 (Zod validation)
-                                    │
+3.2 (Tests) ──should run before──→ 3.5 (Zod validation)
+       │
 3.6 (Notifications) ──independent──→ Can be done anytime
        │
 3.4 (Migration cleanup) ──independent──→ Can be done anytime
@@ -232,7 +223,7 @@ LAIF is a **personal productivity web application** — think of it as a Notion 
 
 | # | Task | Effort | Owner |
 |---|------|--------|-------|
-| 1 | Fix userId scoping on notes, contacts, journal routes | 1h | Backend |
+| ~~1~~ | ~~Fix userId scoping on notes, contacts, journal routes~~ | REMOVED | — |
 | 2 | Add Zod validation to memories + users routes | 1h | Backend |
 | 3 | Write auth flow tests (login → cookie → protected route) | 2h | Backend |
 | 4 | Write CRUD tests for tasks, habits, notes | 3h | Backend |
@@ -257,7 +248,7 @@ LAIF is a **personal productivity web application** — think of it as a Notion 
 | 11 | Add TypeScript interfaces to all API clients | 2h | Frontend |
 | 12 | Add habits tab to Settings page | 1h | Frontend |
 | 13 | Add monthly heatmap on hover for habit dots | 2h | Frontend |
-| 14 | Show linked tasks inline in journal | 3h | Frontend |
+| ~~14~~ | ~~Show linked tasks inline in journal~~ | REMOVED | — |
 
 ### Phase 4: Production Readiness (Day 4-5)
 **Goal:** Deploy-ready
@@ -280,7 +271,7 @@ LAIF is a **personal productivity web application** — think of it as a Notion 
 | MongoDB Atlas costs spike with unindexed queries | Medium | Medium | Add missing indexes (sectionId, scheduledStart) |
 | Habit model confusion (Task-based vs legacy Habit model) | Medium | Medium | Complete TODO #1: legacy habit migration |
 | No CI/CD pipeline — manual deploys | Medium | High | Add GitHub Actions for lint + test + build |
-| Single-user assumption baked into 79 routes | Low | High | Already scoped via userId in most routes; fix remaining 3 |
+| Single-user assumption baked into routes | Low | High | Already scoped via userId in most routes; remaining audited post-feature-removal |
 | Service worker caches stale Next.js paths | Low | Medium | Fix sw.js asset path pattern |
 
 ---
@@ -304,8 +295,8 @@ LAIF is a **personal productivity web application** — think of it as a Notion 
 - [x] User can create, edit, complete, delete tasks
 - [x] User can organize tasks into workflows (kanban boards)
 - [x] User can track habits with daily check-ins and streaks
-- [x] User can write daily journal entries with rich text
-- [x] User can take notes with auto-save
+- ~~[x] User can write daily journal entries with rich text~~ REMOVED
+- ~~[x] User can take notes with auto-save~~ REMOVED
 - [x] User can use focus/pomodoro timer
 - [x] User can view calendar with multiple views
 - [x] User can navigate via keyboard shortcuts
@@ -334,13 +325,13 @@ LAIF is a **personal productivity web application** — think of it as a Notion 
 
 | Metric | Current | Target |
 |--------|---------|--------|
-| PLAN.md completion | 37/41 (90%) | 41/41 (100%) |
+| PLAN.md completion | 35/39 (90%) | 39/39 (100%) |
 | Frontend build | ✅ Passes (1.3s) | ✅ Passes |
 | TypeScript errors | 0 | 0 |
 | Frontend tests | 209 passing, 14 files | 209+ (add component tests) |
 | Backend tests | 0 files | 30+ test files |
-| Zod validation coverage | 17/22 routes (77%) | 22/22 routes (100%) |
-| User-scoped routes | 19/22 (86%) | 22/22 (100%) |
+| Zod validation coverage | 14/19 routes (74%) | 19/19 routes (100%) |
+| User-scoped routes | 16/19 (84%) | 19/19 (100%) |
 | Dead dependencies | 2 (next, eslint-config-next) | 0 |
 | `any` types in API clients | 14 files | 0 files |
 

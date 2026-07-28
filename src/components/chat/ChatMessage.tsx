@@ -1,7 +1,7 @@
 
 import { motion } from 'framer-motion'
 import { Search, CheckCircle2, Plus, AlertCircle, Bot } from 'lucide-react'
-import { fadeSlideUp, ease, motionTokens } from '@/lib/motion'
+import { ease, motionTokens } from '@/lib/motion'
 
 export interface ChatStep {
   icon: 'search' | 'found' | 'created' | 'warning'

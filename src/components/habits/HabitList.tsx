@@ -252,7 +252,7 @@ export default function HabitList({
 function WeeklyStrip({
   last7,
   habits,
-  todayCompletedCount,
+  todayCompletedCount: _todayCompletedCount,
 }: {
   last7: { dateStr: string; dayName: string; dateNum: number; isToday: boolean }[]
   habits: Habit[]

@@ -43,7 +43,7 @@ export default function CalendarHeader({
   onViewChange,
   onNavigate,
   onQuickAdd,
-  onToggleSidebar,
+  onToggleSidebar: _onToggleSidebar,
   onOpenViewOptions,
   onOpenArrangeTasks,
 }: CalendarHeaderProps & {

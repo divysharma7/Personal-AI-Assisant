@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Settings, PanelRight, Plus, ImageIcon, Search } from 'lucide-react'
-import { fade, ease, buttonPress } from '@/lib/motion'
+import { buttonPress } from '@/lib/motion'
 
 const PRESET_IMAGES = [
   'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=400&h=600&fit=crop',

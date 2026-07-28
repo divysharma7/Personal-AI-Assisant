@@ -1,7 +1,7 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Filter, ChevronDown, ChevronRight, Search, Calendar, XCircle } from 'lucide-react'
+import { X, ChevronDown, ChevronRight, Search, Calendar, XCircle } from 'lucide-react'
 import { useTasks } from '@/hooks/useTasks'
 import type { TaskRecord } from '@/hooks/useTasks'
 import { collapse, ease, buttonPress } from '@/lib/motion'

@@ -10,7 +10,6 @@ import {
 import CalendarBlock from './CalendarBlock'
 import DraggableBlock from './DraggableBlock'
 import DroppableSlot from './DroppableSlot'
-import CurrentTimeLine from './CurrentTimeLine'
 // CalendarEmpty removed — always show time grid so users can click slots
 import CapacityBar from './CapacityBar'
 import HiddenHoursDivider from './week/HiddenHoursDivider'

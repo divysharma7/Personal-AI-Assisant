@@ -1,7 +1,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, MoreVertical } from 'lucide-react'
-import { slideFromRight, spring, ease } from '@/lib/motion'
+import { spring, ease } from '@/lib/motion'
 import type { TaskRecord } from '@/hooks/useTasks'
 import TaskDetailPanel from './TaskDetailPanel'
 

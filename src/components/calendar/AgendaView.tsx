@@ -2,7 +2,7 @@
 import { useMemo, useState, useCallback, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { fadeSlideUp, ease, stagger } from '@/lib/motion'
-import { isSameDay, isToday, isPast, formatDuration } from './calendarUtils'
+import { isSameDay, isToday, isPast } from './calendarUtils'
 import { hexToRgba } from '@/lib/colorUtils'
 import type { CalendarEvent } from './types'
 

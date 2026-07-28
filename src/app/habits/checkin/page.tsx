@@ -1,7 +1,7 @@
 
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Check, Minus, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, Plus } from 'lucide-react'
 import { fadeSlideUp, stagger, buttonPress, ease, checkBounce } from '@/lib/motion'
 import { useHabits } from '@/hooks/useHabits'
 import type { Habit } from '@/hooks/useHabits'

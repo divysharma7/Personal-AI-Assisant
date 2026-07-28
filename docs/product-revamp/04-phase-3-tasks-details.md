@@ -270,4 +270,4 @@ Master list in `99-reference.md`.
 
 ---
 
-**End of phase 3.** Next: `05-phase-4-views-migration.md` for Today/Tasks/AI Chat views and migrating Habits/Journal/etc to List types.
+**End of phase 3.** Next: `05-phase-4-views-migration.md` for Today/Tasks/AI Chat views and migrating Habits/Memories to List types. (Journal, Notes, Contacts — features removed, no migration needed)
