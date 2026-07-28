@@ -1,4 +1,3 @@
-'use client'
 import { env } from '@/config/env'
 const API_BASE = env.VITE_API_URL
 
@@ -12,7 +11,6 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { useNavigate } from 'react-router-dom'
 
 export interface FocusState {
   isActive: boolean
@@ -41,7 +39,6 @@ const FocusContext = createContext<FocusContextValue | undefined>(undefined)
 
 export default function FocusProvider({ children }: { children: ReactNode }) {
   const [focus, setFocus] = useState<FocusState>(DEFAULT_STATE)
-  const navigate = useNavigate()
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -137,13 +134,13 @@ export default function FocusProvider({ children }: { children: ReactNode }) {
             totalSeconds: 1500,
             theme: 'aurora',
           })
-          navigate('/focus')
+          window.location.href = '/focus'
         }
       } catch {
         // Failed silently
       }
     },
-    [navigate]
+    []
   )
 
   return (

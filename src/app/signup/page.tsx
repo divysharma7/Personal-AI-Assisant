@@ -1,4 +1,3 @@
-'use client'
 import { env } from '@/config/env'
 const API_BASE = env.VITE_API_URL
 

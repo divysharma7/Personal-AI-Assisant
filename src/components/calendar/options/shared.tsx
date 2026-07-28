@@ -1,4 +1,3 @@
-'use client'
 
 import { HelpCircle } from 'lucide-react'
 import { motionTokens, cssTransition } from '@/lib/motion'

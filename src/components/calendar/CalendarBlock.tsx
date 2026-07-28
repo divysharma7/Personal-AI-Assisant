@@ -1,4 +1,3 @@
-'use client'
 
 import { Link as LinkIcon } from 'lucide-react'
 import { formatDuration } from './calendarUtils'

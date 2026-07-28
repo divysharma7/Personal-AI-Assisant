@@ -59,6 +59,7 @@ export function useWeekInteractions(
 
   const isDragCreating = useRef(false)
   const isResizing = useRef(false)
+  const dragStartPos = useRef<{ x: number; y: number } | null>(null)
 
   /* -- Auto-scroll to current time on mount -- */
   useEffect(() => {
@@ -132,7 +133,8 @@ export function useWeekInteractions(
     const target = e.target as HTMLElement
     if (target.closest('.cal-block') || target.closest('[data-draggable]')) return
 
-    isDragCreating.current = true
+    // Record starting position but don't set isDragCreating yet — wait for actual movement
+    dragStartPos.current = { x: e.clientX, y: e.clientY }
     setDragCreate({
       colIndex,
       startRow: actualRow,
@@ -145,7 +147,20 @@ export function useWeekInteractions(
   useEffect(() => {
     if (!dragCreate) return
 
+    const DRAG_THRESHOLD = 5 // pixels — only start drag-create after this much movement
+
     const handleMouseMove = (e: MouseEvent) => {
+      // Check if we've moved enough to start drag-creating
+      if (!isDragCreating.current && dragStartPos.current) {
+        const dx = Math.abs(e.clientX - dragStartPos.current.x)
+        const dy = Math.abs(e.clientY - dragStartPos.current.y)
+        if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
+          isDragCreating.current = true
+        } else {
+          return // Not enough movement yet — don't update drag state
+        }
+      }
+
       const container = scrollContainerRef.current
       if (!container) return
 
@@ -190,6 +205,7 @@ export function useWeekInteractions(
         }
       }
       setDragCreate(null)
+      dragStartPos.current = null
       setTimeout(() => { isDragCreating.current = false }, 100)
     }
 

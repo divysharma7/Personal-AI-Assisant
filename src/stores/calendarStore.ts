@@ -11,9 +11,6 @@ interface CalendarState {
   navigationDirection: number
   // Arrange Tasks panel
   arrangePanelOpen: boolean
-  // Split View
-  splitViewOpen: boolean
-  splitViewListId: string | null
   // Hidden hours boundaries (hours 0-based)
   /** First visible hour — hours before this are hidden. Default 0 (nothing hidden). */
   hiddenHoursStart: number
@@ -28,8 +25,6 @@ interface CalendarState {
   clearSelection: () => void
   navigateBy: (direction: -1 | 0 | 1) => void
   setArrangePanelOpen: (open: boolean) => void
-  setSplitViewOpen: (open: boolean) => void
-  setSplitViewListId: (listId: string | null) => void
   setHiddenHoursStart: (hour: number) => void
   setHiddenHoursEnd: (hour: number) => void
 }
@@ -42,8 +37,6 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
   selectedTaskIds: [],
   navigationDirection: 1,
   arrangePanelOpen: false,
-  splitViewOpen: false,
-  splitViewListId: null,
   hiddenHoursStart: 7,
   hiddenHoursEnd: 21,
 
@@ -92,8 +85,6 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
     set({ currentDate: d, navigationDirection: direction })
   },
   setArrangePanelOpen: (open) => set({ arrangePanelOpen: open }),
-  setSplitViewOpen: (open) => set({ splitViewOpen: open }),
-  setSplitViewListId: (listId) => set({ splitViewListId: listId }),
   setHiddenHoursStart: (hour) => set({ hiddenHoursStart: Math.max(0, Math.min(12, hour)) }),
   setHiddenHoursEnd: (hour) => set({ hiddenHoursEnd: Math.max(12, Math.min(24, hour)) }),
 }))

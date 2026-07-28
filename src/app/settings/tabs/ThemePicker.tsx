@@ -1,4 +1,3 @@
-'use client'
 
 import { copy } from '@/lib/copy'
 import { type Theme } from '@/contexts/ThemeContext'

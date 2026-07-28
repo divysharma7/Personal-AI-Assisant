@@ -35,24 +35,12 @@ Calm, focused, alive. Not a task manager. A thinking partner.
 - [ ] **3.3** Create `/api/habits/log` — log a completion for today
 - [x] **3.4** Create `HabitsWidget` — row of habit dots, click to toggle today's completion (habits strip in dashboard + sidebar HabitsSection)
 - [x] **3.5** Add HabitsWidget to dashboard (habits strip on "/" dashboard page)
-- [ ] **3.6** Add Habits management to Settings page
-- [ ] **3.7** Show a small monthly heatmap on hover over each habit dot
+- [x] **3.6** Add Habits management to Settings page
+- [x] **3.7** Show a small monthly heatmap on hover over each habit dot
 
 ---
 
-## 4. Daily Journal
-
-- [x] **4.1** Create `JournalEntry` model — date (unique per day), content (Tiptap JSON), createdAt, updatedAt
-- [x] **4.2** Create `/api/journal` routes — GET by date, PUT (upsert by date)
-- [x] **4.3** Create `/journal` page with date navigation (prev/next day, today button)
-- [x] **4.4** Tiptap rich editor — headings, lists, blockquote, code, task list
-- [x] **4.5** Auto-save on pause (debounced 1.5s, flush on unmount)
-- [x] **4.6** Embedded todos via Tiptap TaskList — native checkboxes in prose
-- [x] **4.7** When a `[ ]` checkbox is checked, create a real Task in the system
-- [ ] **4.8** Show linked tasks inline in journal (tasks created from this entry)
-- [x] **4.9** Add Journal link to sidebar navigation
-- [ ] **4.10** Feed last 3 days of journal entries into the AI Brief prompt for richer context
-- [x] **4.11** Journal entry count / streak shown in sidebar
+## 4. ~~Daily Journal~~ — REMOVED (not needed)
 
 ---
 
@@ -77,7 +65,7 @@ Calm, focused, alive. Not a task manager. A thinking partner.
 
 - [x] **7.1** Page transitions via CSS animation (safe, no AnimatePresence)
 - [x] **7.2** Empty states with helpful prompts instead of blank panels
-- [x] **7.3** Keyboard shortcut: `T` → add task, `E` → add event, `J` → open journal
+- [x] **7.3** Keyboard shortcut: `T` → add task, `E` → add event
 - [x] **7.4** Collapse sidebar remembers state across sessions (localStorage)
 - [x] **7.5** AI Brief shows "last updated at X" timestamp so you know how fresh it is
 
@@ -89,9 +77,7 @@ Calm, focused, alive. Not a task manager. A thinking partner.
 1.1 → 1.7   Color shift          (do all at once, ~1 hour)
 2.1 → 2.5   Focus Mode           (2–3 hours)
 3.1 → 3.6   Habits strip         (half day)
-4.1 → 4.9   Journal core         (1–2 days)
 5.1 → 5.4   Dashboard tweaks     (alongside above)
-4.10        AI Brief + journal   (after journal works)
 7.x         Polish               (sprinkle throughout)
 6.x         Notes                (decide after journal)
 ```

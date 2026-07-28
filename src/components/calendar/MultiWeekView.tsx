@@ -1,4 +1,3 @@
-'use client'
 
 import { useMemo } from 'react'
 import { isSameDay, isToday, isPast, startOfWeek } from './calendarUtils'

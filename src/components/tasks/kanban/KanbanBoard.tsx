@@ -1,4 +1,3 @@
-'use client'
 
 import { useCallback, useMemo, useState } from 'react'
 import {
@@ -37,7 +36,7 @@ export interface KanbanBoardProps {
   onMoveTask: (taskId: string, toColumnId: string, newOrder: number) => void
   onToggleTask: (id: string) => void
   onOpenDetail: (id: string) => void
-  onAddTask: (columnId: string) => void
+  onAddTask: (columnId: string, title: string) => void
   getSubTaskCount: (id: string) => { completed: number; total: number } | undefined
   showColumnMenus?: boolean
   onRenameColumn?: (id: string) => void

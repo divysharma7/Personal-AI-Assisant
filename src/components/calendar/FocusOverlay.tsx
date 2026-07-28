@@ -1,4 +1,3 @@
-'use client'
 
 import { useState } from 'react'
 import { useFocusHistory, type FocusSession } from '@/hooks/useFocus'

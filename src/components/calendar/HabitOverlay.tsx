@@ -1,4 +1,3 @@
-'use client'
 
 import { Flame } from 'lucide-react'
 import { useHabits, type Habit } from '@/hooks/useHabits'

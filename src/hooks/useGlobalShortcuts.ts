@@ -31,12 +31,6 @@ export function useGlobalShortcuts() {
         navigate('/calendar')
         break
 
-      case 'j':
-      case 'J':
-        e.preventDefault()
-        navigate('/journal')
-        break
-
       case 'k':
         if (e.ctrlKey || e.metaKey) {
           e.preventDefault()

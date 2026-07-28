@@ -1,4 +1,3 @@
-'use client'
 
 /** Priority bars SVG — filled rectangles */
 export default function PriorityBars({ color, size = 16 }: { color: string; size?: number }) {

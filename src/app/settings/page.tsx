@@ -1,4 +1,3 @@
-'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -17,8 +16,9 @@ import ShortcutsTab from './tabs/ShortcutsTab'
 import FeaturesTab from './tabs/FeaturesTab'
 import IntegrationsTab from './tabs/IntegrationsTab'
 import NotificationsTab from './tabs/NotificationsTab'
+import HabitsTab from './tabs/HabitsTab'
 
-type SettingsTab = 'profile' | 'datetime' | 'calendar-prefs' | 'shortcuts' | 'features' | 'integrations' | 'notifications' | 'collaborators'
+type SettingsTab = 'profile' | 'datetime' | 'calendar-prefs' | 'shortcuts' | 'features' | 'integrations' | 'notifications' | 'collaborators' | 'habits'
 
 const TABS: { key: SettingsTab; label: string }[] = [
   { key: 'profile', label: copy.settings.tabs.profile },
@@ -29,6 +29,7 @@ const TABS: { key: SettingsTab; label: string }[] = [
   { key: 'integrations', label: copy.settings.tabs.integrations },
   { key: 'notifications', label: copy.settings.tabs.notifications },
   { key: 'collaborators', label: copy.settings.tabs.collaborators },
+  { key: 'habits', label: 'Habits' },
 ]
 
 export default function SettingsPage() {
@@ -233,6 +234,8 @@ export default function SettingsPage() {
               </p>
             </motion.div>
           )}
+
+          {activeTab === 'habits' && <HabitsTab />}
         </AnimatePresence>
       </div>
     </div>

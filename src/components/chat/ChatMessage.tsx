@@ -1,4 +1,3 @@
-'use client'
 
 import { motion } from 'framer-motion'
 import { Search, CheckCircle2, Plus, AlertCircle, Bot } from 'lucide-react'

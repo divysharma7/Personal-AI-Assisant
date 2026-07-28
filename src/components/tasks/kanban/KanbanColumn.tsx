@@ -1,6 +1,5 @@
-'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef, useCallback } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { ChevronDown, ChevronRight, Plus, MoreHorizontal } from 'lucide-react'
@@ -23,7 +22,7 @@ interface KanbanColumnProps {
   completedTasks?: TaskRecord[]
   onToggleTask: (id: string) => void
   onOpenDetail: (id: string) => void
-  onAddTask: (columnId: string) => void
+  onAddTask: (columnId: string, title: string) => void
   getSubTaskCount: (id: string) => { completed: number; total: number } | undefined
   showColumnMenu?: boolean
   onRenameColumn?: (id: string) => void
@@ -58,6 +57,32 @@ function KanbanColumn({
   const kanbanSize = useSettingsStore((s) => s.kanbanSize)
   const showKanbanInputBox = useSettingsStore((s) => s.showKanbanInputBox)
   const sizeConfig = KANBAN_SIZE_MAP[kanbanSize]
+
+  // Inline add-task input state
+  const [addingTask, setAddingTask] = useState(false)
+  const [newTaskTitle, setNewTaskTitle] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleStartAdd = useCallback(() => {
+    setAddingTask(true)
+    setNewTaskTitle('')
+    // Focus the input on next tick after it mounts
+    requestAnimationFrame(() => inputRef.current?.focus())
+  }, [])
+
+  const handleConfirmAdd = useCallback(() => {
+    const title = newTaskTitle.trim()
+    if (title) {
+      onAddTask(id, title)
+    }
+    setAddingTask(false)
+    setNewTaskTitle('')
+  }, [newTaskTitle, onAddTask, id])
+
+  const handleCancelAdd = useCallback(() => {
+    setAddingTask(false)
+    setNewTaskTitle('')
+  }, [])
 
   const { setNodeRef } = useDroppable({
     id: `column-${id}`,
@@ -132,7 +157,7 @@ function KanbanColumn({
 
         {/* Add button */}
         <button
-          onClick={() => onAddTask(id)}
+          onClick={handleStartAdd}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -293,36 +318,68 @@ function KanbanColumn({
         </div>
       )}
 
-      {/* ── Footer: add task button ── */}
-      {showKanbanInputBox && (
+      {/* ── Footer: add task button / inline input ── */}
+      {(showKanbanInputBox || addingTask) && (
         <div style={{ padding: '4px 8px 12px' }}>
-          <button
-            onClick={() => onAddTask(id)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              width: '100%',
-              padding: '8px 8px',
-              fontSize: 13,
-              fontWeight: 500,
-              color: 'var(--text-muted)',
-              background: 'transparent',
-              border: 'none',
-              borderRadius: 8,
-              cursor: 'pointer',
-              transition: cssTransition.fast,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-            }}
-          >
-            <Plus size={14} strokeWidth={2} />
-            Add task
-          </button>
+          {addingTask ? (
+            <input
+              ref={inputRef}
+              type="text"
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleConfirmAdd()
+                } else if (e.key === 'Escape') {
+                  e.preventDefault()
+                  handleCancelAdd()
+                }
+              }}
+              onBlur={handleConfirmAdd}
+              placeholder="Task title…"
+              style={{
+                width: '100%',
+                padding: '8px 10px',
+                fontSize: 13,
+                fontWeight: 500,
+                color: 'var(--text-primary)',
+                background: 'var(--overlay-1, rgba(255,255,255,0.06))',
+                border: '1px solid var(--accent, #6366f1)',
+                borderRadius: 8,
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+          ) : (
+            <button
+              onClick={handleStartAdd}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                width: '100%',
+                padding: '8px 8px',
+                fontSize: 13,
+                fontWeight: 500,
+                color: 'var(--text-muted)',
+                background: 'transparent',
+                border: 'none',
+                borderRadius: 8,
+                cursor: 'pointer',
+                transition: cssTransition.fast,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+              }}
+            >
+              <Plus size={14} strokeWidth={2} />
+              Add task
+            </button>
+          )}
         </div>
       )}
     </div>

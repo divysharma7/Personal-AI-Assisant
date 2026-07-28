@@ -1,4 +1,3 @@
-'use client'
 
 import { isToday } from '../calendarUtils'
 import { hexToRgba } from '@/lib/colorUtils'

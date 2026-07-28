@@ -1,4 +1,3 @@
-'use client'
 
 import { useMemo, useState, useCallback } from 'react'
 import { getMonthGrid, isSameDay, isToday, isPast } from './calendarUtils'

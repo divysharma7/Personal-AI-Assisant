@@ -1,4 +1,3 @@
-'use client'
 
 import { type ReactNode, useCallback, useRef, useState } from 'react'
 import { useDraggable } from '@dnd-kit/core'

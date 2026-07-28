@@ -1,5 +1,3 @@
-'use client'
-
 import { useCallback, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -216,9 +214,9 @@ export default function WorkflowPage() {
 
   // ── Add task handler ──
   const handleAddTask = useCallback(
-    async (columnId: string) => {
+    async (columnId: string, title: string) => {
       await createTask({
-        title: 'New task',
+        title,
         priority: 'medium',
         status: 'todo',
         sectionId: columnId,

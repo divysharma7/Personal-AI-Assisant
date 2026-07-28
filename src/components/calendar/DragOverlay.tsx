@@ -1,4 +1,3 @@
-'use client'
 
 import { DragOverlay as DndKitDragOverlay } from '@dnd-kit/core'
 import { useCalendarDnd } from './CalendarDndProvider'

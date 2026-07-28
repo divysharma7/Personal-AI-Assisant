@@ -1,4 +1,3 @@
-'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useEditor, EditorContent, type JSONContent } from '@tiptap/react'

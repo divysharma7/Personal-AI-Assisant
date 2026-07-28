@@ -1,4 +1,3 @@
-'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, MoreVertical } from 'lucide-react'

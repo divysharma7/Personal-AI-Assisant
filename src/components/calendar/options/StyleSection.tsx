@@ -1,4 +1,3 @@
-'use client'
 
 import { Check } from 'lucide-react'
 import { cssTransition } from '@/lib/motion'

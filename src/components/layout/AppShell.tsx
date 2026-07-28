@@ -1,4 +1,3 @@
-'use client'
 
 import { useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'

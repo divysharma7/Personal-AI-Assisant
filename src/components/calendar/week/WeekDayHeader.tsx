@@ -1,4 +1,3 @@
-'use client'
 
 import { isToday } from '../calendarUtils'
 import type { CalendarEvent } from '../types'

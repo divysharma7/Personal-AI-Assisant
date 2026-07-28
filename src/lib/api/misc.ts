@@ -1,16 +1,4 @@
 import { http } from './client'
-export const contacts = {
-  list: () => http.get<any[]>('/api/contacts'),
-  create: (data: any) => http.post<any>('/api/contacts', data),
-  update: (id: string, data: any) => http.put<any>(`/api/contacts/${id}`, data),
-  delete: (id: string) => http.del<any>(`/api/contacts/${id}`),
-}
-export const notes = {
-  list: () => http.get<any[]>('/api/notes'),
-  create: (data: any) => http.post<any>('/api/notes', data),
-  update: (id: string, data: any) => http.put<any>(`/api/notes/${id}`, data),
-  delete: (id: string) => http.del<any>(`/api/notes/${id}`),
-}
 export const memories = {
   list: () => http.get<any[]>('/api/memories'),
   create: (data: any) => http.post<any>('/api/memories', data),
@@ -40,11 +28,6 @@ export const pomodoro = {
   list: () => http.get<any[]>('/api/pomodoro'),
   create: (data: any) => http.post<any>('/api/pomodoro', data),
   update: (id: string, data: any) => http.patch<any>(`/api/pomodoro/${id}`, data),
-}
-export const journal = {
-  get: (date: string) => http.get<any>(`/api/journal?date=${date}`),
-  list: () => http.get<any[]>('/api/journal'),
-  save: (data: { date: string; content: string }) => http.put<any>('/api/journal', data),
 }
 export const chatSessions = {
   list: () => http.get<any[]>('/api/chat/sessions'),

@@ -47,15 +47,6 @@ export interface Reminder {
   createdAt?: string
 }
 
-export interface Note {
-  _id?: string
-  content: string
-  color: string
-  position: { x: number; y: number }
-  size?: { w: number; h: number }
-  createdAt?: string
-}
-
 export type AnyItem = CalendarEvent | Task | Reminder
 
 // ─── Memory ──────────────────────────────────────────────────────────────────
@@ -77,20 +68,6 @@ export interface Memory {
   createdAt?: string
 }
 
-// ─── Contact ──────────────────────────────────────────────────────────────────
-export interface Contact {
-  _id?: string
-  name: string
-  role?: string       // "Electrician", "ISP Helper", "Neighbour", etc.
-  phone?: string
-  email?: string
-  company?: string
-  address?: string
-  notes?: string
-  tags?: string[]
-  createdAt?: string
-}
-
 export type StepIcon = 'search' | 'found' | 'warn' | 'clash' | 'add' | 'done' | 'err'
 
 export interface StepItem {
@@ -99,18 +76,11 @@ export interface StepItem {
   text: string
 }
 
-export interface ContactRef {
-  id: string
-  name: string
-  role?: string
-}
-
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
   content: string
   steps?: StepItem[]
-  contactRefs?: ContactRef[]
   timestamp: Date
 }
 
@@ -119,4 +89,3 @@ export type StreamChunk =
   | { t: 'd'; text: string }
   | { t: 'refresh' }
   | { t: 'err'; text: string }
-  | { t: 'contact_ref'; id: string; name: string; role?: string }

@@ -11,7 +11,7 @@ export { workflows } from './workflows'
 export { settings } from './settings'
 export { integrations } from './integrations'
 export {
-  contacts, notes, memories, reminders,
+  memories, reminders,
   kanbanSections, listGroups, pomodoro,
-  journal, chatSessions, push, devices,
+  chatSessions, push, devices,
 } from './misc'

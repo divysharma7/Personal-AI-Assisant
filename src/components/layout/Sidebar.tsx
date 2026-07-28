@@ -1,4 +1,3 @@
-'use client'
 import { env } from '@/config/env'
 const API_BASE = env.VITE_API_URL
 
@@ -23,8 +22,6 @@ import {
   BarChart3,
   Target,
   MessageCircle,
-  BookOpen,
-  StickyNote,
 } from 'lucide-react'
 import { collapse, fadeSlideDown, buttonPress, ease, motionTokens, springs } from '@/lib/motion'
 import { useTasks } from '@/hooks/useTasks'
@@ -44,15 +41,53 @@ const FEATURES_NAV = [
   { label: 'Habits', icon: Flame, href: '/habits' },
   { label: 'Calendar', icon: Calendar, href: '/calendar' },
   { label: 'Focus', icon: Target, href: '/focus' },
-  { label: 'Journal', icon: BookOpen, href: '/journal' },
-  { label: 'Notes', icon: StickyNote, href: '/notes' },
   { label: 'Statistics', icon: BarChart3, href: '/statistics' },
   { label: 'Chat', icon: MessageCircle, href: '/chat' },
 ] as const
 
 /* ── Habits inline section ── */
+function HabitHeatmapTooltip({ habit, color }: { habit: TaskRecord; color: string }) {
+  const days = useMemo(() => {
+    const result: { date: string; achieved: boolean }[] = []
+    const today = new Date()
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today)
+      d.setDate(d.getDate() - i)
+      const dateStr = d.toISOString().split('T')[0]
+      const achieved = habit.completions?.some((c) => c.date?.startsWith(dateStr) && c.status === 'achieved') ?? false
+      result.push({ date: dateStr, achieved })
+    }
+    return result
+  }, [habit.completions])
+
+  return (
+    <div
+      style={{
+        position: 'absolute', left: '100%', top: '50%', transform: 'translateY(-50%)',
+        marginLeft: 8, padding: '8px 10px', borderRadius: 10,
+        backgroundColor: 'var(--bg-pane-2, #1a1a2e)', border: '1px solid var(--border)',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.2)', zIndex: 50,
+        display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 2,
+      }}
+    >
+      {days.map((day) => (
+        <div
+          key={day.date}
+          title={day.date}
+          style={{
+            width: 8, height: 8, borderRadius: 2,
+            backgroundColor: day.achieved ? color : 'var(--overlay-2, rgba(108,108,158,0.1))',
+            transition: 'background-color 150ms ease',
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
 function HabitsSection({ tasks }: { tasks: TaskRecord[] }) {
   const [open, setOpen] = useState(true)
+  const [hoveredHabit, setHoveredHabit] = useState<string | null>(null)
   const navigate = useNavigate()
   const habits = useMemo(() => tasks.filter((t) => t.isHabit && t.status !== 'dropped'), [tasks])
   const { updateTask } = useTasks()
@@ -115,14 +150,24 @@ function HabitsSection({ tasks }: { tasks: TaskRecord[] }) {
               return (
                 <div
                   key={habit._id}
-                  className="flex items-center gap-2 rounded-lg px-2.5 py-1 text-[13px] font-medium cursor-pointer"
+                  className="flex items-center gap-2 rounded-lg px-2.5 py-1 text-[13px] font-medium cursor-pointer relative"
                   style={{ color: 'var(--text-primary)' }}
                   onClick={() => navigate(`/habits?selected=${habit._id}`)}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))'
+                    setHoveredHabit(habit._id)
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                    setHoveredHabit(null)
+                  }}
                 >
                   <span style={{ fontSize: 14, lineHeight: 1 }}>{icon}</span>
                   <span className="flex-1 truncate">{habit.title}</span>
+                  {/* Heatmap tooltip on hover */}
+                  {hoveredHabit === habit._id && (
+                    <HabitHeatmapTooltip habit={habit} color={color} />
+                  )}
                   {/* Today check-in toggle */}
                   <button
                     onClick={(e) => { e.stopPropagation(); toggleCheckin(habit) }}
@@ -244,7 +289,6 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   const [avatarOpen, setAvatarOpen] = useState(false)
   const [fabOpen, setFabOpen] = useState(false)
   const [userInitial, setUserInitial] = useState('U')
-  const [journalStreak, setJournalStreak] = useState(0)
   const popoverRef = useRef<HTMLDivElement>(null)
   const fabPopoverRef = useRef<HTMLDivElement>(null)
 
@@ -266,27 +310,6 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
       .then((data) => {
         if (data?.name) setUserInitial(data.name.charAt(0).toUpperCase())
         else if (data?.username) setUserInitial(data.username.charAt(0).toUpperCase())
-      })
-      .catch(() => {})
-  }, [])
-
-  // Journal streak computation
-  useEffect(() => {
-    fetch(`${API_BASE}/api/journal`)
-      .then((r) => (r.ok ? r.json() : []))
-      .then((entries: { date?: string }[]) => {
-        if (!entries?.length) { setJournalStreak(0); return }
-        const dates = new Set(entries.map((e) => e.date?.split('T')[0]).filter(Boolean))
-        let streak = 0
-        const today = new Date()
-        for (let i = 0; i < 365; i++) {
-          const d = new Date(today)
-          d.setDate(d.getDate() - i)
-          const key = d.toISOString().split('T')[0]
-          if (dates.has(key)) streak++
-          else if (i > 0) break
-        }
-        setJournalStreak(streak)
       })
       .catch(() => {})
   }, [])
@@ -520,14 +543,6 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
               >
                 <item.icon size={16} strokeWidth={1.5} style={{ color: active ? 'var(--accent)' : 'var(--text-muted)' }} />
                 <span className="truncate">{item.label}</span>
-                {item.href === '/journal' && journalStreak > 0 && (
-                  <span
-                    className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[11px] font-medium"
-                    style={{ backgroundColor: 'var(--overlay-2, var(--bg-hover))', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}
-                  >
-                    {journalStreak}
-                  </span>
-                )}
               </Link>
             )
           })}

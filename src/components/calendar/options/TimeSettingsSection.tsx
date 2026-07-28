@@ -1,4 +1,3 @@
-'use client'
 
 import type { ViewOptions } from '../ViewOptionsModal'
 import { Toggle, OptionRow, RadioGroup, SectionTitle, HourSlider } from './shared'

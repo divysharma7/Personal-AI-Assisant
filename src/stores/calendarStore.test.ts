@@ -17,8 +17,6 @@ describe('calendarStore', () => {
     expect(s.selectedTaskIds).toEqual([])
     expect(s.allDayBarHeight).toBe(60)
     expect(s.arrangePanelOpen).toBe(false)
-    expect(s.splitViewOpen).toBe(false)
-    expect(s.splitViewListId).toBeNull()
   })
 
   // ── setViewMode ────────────────────────────────────────────────────────────
