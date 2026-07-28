@@ -36,14 +36,14 @@ const SESSIONS_KEY = ['chat-sessions'] as const
 // ── Fetchers ────────────────────────────────────────────────────────────────
 
 async function fetchSessions(): Promise<ChatSessionSummary[]> {
-  const res = await fetch(`${API_BASE}/api/chat/sessions`)
+  const res = await fetch(`${API_BASE}/api/chat/sessions`, { credentials: 'include' })
   if (!res.ok) throw new Error('Failed to fetch chat sessions')
   const data = await res.json()
   return data.sessions
 }
 
 async function fetchSession(id: string): Promise<ChatSessionFull> {
-  const res = await fetch(`${API_BASE}/api/chat/sessions/${id}`)
+  const res = await fetch(`${API_BASE}/api/chat/sessions/${id}`, { credentials: 'include' })
   if (!res.ok) throw new Error('Failed to fetch chat session')
   return res.json()
 }
@@ -78,6 +78,7 @@ export function useCreateChatSession() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title }),
+        credentials: 'include',
       })
       if (!res.ok) throw new Error('Failed to create chat session')
       return res.json() as Promise<ChatSessionSummary>
@@ -100,7 +101,7 @@ export function useDeleteChatSession() {
 
   const mutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`${API_BASE}/api/chat/sessions/${id}`, { method: 'DELETE' })
+      const res = await fetch(`${API_BASE}/api/chat/sessions/${id}`, { method: 'DELETE', credentials: 'include' })
       if (!res.ok) throw new Error('Failed to delete chat session')
     },
     onMutate: async (id) => {
@@ -138,6 +139,7 @@ export function useAppendMessages() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages }),
+        credentials: 'include',
       })
       if (!res.ok) throw new Error('Failed to append messages')
       return res.json() as Promise<ChatSessionFull>

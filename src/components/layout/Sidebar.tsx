@@ -305,7 +305,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   }, [tasks])
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/auth/me`)
+    fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.name) setUserInitial(data.name.charAt(0).toUpperCase())
@@ -324,7 +324,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   }, [avatarOpen, fabOpen])
 
   const handleSignOut = useCallback(async () => {
-    await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST' })
+    await fetch(`${API_BASE}/api/auth/logout`, { method: 'POST', credentials: 'include' })
     navigate('/login')
   }, [navigate])
 

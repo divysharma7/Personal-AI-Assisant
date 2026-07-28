@@ -30,13 +30,13 @@ export interface UserProfile {
 }
 
 async function fetchCalendarPreferences(): Promise<CalendarPreferences> {
-  const res = await fetch(`${API_BASE}/api/users/me/calendar-preferences`)
+  const res = await fetch(`${API_BASE}/api/users/me/calendar-preferences`, { credentials: 'include' })
   if (!res.ok) throw new Error('Failed to fetch settings')
   return res.json()
 }
 
 async function fetchUserProfile(): Promise<UserProfile> {
-  const res = await fetch(`${API_BASE}/api/auth/me`)
+  const res = await fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' })
   if (!res.ok) throw new Error('Failed to fetch user')
   return res.json()
 }
@@ -69,6 +69,7 @@ export function useUpdateSettings() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
+        credentials: 'include',
       })
       if (!res.ok) throw new Error('Failed to update settings')
       return res.json() as Promise<CalendarPreferences>

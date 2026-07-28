@@ -51,7 +51,6 @@ The following `/api` endpoints are public:
 - `POST /api/auth/signup`
 - `POST /api/auth/logout`
 - `POST /api/posthook_listener`
-- `POST /api/devices/register`
 - `POST /api/alexa`
 
 All other endpoints require authentication. In development only,
@@ -451,7 +450,7 @@ Enabling MCP without an explicitly supplied key generates a UUID key.
 
 | Method and path | Auth | Request | Success |
 | --- | --- | --- | --- |
-| `POST /devices/register` | Public | `{ fcmToken, platform? }` | `{ ok: true }` |
+| `POST /devices/register` | Protected | `{ fcmToken, platform? }` | `{ ok: true }` |
 | `POST /posthook_listener` | Public | Body ignored | `{ ok: true }` |
 | `POST /alexa` | Public | Body ignored | 200 `{ error: "Alexa integration disabled pending security audit" }` |
 | `POST /mcp` | Protected | Body ignored | 200 `{ error: "MCP proxy — implement as needed" }` |

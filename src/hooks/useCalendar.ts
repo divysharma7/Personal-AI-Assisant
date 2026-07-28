@@ -59,19 +59,19 @@ async function fetchCalendarEvents(
   include: IncludeSource[],
 ): Promise<CalendarEvent[]> {
   const params = new URLSearchParams({ from, to, include: include.join(',') })
-  const res = await fetch(`${API_BASE}/api/calendar/events?${params}`)
+  const res = await fetch(`${API_BASE}/api/calendar/events?${params}`, { credentials: 'include' })
   if (!res.ok) throw new Error('Failed to fetch calendar events')
   return res.json()
 }
 
 async function fetchUnscheduledTasks(): Promise<TaskRecord[]> {
-  const res = await fetch(`${API_BASE}/api/calendar/unscheduled`)
+  const res = await fetch(`${API_BASE}/api/calendar/unscheduled`, { credentials: 'include' })
   if (!res.ok) throw new Error('Failed to fetch unscheduled tasks')
   return res.json()
 }
 
 async function fetchOverdueTasks(): Promise<TaskRecord[]> {
-  const res = await fetch(`${API_BASE}/api/calendar/overdue`)
+  const res = await fetch(`${API_BASE}/api/calendar/overdue`, { credentials: 'include' })
   if (!res.ok) throw new Error('Failed to fetch overdue tasks')
   return res.json()
 }
@@ -81,13 +81,13 @@ async function fetchCalendarCapacity(
   to: string,
 ): Promise<Record<string, DayCapacity>> {
   const params = new URLSearchParams({ from, to })
-  const res = await fetch(`${API_BASE}/api/calendar/capacity?${params}`)
+  const res = await fetch(`${API_BASE}/api/calendar/capacity?${params}`, { credentials: 'include' })
   if (!res.ok) throw new Error('Failed to fetch calendar capacity')
   return res.json()
 }
 
 async function fetchCalendarPreferences(): Promise<CalendarPreferences> {
-  const res = await fetch(`${API_BASE}/api/users/me/calendar-preferences`)
+  const res = await fetch(`${API_BASE}/api/users/me/calendar-preferences`, { credentials: 'include' })
   if (!res.ok) throw new Error('Failed to fetch calendar preferences')
   return res.json()
 }
@@ -153,6 +153,7 @@ export function useScheduleTask() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scheduledStart, scheduledEnd }),
+        credentials: 'include',
       })
       if (!res.ok) throw new Error('Failed to schedule task')
       return res.json() as Promise<TaskRecord>
@@ -184,6 +185,7 @@ export function useUnscheduleTask() {
     mutationFn: async (id: string) => {
       const res = await fetch(`${API_BASE}/api/tasks/${id}/unschedule`, {
         method: 'PATCH',
+        credentials: 'include',
       })
       if (!res.ok) throw new Error('Failed to unschedule task')
       return res.json() as Promise<TaskRecord>
@@ -222,6 +224,7 @@ export function useCalendarPreferences() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
+        credentials: 'include',
       })
       if (!res.ok) throw new Error('Failed to update calendar preferences')
       return res.json() as Promise<CalendarPreferences>

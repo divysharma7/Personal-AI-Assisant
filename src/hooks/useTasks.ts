@@ -71,7 +71,7 @@ export interface TaskRecord {
 }
 
 async function fetchTasks(): Promise<TaskRecord[]> {
-  const res = await fetch(`${API_BASE}/api/tasks`)
+  const res = await fetch(`${API_BASE}/api/tasks`, { credentials: 'include' })
   if (!res.ok) throw new Error('Failed to fetch tasks')
   return res.json()
 }
@@ -91,6 +91,7 @@ export function useTasks() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
+        credentials: 'include',
       })
       if (!res.ok) {
         const err = await res.json().catch(() => null)
@@ -120,6 +121,7 @@ export function useTasks() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
+        credentials: 'include',
       })
       if (!res.ok) throw new Error('Failed to update task')
       return res.json() as Promise<TaskRecord>
@@ -143,7 +145,7 @@ export function useTasks() {
   // Delete
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await fetch(`${API_BASE}/api/tasks/${id}`, { method: 'DELETE' })
+      await fetch(`${API_BASE}/api/tasks/${id}`, { method: 'DELETE', credentials: 'include' })
     },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: TASKS_KEY })

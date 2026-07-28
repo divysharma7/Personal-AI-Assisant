@@ -70,7 +70,7 @@ export default function ChatPage() {
   const hasMessages = messages.length > 0
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/auth/me`).then(r => r.ok ? r.json() : null).then(d => {
+    fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(d => {
       if (d?.name) {
         const firstName = d.name.split(' ')[0]
         setUserName(firstName)
@@ -127,6 +127,7 @@ export default function ChatPage() {
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           localDate: new Date().toISOString(),
         }),
+        credentials: 'include',
       })
 
       if (!res.ok) throw new Error('Failed')

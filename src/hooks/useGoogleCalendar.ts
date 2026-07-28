@@ -15,7 +15,7 @@ interface GCalStatus {
 }
 
 async function fetchStatus(): Promise<GCalStatus> {
-  const res = await fetch(`${API_BASE}/api/integrations/google/status`)
+  const res = await fetch(`${API_BASE}/api/integrations/google/status`, { credentials: 'include' })
   if (!res.ok) return { connected: false, calendarId: 'primary' }
   return res.json()
 }
@@ -32,7 +32,7 @@ export function useGoogleCalendar() {
 
   const disconnectMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`${API_BASE}/api/integrations/google/disconnect`, { method: 'POST' })
+      const res = await fetch(`${API_BASE}/api/integrations/google/disconnect`, { method: 'POST', credentials: 'include' })
       if (!res.ok) throw new Error('Failed to disconnect')
     },
     onSettled: () => {
@@ -46,6 +46,7 @@ export function useGoogleCalendar() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ taskId }),
+        credentials: 'include',
       })
       if (!res.ok) throw new Error('Failed to sync')
       return res.json()
@@ -61,6 +62,7 @@ export function useGoogleCalendar() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ taskId }),
+        credentials: 'include',
       })
       if (!res.ok) throw new Error('Failed to unsync')
     },

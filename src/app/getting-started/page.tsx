@@ -19,7 +19,7 @@ export default function GettingStartedPage() {
   const [userName, setUserName] = useState('')
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/auth/me`).then(r => r.ok ? r.json() : null).then(d => {
+    fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(d => {
       if (d?.name) setUserName(d.name.split(' ')[0])
     }).catch(() => {})
   }, [])

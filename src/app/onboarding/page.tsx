@@ -57,6 +57,7 @@ export default function OnboardingPage() {
           onboarded: true,
           emailsOptIn,
         }),
+        credentials: 'include',
       }).catch(() => {})
 
       navigate('/')

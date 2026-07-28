@@ -24,7 +24,7 @@ export interface Habit {
 const HABITS_KEY = ['habits'] as const
 
 async function fetchHabits(): Promise<Habit[]> {
-  const res = await fetch(`${API_BASE}/api/habits`)
+  const res = await fetch(`${API_BASE}/api/habits`, { credentials: 'include' })
   if (!res.ok) throw new Error('Failed to fetch habits')
   return res.json()
 }
@@ -64,6 +64,7 @@ export function useHabits() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
+        credentials: 'include',
       })
       if (!res.ok) throw new Error('Failed to create habit')
       return res.json() as Promise<Habit>
@@ -77,6 +78,7 @@ export function useHabits() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
+        credentials: 'include',
       })
       if (!res.ok) throw new Error('Failed to update habit')
       return res.json() as Promise<Habit>
@@ -93,7 +95,7 @@ export function useHabits() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await fetch(`${API_BASE}/api/habits/${id}`, { method: 'DELETE' })
+      await fetch(`${API_BASE}/api/habits/${id}`, { method: 'DELETE', credentials: 'include' })
     },
     onMutate: async (id) => {
       await qc.cancelQueries({ queryKey: HABITS_KEY })

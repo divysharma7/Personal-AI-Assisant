@@ -5,6 +5,10 @@
 LAIF will move its persistent application data from MongoDB/Mongoose to
 PostgreSQL using Prisma ORM.
 
+As of 2026-07-29, the initial PostgreSQL migration is applied and the
+Prisma-backed API is deployed to Prisma Compute. Historical MongoDB data has
+not been imported because the configured source URI is a placeholder.
+
 This decision supersedes the older "MongoDB only" invariant in `CLAUDE.md` for
 the migration work described here. MongoDB remains the live source of truth
 until the verification and cutover gates below are complete.

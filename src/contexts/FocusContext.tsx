@@ -45,7 +45,7 @@ export default function FocusProvider({ children }: { children: ReactNode }) {
   // Poll for active session every 30 seconds
   const pollActiveSession = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/focus/sessions/active`)
+      const res = await fetch(`${API_BASE}/api/focus/sessions/active`, { credentials: 'include' })
       if (res.ok) {
         const data = await res.json()
         if (data && data.startedAt) {
@@ -124,6 +124,7 @@ export default function FocusProvider({ children }: { children: ReactNode }) {
             duration: 1500,
             startedAt: new Date().toISOString(),
           }),
+          credentials: 'include',
         })
         if (res.ok) {
           setFocus({

@@ -33,6 +33,7 @@ export default function SignupPage() {
           email: email.trim(),
           password,
         }),
+        credentials: 'include',
       })
 
       if (!res.ok) {

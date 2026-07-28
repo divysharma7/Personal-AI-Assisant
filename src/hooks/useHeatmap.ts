@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query'
 const HEATMAP_KEY = ['calendar', 'heatmap'] as const
 
 async function fetchHeatmap(year: number): Promise<Record<string, number>> {
-  const res = await fetch(`${API_BASE}/api/calendar/heatmap?year=${year}`)
+  const res = await fetch(`${API_BASE}/api/calendar/heatmap?year=${year}`, { credentials: 'include' })
   if (!res.ok) throw new Error('Failed to fetch heatmap data')
   return res.json()
 }
