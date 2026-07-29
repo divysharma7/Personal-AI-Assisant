@@ -20,7 +20,7 @@ export default function ClockWeatherWidget() {
   // Fetch weather once (cached for 30 min)
   useEffect(() => {
     let cancelled = false
-    const cached = sessionStorage.getItem('laif-weather')
+    const cached = sessionStorage.getItem('laif-weather-v2')
     if (cached) {
       try {
         const { data, ts } = JSON.parse(cached)
@@ -41,7 +41,7 @@ export default function ClockWeatherWidget() {
         const condition = current.weatherDesc?.[0]?.value ?? ''
         const data: WeatherData = { temp, condition }
         setWeather(data)
-        try { sessionStorage.setItem('laif-weather', JSON.stringify({ data, ts: Date.now() })) }
+        try { sessionStorage.setItem('laif-weather-v2', JSON.stringify({ data, ts: Date.now() })) }
         catch { /* ignore */ }
       })
       .catch(() => {})
