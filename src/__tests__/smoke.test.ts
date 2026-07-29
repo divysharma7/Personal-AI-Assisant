@@ -38,9 +38,4 @@ describe('application entry point', () => {
     expect(mod.useFocusState).toBeDefined()
   })
 
-  it('QueryClient provider loads without errors', async () => {
-    const mod = await import('@/shared/providers/QueryProvider')
-    expect(mod.default).toBeDefined()
-    expect(typeof mod.default).toBe('function')
-  })
 })

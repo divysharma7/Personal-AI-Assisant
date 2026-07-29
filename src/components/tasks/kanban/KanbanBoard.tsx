@@ -31,7 +31,7 @@ export interface ColumnDefinition {
   headerAction?: { label: string; onClick: () => void }
 }
 
-export interface KanbanBoardProps {
+interface KanbanBoardProps {
   columns: ColumnDefinition[]
   onMoveTask: (taskId: string, toColumnId: string, newOrder: number) => void
   onToggleTask: (id: string) => void
@@ -49,20 +49,9 @@ export interface KanbanBoardProps {
 
 /* ── Helpers ── */
 
-function findColumnForTask(
-  columns: ColumnDefinition[],
-  taskId: string
-): string | null {
-  for (const col of columns) {
-    if (col.tasks.some((t) => t._id === taskId)) return col.id
-    if (col.completedTasks?.some((t) => t._id === taskId)) return col.id
-  }
-  return null
-}
-
 /* ── Component ── */
 
-export function KanbanBoard({
+function KanbanBoard({
   columns,
   onMoveTask,
   onToggleTask,

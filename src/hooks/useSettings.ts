@@ -23,7 +23,7 @@ export interface CalendarPreferences {
   showCurrentTimeIndicator: boolean
 }
 
-export interface UserProfile {
+interface UserProfile {
   username: string
   name: string
   timezone?: string

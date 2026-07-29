@@ -3,17 +3,15 @@ import { useState, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
   X,
-  Check,
   MoreVertical,
   Calendar,
   AlignJustify,
-  User,
   BarChart3,
   Plus,
 } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import { AnimatePresence } from 'framer-motion'
-import { slideFromRight, buttonPress, checkBounce, spring, ease } from '@/lib/motion'
+import { slideFromRight, buttonPress, springs } from '@/lib/motion'
 import { playCompletionSound } from '@/lib/sounds'
 import type { TaskRecord } from '@/hooks/useTasks'
 import { useWorkflows } from '@/hooks/useWorkflows'
@@ -25,8 +23,6 @@ import TaskActivities from '@/components/tasks/TaskActivities'
 import type { JSONContent } from '@tiptap/react'
 
 import { formatRelativeTime } from '@/lib/dateUtils'
-import FocusSection from './detail/FocusSection'
-import PriorityBars from './detail/PriorityBars'
 import SubTaskRow from './detail/SubTaskRow'
 import { hexToRgba } from '@/lib/colorUtils'
 
@@ -87,12 +83,6 @@ export default function TaskDetailPanel({
   const { workflows } = useWorkflows()
   const workflow = task.workflowId ? workflows.find(w => w._id === task.workflowId) : null
   const column = workflow?.columns?.find(c => c.id === task.sectionId)
-
-  const handleToggleComplete = useCallback(() => {
-    const newStatus = isCompleted ? 'todo' : 'done'
-    if (newStatus === 'done') playCompletionSound()
-    onUpdate(task._id, { status: newStatus })
-  }, [isCompleted, onUpdate, task._id])
 
   const handleTitleSubmit = useCallback(() => {
     setIsEditingTitle(false)
@@ -166,7 +156,7 @@ export default function TaskDetailPanel({
   return (
     <motion.div
       {...slideFromRight}
-      transition={spring.snappy}
+      transition={springs.snappy}
       className="flex h-full w-full flex-col overflow-hidden rounded-[var(--outer-radius,20px)]"
       style={{ backgroundColor: 'var(--bg-pane)' }}
     >

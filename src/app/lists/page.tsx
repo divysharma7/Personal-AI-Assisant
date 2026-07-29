@@ -13,7 +13,6 @@ import {
   Lock,
   Globe,
   Users,
-  Calendar,
   Clock,
   Folder,
   Trash2,
@@ -21,7 +20,7 @@ import {
 import { copy } from '@/lib/copy'
 import { useLists } from '@/hooks/useLists'
 import { useFolders } from '@/hooks/useFolders'
-import { fadeSlideUp, collapse, stagger, buttonPress, ease, fade } from '@/lib/motion'
+import { fadeSlideUp, collapse, stagger, buttonPress, ease } from '@/lib/motion'
 import InfoBanner from '@/components/shared/InfoBanner'
 
 type ListFilter = 'all' | 'shared' | 'private' | 'meetings'

@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { copy } from '@/lib/copy'
-import { fadeSlideUp, buttonPress, ease } from '@/lib/motion'
+import { fadeSlideUp, ease } from '@/lib/motion'
 
 export default function SignupPage() {
   const navigate = useNavigate()

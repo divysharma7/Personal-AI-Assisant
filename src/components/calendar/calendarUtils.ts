@@ -214,35 +214,14 @@ export function getRelativeDayLabel(date: Date): string {
 /**
  * Formats a date for agenda day headers: "Wed, Nov 19, 2026"
  */
-export function formatAgendaDate(date: Date): string {
-  const weekday = date.toLocaleDateString('en-US', { weekday: 'short' })
-  const month = date.toLocaleDateString('en-US', { month: 'short' })
-  const day = date.getDate()
-  const year = date.getFullYear()
-  return `${weekday}, ${month} ${day}, ${year}`
-}
-
 // ─── Month helpers ─────────────────────────────────────────────
 
 /**
  * Returns the first day of the month for a given date.
  */
-export function startOfMonth(date: Date): Date {
-  const d = new Date(date)
-  d.setDate(1)
-  d.setHours(0, 0, 0, 0)
-  return d
-}
-
 /**
  * Returns the last day of the month for a given date.
  */
-export function endOfMonth(date: Date): Date {
-  const d = new Date(date.getFullYear(), date.getMonth() + 1, 0)
-  d.setHours(23, 59, 59, 999)
-  return d
-}
-
 // ─── Year view helpers ─────────────────────────────────────────
 
 /**

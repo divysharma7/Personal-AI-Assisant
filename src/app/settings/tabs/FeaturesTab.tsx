@@ -69,12 +69,6 @@ const selectStyle: React.CSSProperties = {
   minWidth: 160,
 }
 
-function themeToLabel(t: Theme): string {
-  if (t === 'system') return 'System preference'
-  if (t === 'dark') return 'Dark'
-  return 'Light'
-}
-
 export default function FeaturesTab({
   theme,
   setTheme,

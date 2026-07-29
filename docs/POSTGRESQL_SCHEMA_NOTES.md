@@ -1,19 +1,18 @@
 # PostgreSQL schema decisions
 
 This document records the decisions behind the initial Prisma schema in
-`laif-api/prisma/schema.prisma`. An initial migration has been generated at
-`laif-api/prisma/migrations/00000000000000_init/migration.sql`, but it has not
-been applied to a database.
+`laif-api/prisma/schema.prisma`. The initial migration is stored at
+`laif-api/prisma/migrations/00000000000000_init/migration.sql` and has been
+applied to the project's primary PostgreSQL database.
 
 The schema follows Prisma ORM 7 syntax. It uses the ESM-first `prisma-client`
-generator and will generate into `laif-api/src/generated/prisma`. The
-datasource block declares only the PostgreSQL provider; `DATABASE_URL` belongs
-in `laif-api/prisma.config.ts`, which the backend integration owner will add
-alongside the Prisma packages and PostgreSQL driver adapter.
+generator and generates into `laif-api/src/generated/prisma`. The datasource
+block declares only the PostgreSQL provider; `DATABASE_URL` is configured in
+`laif-api/prisma.config.ts`.
 
 ## Scope
 
-The schema covers every active Mongoose model as of the PostgreSQL migration:
+The schema covers the active application domains:
 
 - users and authentication/integration settings
 - tasks, task hierarchy, habits, comments, reminders, activities, and completions
@@ -30,10 +29,7 @@ were removed from the product.
 
 ## Identity strategy
 
-All primary keys are PostgreSQL `TEXT`. Existing 24-character MongoDB ObjectId
-strings must be copied without modification. New records use `cuid()` defaults.
-This avoids a high-risk ID rewrite during the initial cutover and preserves
-frontend URLs, JWT user IDs, embedded references, and API response identifiers.
+All primary keys are PostgreSQL `TEXT` and new records use `cuid()` defaults.
 
 The repository/API layer will continue serializing `id` as `_id` until the
 frontend contract is intentionally revised.
@@ -41,9 +37,7 @@ frontend contract is intentionally revised.
 ## Ownership and deletion
 
 Every user-owned row has a required foreign key to `users.id`. Deleting a user
-cascades through owned data. This includes `devices` and
-`web_push_subscriptions`, which currently lack ownership in MongoDB; their
-routes must require authentication before PostgreSQL cutover.
+cascades through owned data, including devices and web-push subscriptions.
 
 Parent records cascade to true child/history rows:
 
@@ -64,7 +58,7 @@ Soft-deleted lists remain represented by `lists.deleted_at`.
 
 ## Normalized data
 
-The following MongoDB embedded arrays become relational child tables:
+The following repeatable data is represented by relational child tables:
 
 - `Task.comments` -> `task_comments`
 - `Task.reminders` -> `task_reminders`
@@ -77,11 +71,9 @@ The following MongoDB embedded arrays become relational child tables:
 - `List.collaborators` -> `list_collaborators`
 - `User.pushDevices` -> `user_push_devices`
 
-Chat messages gain generated IDs and an explicit `position` because their
-MongoDB schema disabled subdocument IDs and relied on array ordering.
+Chat messages use generated IDs and an explicit `position` to preserve order.
 
 Habit completions use a PostgreSQL `DATE` and are unique per `(task_id, date)`.
-Migration must parse the legacy `YYYY-MM-DD` strings without timezone shifting.
 
 ## JSONB and arrays
 
@@ -97,19 +89,14 @@ JSONB is retained where the data is intentionally flexible or document-shaped:
 Tags remain PostgreSQL `TEXT[]` because there is no shared tag entity or
 tag-management behavior in the current product.
 
-## Legacy models
+## Compatibility models
 
-The standalone MongoDB `Habit` collection is not represented as a second table.
-Its records should be transformed into `tasks` rows with `is_habit = true`,
-then its completion strings should be inserted into `habit_completions`.
-The active `/habits` API already reads and writes habits through `Task`.
+Habits are represented only as `tasks` rows with `is_habit = true`; there is no
+second habit table.
 
 `kanban_sections` is retained only because `/kanban-sections` is still routed.
-Current workflow screens use embedded workflow-column IDs in `Task.sectionId`;
-the relational target maps that API field to
-`tasks.section_id -> workflow_columns.id`. Before importing, any task
-`sectionId` that belongs to the legacy global Kanban collection must either be
-mapped to a workflow column or cleared. The legacy endpoint can then be retired
+Current workflow screens map the API `Task.sectionId` field to
+`tasks.section_id -> workflow_columns.id`. The legacy endpoint can be retired
 in a later cleanup.
 
 ## Enum compatibility
@@ -145,19 +132,7 @@ inbox per owner. The workflow/column agreement check must remain in the import
 validator and application repository because a PostgreSQL CHECK constraint
 cannot query the referenced workflow-column row.
 
-## Import prerequisites
+## Data initialization
 
-Before applying foreign keys, the data migration must report and resolve:
-
-- records whose `userId`/`ownerId` does not match a user
-- devices and web-push subscriptions that cannot be attributed to a user
-- tasks referencing missing parents, lists, workflows, or workflow columns
-- list collaborators referencing missing users
-- duplicate usernames ignoring case
-- duplicate external calendar identities
-- duplicate habit completions for the same task/date
-- duplicate list-group titles for one owner
-- workflow-column order collisions
-
-The production MongoDB database remains the rollback source until count,
-ownership, and relationship checks pass for every user.
+The product starts with an empty PostgreSQL database and creates records through
+the authenticated API. Historical MongoDB data is intentionally not imported.

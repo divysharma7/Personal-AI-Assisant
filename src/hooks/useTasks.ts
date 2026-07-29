@@ -8,7 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 const TASKS_KEY = ['tasks'] as const
 
-export interface HabitCompletion {
+interface HabitCompletion {
   date: string
   status: 'achieved' | 'unachieved' | 'skipped' | 'frozen'
   value?: number
@@ -16,7 +16,7 @@ export interface HabitCompletion {
   loggedAt?: string
 }
 
-export interface HabitFrequency {
+interface HabitFrequency {
   type: 'daily' | 'weekly' | 'interval'
   daysOfWeek?: number[]
   timesPerWeek?: number

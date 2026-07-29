@@ -64,37 +64,27 @@ git push origin main --tags
 Every non-public route must follow this pattern exactly:
 
 ```typescript
-export async function POST(req: Request) {
+router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = await getAuthUserId()
-    if (!userId) return NextResponse.json(
-      { error: 'Unauthorized' }, { status: 401 }
-    )
+    const parsed = parseBody(CreateThingSchema, req.body)
+    if (!parsed.success) throw new ValidationError(parsed.error)
 
-    const body = await req.json()
-    const parsed = parseBody(SomeSchema, body)
-    if (!parsed.success) return NextResponse.json(
-      { error: parsed.error }, { status: 400 }
-    )
+    const thing = await getPrisma().thing.create({
+      data: { ...parsed.data, userId: req.userId! },
+    })
 
-    await connectDB()
-    const doc = await Model.create({ ...parsed.data, userId })
-
-    return NextResponse.json(
-      { ...doc.toObject(), _id: String(doc._id) },
-      { status: 201 }
-    )
+    res.status(201).json(serializeThing(thing))
   } catch (err) {
-    return handleApiError(err)
+    next(err)
   }
-}
+})
 ```
 
 Five rules:
-1. `getAuthUserId()` first, 401 on null — no exceptions for non-public routes
-2. `parseBody(Schema, body)` for all POST/PUT/PATCH — no raw `req.json()` into the DB
-3. All queries include `{ userId }` or `{ ownerId }` — never `findById(id)` alone
-4. `handleApiError(err)` in catch — never `api500` or `apiError`
+1. Authentication middleware supplies `req.userId`; no private route bypasses it
+2. `parseBody(Schema, req.body)` for every POST/PUT/PATCH
+3. Every Prisma read/update/delete scopes by `userId` or `ownerId`
+4. Pass errors to the shared Express error handler with `next(err)`
 5. 201 for creates, 400 for validation, 401 for auth, 404 for not found, 500 for server errors
 
 ---
@@ -103,15 +93,15 @@ Five rules:
 
 These are fixed. Do not work around them without updating CAPABILITY_PLAN.md first.
 
-1. **Single user** — every document has `userId`. Every query filters by `userId`.
-   No exceptions. No admin paths. No cross-user access.
-2. **Habits are Tasks** — `isHabit: true` on the Task model is the canonical habit.
-   The legacy `Habit` model still exists but is deprecated. Do not add features to it.
-3. **Task status has 5 states** — `backlog | todo | in-progress | done | dropped`.
-   The TypeScript type in `src/types/index.ts` must match. Do not add custom statuses.
+1. **Strict ownership** — every user-owned PostgreSQL row has `userId` or
+   `ownerId`. Every Prisma query and mutation enforces that ownership.
+2. **Habits are Tasks** — `isHabit: true` on `Task` is the only habit model.
+3. **Task status has 5 API states** — `backlog | todo | in-progress | done |
+   dropped`. Prisma maps `in_progress` to the existing `in-progress` wire value.
 4. **All UI strings in copy.ts** — no hardcoded user-facing strings anywhere else.
 5. **All animation tokens in motion.ts** — no inline framer-motion values.
-6. **MongoDB only** — no SQL, no Drizzle, no Prisma. 21 collections.
+6. **PostgreSQL only** — Prisma ORM and Prisma Postgres are the sole persistence
+   layer. Do not add MongoDB, Mongoose, or a second database.
 
 ---
 
@@ -121,10 +111,8 @@ Before starting any session, check `TODO.md` for the current deferred list.
 Do not implement items not on the list without a product-capability plan first.
 
 Current deferred (as of 2026-05-25):
-- Legacy Habit model migration (~1 day) — use tdd-workflow skill
 - Chat tool function tests (~0.5 day)
 - Notification pipeline implementation (~1 day)
-- Production auth verification (30 min) — must happen before Vercel deploy
 - Rate limiting
 - Alexa integration with proper signature verification (not before rate limiting)
 
@@ -135,12 +123,10 @@ Current deferred (as of 2026-05-25):
 Do not ship any of the following without explicit sign-off in SECURITY_AUDIT.md:
 
 - A new public route (no auth) that writes data
-- A DELETE/PUT/PATCH route without `{ _id, userId }` ownership check
-- A route using `findByIdAndUpdate` or `findByIdAndDelete` (use `findOneAndUpdate`
-  with userId filter instead)
+- A DELETE/PUT/PATCH route without an ownership condition in its Prisma query
 - Any use of `eval`, `Function()`, or dynamic `require()`
-- Any route that accepts user input and passes it directly to MongoDB queries
-  (mass assignment — always use parsed.data from Zod, never spread req.json())
+- Any route that passes unvalidated request data directly to Prisma
+  (always write parsed Zod fields; never spread `req.body`)
 
 ---
 

@@ -6,14 +6,13 @@ import {
   MoreVertical,
   Plus,
   ChevronDown,
-  Clock,
   Star,
 } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import { useList, useLists } from '@/hooks/useLists'
 import { useTasks } from '@/hooks/useTasks'
 import { playCompletionSound } from '@/lib/sounds'
-import { fadeSlideUp, collapse, stagger, buttonPress, ease } from '@/lib/motion'
+import { collapse, stagger, buttonPress, ease } from '@/lib/motion'
 import TaskRow from '@/components/tasks/TaskRow'
 import InfoBanner from '@/components/shared/InfoBanner'
 

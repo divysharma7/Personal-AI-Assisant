@@ -110,18 +110,6 @@ export default function YearView({ date, events, onDayClick, onMonthClick, onWee
     return map
   }, [events])
 
-  // Also compute total event counts for tooltip info
-  const totalCountMap = useMemo(() => {
-    const map: Record<string, number> = {}
-    for (const ev of events) {
-      if (!ev.start) continue
-      const d = new Date(ev.start)
-      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
-      map[key] = (map[key] || 0) + 1
-    }
-    return map
-  }, [events])
-
   const getCompletedCount = useCallback(
     (d: Date): number => {
       const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`

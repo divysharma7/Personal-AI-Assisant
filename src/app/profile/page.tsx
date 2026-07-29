@@ -1,11 +1,11 @@
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { fade, fadeSlideUp, stagger, ease } from '@/lib/motion'
+import { fade, fadeSlideUp, ease } from '@/lib/motion'
 import { CheckCircle2, BarChart3 as BarChart3Icon, Target } from 'lucide-react'
 import { useHabits } from '@/hooks/useHabits'
 import { useTasks } from '@/hooks/useTasks'
-import { format, subDays, eachDayOfInterval, isToday, startOfWeek, endOfWeek } from 'date-fns'
+import { format, subDays, eachDayOfInterval, startOfWeek } from 'date-fns'
 import HabitAnalytics from '@/components/habits/HabitAnalytics'
 import { copy } from '@/lib/copy'
 

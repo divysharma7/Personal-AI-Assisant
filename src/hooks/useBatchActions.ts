@@ -58,7 +58,7 @@ interface UseBatchActionsProps {
 }
 
 export function useBatchActions({ selectedIds, clearSelection }: UseBatchActionsProps) {
-  const { tasks, updateTask, deleteTask, createTask } = useTasks()
+  const { tasks, updateTask, deleteTask } = useTasks()
   const { lists } = useLists()
 
   const count = selectedIds.size

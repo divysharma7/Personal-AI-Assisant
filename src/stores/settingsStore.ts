@@ -1,11 +1,11 @@
 import { create } from 'zustand'
 
 export type KanbanSize = 'small' | 'medium' | 'large'
-export type TaskColorMode = 'list' | 'tag' | 'priority'
-export type CalendarStyle = 'modern' | 'classic'
-export type TimeFormat = '12h' | '24h'
-export type DateFormat = 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD'
-export type WeekStart = 0 | 1 | 6 // Sunday, Monday, Saturday
+type TaskColorMode = 'list' | 'tag' | 'priority'
+type CalendarStyle = 'modern' | 'classic'
+type TimeFormat = '12h' | '24h'
+type DateFormat = 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD'
+type WeekStart = 0 | 1 | 6 // Sunday, Monday, Saturday
 
 interface SettingsState {
   showCompleted: boolean

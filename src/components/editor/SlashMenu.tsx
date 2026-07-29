@@ -18,7 +18,7 @@ import {
 } from 'lucide-react'
 import { fadeSlideDown, ease } from '@/lib/motion'
 
-export interface SlashMenuItem {
+interface SlashMenuItem {
   label: string
   icon: React.ReactNode
   action: string

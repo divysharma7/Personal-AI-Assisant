@@ -15,7 +15,7 @@ export interface ChatSessionSummary {
   messageCount: number
 }
 
-export interface ChatSessionMessage {
+interface ChatSessionMessage {
   role: 'user' | 'assistant'
   content: string
   timestamp: string

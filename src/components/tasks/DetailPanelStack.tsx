@@ -1,7 +1,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, MoreVertical } from 'lucide-react'
-import { spring, ease } from '@/lib/motion'
+import { springs, ease } from '@/lib/motion'
 import type { TaskRecord } from '@/hooks/useTasks'
 import TaskDetailPanel from './TaskDetailPanel'
 
@@ -83,7 +83,7 @@ export default function DetailPanelStack({
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: STRIP_WIDTH, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
-              transition={spring.snappy}
+              transition={springs.snappy}
               onClick={() => onPopToIndex(actualIndex)}
               className="flex h-full flex-shrink-0 flex-col items-center justify-between overflow-hidden py-4 cursor-pointer transition-colors duration-150"
               style={{

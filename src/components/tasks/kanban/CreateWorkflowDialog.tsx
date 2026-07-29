@@ -37,7 +37,7 @@ interface CreateWorkflowDialogProps {
   onClose: () => void
 }
 
-export default function CreateWorkflowDialog({ open, onClose }: CreateWorkflowDialogProps) {
+export function CreateWorkflowDialog({ open, onClose }: CreateWorkflowDialogProps) {
   const navigate = useNavigate()
   const { createWorkflow } = useWorkflows()
 
@@ -420,4 +420,3 @@ export default function CreateWorkflowDialog({ open, onClose }: CreateWorkflowDi
   )
 }
 
-export { CreateWorkflowDialog }

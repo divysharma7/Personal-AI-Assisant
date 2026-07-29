@@ -18,16 +18,6 @@ export const PRIORITY_COLORS: Record<string, string> = {
 // ── PriorityBarsIcon ─────────────────────────────────────────
 
 /** Filled priority bars — 3 solid rectangles with varying heights */
-export function PriorityBarsIcon({ color, size = 20 }: { color: string; size?: number }) {
-  return React.createElement(
-    'svg',
-    { width: size, height: size, viewBox: '0 0 20 20', fill: 'none' },
-    React.createElement('rect', { x: 3, y: 12, width: 3.5, height: 6, rx: 1, fill: color }),
-    React.createElement('rect', { x: 8.25, y: 8, width: 3.5, height: 10, rx: 1, fill: color }),
-    React.createElement('rect', { x: 13.5, y: 4, width: 3.5, height: 14, rx: 1, fill: color }),
-  )
-}
-
 // ── SubtaskRing ──────────────────────────────────────────────
 
 /** Circular progress ring showing subtask completion */

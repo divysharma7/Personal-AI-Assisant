@@ -23,7 +23,7 @@ Prisma resources:
 
 - Project: `proj_cms57bdgy02wx6lf4xyqw7yas`
 - App: `cps_dqyymmjqlclmt8jako8x3blz`
-- Deployment: `cpv_k49a6o5jwlxb1wbasp59s8z4`
+- Deployment: `cpv_mj8x4gdjh5j3uftitetrrfml`
 - Region: `ap-southeast-1`
 - Branch: `main` (production)
 
@@ -53,51 +53,29 @@ Prisma resources:
 - `/api` and `/api/v1` share the same public authentication policy.
 - Device registration now requires authentication.
 
-## Data migration
+## Data policy
 
-The migration runner is:
+The product starts with a clean PostgreSQL database. Historical MongoDB data
+will not be imported. The Mongo importer, Mongoose dependency, Mongo connection
+configuration, and old maintenance scripts have been removed.
 
-`npm run migrate:postgres`
+## Frontend integration
 
-It defaults to dry-run mode and provides:
-
-- collection and per-user totals;
-- ownership and relationship validation;
-- duplicate-user detection;
-- legacy Habit-to-Task conversion;
-- embedded-child normalization;
-- deterministic rejection reporting;
-- an explicit `--apply` gate.
-
-The local `MONGODB_URI` currently points to the placeholder
-`cluster.mongodb.net`, so no source data could be read or imported. The
-PostgreSQL schema is live but starts without migrated MongoDB application data.
-Run the dry run again with the real MongoDB URL before importing any historical
-data.
-
-## Command Code frontend actions
-
-1. Set:
+1. Production API URL:
 
    `VITE_API_URL=https://dqyymmjqlclmt8jako8x3blz.sin.prisma.build`
 
-2. Make login and signup requests include:
+2. Login and signup requests include:
 
    `credentials: 'include'`
 
-3. Route every protected request through `src/lib/api/client.ts`, or ensure
-   every remaining raw `fetch` call also includes `credentials: 'include'`.
+3. Protected requests use `credentials: 'include'`.
 
-4. After the Vercel production URL is known, give that exact origin to Codex so
-   `CORS_ORIGINS` can be set in Prisma Compute and the backend can be
-   redeployed. Do not use a wildcard with credentialed requests.
+4. Prisma Compute allows the exact Vercel origin:
 
-5. Run the browser login and core task/habit smoke journey against the deployed
-   frontend and backend.
+   `CORS_ORIGINS=https://laif-iota.vercel.app`
 
-Until step 4, the backend defaults to localhost-only CORS. Its health endpoint
-and direct server calls work, but the production browser frontend should not be
-considered launch-ready.
+5. Do not use a wildcard with credentialed requests.
 
 ## Verification
 
@@ -106,13 +84,16 @@ Latest backend verification:
 - Prisma schema validation: passed
 - Prisma client generation: passed
 - TypeScript: passed
-- Backend tests: 51/51 passed
+- Backend tests: 46/46 passed
 - Backend build: passed
 - Prisma Compute local build: passed
 - PostgreSQL migration deployment: passed
 - Live `/health`: HTTP 200 `{ "status": "ok" }`
 - Live unauthenticated task boundary: HTTP 401
 - Live PostgreSQL-backed unknown-user login: HTTP 401
+- Live CORS preflight allows `https://laif-iota.vercel.app` with credentials
+- Deployed Vercel bundle targets the Prisma Compute API
+- Production login and signup screens render without browser console errors
 
 ## Remaining known compatibility decisions
 
@@ -122,10 +103,7 @@ Latest backend verification:
   habits to `todo` because there is no separate habit archive column.
 - Task hierarchy deletion now cascades through descendants rather than leaving
   orphaned grandchildren.
-- The old Mongoose models remain only for migration reference; runtime routes
-  do not import them.
-- Production dependency audit still reports advisories through the existing
-  Firebase/Mongoose dependency tree. Prisma packages were not the source.
+- MongoDB and Mongoose are not part of the runtime or data plan.
 
 ## Repository layout
 

@@ -30,9 +30,9 @@ Calm, focused, alive. Not a task manager. A thinking partner.
 
 ## 3. Habits Strip
 
-- [ ] **3.1** Create `Habit` model (MongoDB) — name, emoji/icon, color, active bool
-- [ ] **3.2** Create `/api/habits` CRUD routes
-- [ ] **3.3** Create `/api/habits/log` — log a completion for today
+- [x] **3.1** Model habits as PostgreSQL `Task` rows with `isHabit: true`
+- [x] **3.2** Create Prisma-backed `/api/habits` CRUD routes
+- [x] **3.3** Add habit completion/check-in persistence
 - [x] **3.4** Create `HabitsWidget` — row of habit dots, click to toggle today's completion (habits strip in dashboard + sidebar HabitsSection)
 - [x] **3.5** Add HabitsWidget to dashboard (habits strip on "/" dashboard page)
 - [x] **3.6** Add Habits management to Settings page

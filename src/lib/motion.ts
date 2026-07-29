@@ -51,23 +51,8 @@ export const springs = {
 }
 
 // Legacy alias — existing components import `spring` (singular)
-export const spring = springs
 
 // ── Runtime flags ─────────────────────────────────────────────
-
-export const motionConfig = {
-  isLowEnd() {
-    return typeof navigator !== 'undefined' && navigator.hardwareConcurrency <= 4
-  },
-  prefersReduced() {
-    return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  },
-  shouldAnimate({ essential = false } = {}) {
-    if (this.prefersReduced()) return false
-    if (!essential && this.isLowEnd()) return false
-    return true
-  },
-}
 
 // ── CSS transition helper for inline styles ───────────────────
 // Use instead of hardcoding '150ms ease' in style={{ transition: ... }}
@@ -129,12 +114,6 @@ export const slideFromLeft = {
 }
 
 /** Slide from bottom (mobile sheets, toasts) */
-export const slideFromBottom = {
-  initial: { y: '100%' },
-  animate: { y: 0 },
-  exit: { y: '100%' },
-}
-
 /** Scale in (modals, popups) */
 export const scaleIn = {
   initial: { opacity: 0, y: motionTokens.distance.md, scale: motionTokens.scale.press },
@@ -181,30 +160,13 @@ export const checkBounce = {
 }
 
 /** Toast enter/exit */
-export const toast = {
-  initial: { opacity: 0, y: 20, scale: motionTokens.scale.press },
-  animate: { opacity: 1, y: 0, scale: 1 },
-  exit: { opacity: 0, y: 20, scale: motionTokens.scale.press },
-}
-
 /** Hover lift (cards) */
-export const hoverLift = {
-  whileHover: { y: -2, transition: ease.fast },
-  whileTap: { scale: motionTokens.scale.subtle, transition: ease.fast },
-}
-
 /** Button press */
 export const buttonPress = {
   whileTap: { scale: motionTokens.scale.press, transition: { duration: motionTokens.duration.instant } },
 }
 
 /** View transition — used by CalendarPage for AnimatePresence transitions between views */
-export const viewTransition = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 },
-}
-
 /**
  * Get directional slide variants for calendar view navigation.
  * direction: -1 = backward (slide from left), 0 = no slide, 1 = forward (slide from right)
@@ -221,65 +183,12 @@ export function getDirectionalVariants(direction: -1 | 0 | 1) {
 // ── Advanced animation variants (ported from Chronos) ────────
 
 /** Pulse — gentle scale throb for attention (e.g. overdue indicators) */
-export const pulse = {
-  animate: {
-    scale: [1, 1.05, 1],
-    transition: { duration: motionTokens.duration.slow, repeat: Infinity, ease: 'easeInOut' },
-  },
-}
-
 /** Shake — horizontal shake for error feedback */
-export const shake = {
-  animate: {
-    x: [0, -4, 4, -4, 4, 0],
-    transition: { duration: motionTokens.duration.normal },
-  },
-}
-
 /** Number flip — used for animated counter digits */
-export const numberFlip = {
-  initial: { y: -20, opacity: 0 },
-  animate: { y: 0, opacity: 1, transition: { type: 'spring' as const, stiffness: 300, damping: 20 } },
-  exit: { y: 20, opacity: 0, transition: { duration: motionTokens.duration.fast } },
-}
-
 /** Celebration pop — scale bounce for task completion, streaks, etc. */
-export const celebrationPop = {
-  initial: { scale: 0.5, opacity: 0 },
-  animate: {
-    scale: [0.5, 1.15, 1],
-    opacity: 1,
-    transition: { duration: motionTokens.duration.normal, ease: motionTokens.easing.bounce },
-  },
-}
-
 /** Flame flicker — subtle scale + opacity variation for streak fire icons */
-export const flameFlicker = {
-  animate: {
-    scale: [1, 1.08, 0.97, 1.04, 1],
-    opacity: [1, 0.85, 1, 0.9, 1],
-    transition: { duration: 1.2, repeat: Infinity, ease: 'easeInOut' },
-  },
-}
-
 /** Counter spring — spring-based transition for animated number counters */
-export const counterSpring = {
-  type: 'spring' as const,
-  stiffness: 200,
-  damping: 20,
-  restDelta: 0.5,
-}
-
 /** Check draw — stroke animation preset for SVG checkmark paths */
-export const checkDraw = {
-  initial: { pathLength: 0, opacity: 0 },
-  animate: {
-    pathLength: 1,
-    opacity: 1,
-    transition: { duration: motionTokens.duration.normal, ease: motionTokens.easing.smooth },
-  },
-}
-
 /** Card drag lift — elevated shadow + slight scale for dragged kanban cards */
 export const cardDragLift = {
   scale: 1.03,

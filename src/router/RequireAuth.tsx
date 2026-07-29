@@ -8,7 +8,7 @@ type AuthState =
   | { status: 'anonymous'; user: null }
   | { status: 'error'; user: null; error: Error }
 
-export function useSessionAuth() {
+function useSessionAuth() {
   const [auth, setAuth] = useState<AuthState>({ status: 'loading', user: null })
 
   useEffect(() => {

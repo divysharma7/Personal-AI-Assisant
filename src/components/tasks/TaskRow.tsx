@@ -23,24 +23,6 @@ function PriorityBarsIcon({ color, size = 20 }: { color: string; size?: number }
   )
 }
 
-/** Filled calendar icon with grid dots inside */
-function CalendarIcon({ color, size = 16 }: { color: string; size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
-      <rect x="1" y="2.5" width="14" height="12" rx="2.5" fill={color} />
-      <rect x="4" y="0.5" width="1.5" height="3" rx="0.75" fill={color} />
-      <rect x="10.5" y="0.5" width="1.5" height="3" rx="0.75" fill={color} />
-      {/* Grid dots */}
-      <circle cx="5" cy="8" r="1" fill="rgba(255,255,255,0.8)" />
-      <circle cx="8" cy="8" r="1" fill="rgba(255,255,255,0.8)" />
-      <circle cx="11" cy="8" r="1" fill="rgba(255,255,255,0.8)" />
-      <circle cx="5" cy="11" r="1" fill="rgba(255,255,255,0.8)" />
-      <circle cx="8" cy="11" r="1" fill="rgba(255,255,255,0.8)" />
-      <circle cx="11" cy="11" r="1" fill="rgba(255,255,255,0.8)" />
-    </svg>
-  )
-}
-
 /** Subtask progress ring */
 function SubtaskRing({ completed, total, size = 16 }: { completed: number; total: number; size?: number }) {
   const r = 6
@@ -105,7 +87,7 @@ interface TaskRowProps {
 }
 
 export default memo(forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow({
-  task, onToggle, onOpenDetail, onUpdate, isSelected, isDetailOpen,
+  task, onToggle, onOpenDetail, onUpdate, isSelected, isDetailOpen: _isDetailOpen,
   subTaskCount, onTitleChange, isCompleting = false,
 }: TaskRowProps, ref) {
   const [hovered, setHovered] = useState(false)

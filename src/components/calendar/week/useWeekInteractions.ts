@@ -293,5 +293,4 @@ export function useWeekInteractions(
   }
 }
 
-export { FIRST_VISIBLE_ROW, LAST_VISIBLE_ROW, VISIBLE_ROW_COUNT }
 export type { DragCreateState, ResizeState }

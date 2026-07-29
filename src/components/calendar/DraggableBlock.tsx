@@ -50,7 +50,6 @@ export default function DraggableBlock({
     attributes: resizeAttrs,
     listeners: resizeListeners,
     setNodeRef: setResizeRef,
-    isDragging: _isResizeDragging,
   } = useDraggable({
     id: `resize-${id}`,
     data: {

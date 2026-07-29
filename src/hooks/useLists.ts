@@ -5,7 +5,7 @@ import { useCallback } from 'react'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
-export interface ListCollaborator {
+interface ListCollaborator {
   userId: string
   email?: string
   role: 'creator' | 'collaborator'
@@ -33,22 +33,11 @@ export interface ListDoc {
   updatedAt: string
 }
 
-export interface ListGroupDoc {
-  _id: string
-  title: string
-  ownerId: string
-  order: number
-  collapsed: boolean
-  createdAt: string
-  updatedAt: string
-}
-
 // ── Keys ────────────────────────────────────────────────────────────────────
 
 const listKeys = {
   all: ['lists'] as const,
   detail: (id: string) => ['lists', id] as const,
-  groups: ['list-groups'] as const,
 }
 
 // ── Hook: useLists ──────────────────────────────────────────────────────────
@@ -195,57 +184,3 @@ export function useList(id: string | undefined) {
 
 // ── Hook: useListGroups ─────────────────────────────────────────────────────
 
-export function useListGroups() {
-  const queryClient = useQueryClient()
-
-  const query = useQuery<ListGroupDoc[]>({
-    queryKey: listKeys.groups,
-    queryFn: () => http.get<ListGroupDoc[]>('/api/list-groups'),
-  })
-
-  const createGroup = useMutation({
-    mutationFn: (data: { title: string }) =>
-      http.post<ListGroupDoc>('/api/list-groups', data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: listKeys.groups })
-    },
-  })
-
-  const updateGroup = useMutation({
-    mutationFn: ({ id, ...data }: { id: string } & Partial<ListGroupDoc>) =>
-      http.patch<ListGroupDoc>(`/api/list-groups/${id}`, data),
-    onMutate: async ({ id, ...data }) => {
-      await queryClient.cancelQueries({ queryKey: listKeys.groups })
-      const previous = queryClient.getQueryData<ListGroupDoc[]>(listKeys.groups)
-      queryClient.setQueryData<ListGroupDoc[]>(listKeys.groups, (old) =>
-        old?.map((g) => (g._id === id ? { ...g, ...data } : g))
-      )
-      return { previous }
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(listKeys.groups, context.previous)
-      }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: listKeys.groups })
-    },
-  })
-
-  const deleteGroup = useMutation({
-    mutationFn: (id: string) =>
-      http.del<{ ok: boolean }>(`/api/list-groups/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: listKeys.groups })
-      queryClient.invalidateQueries({ queryKey: listKeys.all })
-    },
-  })
-
-  return {
-    groups: query.data ?? [],
-    isLoading: query.isLoading,
-    createGroup: createGroup.mutateAsync,
-    updateGroup: updateGroup.mutate,
-    deleteGroup: deleteGroup.mutate,
-  }
-}

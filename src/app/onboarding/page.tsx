@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { X, Check } from 'lucide-react'
 import { copy } from '@/lib/copy'
-import { fade, fadeSlideUp, scaleIn, buttonPress, spring, ease } from '@/lib/motion'
+import { fadeSlideUp, scaleIn, springs, ease } from '@/lib/motion'
 
 type Step = 1 | 2 | 3
 
@@ -97,7 +97,7 @@ export default function OnboardingPage() {
       {/* Card */}
       <motion.div
         {...scaleIn}
-        transition={spring.smooth}
+        transition={springs.smooth}
         className="w-full max-w-md rounded-3xl p-8"
         style={{
           backgroundColor: 'rgba(28, 24, 38, 0.75)',

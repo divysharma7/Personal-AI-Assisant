@@ -1,7 +1,7 @@
 
 import { useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Check, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check } from 'lucide-react'
 import { fadeSlideUp, stagger, buttonPress, ease, checkBounce } from '@/lib/motion'
 import { useHabits } from '@/hooks/useHabits'
 import type { Habit } from '@/hooks/useHabits'
@@ -11,7 +11,7 @@ import { copy } from '@/lib/copy'
 
 const COPY = copy.habitCheckin
 
-function WeekMiniGrid({ habit, targetDate, weekCompletions }: {
+function WeekMiniGrid({ habit, targetDate: _targetDate, weekCompletions }: {
   habit: Habit
   targetDate: Date
   weekCompletions: (h: Habit) => { date: string; day: string; completed: boolean; isToday: boolean }[]
