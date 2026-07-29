@@ -134,7 +134,7 @@ export default memo(forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow({
       }}
       style={{
         display: 'flex', alignItems: 'flex-start',
-        padding: '12px 8px', cursor: 'pointer',
+        padding: '12px 8px', cursor: 'pointer', borderRadius: 8,
         borderBottom: '1px solid var(--overlay-1, rgba(108,108,158,0.06))',
         backgroundColor: isSelected
           ? 'var(--overlay-2, rgba(108,108,158,0.12))'

@@ -31,15 +31,15 @@ export default function ClockWeatherWidget() {
       } catch { /* ignore */ }
     }
 
-    fetch('https://wttr.in/?format=%t+%C', { headers: { 'Accept': 'text/plain' } })
-      .then((r) => r.ok ? r.text() : Promise.reject())
-      .then((text) => {
+    fetch('https://wttr.in/?format=j1')
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((json) => {
         if (cancelled) return
-        const trimmed = text.trim()
-        const match = trimmed.match(/^([+-]?\d+°\w*)\s+(.+)$/)
-        const data: WeatherData = match
-          ? { temp: match[1], condition: match[2] }
-          : { temp: '', condition: trimmed }
+        const current = json.current_condition?.[0]
+        if (!current) return
+        const temp = `${current.temp_C}°C`
+        const condition = current.weatherDesc?.[0]?.value ?? ''
+        const data: WeatherData = { temp, condition }
         setWeather(data)
         try { sessionStorage.setItem('laif-weather', JSON.stringify({ data, ts: Date.now() })) }
         catch { /* ignore */ }
