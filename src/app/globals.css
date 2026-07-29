@@ -23,10 +23,10 @@
   --bg-selected: rgba(15, 98, 254, 0.14);
   --border: rgba(222, 221, 249, 0.07);
 
-  /* Text */
+  /* Text — WCAG AA compliant */
   --text-primary: #f7f7ff;
-  --text-muted: #8e8da0;
-  --text-faint: #605f6a;
+  --text-muted: #a09fb2;
+  --text-faint: #908f9a;
 
   /* Mapped aliases */
   --accent: var(--accent-default);
@@ -97,10 +97,10 @@
   --bg-selected: rgba(15, 98, 254, 0.08);
   --border: rgba(120, 110, 100, 0.15);
 
-  /* Warm text */
+  /* Warm text — WCAG AA compliant */
   --text-primary: #1a1a1a;
-  --text-muted: #8c8478;
-  --text-faint: #b5ada3;
+  --text-muted: #6b6358;
+  --text-faint: #706c64;
 
   --accent: var(--accent-default);
   --accent-soft: rgba(15, 98, 254, 0.08);

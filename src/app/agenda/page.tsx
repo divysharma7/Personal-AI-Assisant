@@ -631,6 +631,7 @@ function SchedulingPopover({
 }) {
   const prefersReduced = useReducedMotion()
   const popoverRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLElement | null>(null)
   const [isScheduling, setIsScheduling] = useState(false)
 
   const todayStr = new Date().toISOString().split('T')[0]
@@ -657,17 +658,56 @@ function SchedulingPopover({
     }
   }, [anchorRef])
 
-  // Click outside / Esc
+  // Click outside
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (popoverRef.current && !popoverRef.current.contains(e.target as Node) &&
           anchorRef.current && !anchorRef.current.contains(e.target as Node)) onClose()
     }
-    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('mousedown', handleClick)
-    document.addEventListener('keydown', handleKey)
-    return () => { document.removeEventListener('mousedown', handleClick); document.removeEventListener('keydown', handleKey) }
+    return () => { document.removeEventListener('mousedown', handleClick) }
   }, [onClose, anchorRef])
+
+  // Focus trap
+  useEffect(() => {
+    const container = popoverRef.current
+    if (!container) return
+
+    triggerRef.current = document.activeElement as HTMLElement
+
+    const focusable = container.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (e.key !== 'Tab') return
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault()
+          last?.focus()
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault()
+          first?.focus()
+        }
+      }
+    }
+
+    first?.focus()
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      triggerRef.current?.focus()
+    }
+  }, [onClose])
 
   const handleSubmit = async () => {
     if (!selectedSlot || isScheduling) return
@@ -853,15 +893,56 @@ function ConflictPopover({
 }) {
   const prefersReduced = useReducedMotion()
   const popoverRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLElement | null>(null)
 
+  // Click outside
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) onClose()
     }
-    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('mousedown', handleClick)
-    document.addEventListener('keydown', handleKey)
-    return () => { document.removeEventListener('mousedown', handleClick); document.removeEventListener('keydown', handleKey) }
+    return () => { document.removeEventListener('mousedown', handleClick) }
+  }, [onClose])
+
+  // Focus trap
+  useEffect(() => {
+    const container = popoverRef.current
+    if (!container) return
+
+    triggerRef.current = document.activeElement as HTMLElement
+
+    const focusable = container.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (e.key !== 'Tab') return
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault()
+          last?.focus()
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault()
+          first?.focus()
+        }
+      }
+    }
+
+    first?.focus()
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      triggerRef.current?.focus()
+    }
   }, [onClose])
 
   return (
@@ -869,6 +950,8 @@ function ConflictPopover({
       {...(prefersReduced ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } } : scaleIn)}
       transition={motionEase.fast}
       ref={popoverRef}
+      role="dialog"
+      aria-modal="true"
       className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-[340px] w-[calc(100vw-2rem)] rounded-xl p-5 z-[150]"
       style={{ backgroundColor: 'var(--bg-pane-2)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-elevated)' }}
     >
@@ -1120,6 +1203,8 @@ function BottomSheetTray({
   onScheduleConfirm: (taskId: string, target: ScheduleTarget, force?: boolean) => void
 }) {
   const prefersReduced = useReducedMotion()
+  const containerRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLElement | null>(null)
   const [schedulingTask, setSchedulingTask] = useState<UnscheduledTask | null>(null)
   const [scheduleTarget, setScheduleTarget] = useState<ScheduleTarget | null>(null)
   const [showConflict, setShowConflict] = useState<{ task: UnscheduledTask; conflict: { title: string; start: string; end: string }; target: ScheduleTarget } | null>(null)
@@ -1138,6 +1223,47 @@ function BottomSheetTray({
       setSheetDate(todayStr)
     }
   }, [schedulingTask, todayStr])
+
+  // Focus trap
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    triggerRef.current = document.activeElement as HTMLElement
+
+    const focusable = container.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (e.key !== 'Tab') return
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault()
+          last?.focus()
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault()
+          first?.focus()
+        }
+      }
+    }
+
+    first?.focus()
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      triggerRef.current?.focus()
+    }
+  }, [onClose])
 
   const freeSlots = useMemo(
     () => schedulingTask ? findFreeSlots(sheetDate, sheetDuration, agendaItems, sheetDate === todayStr ? undefined : 480) : [],
@@ -1165,6 +1291,7 @@ function BottomSheetTray({
         className="fixed inset-0 z-[110]"
         style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
         onClick={onClose}
+        aria-hidden="true"
       />
 
       {/* Sheet */}
@@ -1173,6 +1300,7 @@ function BottomSheetTray({
         animate={prefersReduced ? { opacity: 1 } : { y: 0 }}
         exit={prefersReduced ? { opacity: 0 } : { y: '100%' }}
         transition={motionEase.medium}
+        ref={containerRef}
         className="fixed bottom-0 left-0 right-0 z-[115] rounded-t-2xl max-h-[75vh] flex flex-col"
         style={{ backgroundColor: 'var(--bg-pane-2)', border: '1px solid var(--border)' }}
       >
@@ -1335,6 +1463,7 @@ function BottomSheetTray({
             className="fixed inset-0 z-[120]"
             style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
             onClick={() => setShowConflict(null)}
+            aria-hidden="true"
           />
           <ConflictPopover
             taskTitle={showConflict.task.title}
@@ -1880,6 +2009,8 @@ export default function AgendaPage() {
                     <button
                       className="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors cursor-pointer"
                       style={{ backgroundColor: 'var(--accent)', color: '#fff' }}
+                      onClick={() => window.dispatchEvent(new CustomEvent('laif:focus-new-task'))}
+                      aria-label="Create a new task"
                     >
                       <Plus size={16} strokeWidth={2} />
                       Add task
@@ -1952,6 +2083,7 @@ export default function AgendaPage() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[90]"
             onClick={() => setSchedulingTask(null)}
+            aria-hidden="true"
           />
           <SchedulingPopover
             task={schedulingTask}
@@ -1974,6 +2106,7 @@ export default function AgendaPage() {
             className="fixed inset-0 z-[140]"
             style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
             onClick={() => setShowConflict(null)}
+            aria-hidden="true"
           />
           <ConflictPopover
             taskTitle={showConflict.task.title}
