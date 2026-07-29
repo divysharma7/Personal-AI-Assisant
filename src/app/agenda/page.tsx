@@ -24,157 +24,9 @@ import {
 import { motionTokens, fadeSlideDown, ease as motionEase, scaleIn } from '@/lib/motion'
 import { useSearchParams } from 'react-router-dom'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
-
-// ── Types ──────────────────────────────────────────────────────
-
-interface AgendaItem {
-  id: string
-  kind: 'task' | 'habit' | 'external_event' | 'focus_session'
-  title: string
-  start: string | null
-  end: string | null
-  allDay: boolean
-  completed: boolean
-  source: { type: string; displayName?: string }
-  availability: 'busy' | 'free'
-  color: string
-  actions: string[]
-}
-
-interface UnscheduledTask {
-  id: string
-  title: string
-  priority: 'high' | 'medium' | 'low'
-  estimatedMinutes?: number
-  dueDate?: string
-}
-
-interface AgendaResponse {
-  date: string
-  timeZone: string
-  generatedAt: string
-  sync: { state: string; lastSuccessfulAt: string | null }
-  items: AgendaItem[]
-  unscheduledPriorities: UnscheduledTask[]
-}
-
-// ── Mock data ──────────────────────────────────────────────────
-
-function generateMockAgenda(dateStr: string): AgendaResponse {
-  const now = new Date()
-  const isToday = dateStr === now.toISOString().split('T')[0]
-
-  const items: AgendaItem[] = [
-    {
-      id: 'ext-1',
-      kind: 'external_event',
-      title: 'Team standup',
-      start: `${dateStr}T09:00:00`,
-      end: `${dateStr}T09:30:00`,
-      allDay: false,
-      completed: false,
-      source: { type: 'google', displayName: 'Work' },
-      availability: 'busy',
-      color: '#4285f4',
-      actions: ['view'],
-    },
-    {
-      id: 'habit-1',
-      kind: 'habit',
-      title: 'Morning meditation',
-      start: `${dateStr}T07:00:00`,
-      end: `${dateStr}T07:15:00`,
-      allDay: false,
-      completed: isToday && now.getHours() > 7,
-      source: { type: 'lifeos' },
-      availability: 'free',
-      color: '#f59e0b',
-      actions: ['complete'],
-    },
-    {
-      id: 'task-1',
-      kind: 'task',
-      title: 'Review PR #142',
-      start: `${dateStr}T10:00:00`,
-      end: `${dateStr}T10:30:00`,
-      allDay: false,
-      completed: false,
-      source: { type: 'lifeos' },
-      availability: 'busy',
-      color: '#6366f1',
-      actions: ['complete', 'focus', 'reschedule'],
-    },
-    {
-      id: 'ext-2',
-      kind: 'external_event',
-      title: 'Design review',
-      start: `${dateStr}T14:00:00`,
-      end: `${dateStr}T15:00:00`,
-      allDay: false,
-      completed: false,
-      source: { type: 'google', displayName: 'Work' },
-      availability: 'busy',
-      color: '#4285f4',
-      actions: ['view'],
-    },
-    {
-      id: 'task-2',
-      kind: 'task',
-      title: 'Write migration docs',
-      start: `${dateStr}T11:00:00`,
-      end: `${dateStr}T12:00:00`,
-      allDay: false,
-      completed: false,
-      source: { type: 'lifeos' },
-      availability: 'busy',
-      color: '#6366f1',
-      actions: ['complete', 'focus', 'reschedule'],
-    },
-    {
-      id: 'task-3',
-      kind: 'task',
-      title: 'Prepare sprint retro',
-      start: `${dateStr}T14:15:00`,
-      end: `${dateStr}T14:45:00`,
-      allDay: false,
-      completed: false,
-      source: { type: 'lifeos' },
-      availability: 'busy',
-      color: '#6366f1',
-      actions: ['complete', 'focus', 'reschedule'],
-    },
-    {
-      id: 'focus-1',
-      kind: 'focus_session',
-      title: 'Deep work: API refactor',
-      start: `${dateStr}T16:00:00`,
-      end: `${dateStr}T17:00:00`,
-      allDay: false,
-      completed: true,
-      source: { type: 'lifeos' },
-      availability: 'busy',
-      color: '#10b981',
-      actions: ['view'],
-    },
-  ]
-
-  const unscheduled: UnscheduledTask[] = [
-    { id: 'u-1', title: 'Update dependencies', priority: 'medium', estimatedMinutes: 30 },
-    { id: 'u-2', title: 'Write unit tests for auth', priority: 'high', estimatedMinutes: 60, dueDate: dateStr },
-    { id: 'u-3', title: 'Review design mockups', priority: 'low', estimatedMinutes: 15 },
-    { id: 'u-4', title: 'Draft Q2 roadmap', priority: 'high', estimatedMinutes: 90, dueDate: (() => { const d = new Date(dateStr + 'T12:00:00'); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0] })() },
-    { id: 'u-5', title: 'Fix login redirect bug', priority: 'medium', estimatedMinutes: 45, dueDate: dateStr },
-  ]
-
-  return {
-    date: dateStr,
-    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    generatedAt: new Date().toISOString(),
-    sync: { state: 'healthy', lastSuccessfulAt: new Date().toISOString() },
-    items,
-    unscheduledPriorities: unscheduled,
-  }
-}
+import { useAgenda } from '@/hooks/useAgenda'
+import type { AgendaItem, UnscheduledTask } from '@/hooks/useAgenda'
+import { http } from '@/lib/api/client'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -681,31 +533,6 @@ function toIso(dateStr: string, hour: number, minute: number): string {
 interface ScheduleResult {
   success: boolean
   conflict?: { title: string; start: string; end: string }
-}
-
-async function mockScheduleTask(
-  taskId: string,
-  dateStr: string,
-  hour: number,
-  minute: number,
-  durationMin: number,
-  _items: AgendaItem[],
-): Promise<ScheduleResult> {
-  await new Promise((r) => setTimeout(r, 200))
-  // ~20% chance of conflict for demo
-  const hasConflict = Math.random() < 0.2
-  if (hasConflict) {
-    const conflictHour = hour + Math.floor(Math.random() * 3)
-    return {
-      success: false,
-      conflict: {
-        title: ['Team standup', 'Design review', 'Write migration docs'][Math.floor(Math.random() * 3)],
-        start: toIso(dateStr, Math.min(conflictHour, 23), minute),
-        end: toIso(dateStr, Math.min(conflictHour + 1, 23), (minute + 30) % 60),
-      },
-    }
-  }
-  return { success: true }
 }
 
 // ── Toast Context ───────────────────────────────────────────────
@@ -1313,13 +1140,9 @@ function BottomSheetTray({
     if (!schedulingTask || freeSlots.length === 0 || isScheduling) return
     const slot = freeSlots[0]
     setIsScheduling(true)
-    const result = await mockScheduleTask(schedulingTask.id, sheetDate, slot.hour, slot.minute, sheetDuration, agendaItems)
-    if (result.success) {
-      onScheduleConfirm(schedulingTask.id, { date: sheetDate, hour: slot.hour, minute: slot.minute, durationMin: sheetDuration })
-      setSchedulingTask(null)
-    } else if (result.conflict) {
-      setShowConflict({ task: schedulingTask, conflict: result.conflict, target: { date: sheetDate, hour: slot.hour, minute: slot.minute, durationMin: sheetDuration } })
-    }
+    // Call real API via parent handler
+    onScheduleConfirm(schedulingTask.id, { date: sheetDate, hour: slot.hour, minute: slot.minute, durationMin: sheetDuration })
+    setSchedulingTask(null)
     setIsScheduling(false)
   }
 
@@ -1533,10 +1356,6 @@ export default function AgendaPage() {
   const dateParam = searchParams.get('date') || todayStr
   const [selectedDate, setSelectedDate] = useState(dateParam)
 
-  // Simulated loading / error state for state-design demo
-  const [loading, setLoading] = useState(true)
-  const [hasError, setHasError] = useState(false)
-
   // Collapsed earlier items
   const [earlierExpanded, setEarlierExpanded] = useState(false)
 
@@ -1556,15 +1375,13 @@ export default function AgendaPage() {
   const [showMobileSheet, setShowMobileSheet] = useState(false)
   const [scheduleTarget, setScheduleTarget] = useState<ScheduleTarget | null>(null)
 
-  // Simulate loading on date change
-  useEffect(() => {
-    setLoading(true)
-    setHasError(false)
-    const timer = setTimeout(() => {
-      setLoading(false)
-    }, 400)
-    return () => clearTimeout(timer)
-  }, [selectedDate])
+  // Fetch agenda from API
+  const { agenda, isLoading: apiLoading, isFetching, error: apiError, refetch, invalidate } = useAgenda(selectedDate)
+  const dateObj = useMemo(() => new Date(selectedDate + 'T12:00:00'), [selectedDate])
+
+  // Derive loading/error states
+  const loading = apiLoading || isFetching
+  const hasError = !!apiError
 
   // Sync URL when date changes
   useEffect(() => {
@@ -1575,13 +1392,11 @@ export default function AgendaPage() {
     }
   }, [selectedDate, todayStr, setSearchParams])
 
-  // Mock data
-  const agenda = useMemo(() => generateMockAgenda(selectedDate), [selectedDate])
-  const dateObj = useMemo(() => new Date(selectedDate + 'T12:00:00'), [selectedDate])
-
-  // Sync unscheduled tasks from mock data
+  // Sync unscheduled tasks from API data
   useEffect(() => {
-    setUnscheduledTasks(agenda.unscheduledPriorities)
+    if (agenda) {
+      setUnscheduledTasks(agenda.unscheduledPriorities)
+    }
   }, [agenda])
 
   // ── Scheduling handlers ────────────────────────────────────
@@ -1594,57 +1409,83 @@ export default function AgendaPage() {
     }
   }, [isTouchDevice])
 
-  const performSchedule = useCallback((taskId: string, target: ScheduleTarget) => {
+  const performSchedule = useCallback(async (taskId: string, target: ScheduleTarget) => {
     const task = unscheduledTasks.find((t) => t.id === taskId)
     if (!task) return
     const scrollTop = scrollRef.current?.scrollTop
 
-    // Move from tray to agenda items (mock)
-    const newAgendaItem: AgendaItem = {
-      id: `scheduled-${taskId}`,
-      kind: 'task',
-      title: task.title,
-      start: toIso(target.date, target.hour, target.minute),
-      end: toIso(target.date, target.hour + Math.floor((target.minute + target.durationMin) / 60), (target.minute + target.durationMin) % 60),
-      allDay: false,
-      completed: false,
-      source: { type: 'lifeos' },
-      availability: 'busy',
-      color: '#6366f1',
-      actions: ['complete', 'focus', 'reschedule'],
+    // Call real API to schedule the task
+    try {
+      const scheduledStart = toIso(target.date, target.hour, target.minute)
+      const endHour = target.hour + Math.floor((target.minute + target.durationMin) / 60)
+      const endMinute = (target.minute + target.durationMin) % 60
+      const scheduledEnd = toIso(target.date, endHour, endMinute)
+
+      await http.patch(`/api/tasks/${taskId}`, {
+        scheduledStart,
+        scheduledEnd,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      })
+
+      // Remove from local tray immediately
+      setUnscheduledTasks((prev) => prev.filter((t) => t.id !== taskId))
+      setSchedulingTask(null)
+      setScheduleTarget(null)
+
+      // Restore scroll position
+      requestAnimationFrame(() => {
+        if (scrollRef.current && scrollTop !== undefined) {
+          scrollRef.current.scrollTop = scrollTop
+        }
+      })
+
+      // Invalidate agenda to refetch with the new scheduled item
+      invalidate()
+
+      // Show undo toast
+      addToast(`Scheduled "${task.title}"`, {
+        label: 'Undo',
+        onClick: async () => {
+          await http.patch(`/api/tasks/${taskId}`, {
+            scheduledStart: null,
+            scheduledEnd: null,
+          })
+          invalidate()
+        },
+      })
+    } catch {
+      // Schedule failed — show error
+      addToast(`Failed to schedule "${task.title}"`)
     }
-    agenda.items.push(newAgendaItem)
-    setUnscheduledTasks((prev) => prev.filter((t) => t.id !== taskId))
-    setSchedulingTask(null)
-    setScheduleTarget(null)
-
-    // Restore scroll position
-    requestAnimationFrame(() => {
-      if (scrollRef.current && scrollTop !== undefined) {
-        scrollRef.current.scrollTop = scrollTop
-      }
-    })
-
-    // Show undo toast
-    addToast(`Scheduled "${task.title}"`, {
-      label: 'Undo',
-      onClick: () => {
-        setUnscheduledTasks((prev) => [...prev, task])
-        const idx = agenda.items.findIndex((i) => i.id === newAgendaItem.id)
-        if (idx !== -1) agenda.items.splice(idx, 1)
-      },
-    })
-  }, [unscheduledTasks, agenda, addToast])
+  }, [unscheduledTasks, invalidate, addToast])
 
   const handleScheduleConfirm = useCallback(async (taskId: string, target: ScheduleTarget, force?: boolean) => {
+    // Client-side conflict detection
     if (!force) {
       const task = unscheduledTasks.find((t) => t.id === taskId)
       if (!task) return
-      setIsSchedulingApi(true)
-      const result = await mockScheduleTask(taskId, target.date, target.hour, target.minute, target.durationMin, agenda.items)
-      setIsSchedulingApi(false)
-      if (!result.success && result.conflict) {
-        setShowConflict({ task, conflict: result.conflict, target })
+
+      const startMinutes = target.hour * 60 + target.minute
+      const endMinutes = startMinutes + target.durationMin
+      const conflict = agenda.items.find((item) => {
+        if (!item.start || !item.end || item.allDay) return false
+        const itemStart = new Date(item.start)
+        const itemEnd = new Date(item.end)
+        const itemStartMin = itemStart.getHours() * 60 + itemStart.getMinutes()
+        const itemEndMin = itemEnd.getHours() * 60 + itemEnd.getMinutes()
+        return startMinutes < itemEndMin && endMinutes > itemStartMin
+      })
+
+      if (conflict && conflict.start && conflict.end) {
+        setShowConflict({
+          task,
+          conflict: {
+            title: conflict.title,
+            start: conflict.start,
+            end: conflict.end,
+          },
+          target,
+        })
         setScheduleTarget(target)
         return
       }

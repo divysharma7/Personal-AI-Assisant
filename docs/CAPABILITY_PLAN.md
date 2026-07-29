@@ -139,3 +139,22 @@ Not in this session:
 LOS-301 replaces the user-level Google token fields with owned account and
 calendar inventory records. That schema change starts only after LOS-401 passes
 backend typechecking and the complete backend test suite.
+
+### LOS-202 — Unified Agenda API
+
+Implemented locally on 2026-07-29:
+
+- Published `GET /api/calendar/agenda?date=YYYY-MM-DD&timeZone=Area/City`.
+- Matched the frontend `AgendaResponse`, `AgendaItem`, and
+  `UnscheduledTask` mock shapes.
+- Added ownership-scoped reads for scheduled tasks/habits, external events,
+  completed Focus sessions, and unscheduled priorities.
+- Added IANA time-zone validation and DST-aware local-day boundaries.
+- Added deterministic ordering, sync status, and integration tests.
+
+Transition rule:
+
+- Until LOS-301 adds owned account/calendar inventory, existing external events
+  are treated as active and have `accountId: null`.
+- LOS-301 must add active/passive filtering without changing the public Agenda
+  response shape documented in `docs/AGENDA_API_CONTRACT.md`.

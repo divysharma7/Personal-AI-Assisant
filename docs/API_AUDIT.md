@@ -39,6 +39,7 @@
 | `/focus/sessions/active` | GET | ✓ | — | ✓ handleApiError | ✓ | Raw data | — |
 | `/focus/stats` | GET | ✓ | — | ✓ handleApiError | ✓ | Raw data | — |
 | `/calendar` | GET | ✓ | — | ✓ handleApiError | ✓ | Unified items | Fixed in this session |
+| `/calendar/agenda` | GET | ✓ | ✓ query | ✓ shared error handler | ✓ | `AgendaResponse` | LOS-202 contract; ownership and local-day bounds tested |
 | `/calendar/events` | GET | ✓ | — | ✓ handleApiError | ✓ | CalendarEvent[] | — |
 | `/calendar/capacity` | GET | ✓ | — | ✓ handleApiError | ✓ | Raw data | — |
 | `/calendar/heatmap` | GET | ✓ | — | ✓ handleApiError | ✓ | Raw data | — |

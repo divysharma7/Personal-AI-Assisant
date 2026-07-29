@@ -307,6 +307,7 @@ computes `actualDurationMin`.
 | Method and path | Request/query | Success |
 | --- | --- | --- |
 | `GET /calendar` | none | Combined event, due-date task, and reminder array with `itemType` |
+| `GET /calendar/agenda` | required `date`, optional `timeZone` | One local day containing normalized Agenda items, sync state, and unscheduled priorities |
 | `GET /calendar/events` | optional `from`, `to`, comma-separated `include` | Scheduled task, external Google event, and completed focus-session array with `calendarType` |
 | `GET /calendar/unscheduled` | none | Non-completed tasks with no scheduled start |
 | `GET /calendar/overdue` | none | Non-completed tasks whose scheduled start is before now |
@@ -316,6 +317,12 @@ computes `actualDurationMin`.
 The default `include` is `tasks,habits,google,focus`. The current code handles
 `tasks`, `google`, and `focus`; scheduled habits are included through the task
 query and get `calendarType: "habit"`.
+
+`GET /calendar/agenda` is the stable Agenda integration endpoint. It interprets
+the requested date in the supplied IANA time zone, returns intersecting items
+across local-day boundaries, and orders them deterministically. Its complete
+wire format and the temporary pre-LOS-301 behavior are documented in
+`docs/AGENDA_API_CONTRACT.md`.
 
 ### Events
 
