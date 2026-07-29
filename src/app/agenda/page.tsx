@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   CalendarDays,
   Plus,
   Clock,
@@ -10,9 +11,14 @@ import {
   Flame,
   Timer,
   Calendar,
+  AlertTriangle,
+  Focus,
+  ExternalLink,
+  Eye,
 } from 'lucide-react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
-import { fade, ease, motionTokens } from '@/lib/motion'
+import { useSearchParams } from 'react-router-dom'
+import { motionTokens } from '@/lib/motion'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -68,19 +74,6 @@ function generateMockAgenda(dateStr: string): AgendaResponse {
       actions: ['view'],
     },
     {
-      id: 'task-1',
-      kind: 'task',
-      title: 'Review PR #142',
-      start: `${dateStr}T10:00:00`,
-      end: `${dateStr}T10:30:00`,
-      allDay: false,
-      completed: false,
-      source: { type: 'lifeos' },
-      availability: 'busy',
-      color: '#6366f1',
-      actions: ['complete', 'focus', 'reschedule'],
-    },
-    {
       id: 'habit-1',
       kind: 'habit',
       title: 'Morning meditation',
@@ -92,6 +85,19 @@ function generateMockAgenda(dateStr: string): AgendaResponse {
       availability: 'free',
       color: '#f59e0b',
       actions: ['complete'],
+    },
+    {
+      id: 'task-1',
+      kind: 'task',
+      title: 'Review PR #142',
+      start: `${dateStr}T10:00:00`,
+      end: `${dateStr}T10:30:00`,
+      allDay: false,
+      completed: false,
+      source: { type: 'lifeos' },
+      availability: 'busy',
+      color: '#6366f1',
+      actions: ['complete', 'focus', 'reschedule'],
     },
     {
       id: 'ext-2',
@@ -112,6 +118,19 @@ function generateMockAgenda(dateStr: string): AgendaResponse {
       title: 'Write migration docs',
       start: `${dateStr}T11:00:00`,
       end: `${dateStr}T12:00:00`,
+      allDay: false,
+      completed: false,
+      source: { type: 'lifeos' },
+      availability: 'busy',
+      color: '#6366f1',
+      actions: ['complete', 'focus', 'reschedule'],
+    },
+    {
+      id: 'task-3',
+      kind: 'task',
+      title: 'Prepare sprint retro',
+      start: `${dateStr}T14:15:00`,
+      end: `${dateStr}T14:45:00`,
       allDay: false,
       completed: false,
       source: { type: 'lifeos' },
@@ -174,8 +193,28 @@ function formatDateSecondary(date: Date): string {
   return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
 }
 
-function isViewingToday(dateStr: string): boolean {
-  return dateStr === new Date().toISOString().split('T')[0]
+/** Minutes between two ISO strings. */
+function overlapMinutes(aStart: string, aEnd: string, bStart: string, bEnd: string): number {
+  const as = new Date(aStart).getTime()
+  const ae = new Date(aEnd).getTime()
+  const bs = new Date(bStart).getTime()
+  const be = new Date(bEnd).getTime()
+  const start = Math.max(as, bs)
+  const end = Math.min(ae, be)
+  return Math.max(0, Math.round((end - start) / 60000))
+}
+
+/** Duration in minutes between two ISO timestamps. */
+function durationMinutes(start: string, end: string): number {
+  return Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000)
+}
+
+/** Friendly duration string, e.g. "45m" or "1h 15m". */
+function formatDuration(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return m > 0 ? `${h}h ${m}m` : `${h}h`
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -198,23 +237,155 @@ const KIND_ICONS: Record<string, typeof CheckCircle2> = {
   focus_session: Timer,
 }
 
+// ── Conflict Detection ─────────────────────────────────────────
+
+interface ConflictInfo {
+  itemId: string
+  otherTitle: string
+  overlapMin: number
+}
+
+/** Build a map of item id → conflict description (first conflict only). */
+function detectConflicts(items: AgendaItem[]): Map<string, ConflictInfo> {
+  const map = new Map<string, ConflictInfo>()
+  const timed = items.filter((i) => i.start && i.end && !i.allDay)
+
+  for (let i = 0; i < timed.length; i++) {
+    for (let j = i + 1; j < timed.length; j++) {
+      const a = timed[i]
+      const b = timed[j]
+      const mins = overlapMinutes(a.start!, a.end!, b.start!, b.end!)
+      if (mins > 0) {
+        if (!map.has(a.id)) {
+          map.set(a.id, { itemId: b.id, otherTitle: b.title, overlapMin: mins })
+        }
+        if (!map.has(b.id)) {
+          map.set(b.id, { itemId: a.id, otherTitle: a.title, overlapMin: mins })
+        }
+      }
+    }
+  }
+  return map
+}
+
+// ── Current Time Rule ──────────────────────────────────────────
+
+function CurrentTimeRule() {
+  const [, setTick] = useState(0)
+
+  // Re-render every 60 seconds
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 60_000)
+    return () => clearInterval(id)
+  }, [])
+
+  const now = new Date()
+  const label = formatTime(now.toISOString())
+
+  return (
+    <div className="flex items-center gap-3 py-1" role="separator" aria-label={`Current time: ${label}`}>
+      <div className="min-w-[72px] flex justify-end">
+        <span className="text-[10px] font-semibold" style={{ color: 'var(--accent)' }}>
+          {label}
+        </span>
+      </div>
+      <div className="flex-1 relative h-px" style={{ backgroundColor: 'var(--accent)' }}>
+        <div
+          className="absolute -top-1 -left-1 w-2 h-2 rounded-full"
+          style={{ backgroundColor: 'var(--accent)' }}
+        />
+      </div>
+    </div>
+  )
+}
+
+// ── Skeleton Row ───────────────────────────────────────────────
+
+function SkeletonRow({ width = '60%' }: { width?: string }) {
+  return (
+    <div className="flex items-start gap-3 px-4 py-3 rounded-xl animate-pulse">
+      <div className="flex flex-col items-end min-w-[72px] gap-1 pt-0.5">
+        <div className="h-3 w-10 rounded" style={{ backgroundColor: 'var(--overlay-2)' }} />
+        <div className="h-2.5 w-8 rounded" style={{ backgroundColor: 'var(--overlay-1)' }} />
+      </div>
+      <div className="flex-1 min-w-0 space-y-1.5">
+        <div className="h-3.5 rounded" style={{ backgroundColor: 'var(--overlay-2)', width }} />
+        <div className="h-2.5 w-20 rounded" style={{ backgroundColor: 'var(--overlay-1)' }} />
+      </div>
+    </div>
+  )
+}
+
+function LoadingState() {
+  return (
+    <div className="flex flex-col gap-1" role="status" aria-label="Loading agenda">
+      <span className="sr-only">Loading agenda…</span>
+      <SkeletonRow width="55%" />
+      <SkeletonRow width="75%" />
+      <SkeletonRow width="40%" />
+      <SkeletonRow width="65%" />
+      <SkeletonRow width="50%" />
+    </div>
+  )
+}
+
 // ── Agenda Item Row ────────────────────────────────────────────
 
-function AgendaItemRow({ item, isNow }: { item: AgendaItem; isNow: boolean }) {
+function AgendaItemRow({
+  item,
+  isNow,
+  conflict,
+  isTouchDevice,
+}: {
+  item: AgendaItem
+  isNow: boolean
+  conflict?: ConflictInfo
+  isTouchDevice: boolean
+}) {
   const Icon = KIND_ICONS[item.kind] || Clock
+  const prefersReduced = useReducedMotion()
+  const [actionsVisible, setActionsVisible] = useState(isTouchDevice)
+
+  const showActions = isTouchDevice || actionsVisible
+
+  const duration = item.start && item.end ? durationMinutes(item.start, item.end) : null
+
+  /** Accessible label for screen readers. */
+  const srLabel = [
+    KIND_LABELS[item.kind],
+    item.title,
+    item.completed ? 'completed' : '',
+    item.start ? `from ${formatTime(item.start)}` : '',
+    item.end ? `to ${formatTime(item.end)}` : '',
+    isNow ? 'current item' : '',
+    conflict ? `overlaps with ${conflict.otherTitle} by ${conflict.overlapMin} minutes` : '',
+  ]
+    .filter(Boolean)
+    .join(', ')
 
   return (
     <motion.div
+      layout={!prefersReduced}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: motionTokens.duration.fast }}
-      className="flex items-start gap-3 px-4 py-3 rounded-xl transition-colors"
+      className="group flex items-start gap-3 px-4 py-3 rounded-xl transition-colors"
       style={{
         backgroundColor: isNow ? 'var(--overlay-1)' : 'transparent',
         borderLeft: `3px solid ${item.color}`,
       }}
-      onMouseEnter={(e) => { if (!isNow) e.currentTarget.style.backgroundColor = 'var(--overlay-1)' }}
-      onMouseLeave={(e) => { if (!isNow) e.currentTarget.style.backgroundColor = 'transparent' }}
+      onMouseEnter={(e) => {
+        if (!isNow) e.currentTarget.style.backgroundColor = 'var(--overlay-1)'
+        if (!isTouchDevice) setActionsVisible(true)
+      }}
+      onMouseLeave={(e) => {
+        if (!isNow) e.currentTarget.style.backgroundColor = 'transparent'
+        if (!isTouchDevice) setActionsVisible(false)
+      }}
+      onFocus={() => setActionsVisible(true)}
+      onBlur={() => { if (!isTouchDevice) setActionsVisible(false) }}
+      role="listitem"
+      aria-label={srLabel}
     >
       {/* Time column */}
       <div className="flex flex-col items-end min-w-[72px] pt-0.5">
@@ -255,11 +426,14 @@ function AgendaItemRow({ item, isNow }: { item: AgendaItem; isNow: boolean }) {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2 mt-0.5">
+
+        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           <span className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
             {KIND_LABELS[item.kind]}
           </span>
-          {item.source.displayName && (
+
+          {/* External event: show calendar source */}
+          {item.kind === 'external_event' && item.source.displayName && (
             <>
               <span style={{ color: 'var(--text-faint)' }}>·</span>
               <span className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
@@ -267,25 +441,160 @@ function AgendaItemRow({ item, isNow }: { item: AgendaItem; isNow: boolean }) {
               </span>
             </>
           )}
+
+          {/* Focus session: show completed duration */}
+          {item.kind === 'focus_session' && item.completed && duration !== null && (
+            <>
+              <span style={{ color: 'var(--text-faint)' }}>·</span>
+              <span className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
+                {formatDuration(duration)} completed
+              </span>
+            </>
+          )}
+
           {item.completed && (
             <CheckCircle2 size={12} strokeWidth={2} style={{ color: '#10b981' }} />
           )}
         </div>
+
+        {/* Conflict marker */}
+        {conflict && (
+          <div
+            className="flex items-center gap-1.5 mt-1.5 text-[11px]"
+            role="alert"
+            aria-label={`Scheduling conflict: overlaps ${conflict.otherTitle} by ${conflict.overlapMin} minutes`}
+          >
+            <AlertTriangle size={12} strokeWidth={2} style={{ color: '#f59e0b', flexShrink: 0 }} />
+            <span style={{ color: '#f59e0b' }}>
+              Overlaps {conflict.otherTitle} by {conflict.overlapMin} min
+            </span>
+          </div>
+        )}
+
+        {/* External event read-only details */}
+        {item.kind === 'external_event' && showActions && (
+          <div className="flex items-center gap-2 mt-2">
+            <button
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer"
+              style={{ backgroundColor: 'var(--overlay-1)', color: 'var(--text-muted)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-2)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1)'; e.currentTarget.style.color = 'var(--text-muted)' }}
+              tabIndex={0}
+              aria-label={`View details for ${item.title}`}
+            >
+              <Eye size={12} strokeWidth={1.5} />
+              <span>Details</span>
+            </button>
+            <span
+              className="flex items-center gap-1 text-[11px]"
+              style={{ color: 'var(--text-faint)' }}
+            >
+              <Calendar size={11} strokeWidth={1.5} />
+              {item.source.displayName || item.source.type}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Actions */}
-      {!item.completed && item.actions.includes('complete') && (
-        <button
-          className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors cursor-pointer"
-          style={{ color: 'var(--text-faint)' }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-2)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-faint)' }}
-          title="Complete"
-        >
-          <CheckCircle2 size={16} strokeWidth={1.5} />
-        </button>
-      )}
+      {/* Action buttons — revealed on hover/focus (pointer) or always visible (touch) */}
+      <div
+        className="flex items-center gap-1 flex-shrink-0"
+        style={{
+          opacity: showActions ? 1 : 0,
+          transition: 'opacity 0.15s ease',
+          pointerEvents: showActions ? 'auto' : 'none',
+        }}
+      >
+        {/* Task actions */}
+        {item.kind === 'task' && !item.completed && item.actions.includes('complete') && (
+          <button
+            className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors cursor-pointer"
+            style={{ color: 'var(--text-faint)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-2)'; e.currentTarget.style.color = '#10b981' }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-faint)' }}
+            title="Complete task"
+            aria-label={`Complete ${item.title}`}
+          >
+            <CheckCircle2 size={16} strokeWidth={1.5} />
+          </button>
+        )}
+        {item.kind === 'task' && !item.completed && item.actions.includes('focus') && (
+          <button
+            className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors cursor-pointer"
+            style={{ color: 'var(--text-faint)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-2)'; e.currentTarget.style.color = 'var(--accent)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-faint)' }}
+            title="Start focus session"
+            aria-label={`Start focus session for ${item.title}`}
+          >
+            <Focus size={16} strokeWidth={1.5} />
+          </button>
+        )}
+        {item.kind === 'task' && item.actions.includes('reschedule') && (
+          <button
+            className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors cursor-pointer"
+            style={{ color: 'var(--text-faint)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-2)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-faint)' }}
+            title="Open task"
+            aria-label={`Open ${item.title}`}
+          >
+            <ExternalLink size={16} strokeWidth={1.5} />
+          </button>
+        )}
+
+        {/* Habit actions */}
+        {item.kind === 'habit' && !item.completed && item.actions.includes('complete') && (
+          <button
+            className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors cursor-pointer"
+            style={{ color: 'var(--text-faint)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-2)'; e.currentTarget.style.color = '#f59e0b' }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-faint)' }}
+            title="Mark habit complete"
+            aria-label={`Mark ${item.title} complete`}
+          >
+            <Flame size={16} strokeWidth={1.5} />
+          </button>
+        )}
+
+        {/* Focus session: completed icon (non-interactive) */}
+        {item.kind === 'focus_session' && item.completed && (
+          <div
+            className="flex items-center justify-center w-8 h-8 rounded-lg"
+            style={{ color: '#10b981' }}
+            aria-label={`Focus session ${item.title} completed`}
+          >
+            <CheckCircle2 size={16} strokeWidth={1.5} />
+          </div>
+        )}
+      </div>
     </motion.div>
+  )
+}
+
+// ── Earlier Toggle ─────────────────────────────────────────────
+
+function EarlierToggle({ count, expanded, onToggle }: { count: number; expanded: boolean; onToggle: () => void }) {
+  return (
+    <button
+      onClick={onToggle}
+      className="flex items-center gap-2 w-full px-4 py-2 rounded-lg transition-colors cursor-pointer text-left"
+      style={{ color: 'var(--text-faint)' }}
+      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1)' }}
+      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+      aria-expanded={expanded}
+      aria-label={expanded ? `Collapse ${count} earlier items` : `Show ${count} earlier items`}
+    >
+      <motion.div
+        animate={{ rotate: expanded ? 0 : -90 }}
+        transition={{ duration: motionTokens.duration.fast }}
+      >
+        <ChevronDown size={14} strokeWidth={1.5} />
+      </motion.div>
+      <span className="text-xs font-medium">
+        Earlier · {count} {count === 1 ? 'item' : 'items'}
+      </span>
+    </button>
   )
 }
 
@@ -340,13 +649,35 @@ function UnscheduledTray({ tasks }: { tasks: UnscheduledTask[] }) {
 // ── Main Component ─────────────────────────────────────────────
 
 export default function AgendaPage() {
-  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const scrollRef = useRef<HTMLDivElement>(null)
+  const prefersReduced = useReducedMotion()
 
   const todayStr = new Date().toISOString().split('T')[0]
   const dateParam = searchParams.get('date') || todayStr
   const [selectedDate, setSelectedDate] = useState(dateParam)
+
+  // Simulated loading / error state for state-design demo
+  const [loading, setLoading] = useState(true)
+  const [hasError, setHasError] = useState(false)
+
+  // Collapsed earlier items
+  const [earlierExpanded, setEarlierExpanded] = useState(false)
+
+  // Detect touch device
+  const [isTouchDevice] = useState(() =>
+    typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0)
+  )
+
+  // Simulate loading on date change
+  useEffect(() => {
+    setLoading(true)
+    setHasError(false)
+    const timer = setTimeout(() => {
+      setLoading(false)
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [selectedDate])
 
   // Sync URL when date changes
   useEffect(() => {
@@ -387,10 +718,14 @@ export default function AgendaPage() {
     return () => document.removeEventListener('keydown', handler)
   }, [goPrev, goNext, goToday])
 
-  // Now marker
-  const nowHour = new Date().getHours()
-  const nowMinute = new Date().getMinutes()
-  const isViewingToday = selectedDate === todayStr
+  // Now marker — refreshed every minute
+  const [nowTick, setNowTick] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => setNowTick((t) => t + 1), 60_000)
+    return () => clearInterval(id)
+  }, [])
+
+  const isViewingTodayVal = selectedDate === todayStr
 
   // Sort items: all-day first, then by start time
   const sortedItems = useMemo(() => {
@@ -402,9 +737,12 @@ export default function AgendaPage() {
     return [...allDay, ...timed]
   }, [agenda.items])
 
+  // Detect conflicts
+  const conflicts = useMemo(() => detectConflicts(sortedItems), [sortedItems])
+
   // Find "now" item
   const nowItem = useMemo(() => {
-    if (!isViewingToday) return null
+    if (!isViewingTodayVal) return null
     const now = new Date()
     return sortedItems.find((item) => {
       if (!item.start || !item.end) return false
@@ -412,7 +750,66 @@ export default function AgendaPage() {
       const end = new Date(item.end)
       return now >= start && now <= end
     })
-  }, [sortedItems, isViewingToday])
+  }, [sortedItems, isViewingTodayVal, nowTick])
+
+  // Partition timed items into "earlier" (before now) and "upcoming" (at or after now)
+  const { earlierItems, upcomingItems } = useMemo(() => {
+    if (!isViewingTodayVal) {
+      return { earlierItems: [] as AgendaItem[], upcomingItems: sortedItems.filter((i) => !i.allDay) }
+    }
+
+    const now = new Date()
+    const earlier: AgendaItem[] = []
+    const upcoming: AgendaItem[] = []
+
+    sortedItems.filter((i) => !i.allDay).forEach((item) => {
+      if (!item.end) {
+        upcoming.push(item)
+        return
+      }
+      const end = new Date(item.end)
+      if (now > end) {
+        earlier.push(item)
+      } else {
+        upcoming.push(item)
+      }
+    })
+
+    return { earlierItems: earlier, upcomingItems: upcoming }
+  }, [sortedItems, isViewingTodayVal, nowTick])
+
+  // Auto-scroll to now item (respects reduced motion)
+  useEffect(() => {
+    if (!prefersReduced && nowItem && scrollRef.current && isViewingTodayVal) {
+      const el = scrollRef.current.querySelector(`[data-now="true"]`)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+  }, [nowItem?.id, prefersReduced, isViewingTodayVal])
+
+  // Current time position for the time rule
+  const nowTime = useMemo(() => {
+    const d = new Date()
+    return d.getHours() * 60 + d.getMinutes()
+  }, [nowTick])
+
+  /** Find the index where the time rule should be inserted. */
+  const timeRuleIndex = useMemo(() => {
+    if (!isViewingTodayVal) return -1
+    for (let i = 0; i < upcomingItems.length; i++) {
+      const item = upcomingItems[i]
+      if (!item.start) continue
+      const itemStart = new Date(item.start)
+      const itemMinutes = itemStart.getHours() * 60 + itemStart.getMinutes()
+      if (itemMinutes > nowTime) return i
+    }
+    return upcomingItems.length
+  }, [upcomingItems, nowTime, isViewingTodayVal])
+
+  // ── Render ───────────────────────────────────────────────────
+
+  const allDayItems = sortedItems.filter((i) => i.allDay)
 
   return (
     <div className="flex flex-col h-full" style={{ background: 'var(--bg-canvas)' }}>
@@ -430,7 +827,7 @@ export default function AgendaPage() {
               {formatDateSecondary(dateObj)}
             </p>
           </div>
-          {!isViewingToday && (
+          {!isViewingTodayVal && (
             <button
               onClick={goToday}
               className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
@@ -483,54 +880,137 @@ export default function AgendaPage() {
         {/* ── Main lane ── */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-4">
           <div className="max-w-[560px] mx-auto">
-            {/* All-day items */}
-            {sortedItems.filter((i) => i.allDay).length > 0 && (
-              <div className="mb-4">
-                <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-faint)' }}>
-                  All day
-                </span>
-                {sortedItems.filter((i) => i.allDay).map((item) => (
-                  <AgendaItemRow key={item.id} item={item} isNow={false} />
-                ))}
+
+            {/* Loading state */}
+            {loading && <LoadingState />}
+
+            {/* Error with cached data */}
+            {hasError && !loading && (
+              <div
+                className="mb-4 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs"
+                style={{ backgroundColor: 'var(--overlay-1)', color: '#f59e0b' }}
+                role="alert"
+              >
+                <AlertTriangle size={14} strokeWidth={2} />
+                <span>Could not refresh · showing cached data</span>
               </div>
             )}
 
-            {/* Timed items */}
-            <div className="flex flex-col gap-1">
-              {sortedItems.filter((i) => !i.allDay).map((item) => (
-                <AgendaItemRow key={item.id} item={item} isNow={item.id === nowItem?.id} />
-              ))}
-            </div>
-
-            {/* Empty state */}
-            {sortedItems.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <CalendarDays size={40} strokeWidth={1} style={{ color: 'var(--text-faint)', marginBottom: 16 }} />
-                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                  Your day has room
-                </p>
-                <p className="text-xs mt-1" style={{ color: 'var(--text-faint)' }}>
-                  Schedule a priority or create a task to get started
-                </p>
-                <button
-                  className="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors cursor-pointer"
-                  style={{ backgroundColor: 'var(--accent)', color: '#fff' }}
-                >
-                  <Plus size={16} strokeWidth={2} />
-                  Add task
-                </button>
-              </div>
-            )}
-
-            {/* Sync status */}
-            <div className="mt-6 text-center">
-              <span className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
-                {agenda.sync.state === 'healthy' ? 'Calendar synced' : 'Sync delayed'}
-                {agenda.sync.lastSuccessfulAt && (
-                  <> · {new Date(agenda.sync.lastSuccessfulAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</>
+            {/* Main content (shown when not loading) */}
+            {!loading && (
+              <>
+                {/* All-day items */}
+                {allDayItems.length > 0 && (
+                  <div className="mb-4" role="group" aria-label="All-day items">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-faint)' }}>
+                      All day
+                    </span>
+                    {allDayItems.map((item) => (
+                      <AgendaItemRow
+                        key={item.id}
+                        item={item}
+                        isNow={false}
+                        isTouchDevice={isTouchDevice}
+                      />
+                    ))}
+                  </div>
                 )}
-              </span>
-            </div>
+
+                {/* Earlier items (collapsible) */}
+                {earlierItems.length > 0 && (
+                  <div className="mb-2">
+                    <EarlierToggle
+                      count={earlierItems.length}
+                      expanded={earlierExpanded}
+                      onToggle={() => setEarlierExpanded((v) => !v)}
+                    />
+                    <AnimatePresence>
+                      {earlierExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: motionTokens.duration.fast }}
+                          className="overflow-hidden"
+                          role="group"
+                          aria-label="Earlier items"
+                        >
+                          <div className="flex flex-col gap-1 opacity-70">
+                            {earlierItems.map((item) => (
+                              <AgendaItemRow
+                                key={item.id}
+                                item={item}
+                                isNow={false}
+                                conflict={conflicts.get(item.id)}
+                                isTouchDevice={isTouchDevice}
+                              />
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+
+                {/* Upcoming / current items */}
+                <div
+                  className="flex flex-col gap-1"
+                  role="list"
+                  aria-label={`Agenda items for ${formatDateHeader(dateObj)}`}
+                >
+                  {upcomingItems.map((item, idx) => {
+                    const isNow = item.id === nowItem?.id
+                    const showTimeRule = isViewingTodayVal && idx === timeRuleIndex
+
+                    return (
+                      <div key={item.id}>
+                        {showTimeRule && <CurrentTimeRule />}
+                        <div data-now={isNow ? 'true' : undefined}>
+                          <AgendaItemRow
+                            item={item}
+                            isNow={isNow}
+                            conflict={conflicts.get(item.id)}
+                            isTouchDevice={isTouchDevice}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
+                  {/* If now is after all items, show time rule at bottom */}
+                  {isViewingTodayVal && timeRuleIndex >= upcomingItems.length && <CurrentTimeRule />}
+                </div>
+
+                {/* Empty state */}
+                {sortedItems.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <CalendarDays size={40} strokeWidth={1} style={{ color: 'var(--text-faint)', marginBottom: 16 }} />
+                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                      Your day has room
+                    </p>
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-faint)' }}>
+                      Schedule a priority or create a task to get started
+                    </p>
+                    <button
+                      className="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors cursor-pointer"
+                      style={{ backgroundColor: 'var(--accent)', color: '#fff' }}
+                    >
+                      <Plus size={16} strokeWidth={2} />
+                      Add task
+                    </button>
+                  </div>
+                )}
+
+                {/* Sync status */}
+                <div className="mt-6 text-center">
+                  <span className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
+                    {agenda.sync.state === 'healthy' ? 'Calendar synced' : 'Sync delayed'}
+                    {agenda.sync.lastSuccessfulAt && (
+                      <> · {new Date(agenda.sync.lastSuccessfulAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</>
+                    )}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

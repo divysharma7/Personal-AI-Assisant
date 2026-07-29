@@ -1,6 +1,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { fade, ease } from '@/lib/motion'
+import CalendarControlsSection from '@/components/calendar/CalendarControlsSection'
 
 interface CalendarPrefsTabProps {
   calSettingsToast: boolean
@@ -180,6 +181,12 @@ export default function CalendarPrefsTab({
           </select>
         </div>
       </div>
+
+      {/* Separator */}
+      <div className="h-px" style={{ backgroundColor: 'var(--border)' }} />
+
+      {/* Calendar Controls — Active / Passive */}
+      <CalendarControlsSection />
     </motion.div>
   )
 }
