@@ -1,814 +1,664 @@
-
-import { useState, useRef, useCallback, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { env } from '@/config/env'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  SkipForward, Maximize, CloudRain,
-  Music, Clock, X, Timer, Target,
+  ArrowLeft,
+  Check,
+  Coffee,
+  Maximize,
+  Pause,
+  Play,
+  Plus,
+  RotateCcw,
+  SkipForward,
+  Target,
 } from 'lucide-react'
-import { fadeSlideUp, ease, motionTokens } from '@/lib/motion'
+import LifeOSMark from '@/components/brand/LifeOSMark'
 
-// ── Scenes ──
-const SCENES = [
-  { id: 'mountains', label: 'Mountains', url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1920&h=1080&fit=crop' },
-  { id: 'ocean', label: 'Ocean', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&h=1080&fit=crop' },
-  { id: 'forest', label: 'Forest', url: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=1920&h=1080&fit=crop' },
-  { id: 'night', label: 'Night Sky', url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&h=1080&fit=crop' },
-  { id: 'desert', label: 'Desert', url: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=1920&h=1080&fit=crop' },
-  { id: 'rain', label: 'Rainy City', url: 'https://images.unsplash.com/photo-1501999635878-71cb5379c2d6?w=1920&h=1080&fit=crop' },
-]
-
-// ── Ambient sounds ──
-const SOUNDS = [
-  { emoji: '🌧️', label: 'Rain' }, { emoji: '🐦', label: 'Birds' },
-  { emoji: '🫧', label: 'Bubbles' }, { emoji: '🔥', label: 'Fire' },
-  { emoji: '🌊', label: 'Waves' }, { emoji: '⚡', label: 'Thunder' },
-  { emoji: '💨', label: 'Wind' }, { emoji: '☕', label: 'Café' },
-  { emoji: '🌘', label: 'Night' }, { emoji: '✏️', label: 'Pencil' },
-  { emoji: '⌨️', label: 'Keyboard' }, { emoji: '🚂', label: 'Train' },
-]
-
-// ── Sound frequency configs for Web Audio API ──
-const SOUND_CONFIGS: Record<string, { freq: number; type: OscillatorType; gain: number }> = {
-  Rain:     { freq: 200, type: 'triangle', gain: 0.04 },
-  Birds:    { freq: 800, type: 'sine',     gain: 0.03 },
-  Bubbles:  { freq: 400, type: 'sine',     gain: 0.03 },
-  Fire:     { freq: 150, type: 'triangle', gain: 0.04 },
-  Waves:    { freq: 180, type: 'sine',     gain: 0.05 },
-  Thunder:  { freq: 100, type: 'triangle', gain: 0.05 },
-  Wind:     { freq: 250, type: 'triangle', gain: 0.04 },
-  'Café':   { freq: 350, type: 'sine',     gain: 0.03 },
-  Night:    { freq: 120, type: 'sine',     gain: 0.03 },
-  Pencil:   { freq: 600, type: 'triangle', gain: 0.03 },
-  Keyboard: { freq: 500, type: 'square',   gain: 0.02 },
-  Train:    { freq: 160, type: 'triangle', gain: 0.04 },
-}
-
-// ── Quotes ──
-const QUOTES = [
-  'Push yourself, because no one else is going to do it for you.',
-  'Great things never come from comfort zones.',
-  'The secret of getting ahead is getting started.',
-  'Focus on being productive instead of busy.',
-  "Don't watch the clock; do what it does. Keep going.",
-  "It always seems impossible until it's done.",
-]
-
-// ── Presets ──
-const PRESETS = [
-  { name: 'Classic Pomodoro', focus: 25, short: 5, long: 15 },
-  { name: 'Extended Focus', focus: 50, short: 10, long: 30 },
-  { name: 'Quick Sessions', focus: 15, short: 3, long: 10 },
-  { name: 'Deep Work', focus: 90, short: 15, long: 45 },
-]
+const API_BASE = env.VITE_API_URL
 
 type Mode = 'focus' | 'shortBreak' | 'longBreak'
 
-function formatTime(s: number): string {
-  const m = Math.floor(s / 60)
-  const sec = s % 60
-  return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+interface Preset {
+  id: string
+  label: string
+  description: string
+  focus: number
+  short: number
+  long: number
 }
 
-/** Play a pleasant ascending completion tone via Web Audio API */
+interface FocusStats {
+  today: { sessions: number; totalMin: number }
+  week: { sessions: number; totalMin: number }
+  total: { sessions: number; totalMin: number }
+  avgSessionMin: number
+}
+
+interface ActiveSession {
+  _id: string
+  plannedDurationMin?: number
+  extendedByMin?: number
+  startedAt: string
+  pausedAt?: string | null
+  totalPausedMs?: number
+  taskTitleSnapshot?: string | null
+}
+
+const presets: Preset[] = [
+  {
+    id: 'reset',
+    label: '25 / 5',
+    description: 'Quick reset',
+    focus: 25,
+    short: 5,
+    long: 15,
+  },
+  {
+    id: 'flow',
+    label: '50 / 10',
+    description: 'Sustained flow',
+    focus: 50,
+    short: 10,
+    long: 20,
+  },
+  {
+    id: 'deep',
+    label: '90 / 15',
+    description: 'Deep work',
+    focus: 90,
+    short: 15,
+    long: 30,
+  },
+]
+
+const modeLabels: Record<Mode, string> = {
+  focus: 'Focus',
+  shortBreak: 'Reset',
+  longBreak: 'Long reset',
+}
+
+function formatTime(seconds: number): string {
+  const minutes = Math.floor(seconds / 60)
+  const remainder = seconds % 60
+  return `${String(minutes).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`
+}
+
+function formatMinutes(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`
+  const hours = Math.floor(minutes / 60)
+  const remainder = minutes % 60
+  return remainder ? `${hours}h ${remainder}m` : `${hours}h`
+}
+
 function playCompletionSound() {
   try {
-    const ctx = new AudioContext()
-    const notes = [
-      { freq: 523, startAt: 0, dur: 0.1 },    // C5
-      { freq: 659, startAt: 0.1, dur: 0.1 },   // E5
-      { freq: 784, startAt: 0.2, dur: 0.2 },   // G5
-    ]
-    notes.forEach(({ freq, startAt, dur }) => {
-      const osc = ctx.createOscillator()
-      const gainNode = ctx.createGain()
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(freq, ctx.currentTime + startAt)
-      gainNode.gain.setValueAtTime(0.15, ctx.currentTime + startAt)
-      gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + startAt + dur)
-      osc.connect(gainNode)
-      gainNode.connect(ctx.destination)
-      osc.start(ctx.currentTime + startAt)
-      osc.stop(ctx.currentTime + startAt + dur + 0.05)
+    const context = new AudioContext()
+    const notes = [523, 659, 784]
+
+    notes.forEach((frequency, index) => {
+      const oscillator = context.createOscillator()
+      const gain = context.createGain()
+      const start = context.currentTime + index * 0.1
+
+      oscillator.type = 'sine'
+      oscillator.frequency.setValueAtTime(frequency, start)
+      gain.gain.setValueAtTime(0.12, start)
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.22)
+      oscillator.connect(gain)
+      gain.connect(context.destination)
+      oscillator.start(start)
+      oscillator.stop(start + 0.24)
     })
-    setTimeout(() => ctx.close(), 1000)
+
+    window.setTimeout(() => context.close(), 900)
   } catch {
-    // Web Audio API not available
+    // Sound is a progressive enhancement.
   }
 }
 
 export default function FocusPage() {
-  // Timer state
+  const [preset, setPreset] = useState(presets[1])
   const [mode, setMode] = useState<Mode>('focus')
-  const [preset] = useState(PRESETS[0])
-  const [remaining, setRemaining] = useState(25 * 60)
-  const [total, setTotal] = useState(25 * 60)
+  const [remaining, setRemaining] = useState(presets[1].focus * 60)
+  const [total, setTotal] = useState(presets[1].focus * 60)
   const [isRunning, setIsRunning] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
-  const [taskInput, setTaskInput] = useState('')
-  const [focusCount, setFocusCount] = useState(0)
-
-  // Timer mode: pomodoro (countdown) or stopwatch (count up)
-  const [timerMode, setTimerMode] = useState<'pomodoro' | 'stopwatch'>('pomodoro')
-  const [elapsedSeconds, setElapsedSeconds] = useState(0)
-  const stopwatchStartRef = useRef(0)
-  const [completedSessions, setCompletedSessions] = useState<{ duration: number; completedAt: Date }[]>([])
-
-  // UI state
-  const [scene, setScene] = useState(SCENES[0])
-  const [showSounds, setShowSounds] = useState(false)
-  const [showScenes, setShowScenes] = useState(false)
-  const [activeSounds, setActiveSounds] = useState<Set<string>>(new Set())
+  const [intention, setIntention] = useState(() => {
+    const params = new URLSearchParams(window.location.search)
+    return params.get('habit') || params.get('task') || ''
+  })
   const [autoStart, setAutoStart] = useState(false)
-  const [autoStartMsg, setAutoStartMsg] = useState('')
-  const [quote, setQuote] = useState(QUOTES[0])
-  const [now, setNow] = useState<Date | null>(null)
+  const [stats, setStats] = useState<FocusStats | null>(null)
+  const [statusMessage, setStatusMessage] = useState('')
 
-  // Timer refs
-  const startTimeRef = useRef(0)
-  const pausedAtRef = useRef(0)
-  const targetRef = useRef(25 * 60)
-  const rafRef = useRef(0)
-  const prevRemainingRef = useRef(remaining)
-  const oscillatorsRef = useRef<Map<string, { osc: OscillatorNode; gain: GainNode; ctx: AudioContext }>>(new Map())
-  const notifPermissionRef = useRef(false)
+  const startedAtRef = useRef(0)
+  const targetSecondsRef = useRef(presets[1].focus * 60)
+  const frameRef = useRef(0)
+  const sessionIdRef = useRef<string | null>(null)
+  const completedRef = useRef(false)
+  const notificationPermissionRef = useRef(false)
 
-  // Live clock + random quote (client-only to avoid hydration mismatch)
-  useEffect(() => {
-    setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)])
-    setNow(new Date())
-    const id = setInterval(() => setNow(new Date()), 1000)
-    return () => clearInterval(id)
+  const fetchStats = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/focus/stats`, { credentials: 'include' })
+      if (response.ok) setStats(await response.json())
+    } catch {
+      // Stats should never block a focus session.
+    }
   }, [])
 
-  // Browser tab title
-  useEffect(() => {
-    if (timerMode === 'stopwatch') {
-      document.title = isRunning ? `${formatTime(elapsedSeconds)} — Stopwatch` : 'LAIF Focus'
-    } else {
-      const label = mode === 'focus' ? 'Focus' : mode === 'shortBreak' ? 'Short Break' : 'Long Break'
-      document.title = isRunning ? `${formatTime(remaining)} — ${label}` : 'LAIF Focus'
+  const updateSession = useCallback(async (
+    action: 'pause' | 'resume' | 'extend' | 'complete' | 'cancel',
+    extra: Record<string, unknown> = {},
+  ) => {
+    const sessionId = sessionIdRef.current
+    if (!sessionId) return
+
+    try {
+      await fetch(`${API_BASE}/api/focus/sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action, ...extra }),
+      })
+      if (action === 'complete' || action === 'cancel') sessionIdRef.current = null
+    } catch {
+      // The local timer remains usable if persistence is temporarily unavailable.
     }
-    return () => { document.title = 'LAIF' }
-  }, [remaining, isRunning, mode, timerMode, elapsedSeconds])
-
-  // rAF tick
-  const tick = useCallback(() => {
-    if (timerMode === 'stopwatch') {
-      const elapsed = (performance.now() - stopwatchStartRef.current) / 1000
-      setElapsedSeconds(Math.floor(elapsed))
-      rafRef.current = requestAnimationFrame(tick)
-      return
-    }
-
-    const elapsed = (performance.now() - startTimeRef.current) / 1000
-    const r = Math.max(0, targetRef.current - elapsed)
-    const rounded = Math.ceil(r)
-    setRemaining(rounded)
-
-    if (r <= 0) {
-      setIsRunning(false)
-      setIsPaused(false)
-      if (mode === 'focus') {
-        setFocusCount(c => c + 1)
-        setCompletedSessions(prev => [...prev, { duration: targetRef.current, completedAt: new Date() }])
-      }
-      return
-    }
-    rafRef.current = requestAnimationFrame(tick)
-  }, [mode, timerMode])
-
-  const start = useCallback(() => {
-    if (timerMode === 'stopwatch') {
-      stopwatchStartRef.current = performance.now()
-      setElapsedSeconds(0)
-      setIsRunning(true)
-      setIsPaused(false)
-      cancelAnimationFrame(rafRef.current)
-      rafRef.current = requestAnimationFrame(tick)
-      return
-    }
-    const dur = mode === 'focus' ? preset.focus * 60 : mode === 'shortBreak' ? preset.short * 60 : preset.long * 60
-    targetRef.current = dur
-    startTimeRef.current = performance.now()
-    setTotal(dur)
-    setRemaining(dur)
-    setIsRunning(true)
-    setIsPaused(false)
-    cancelAnimationFrame(rafRef.current)
-    rafRef.current = requestAnimationFrame(tick)
-  }, [mode, preset, tick, timerMode])
-
-  const pause = useCallback(() => {
-    cancelAnimationFrame(rafRef.current)
-    pausedAtRef.current = performance.now()
-    setIsPaused(true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timerMode])
-
-  const resume = useCallback(() => {
-    const pauseDuration = performance.now() - pausedAtRef.current
-    if (timerMode === 'stopwatch') {
-      stopwatchStartRef.current += pauseDuration
-    } else {
-      startTimeRef.current += pauseDuration
-    }
-    setIsPaused(false)
-    rafRef.current = requestAnimationFrame(tick)
-  }, [tick, timerMode])
-
-  const extend = useCallback((mins: number) => {
-    targetRef.current += mins * 60
-    setTotal(t => t + mins * 60)
   }, [])
 
-  const skip = useCallback(() => {
-    cancelAnimationFrame(rafRef.current)
-    setIsRunning(false)
-    setIsPaused(false)
-    if (mode === 'focus') {
-      setMode(focusCount > 0 && focusCount % 4 === 3 ? 'longBreak' : 'shortBreak')
-    } else {
-      setMode('focus')
+  const requestNotificationPermission = useCallback(() => {
+    if (typeof Notification === 'undefined') return
+    if (Notification.permission === 'granted') {
+      notificationPermissionRef.current = true
+      return
     }
-  }, [mode, focusCount])
+    if (Notification.permission === 'default') {
+      Notification.requestPermission().then((permission) => {
+        notificationPermissionRef.current = permission === 'granted'
+      })
+    }
+  }, [])
 
-  const switchMode = useCallback((m: Mode) => {
-    cancelAnimationFrame(rafRef.current)
-    setMode(m)
-    setIsRunning(false)
-    setIsPaused(false)
-    const dur = m === 'focus' ? preset.focus * 60 : m === 'shortBreak' ? preset.short * 60 : preset.long * 60
-    setRemaining(dur)
-    setTotal(dur)
+  const durationFor = useCallback((nextMode: Mode, nextPreset = preset) => {
+    if (nextMode === 'focus') return nextPreset.focus * 60
+    if (nextMode === 'shortBreak') return nextPreset.short * 60
+    return nextPreset.long * 60
   }, [preset])
 
-  const toggleSound = useCallback((label: string) => {
-    setActiveSounds(prev => {
-      const next = new Set(prev)
-      if (next.has(label)) next.delete(label); else next.add(label)
-      return next
-    })
+  const beginCountdown = useCallback((seconds: number, preserveTotal = false) => {
+    cancelAnimationFrame(frameRef.current)
+    targetSecondsRef.current = seconds
+    startedAtRef.current = performance.now()
+    completedRef.current = false
+    if (!preserveTotal) setTotal(seconds)
+    setRemaining(seconds)
+    setIsPaused(false)
+    setIsRunning(true)
   }, [])
 
-  useEffect(() => { return () => cancelAnimationFrame(rafRef.current) }, [])
-
-  // ── Ambient sound playback via Web Audio API ──
-  useEffect(() => {
-    const map = oscillatorsRef.current
-    // Start oscillators for newly active sounds
-    activeSounds.forEach(label => {
-      if (!map.has(label)) {
-        const config = SOUND_CONFIGS[label] || { freq: 300, type: 'sine' as OscillatorType, gain: 0.03 }
-        try {
-          const ctx = new AudioContext()
-          const osc = ctx.createOscillator()
-          const gainNode = ctx.createGain()
-          osc.type = config.type
-          osc.frequency.setValueAtTime(config.freq, ctx.currentTime)
-          // Slow frequency drift for organic ambient feel
-          osc.frequency.linearRampToValueAtTime(config.freq * 1.02, ctx.currentTime + 2)
-          osc.frequency.linearRampToValueAtTime(config.freq * 0.98, ctx.currentTime + 4)
-          osc.frequency.setValueAtTime(config.freq, ctx.currentTime + 6)
-          gainNode.gain.setValueAtTime(config.gain, ctx.currentTime)
-          osc.connect(gainNode)
-          gainNode.connect(ctx.destination)
-          osc.start()
-          map.set(label, { osc, gain: gainNode, ctx })
-        } catch {
-          // Web Audio API not available
-        }
-      }
-    })
-    // Stop oscillators for deactivated sounds
-    map.forEach((entry, label) => {
-      if (!activeSounds.has(label)) {
-        try {
-          entry.osc.stop()
-          entry.osc.disconnect()
-          entry.gain.disconnect()
-          entry.ctx.close()
-        } catch {
-          // already stopped
-        }
-        map.delete(label)
-      }
-    })
-     
-  }, [activeSounds])
-
-  // Cleanup all oscillators on unmount
-  useEffect(() => {
-    return () => {
-      oscillatorsRef.current.forEach(entry => {
-        try {
-          entry.osc.stop()
-          entry.osc.disconnect()
-          entry.gain.disconnect()
-          entry.ctx.close()
-        } catch {
-          // noop
-        }
+  const createFocusSession = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/focus/sessions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          plannedDurationMin: preset.focus,
+          plannedBreakMin: preset.short,
+        }),
       })
-      oscillatorsRef.current.clear()
+      if (response.ok) {
+        const session = await response.json()
+        sessionIdRef.current = session._id
+      }
+    } catch {
+      // The timer still starts offline and can be used without persistence.
     }
-  }, [])
+  }, [preset])
 
-  // ── Timer completion: notification sound + browser notification + auto-start ──
+  const start = useCallback(async () => {
+    requestNotificationPermission()
+    const seconds = durationFor(mode)
+    if (mode === 'focus') void createFocusSession()
+    beginCountdown(seconds)
+    setStatusMessage('')
+  }, [beginCountdown, createFocusSession, durationFor, mode, requestNotificationPermission])
+
+  const pause = useCallback(() => {
+    cancelAnimationFrame(frameRef.current)
+    setIsPaused(true)
+    setIsRunning(false)
+    if (mode === 'focus') void updateSession('pause')
+  }, [mode, updateSession])
+
+  const resume = useCallback(() => {
+    if (mode === 'focus') void updateSession('resume')
+    beginCountdown(remaining, true)
+  }, [beginCountdown, mode, remaining, updateSession])
+
+  const reset = useCallback(() => {
+    cancelAnimationFrame(frameRef.current)
+    if (mode === 'focus' && sessionIdRef.current) {
+      void updateSession('cancel', { endedReason: 'user_cancelled' })
+    }
+    const seconds = durationFor(mode)
+    setRemaining(seconds)
+    setTotal(seconds)
+    setIsRunning(false)
+    setIsPaused(false)
+    setStatusMessage('')
+  }, [durationFor, mode, updateSession])
+
+  const switchMode = useCallback((nextMode: Mode) => {
+    cancelAnimationFrame(frameRef.current)
+    if (sessionIdRef.current) void updateSession('cancel', { endedReason: 'user_cancelled' })
+    const seconds = durationFor(nextMode)
+    setMode(nextMode)
+    setRemaining(seconds)
+    setTotal(seconds)
+    setIsRunning(false)
+    setIsPaused(false)
+    setStatusMessage('')
+  }, [durationFor, updateSession])
+
+  const changePreset = useCallback((nextPreset: Preset) => {
+    if (isRunning) return
+    setPreset(nextPreset)
+    const seconds = durationFor(mode, nextPreset)
+    setRemaining(seconds)
+    setTotal(seconds)
+    setIsPaused(false)
+  }, [durationFor, isRunning, mode])
+
+  const extend = useCallback(() => {
+    const extraSeconds = 5 * 60
+    targetSecondsRef.current += extraSeconds
+    setRemaining((value) => value + extraSeconds)
+    setTotal((value) => value + extraSeconds)
+    if (mode === 'focus') void updateSession('extend', { additionalMin: 5 })
+  }, [mode, updateSession])
+
+  const complete = useCallback(async () => {
+    if (completedRef.current) return
+    completedRef.current = true
+    cancelAnimationFrame(frameRef.current)
+    setRemaining(0)
+    setIsRunning(false)
+    setIsPaused(false)
+    playCompletionSound()
+
+    if (mode === 'focus') {
+      await updateSession('complete', {
+        endedReason: 'timer_ended',
+        ...(intention.trim() ? { postSessionNote: intention.trim().slice(0, 200) } : {}),
+      })
+      await fetchStats()
+    }
+
+    if (notificationPermissionRef.current) {
+      try {
+        new Notification('Life OS', { body: `${modeLabels[mode]} complete.` })
+      } catch {
+        // Notifications are optional.
+      }
+    }
+
+    const nextMode: Mode = mode === 'focus' ? 'shortBreak' : 'focus'
+    setStatusMessage(mode === 'focus' ? 'Session complete. Take a real reset.' : 'Reset complete. Ready when you are.')
+
+    if (autoStart) {
+      window.setTimeout(() => {
+        setMode(nextMode)
+        if (nextMode === 'focus') void createFocusSession()
+        beginCountdown(durationFor(nextMode))
+      }, 2200)
+    }
+  }, [autoStart, beginCountdown, createFocusSession, durationFor, fetchStats, intention, mode, updateSession])
+
+  const tick = useCallback(() => {
+    const elapsed = (performance.now() - startedAtRef.current) / 1000
+    const nextRemaining = Math.max(0, Math.ceil(targetSecondsRef.current - elapsed))
+    setRemaining(nextRemaining)
+
+    if (nextRemaining <= 0) {
+      void complete()
+      return
+    }
+
+    frameRef.current = requestAnimationFrame(tick)
+  }, [complete])
+
   useEffect(() => {
-    const prev = prevRemainingRef.current
-    prevRemainingRef.current = remaining
-
-    // Detect the tick where remaining just hit 0 (prev was positive, timer just stopped)
-    if (prev > 0 && remaining === 0 && !isRunning) {
-      // Play ascending completion tone
-      playCompletionSound()
-
-      // Browser notification
-      if (notifPermissionRef.current) {
-        const modeLabel = mode === 'focus' ? 'Focus session' : mode === 'shortBreak' ? 'Short break' : 'Long break'
-        try {
-          new Notification('LAIF Focus', { body: `${modeLabel} complete!` })
-        } catch {
-          // Notification not available
-        }
-      }
-
-      // Auto-start next session after 3 seconds
-      if (autoStart) {
-        setAutoStartMsg('Starting next session...')
-        const nextMode: Mode = mode === 'focus'
-          ? (focusCount > 0 && focusCount % 4 === 0 ? 'longBreak' : 'shortBreak')
-          : 'focus'
-        const timer = setTimeout(() => {
-          setAutoStartMsg('')
-          setMode(nextMode)
-          // Start the new session after mode switch settles
-          setTimeout(() => {
-            const dur = nextMode === 'focus' ? preset.focus * 60 : nextMode === 'shortBreak' ? preset.short * 60 : preset.long * 60
-            targetRef.current = dur
-            startTimeRef.current = performance.now()
-            setTotal(dur)
-            setRemaining(dur)
-            setIsRunning(true)
-            setIsPaused(false)
-            cancelAnimationFrame(rafRef.current)
-            rafRef.current = requestAnimationFrame(tick)
-          }, 50)
-        }, 3000)
-        return () => clearTimeout(timer)
-      }
+    if (isRunning) {
+      frameRef.current = requestAnimationFrame(tick)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [remaining, isRunning])
+    return () => cancelAnimationFrame(frameRef.current)
+  }, [isRunning, tick])
 
-  // Request notification permission on first timer start
-  const startWithNotifPermission = useCallback(() => {
-    if (typeof Notification !== 'undefined') {
-      if (Notification.permission === 'default') {
-        Notification.requestPermission().then(p => {
-          notifPermissionRef.current = p === 'granted'
-        })
-      } else if (Notification.permission === 'granted') {
-        notifPermissionRef.current = true
-      }
-    }
-    start()
-  }, [start])
-
-  // Keyboard
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).tagName === 'INPUT') return
-      if (e.key === ' ') {
-        e.preventDefault()
-        if (isRunning) {
-          if (isPaused) resume(); else pause()
+    fetchStats()
+
+    const restoreActiveSession = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/api/focus/sessions/active`, { credentials: 'include' })
+        if (!response.ok) return
+        const session = await response.json() as ActiveSession | null
+        if (!session?.startedAt) return
+
+        const plannedSeconds = ((session.plannedDurationMin || 25) + (session.extendedByMin || 0)) * 60
+        const endAt = session.pausedAt ? new Date(session.pausedAt).getTime() : Date.now()
+        const elapsedSeconds = Math.floor(
+          (endAt - new Date(session.startedAt).getTime() - (session.totalPausedMs || 0)) / 1000,
+        )
+        const secondsLeft = Math.max(0, plannedSeconds - elapsedSeconds)
+        if (secondsLeft <= 0) return
+
+        sessionIdRef.current = session._id
+        setMode('focus')
+        setTotal(plannedSeconds)
+        setRemaining(secondsLeft)
+        targetSecondsRef.current = secondsLeft
+        if (session.taskTitleSnapshot) setIntention(session.taskTitleSnapshot)
+
+        if (session.pausedAt) {
+          setIsPaused(true)
+          setIsRunning(false)
         } else {
-          startWithNotifPermission()
+          startedAtRef.current = performance.now()
+          setIsRunning(true)
         }
-      }
-      if (e.key === 'Escape') {
-        cancelAnimationFrame(rafRef.current)
-        setIsRunning(false)
-        setIsPaused(false)
-        if (timerMode === 'stopwatch') setElapsedSeconds(0)
+      } catch {
+        // Start with a fresh local timer if restoration fails.
       }
     }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [isRunning, isPaused, startWithNotifPermission, pause, resume, timerMode])
 
-  const progress = total > 0 ? (total - remaining) / total : 0
+    void restoreActiveSession()
+  }, [fetchStats])
+
+  useEffect(() => {
+    document.title = isRunning
+      ? `${formatTime(remaining)} — ${modeLabels[mode]}`
+      : 'Focus — Life OS'
+    return () => {
+      document.title = 'Life OS'
+    }
+  }, [isRunning, mode, remaining])
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement
+      if (target.matches('input, textarea, select, [contenteditable="true"]')) return
+
+      if (event.code === 'Space') {
+        event.preventDefault()
+        if (isRunning) pause()
+        else if (isPaused) resume()
+        else void start()
+      }
+
+      if (event.key.toLowerCase() === 'r') reset()
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isPaused, isRunning, pause, reset, resume, start])
+
+  const progress = total > 0 ? Math.min(1, Math.max(0, (total - remaining) / total)) : 0
+  const circumference = 2 * Math.PI * 132
+  const dashOffset = circumference * (1 - progress)
 
   return (
-    <div style={{
-      position: 'relative', width: '100%', height: '100%',
-      display: 'flex', flexDirection: 'column',
-      fontFamily: 'Inter, system-ui, sans-serif',
-      color: '#fff', overflow: 'hidden',
-    }}>
-      {/* Background scene */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        backgroundImage: `url(${scene.url})`,
-        backgroundSize: 'cover', backgroundPosition: 'center',
-        transition: 'background-image 1s ease',
-      }} />
-      <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.3)' }} />
-
-      {/* Progress bar (top) */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, zIndex: 10 }}>
-        <div style={{
-          height: '100%', width: `${progress * 100}%`,
-          backgroundColor: mode === 'focus' ? '#34d399' : '#60a5fa',
-          transition: 'width 1s linear',
-        }} />
-      </div>
-
-      {/* Top bar */}
-      <div style={{ position: 'relative', zIndex: 10, display: 'flex', justifyContent: 'space-between', padding: '20px 28px' }}>
-        <p style={{ fontSize: 14, fontWeight: 500, maxWidth: 300, lineHeight: 1.5, opacity: 0.8 }}>
-          {quote}
-        </p>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 14, fontWeight: 600, opacity: 0.8 }}>
-            {now ? now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
-          </span>
+    <div className="min-h-screen bg-[#efebe2] text-[#191915]">
+      <header className="flex items-center justify-between border-b border-black/10 px-5 py-4 sm:px-8">
+        <LifeOSMark />
+        <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={() => document.documentElement.requestFullscreen?.()}
-            style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', opacity: 0.6 }}
+            aria-label="Enter full screen"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-black/45 hover:bg-black/[0.06] hover:text-black"
           >
-            <Maximize size={18} strokeWidth={1.5} />
+            <Maximize size={17} />
           </button>
           <button
+            type="button"
             onClick={() => window.history.back()}
-            style={{
-              background: 'none', border: 'none', color: '#fff', cursor: 'pointer', opacity: 0.6,
-              display: 'flex',
-            }}
+            className="flex items-center gap-2 rounded-full border border-black/15 px-4 py-2 text-xs font-semibold hover:bg-white/60"
           >
-            <X size={18} strokeWidth={1.5} />
+            <ArrowLeft size={15} />
+            Leave focus
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Center: Timer */}
-      <div style={{
-        flex: 1, display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        position: 'relative', zIndex: 10, gap: 16,
-      }}>
-        {/* Timer mode toggle */}
-        <div style={{ display: 'flex', gap: 4, marginBottom: 12, padding: 3, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}>
-          <button
-            onClick={() => { if (isRunning) return; setTimerMode('pomodoro') }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '6px 16px', borderRadius: 999, cursor: isRunning ? 'default' : 'pointer',
-              border: 'none', fontSize: 13, fontWeight: 600,
-              fontFamily: 'Inter, system-ui, sans-serif',
-              backgroundColor: timerMode === 'pomodoro' ? 'rgba(255,255,255,0.9)' : 'transparent',
-              color: timerMode === 'pomodoro' ? '#1a1a1a' : 'rgba(255,255,255,0.6)',
-              transition: 'background-color 200ms ease, color 200ms ease, transform 200ms ease',
-            }}
-          >
-            <Clock size={14} strokeWidth={2} />
-            Focus Timer
-          </button>
-          <button
-            onClick={() => { if (isRunning) return; setTimerMode('stopwatch'); cancelAnimationFrame(rafRef.current); setIsRunning(false); setIsPaused(false); setElapsedSeconds(0) }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '6px 16px', borderRadius: 999, cursor: isRunning ? 'default' : 'pointer',
-              border: 'none', fontSize: 13, fontWeight: 600,
-              fontFamily: 'Inter, system-ui, sans-serif',
-              backgroundColor: timerMode === 'stopwatch' ? 'rgba(255,255,255,0.9)' : 'transparent',
-              color: timerMode === 'stopwatch' ? '#1a1a1a' : 'rgba(255,255,255,0.6)',
-              transition: 'background-color 200ms ease, color 200ms ease, transform 200ms ease',
-            }}
-          >
-            <Timer size={14} strokeWidth={2} />
-            Stopwatch
-          </button>
-        </div>
-
-        {/* Mode dots (pomodoro only) */}
-        {timerMode === 'pomodoro' && (
-        <div style={{ display: 'flex', gap: 10, marginBottom: 8 }}>
-          {(['focus', 'shortBreak', 'longBreak'] as Mode[]).map((m) => (
-            <button
-              key={m}
-              onClick={() => switchMode(m)}
-              style={{
-                width: 12, height: 12, borderRadius: '50%', cursor: 'pointer',
-                border: 'none',
-                backgroundColor: mode === m ? '#fff' : 'rgba(255,255,255,0.35)',
-                transition: 'background-color 200ms ease',
-              }}
+      <main className="mx-auto grid w-full max-w-[1180px] gap-6 px-5 py-6 lg:grid-cols-[minmax(0,1fr)_330px] lg:px-8 lg:py-10">
+        <section className="relative overflow-hidden border border-black/10 bg-[#f8f5ee] p-5 sm:p-8 lg:min-h-[690px]">
+          <div className="absolute left-0 top-0 h-1 w-full bg-black/10">
+            <div
+              className="h-full bg-[#f15b43]"
+              style={{ width: `${progress * 100}%`, transition: 'width 250ms linear' }}
             />
-          ))}
-        </div>
-        )}
-
-        {/* Timer display */}
-        <motion.div
-          key={timerMode === 'stopwatch' ? elapsedSeconds : remaining}
-          style={{
-            fontSize: 'clamp(80px, 15vw, 160px)',
-            fontWeight: 800, letterSpacing: '-0.03em',
-            fontVariantNumeric: 'tabular-nums',
-            textShadow: '0 4px 40px rgba(0,0,0,0.3)',
-            lineHeight: 1,
-          }}
-        >
-          {timerMode === 'stopwatch' ? formatTime(elapsedSeconds) : formatTime(remaining)}
-        </motion.div>
-
-        {/* Auto-start message */}
-        <AnimatePresence>
-          {autoStartMsg && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              style={{
-                fontSize: 14, fontWeight: 600,
-                color: '#34d399',
-                textShadow: '0 2px 12px rgba(0,0,0,0.3)',
-              }}
-            >
-              {autoStartMsg}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Extend buttons (pomodoro only) */}
-        {isRunning && timerMode === 'pomodoro' && (
-          <div style={{ display: 'flex', gap: 8 }}>
-            {[1, 5, 10].map(n => (
-              <button
-                key={n}
-                onClick={() => extend(n)}
-                style={{
-                  padding: '4px 12px', borderRadius: 999, cursor: 'pointer',
-                  backgroundColor: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)',
-                  color: '#fff', fontSize: 13, fontWeight: 600,
-                  fontFamily: 'Inter, system-ui, sans-serif',
-                  transition: 'background-color 150ms ease',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)' }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)' }}
-              >
-                +{n}
-              </button>
-            ))}
           </div>
-        )}
 
-        {/* Task input */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-          <span style={{ fontSize: 16 }}>✨</span>
-          <input
-            value={taskInput}
-            onChange={e => setTaskInput(e.target.value)}
-            placeholder="What are you working on?"
-            style={{
-              background: 'none', border: 'none', outline: 'none',
-              color: 'rgba(255,255,255,0.7)', fontSize: 15, fontWeight: 500,
-              fontFamily: 'Inter, system-ui, sans-serif',
-              textAlign: 'center', width: 260,
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Session stats strip / Empty state */}
-      {completedSessions.length > 0 ? (
-        <div style={{
-          position: 'relative', zIndex: 10,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: 24, padding: '0 28px 12px',
-        }}>
-          <span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.5)' }}>
-            Sessions today: {completedSessions.length}
-          </span>
-          <span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.5)' }}>
-            Total focus: {(() => {
-              const totalSec = completedSessions.reduce((sum, s) => sum + s.duration, 0)
-              const h = Math.floor(totalSec / 3600)
-              const m = Math.floor((totalSec % 3600) / 60)
-              return h > 0 ? `${h}h ${m}m` : `${m}m`
-            })()}
-          </span>
-        </div>
-      ) : (
-        <motion.div
-          {...fadeSlideUp}
-          transition={ease.normal}
-          className="flex flex-col items-center justify-center py-20 text-center"
-          style={{ position: 'relative', zIndex: 10 }}
-        >
-          <Target size={48} strokeWidth={1} style={{ color: 'var(--text-faint)', opacity: 0.3 }} />
-          <h3 className="mt-4 text-lg font-medium" style={{ color: 'var(--text-primary)' }}>
-            No focus sessions
-          </h3>
-          <p className="mt-1 max-w-xs text-sm" style={{ color: 'var(--text-muted)' }}>
-            Start a pomodoro session to begin tracking your focus time
-          </p>
-        </motion.div>
-      )}
-
-      {/* Bottom controls */}
-      <div style={{
-        position: 'relative', zIndex: 10,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '0 28px 28px', gap: 12,
-      }}>
-        {/* Left: ambient tools */}
-        <div style={{ position: 'absolute', left: 28, bottom: 28, display: 'flex', gap: 8 }}>
-          <button
-            onClick={() => setShowSounds(!showSounds)}
-            style={{
-              width: 40, height: 40, borderRadius: '50%', cursor: 'pointer',
-              backgroundColor: showSounds ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.15)', color: '#fff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'background-color 180ms ease-out',
-            }}
-          >
-            <CloudRain size={18} strokeWidth={1.5} />
-          </button>
-          <button
-            onClick={() => setShowScenes(!showScenes)}
-            style={{
-              width: 40, height: 40, borderRadius: '50%', cursor: 'pointer',
-              backgroundColor: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.15)', color: '#fff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'background-color 180ms ease-out',
-            }}
-          >
-            <Music size={18} strokeWidth={1.5} />
-          </button>
-        </div>
-
-        {/* Right: auto-start toggle */}
-        <div style={{ position: 'absolute', right: 28, bottom: 28, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 12, fontWeight: 500, opacity: 0.6 }}>Auto-start</span>
-          <button
-            onClick={() => setAutoStart(prev => !prev)}
-            style={{
-              width: 40, height: 22, borderRadius: 11, cursor: 'pointer',
-              backgroundColor: autoStart ? '#34d399' : 'rgba(255,255,255,0.15)',
-              border: 'none', position: 'relative',
-              transition: 'background-color 200ms ease',
-            }}
-          >
-            <div style={{
-              width: 16, height: 16, borderRadius: '50%',
-              backgroundColor: '#fff',
-              position: 'absolute', top: 3,
-              left: autoStart ? 21 : 3,
-              transition: 'left 200ms ease',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-            }} />
-          </button>
-        </div>
-
-        {/* Center: main controls */}
-        <motion.button
-          whileTap={{ scale: 0.96 }}
-          onClick={() => {
-            if (!isRunning) startWithNotifPermission()
-            else if (isPaused) resume()
-            else pause()
-          }}
-          style={{
-            padding: '14px 48px', borderRadius: 999, cursor: 'pointer',
-            backgroundColor: 'rgba(255,255,255,0.95)', color: '#1a1a1a',
-            fontSize: 16, fontWeight: 700, border: 'none',
-            fontFamily: 'Inter, system-ui, sans-serif',
-            display: 'flex', alignItems: 'center', gap: 8,
-            boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
-            transition: 'transform 100ms ease',
-          }}
-        >
-          {!isRunning ? 'Start' : isPaused ? 'Resume' : 'Pause'}
-        </motion.button>
-
-        {isRunning && timerMode === 'pomodoro' && (
-          <button
-            onClick={skip}
-            style={{
-              width: 44, height: 44, borderRadius: '50%', cursor: 'pointer',
-              backgroundColor: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)',
-              color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'background-color 180ms ease-out',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)' }}
-            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)' }}
-          >
-            <SkipForward size={18} strokeWidth={1.5} />
-          </button>
-        )}
-      </div>
-
-      {/* Ambient sounds panel */}
-      <AnimatePresence>
-        {showSounds && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: motionTokens.duration.normal }}
-            style={{
-              position: 'absolute', left: 28, bottom: 80, zIndex: 20,
-              width: 320, padding: 20, borderRadius: 20,
-              backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255,255,255,0.1)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>White Noises</h3>
-              <button onClick={() => setShowSounds(false)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}>
-                <X size={18} strokeWidth={1.5} />
-              </button>
+          <div className="flex flex-wrap items-start justify-between gap-5">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-black/35">
+                Focus protocol
+              </p>
+              <h1
+                className="mt-2 text-[38px] font-normal leading-none tracking-[-0.04em]"
+                style={{ fontFamily: "'Instrument Serif', serif" }}
+              >
+                Do one thing well.
+              </h1>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-              {SOUNDS.map(s => {
-                const active = activeSounds.has(s.label)
-                return (
-                  <button
-                    key={s.label}
-                    onClick={() => toggleSound(s.label)}
-                    title={s.label}
-                    style={{
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                      padding: 10, borderRadius: 12, cursor: 'pointer',
-                      backgroundColor: active ? 'rgba(255,255,255,0.15)' : 'transparent',
-                      border: active ? '1px solid rgba(255,255,255,0.3)' : '1px solid transparent',
-                      transition: 'background-color 150ms ease, border-color 150ms ease',
-                    }}
-                    onMouseEnter={e => { if (!active) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)' }}
-                    onMouseLeave={e => { if (!active) e.currentTarget.style.backgroundColor = 'transparent' }}
-                  >
-                    <span style={{ fontSize: 28 }}>{s.emoji}</span>
-                    <span style={{ fontSize: 10, opacity: 0.6, fontWeight: 500 }}>{s.label}</span>
-                  </button>
-                )
-              })}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
-      {/* Scene picker */}
-      <AnimatePresence>
-        {showScenes && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: motionTokens.duration.normal }}
-            style={{
-              position: 'absolute', left: 80, bottom: 80, zIndex: 20,
-              width: 340, padding: 20, borderRadius: 20,
-              backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255,255,255,0.1)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Scenes</h3>
-              <button onClick={() => setShowScenes(false)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}>
-                <X size={18} strokeWidth={1.5} />
-              </button>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-              {SCENES.map(s => (
+            <div className="flex rounded-full bg-black/[0.06] p-1" aria-label="Session type">
+              {(['focus', 'shortBreak', 'longBreak'] as Mode[]).map((item) => (
                 <button
-                  key={s.id}
-                  onClick={() => { setScene(s); setShowScenes(false) }}
+                  key={item}
+                  type="button"
+                  onClick={() => switchMode(item)}
+                  aria-pressed={mode === item}
+                  className="rounded-full px-3 py-1.5 text-xs font-semibold"
                   style={{
-                    aspectRatio: '16/10', borderRadius: 12, overflow: 'hidden', cursor: 'pointer',
-                    backgroundImage: `url(${s.url})`, backgroundSize: 'cover', backgroundPosition: 'center',
-                    border: scene.id === s.id ? '2px solid #fff' : '2px solid transparent',
-                    position: 'relative', transition: 'border-color 150ms ease',
+                    backgroundColor: mode === item ? '#191915' : 'transparent',
+                    color: mode === item ? '#f8f5ee' : 'rgba(25,25,21,0.45)',
                   }}
                 >
-                  <div style={{
-                    position: 'absolute', bottom: 0, left: 0, right: 0,
-                    padding: '16px 8px 6px', fontSize: 11, fontWeight: 600,
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)',
-                    textAlign: 'center',
-                  }}>
-                    {s.label}
-                  </div>
+                  {modeLabels[item]}
                 </button>
               ))}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+
+          <div className="mx-auto mt-7 flex max-w-[520px] flex-col items-center">
+            <div className="relative flex h-[300px] w-[300px] items-center justify-center sm:h-[340px] sm:w-[340px]">
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 300 300"
+                className="absolute inset-0 h-full w-full -rotate-90"
+              >
+                <circle cx="150" cy="150" r="132" fill="none" stroke="rgba(25,25,21,0.08)" strokeWidth="5" />
+                <circle
+                  cx="150"
+                  cy="150"
+                  r="132"
+                  fill="none"
+                  stroke={mode === 'focus' ? '#f15b43' : '#7d78d7'}
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={dashOffset}
+                />
+              </svg>
+              <div className="relative text-center">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-black/35">
+                  {isPaused ? 'Paused' : isRunning ? 'In progress' : modeLabels[mode]}
+                </p>
+                <div
+                  role="timer"
+                  aria-live="off"
+                  aria-label={`${formatTime(remaining)} remaining`}
+                  className="text-[72px] font-semibold leading-none tracking-[-0.065em] tabular-nums sm:text-[84px]"
+                >
+                  {formatTime(remaining)}
+                </div>
+              </div>
+            </div>
+
+            {mode === 'focus' ? (
+              <div className="w-full max-w-md">
+                <label
+                  htmlFor="focus-intention"
+                  className="mb-2 block text-center text-[10px] font-bold uppercase tracking-[0.16em] text-black/35"
+                >
+                  Session intention
+                </label>
+                <input
+                  id="focus-intention"
+                  value={intention}
+                  onChange={(event) => setIntention(event.target.value)}
+                  placeholder="What will be true when this session ends?"
+                  className="w-full border-0 border-b border-black/20 bg-transparent px-2 py-3 text-center text-[15px] outline-none placeholder:text-black/25 focus:border-black"
+                />
+              </div>
+            ) : (
+              <p className="max-w-sm text-center text-sm leading-6 text-black/45">
+                Step away from the screen. Water, movement, and distance count.
+              </p>
+            )}
+
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={reset}
+                aria-label="Reset timer"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-black/15 text-black/50 hover:bg-white hover:text-black"
+              >
+                <RotateCcw size={17} />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (isRunning) pause()
+                  else if (isPaused) resume()
+                  else void start()
+                }}
+                className="flex min-w-40 items-center justify-center gap-2 rounded-full bg-[#191915] px-7 py-3.5 text-sm font-semibold text-white hover:bg-[#f15b43]"
+              >
+                {isRunning ? <Pause size={17} fill="currentColor" /> : <Play size={17} fill="currentColor" />}
+                {isRunning ? 'Pause' : isPaused ? 'Resume' : mode === 'focus' ? 'Begin focus' : 'Begin reset'}
+              </button>
+              <button
+                type="button"
+                onClick={() => switchMode(mode === 'focus' ? 'shortBreak' : 'focus')}
+                aria-label={mode === 'focus' ? 'Skip to reset' : 'Skip to focus'}
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-black/15 text-black/50 hover:bg-white hover:text-black"
+              >
+                <SkipForward size={17} />
+              </button>
+            </div>
+
+            {isRunning && mode === 'focus' && (
+              <button
+                type="button"
+                onClick={extend}
+                className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-black/45 hover:text-black"
+              >
+                <Plus size={14} />
+                Add 5 minutes
+              </button>
+            )}
+
+            {statusMessage && (
+              <p role="status" aria-live="polite" className="mt-5 flex items-center gap-2 text-sm font-semibold text-[#447500]">
+                <Check size={16} />
+                {statusMessage}
+              </p>
+            )}
+          </div>
+        </section>
+
+        <aside className="space-y-5">
+          <section className="border border-black/10 bg-[#dedbcf] p-5">
+            <div className="mb-5 flex items-center gap-2">
+              <Target size={17} />
+              <h2 className="text-sm font-semibold">Choose a rhythm</h2>
+            </div>
+            <div className="space-y-2">
+              {presets.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => changePreset(item)}
+                  disabled={isRunning}
+                  aria-pressed={preset.id === item.id}
+                  className="flex w-full items-center justify-between border border-black/10 px-4 py-3 text-left disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{
+                    backgroundColor: preset.id === item.id ? '#191915' : 'rgba(255,255,255,0.32)',
+                    color: preset.id === item.id ? '#f7f3ea' : '#191915',
+                  }}
+                >
+                  <span>
+                    <span className="block text-sm font-semibold tabular-nums">{item.label}</span>
+                    <span className={`mt-0.5 block text-[11px] ${preset.id === item.id ? 'text-white/45' : 'text-black/40'}`}>
+                      {item.description}
+                    </span>
+                  </span>
+                  {preset.id === item.id && <Check size={16} />}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="border border-black/10 bg-[#c8ee72] p-5">
+            <div className="flex items-center gap-2">
+              <Coffee size={17} />
+              <h2 className="text-sm font-semibold">Today&apos;s focus</h2>
+            </div>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-black/40">Sessions</p>
+                <p className="mt-1 text-3xl font-semibold tracking-[-0.04em] tabular-nums">
+                  {stats?.today.sessions ?? 0}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-black/40">Focused</p>
+                <p className="mt-1 text-3xl font-semibold tracking-[-0.04em] tabular-nums">
+                  {formatMinutes(stats?.today.totalMin ?? 0)}
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 border-t border-black/15 pt-4 text-xs text-black/55">
+              Weekly total: <strong className="text-black">{formatMinutes(stats?.week.totalMin ?? 0)}</strong>
+            </div>
+          </section>
+
+          <section className="border border-black/10 bg-white/40 p-5">
+            <label className="flex cursor-pointer items-center justify-between gap-4">
+              <span>
+                <span className="block text-sm font-semibold">Continue the rhythm</span>
+                <span className="mt-1 block text-xs leading-5 text-black/40">
+                  Start the next reset or focus session automatically.
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                checked={autoStart}
+                onChange={(event) => setAutoStart(event.target.checked)}
+                className="h-4 w-4 shrink-0 accent-[#191915]"
+              />
+            </label>
+          </section>
+
+          <p className="px-1 text-[11px] leading-5 text-black/35">
+            Space starts or pauses · R resets
+          </p>
+        </aside>
+      </main>
     </div>
   )
 }

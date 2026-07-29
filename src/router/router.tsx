@@ -30,6 +30,7 @@ const routes: RouteObject[] = [
         element: <AppLayout />,
         children: [
           { path: '/', ...lazyRoute(() => import('@/app/page')) },
+          { path: '/agenda', ...lazyRoute(() => import('@/app/agenda/page')) },
           { path: '/calendar', ...lazyRoute(() => import('@/app/calendar/page')) },
           { path: '/chat', ...lazyRoute(() => import('@/app/chat/page')) },
           { path: '/focus', ...lazyRoute(() => import('@/app/focus/page')) },

@@ -521,7 +521,7 @@ export default function ChatPage() {
             fontSize: 11, color: 'var(--text-faint)', textAlign: 'center',
             marginTop: 8, opacity: 0.5, fontFamily: 'Inter, system-ui, sans-serif',
           }}>
-            LAIF AI can access your tasks, habits, and calendar
+            Life OS can access your tasks, habits, and calendar
           </p>
         </div>
 

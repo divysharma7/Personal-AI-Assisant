@@ -108,3 +108,34 @@ P3-12 ✅ Calendar defaultView enum expanded (3→7 values, default changed day�
 - **P2-10**: Audit all 79 API routes for consistent auth + Zod validation + error handling
 - **Notifications**: Implement real PostHook API calls and configure Firebase credentials
 ```
+
+## Life OS calendar capability plan (2026-07-29)
+
+### LOS-401 — Secure Google OAuth lifecycle
+
+Scope for the dedicated OAuth security session:
+
+- Retain short-lived signed state backed by a single-use PostgreSQL record.
+- Reject missing, invalid, expired, reused, and wrong-user state before token
+  exchange.
+- Handle provider cancellation as a neutral redirect after state validation.
+- Redirect to an explicit `FRONTEND_URL`; do not derive a redirect from CORS.
+- Request only Calendar event and calendar-list scopes needed by the product.
+- Encrypt Google access and refresh tokens at rest using a dedicated encryption
+  key, separate from `JWT_SECRET`.
+- Preserve an existing refresh token when Google does not return a replacement.
+- Add regression tests for scope, state replay, encrypted storage, refresh-token
+  preservation, and cancellation.
+
+Not in this session:
+
+- Calendar account/inventory models (LOS-301).
+- Pull or push synchronization (LOS-402/LOS-403).
+- Provider revocation during disconnect.
+- Frontend Settings behavior.
+
+### Planned follow-up
+
+LOS-301 replaces the user-level Google token fields with owned account and
+calendar inventory records. That schema change starts only after LOS-401 passes
+backend typechecking and the complete backend test suite.

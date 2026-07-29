@@ -47,10 +47,10 @@ export default function GettingStartedPage() {
       {/* ── Welcome ── */}
       <div style={{ marginBottom: 40 }}>
         <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12 }}>
-          👋 {userName ? `Welcome, ${userName}` : 'Welcome to LAIF'}
+          👋 {userName ? `Welcome, ${userName}` : 'Welcome to Life OS'}
         </h2>
         <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--text-muted)', maxWidth: 560 }}>
-          LAIF is your personal life operating system. All your <strong style={{ color: 'var(--text-primary)', fontStyle: 'italic' }}>tasks</strong>, <strong style={{ color: 'var(--text-primary)', fontStyle: 'italic' }}>habits</strong>, <strong style={{ color: 'var(--text-primary)', fontStyle: 'italic' }}>calendar</strong>, and <strong style={{ color: 'var(--text-primary)', fontStyle: 'italic' }}>focus time</strong> in one place. It should feel as natural as pen and paper — but smarter.
+          Life OS brings your <strong style={{ color: 'var(--text-primary)', fontStyle: 'italic' }}>tasks</strong>, <strong style={{ color: 'var(--text-primary)', fontStyle: 'italic' }}>habits</strong>, <strong style={{ color: 'var(--text-primary)', fontStyle: 'italic' }}>calendar</strong>, and <strong style={{ color: 'var(--text-primary)', fontStyle: 'italic' }}>focus time</strong> into one calm rhythm. It should feel as natural as pen and paper — but smarter.
         </p>
       </div>
 
@@ -156,9 +156,9 @@ export default function GettingStartedPage() {
           <FeatureCard emoji="📋" title="Lists & Workspaces" desc="Create a list for Home, Work, a project — whatever you need. Each list works the same way: add tasks, track them, finish them." link="/lists" />
           <FeatureCard emoji="🔥" title="Habit Tracking" desc="Build daily routines with streaks, mood journals, weekly grids, and analytics. Morning meditation, reading, gym — all tracked." link="/habits" />
           <FeatureCard emoji="📅" title="Calendar" desc="Day, Week, Month, Year, and Agenda views. Drag tasks to schedule them. See overdue items. Connect Google Calendar." link="/calendar" />
-          <FeatureCard emoji="🎯" title="Focus Timer" desc="Pomodoro-style deep work sessions tied to specific tasks. Pick a task, start a focus session, track your output." link="/focus" />
+          <FeatureCard emoji="🎯" title="Focus Protocol" desc="Flexible focus and reset rhythms tied to a clear intention. Pick what matters, protect the time, and track the result." link="/focus" />
           <FeatureCard emoji="📊" title="Statistics" desc="See your completion rates, streaks, focus time, and habit consistency across Overview, Task, and Focus tabs." link="/statistics" />
-          <FeatureCard emoji="✨" title="AI Chat" desc="Ask LAIF anything — 'Plan my day', 'What's overdue?', 'Break down this goal'. It knows your tasks and can create them for you." link="/chat" />
+          <FeatureCard emoji="✨" title="AI Chat" desc="Ask Life OS anything — 'Plan my day', 'What's overdue?', 'Break down this goal'. It knows your tasks and can create them for you." link="/chat" />
         </div>
       </div>
 
@@ -193,11 +193,11 @@ export default function GettingStartedPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <Sparkles size={20} strokeWidth={1.5} style={{ color: 'var(--accent)' }} />
             <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-              The idea behind LAIF
+              The idea behind Life OS
             </h3>
           </div>
           <p style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--text-muted)', margin: 0 }}>
-            Most productivity apps make you feel behind. LAIF is designed to make you feel in control. The Today view shows only what matters right now. The AI assistant understands your workload. The focus timer turns intentions into action. And when you check something off, you hear it — because finishing things should feel good.
+            Most productivity apps make you feel behind. Life OS is designed to make you feel in control. The Today view shows only what matters right now. The AI assistant understands your workload. The focus timer turns intentions into action. And when you check something off, you hear it — because finishing things should feel good.
           </p>
         </div>
       </div>

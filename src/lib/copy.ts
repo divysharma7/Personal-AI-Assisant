@@ -8,14 +8,14 @@ export const copy = {
       cta: "Next",
     },
     step2: {
-      title: "How do you want to use LAIF?",
+      title: "How do you want to use Life OS?",
       body: "Help us personalize your experience. Select all that apply.",
       options: ["Manage my personal tasks", "Collaborate with others", "Both"],
       cta: "Next",
     },
     step3: {
       title: "You're almost there",
-      terms: "I agree to the LAIF Terms of Use and Privacy Policy.",
+      terms: "I agree to the Life OS Terms of Use and Privacy Policy.",
       emails: "I want to receive occasional emails with best practices, tips and tricks, and other news.",
       cta: "Continue",
       ctaLoading: "Creating account...",
@@ -252,7 +252,7 @@ export const copy = {
   starter: {
     gettingStartedTitle: "Getting Started",
     welcomeBody:
-      "With LAIF, you can manage what matters — from daily tasks to project planning with your team — in one place. It gives you the flexibility to organize tasks, notes, images, and attachments however you want. It's not just a list. It's a LAIF list.",
+      "With Life OS, you can manage what matters — from daily tasks to project planning with your team — in one place. It gives you the flexibility to organize tasks, notes, images, and attachments however you want. It's not just a list. It's your Life OS.",
     getSetUp: "Get set up",
     firstTodoIntro: "Ready to dig in? Here's your very first to-do list.",
     openTaskHint: "To open this task, click on the task row.",
@@ -262,7 +262,7 @@ export const copy = {
       "Create your team",
       "Connect your first integration",
       "Stay connected across all your devices",
-      "Share your feedback with the LAIF team",
+      "Share your feedback with the Life OS team",
     ],
   },
 
@@ -415,8 +415,8 @@ export const copy = {
   // ───────── Auth ─────────
   auth: {
     login: {
-      title: "Welcome to LAIF",
-      subtitle: "Your intelligent life manager",
+      title: "Welcome to Life OS",
+      subtitle: "Your daily operating system",
       usernamePlaceholder: "Username",
       passwordPlaceholder: "Password",
       cta: "Sign in",
@@ -425,7 +425,7 @@ export const copy = {
     },
     signup: {
       title: "Create your account",
-      subtitle: "Start managing your life with LAIF",
+      subtitle: "Build a calmer day with Life OS",
       namePlaceholder: "Full name",
       emailPlaceholder: "Email",
       passwordPlaceholder: "Password",
@@ -437,7 +437,7 @@ export const copy = {
 
   // ───────── Desktop only ─────────
   desktopOnly: {
-    title: "LAIF is best on desktop",
+    title: "Life OS is best on desktop",
     body: "For the best experience, please use a device with a screen width of 1024px or larger.",
   },
 
@@ -613,9 +613,9 @@ export const copy = {
   chat: {
     title: "AI Chat",
     subtitle: "Your intelligent assistant",
-    inputPlaceholder: "Ask LAIF anything...",
+    inputPlaceholder: "Ask Life OS anything...",
     thinking: "AI is thinking...",
-    welcome: "Hi! I'm LAIF, your intelligent life assistant. I can help you manage tasks, check your schedule, track habits, and more. What would you like to do?",
+    welcome: "Hi! I'm your Life OS assistant. I can help you manage tasks, check your schedule, track habits, and more. What would you like to do?",
     suggestions: [
       "What's on my schedule today?",
       "Create a task to write a blog post",

@@ -20,17 +20,24 @@ import HabitsTab from './tabs/HabitsTab'
 
 type SettingsTab = 'profile' | 'datetime' | 'calendar-prefs' | 'shortcuts' | 'features' | 'integrations' | 'notifications' | 'collaborators' | 'habits'
 
-const TABS: { key: SettingsTab; label: string }[] = [
-  { key: 'profile', label: copy.settings.tabs.profile },
-  { key: 'datetime', label: 'Date & Time' },
-  { key: 'calendar-prefs', label: 'Calendar' },
-  { key: 'shortcuts', label: 'Shortcuts' },
-  { key: 'features', label: copy.settings.tabs.features },
-  { key: 'integrations', label: copy.settings.tabs.integrations },
-  { key: 'notifications', label: copy.settings.tabs.notifications },
-  { key: 'collaborators', label: copy.settings.tabs.collaborators },
-  { key: 'habits', label: 'Habits' },
+const TABS: {
+  key: SettingsTab
+  label: string
+  group: 'Personal' | 'System' | 'Workspace'
+  description: string
+}[] = [
+  { key: 'profile', label: copy.settings.tabs.profile, group: 'Personal', description: 'Identity and account details' },
+  { key: 'datetime', label: 'Date & Time', group: 'Personal', description: 'Timezone, week, and clock preferences' },
+  { key: 'calendar-prefs', label: 'Calendar', group: 'Personal', description: 'How time appears across Life OS' },
+  { key: 'habits', label: 'Habits', group: 'Personal', description: 'Create and maintain your rhythms' },
+  { key: 'features', label: 'Appearance & features', group: 'System', description: 'Theme, sound, and optional tools' },
+  { key: 'integrations', label: copy.settings.tabs.integrations, group: 'System', description: 'Connected calendars and services' },
+  { key: 'notifications', label: copy.settings.tabs.notifications, group: 'System', description: 'Choose what can interrupt you' },
+  { key: 'shortcuts', label: 'Shortcuts', group: 'System', description: 'Keyboard controls for faster work' },
+  { key: 'collaborators', label: copy.settings.tabs.collaborators, group: 'Workspace', description: 'People with workspace access' },
 ]
+
+const GROUPS = ['Personal', 'System', 'Workspace'] as const
 
 export default function SettingsPage() {
   const navigate = useNavigate()
@@ -105,58 +112,79 @@ export default function SettingsPage() {
     navigate('/login')
   }, [navigate])
 
+  const activeTabMeta = TABS.find((tab) => tab.key === activeTab) ?? TABS[0]
+
   return (
-    <div className="flex flex-col px-6 py-5">
-      {/* Header */}
-      <div className="mb-1 flex items-center justify-between">
-        <div />
+    <div className="grid min-h-full grid-cols-[220px_minmax(0,1fr)]">
+      <aside
+        className="flex flex-col border-r px-5 py-7"
+        style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-pane-2)' }}
+      >
+        <h1 className="mb-8 text-[26px]" style={{ color: 'var(--text-primary)' }}>
+          {copy.settings.title}
+        </h1>
+
+        <nav aria-label="Settings">
+          {GROUPS.map((group) => (
+            <div key={group} className="mb-6">
+              <p
+                className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[0.16em]"
+                style={{ color: 'var(--text-faint)' }}
+              >
+                {group}
+              </p>
+              <div className="space-y-0.5">
+                {TABS.filter((tab) => tab.group === group).map((tab) => {
+                  const active = activeTab === tab.key
+                  return (
+                    <motion.button
+                      key={tab.key}
+                      {...buttonPress}
+                      type="button"
+                      onClick={() => setActiveTab(tab.key)}
+                      aria-current={active ? 'page' : undefined}
+                      className="w-full rounded-lg px-3 py-2 text-left text-[13px] font-medium transition-colors duration-150"
+                      style={{
+                        backgroundColor: active ? 'var(--bg-selected)' : 'transparent',
+                        color: active ? 'var(--text-primary)' : 'var(--text-muted)',
+                      }}
+                    >
+                      {tab.label}
+                    </motion.button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
+
         <button
+          type="button"
           onClick={handleSignOut}
-          className="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-150 cursor-pointer"
-          style={{ color: 'var(--text-muted)' }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent'
-          }}
+          className="mt-auto rounded-lg px-3 py-2 text-left text-[13px] font-medium transition-colors duration-150 hover:bg-[var(--bg-hover)]"
+          style={{ color: 'var(--priority-high)' }}
         >
           {copy.settings.signOut}
         </button>
-      </div>
+      </aside>
 
-      {/* Title */}
-      <h1
-        className="mb-6 text-[32px]"
-        style={{ color: 'var(--text-primary)' }}
-      >
-        {copy.settings.title}
-      </h1>
+      <section className="min-w-0 px-8 py-9 lg:px-12">
+        <header className="mb-8 max-w-2xl border-b pb-6" style={{ borderColor: 'var(--border)' }}>
+          <p
+            className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em]"
+            style={{ color: 'var(--text-faint)' }}
+          >
+            {activeTabMeta.group}
+          </p>
+          <h2 className="text-[28px]" style={{ color: 'var(--text-primary)' }}>
+            {activeTabMeta.label}
+          </h2>
+          <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+            {activeTabMeta.description}
+          </p>
+        </header>
 
-      {/* Tabs */}
-      <div className="mb-6 flex flex-wrap items-center gap-1">
-        {TABS.map((tab) => {
-          const active = activeTab === tab.key
-          return (
-            <motion.button
-              key={tab.key}
-              {...buttonPress}
-              onClick={() => setActiveTab(tab.key)}
-              className="rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors duration-150 cursor-pointer"
-              style={{
-                backgroundColor: active ? 'var(--accent)' : 'transparent',
-                color: active ? '#FFFFFF' : 'var(--text-muted)',
-                border: active ? 'none' : '1px solid var(--border)',
-              }}
-            >
-              {tab.label}
-            </motion.button>
-          )
-        })}
-      </div>
-
-      {/* Tab content */}
-      <div className="max-w-2xl">
+        <div className="max-w-2xl">
         <AnimatePresence mode="wait">
           {activeTab === 'profile' && (
             <ProfileTab
@@ -225,7 +253,8 @@ export default function SettingsPage() {
 
           {activeTab === 'habits' && <HabitsTab />}
         </AnimatePresence>
-      </div>
+        </div>
+      </section>
     </div>
   )
 }

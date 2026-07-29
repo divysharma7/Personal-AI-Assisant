@@ -3,6 +3,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { fade, ease } from '@/lib/motion'
 import GoogleCalendarSetup from '@/components/integrations/GoogleCalendarSetup'
+import GoogleCalendarAccountCard from '@/components/integrations/GoogleCalendarAccountCard'
+import { useGoogleCalendarAccounts } from '@/hooks/useGoogleCalendarAccounts'
 import { MCP_TOOLS } from '@/mcp/tools'
 import { http } from '@/lib/api/client'
 
@@ -285,6 +287,15 @@ function McpServerCard() {
 
 export default function IntegrationsTab({ googleConnected }: IntegrationsTabProps) {
   const [gcalSetupOpen, setGcalSetupOpen] = useState(false)
+  const {
+    accounts,
+    syncingIds,
+    syncNow,
+    retry,
+    reconnect,
+    disconnect,
+    toggleCalendar,
+  } = useGoogleCalendarAccounts()
 
   return (
     <>
@@ -371,6 +382,32 @@ export default function IntegrationsTab({ googleConnected }: IntegrationsTabProp
             )
           })}
         </div>
+
+        {/* Google Calendar connected accounts */}
+        {googleConnected && accounts.length > 0 && (
+          <div className="mt-6">
+            <h3
+              className="mb-3 text-xs font-semibold uppercase tracking-wide"
+              style={{ color: 'var(--text-faint)' }}
+            >
+              Connected accounts
+            </h3>
+            <div className="flex flex-col gap-3">
+              {accounts.map((account) => (
+                <GoogleCalendarAccountCard
+                  key={account.id}
+                  account={account}
+                  syncing={syncingIds.has(account.id)}
+                  onSyncNow={syncNow}
+                  onRetry={retry}
+                  onReconnect={reconnect}
+                  onDisconnect={disconnect}
+                  onToggleCalendar={toggleCalendar}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* MCP Server Card */}
         <McpServerCard />

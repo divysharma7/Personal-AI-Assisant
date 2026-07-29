@@ -18,7 +18,6 @@ export interface FocusState {
   taskTitle: string
   remainingSeconds: number
   totalSeconds: number
-  theme: 'aurora' | 'minimal' | 'liquid'
 }
 
 interface FocusContextValue {
@@ -32,7 +31,6 @@ const DEFAULT_STATE: FocusState = {
   taskTitle: '',
   remainingSeconds: 0,
   totalSeconds: 0,
-  theme: 'aurora',
 }
 
 const FocusContext = createContext<FocusContextValue | undefined>(undefined)
@@ -50,16 +48,16 @@ export default function FocusProvider({ children }: { children: ReactNode }) {
         const data = await res.json()
         if (data && data.startedAt) {
           const startedAt = new Date(data.startedAt).getTime()
-          const duration = (data.duration || 1500) // seconds
-          const elapsed = Math.floor((Date.now() - startedAt) / 1000)
+          const duration = ((data.plannedDurationMin || 25) + (data.extendedByMin || 0)) * 60
+          const endAt = data.pausedAt ? new Date(data.pausedAt).getTime() : Date.now()
+          const elapsed = Math.floor((endAt - startedAt - (data.totalPausedMs || 0)) / 1000)
           const remaining = Math.max(0, duration - elapsed)
           setFocus({
-            isActive: remaining > 0,
+            isActive: remaining > 0 && !data.pausedAt,
             taskId: data.taskId || null,
-            taskTitle: data.taskTitle || '',
+            taskTitle: data.taskTitleSnapshot || '',
             remainingSeconds: remaining,
             totalSeconds: duration,
-            theme: data.theme || 'aurora',
           })
           return
         }
@@ -114,15 +112,13 @@ export default function FocusProvider({ children }: { children: ReactNode }) {
   const startSession = useCallback(
     async (taskId: string, taskTitle: string) => {
       try {
-        const res = await fetch(`${API_BASE}/api/pomodoro`, {
+        const res = await fetch(`${API_BASE}/api/focus/sessions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             taskId,
-            taskTitle,
-            type: 'focus',
-            duration: 1500,
-            startedAt: new Date().toISOString(),
+            plannedDurationMin: 25,
+            plannedBreakMin: 5,
           }),
           credentials: 'include',
         })
@@ -133,7 +129,6 @@ export default function FocusProvider({ children }: { children: ReactNode }) {
             taskTitle,
             remainingSeconds: 1500,
             totalSeconds: 1500,
-            theme: 'aurora',
           })
           window.location.href = '/focus'
         }

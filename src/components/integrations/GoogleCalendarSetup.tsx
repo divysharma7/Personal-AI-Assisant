@@ -5,6 +5,9 @@ import { Calendar, Check, X } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import { slideFromRight, buttonPress, ease, springs } from '@/lib/motion'
 import { useGoogleCalendar } from '@/hooks/useGoogleCalendar'
+import { env } from '@/config/env'
+
+const API_BASE = env.VITE_API_URL
 
 interface GoogleCalendarSetupProps {
   open: boolean
@@ -17,7 +20,7 @@ export default function GoogleCalendarSetup({ open, onClose }: GoogleCalendarSet
   const [disconnecting, setDisconnecting] = useState(false)
 
   const handleConnect = () => {
-    window.location.href = '/api/integrations/google/auth'
+    window.location.href = `${API_BASE}/api/integrations/google/auth`
   }
 
   const handleDisconnect = async () => {
@@ -63,7 +66,9 @@ export default function GoogleCalendarSetup({ open, onClose }: GoogleCalendarSet
                 </h2>
               </div>
               <button
+                type="button"
                 onClick={onClose}
+                aria-label="Close Google Calendar setup"
                 className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
                 style={{ color: 'var(--text-faint)' }}
                 onMouseEnter={(e) => {
@@ -158,7 +163,11 @@ export default function GoogleCalendarSetup({ open, onClose }: GoogleCalendarSet
                       {copy.calendar.autoSyncLabel}
                     </span>
                     <button
+                      type="button"
                       onClick={() => setAutoSync(!autoSync)}
+                      role="switch"
+                      aria-checked={autoSync}
+                      aria-label="Automatically sync scheduled tasks"
                       className="relative h-5 w-9 rounded-full transition-colors duration-200 cursor-pointer"
                       style={{
                         backgroundColor: autoSync ? 'var(--accent)' : 'var(--border)',
@@ -175,6 +184,7 @@ export default function GoogleCalendarSetup({ open, onClose }: GoogleCalendarSet
 
                   {/* Disconnect */}
                   <button
+                    type="button"
                     onClick={handleDisconnect}
                     disabled={disconnecting}
                     className="rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-150 cursor-pointer disabled:opacity-50"

@@ -1,13 +1,11 @@
 import { env } from '@/config/env'
-const API_BASE = env.VITE_API_URL
-
-
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Eye, EyeOff } from 'lucide-react'
-import { copy } from '@/lib/copy'
-import { fadeSlideUp, ease } from '@/lib/motion'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import AuthShell from '@/components/auth/AuthShell'
+
+const API_BASE = env.VITE_API_URL
 
 export default function SignupPage() {
   const navigate = useNavigate()
@@ -19,13 +17,13 @@ export default function SignupPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
     setError('')
     setLoading(true)
 
     try {
-      const res = await fetch(`${API_BASE}/api/auth/signup`, {
+      const response = await fetch(`${API_BASE}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -36,9 +34,9 @@ export default function SignupPage() {
         credentials: 'include',
       })
 
-      if (!res.ok) {
-        const data = await res.json()
-        setError(data.error || 'Signup failed')
+      if (!response.ok) {
+        const data = await response.json()
+        setError(data.error || 'We could not create your workspace.')
         setLoading(false)
         return
       }
@@ -46,153 +44,122 @@ export default function SignupPage() {
       const from = (location.state as { from?: string })?.from || '/onboarding'
       navigate(from)
     } catch {
-      setError('Something went wrong')
+      setError('Life OS could not reach the server. Please try again.')
       setLoading(false)
     }
   }
 
   return (
-    <div
-      className="flex min-h-screen items-center justify-center px-4"
-      style={{ backgroundColor: '#0E0E12' }}
-    >
+    <AuthShell eyebrow="Create workspace">
       <motion.div
-        {...fadeSlideUp}
-        transition={ease.normal}
-        className="w-full max-w-md rounded-2xl p-8"
-        style={{
-          backgroundColor: '#17171E',
-          border: '1px solid #2A2A33',
-        }}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       >
-        {/* Logo */}
-        <div className="mb-8 text-center">
-          <span
-            className="text-2xl font-bold tracking-tight"
-            style={{ color: '#FF4D3D' }}
-          >
-            LAIF
-          </span>
-        </div>
-
-        {/* Heading */}
-        <h1
-          className="mb-2 text-center text-[28px] font-bold"
-          style={{ color: '#F2F2F5' }}
+        <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-[#f15b43]">
+          Start with clarity
+        </p>
+        <h2
+          className="text-[44px] font-normal leading-none tracking-[-0.045em]"
+          style={{ fontFamily: "'Instrument Serif', serif" }}
         >
-          {copy.auth.signup.title}
-        </h1>
-        <p
-          className="mb-8 text-center text-sm"
-          style={{ color: '#A0A0AA' }}
-        >
-          {copy.auth.signup.subtitle}
+          Make room for what matters.
+        </h2>
+        <p className="mb-8 mt-4 text-sm leading-6 text-black/50">
+          Set up your personal workspace. It takes about a minute.
         </p>
 
-        {/* Error */}
         <AnimatePresence>
           {error && (
             <motion.div
-              {...fadeSlideUp}
-              transition={ease.fast}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
               role="alert"
               aria-live="assertive"
-              className="mb-4 rounded-xl px-4 py-3 text-sm"
-              style={{
-                backgroundColor: 'rgba(255, 77, 61, 0.1)',
-                color: '#FF4D3D',
-                border: '1px solid rgba(255, 77, 61, 0.2)',
-              }}
+              className="mb-5 border-l-2 border-[#d9422d] bg-[#d9422d]/[0.06] px-4 py-3 text-sm text-[#9c2c1d]"
             >
               {error}
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={copy.auth.signup.namePlaceholder}
-            aria-label="Full name"
-            className="w-full rounded-xl px-4 py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 transition-colors duration-150"
-            style={{
-              backgroundColor: '#1E1E26',
-              border: '1px solid #2A2A33',
-              color: '#F2F2F5',
-            }}
-            autoComplete="name"
-          />
-
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder={copy.auth.signup.emailPlaceholder}
-            aria-label="Email"
-            className="w-full rounded-xl px-4 py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 transition-colors duration-150"
-            style={{
-              backgroundColor: '#1E1E26',
-              border: '1px solid #2A2A33',
-              color: '#F2F2F5',
-            }}
-            autoComplete="email"
-          />
-
-          <div className="relative">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="signup-name" className="mb-1 block text-xs font-semibold">
+              Your name
+            </label>
             <input
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={copy.auth.signup.passwordPlaceholder}
-              aria-label="Password"
-              className="w-full rounded-xl px-4 py-3 pr-11 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 transition-colors duration-150"
-              style={{
-                backgroundColor: '#1E1E26',
-                border: '1px solid #2A2A33',
-                color: '#F2F2F5',
-              }}
-              autoComplete="new-password"
+              id="signup-name"
+              type="text"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              autoComplete="name"
+              className="w-full rounded-none border-0 border-b border-black/20 bg-transparent px-0 py-2.5 text-[15px] text-[#191915] outline-none placeholder:text-black/30 focus:border-[#191915]"
+              placeholder="How should Life OS greet you?"
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
-              style={{ color: '#6B6B75' }}
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
           </div>
 
-          <motion.button
+          <div>
+            <label htmlFor="signup-email" className="mb-1 block text-xs font-semibold">
+              Email
+            </label>
+            <input
+              id="signup-email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="email"
+              className="w-full rounded-none border-0 border-b border-black/20 bg-transparent px-0 py-2.5 text-[15px] text-[#191915] outline-none placeholder:text-black/30 focus:border-[#191915]"
+              placeholder="you@example.com"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="signup-password" className="mb-1 block text-xs font-semibold">
+              Password
+            </label>
+            <div className="relative">
+              <input
+                id="signup-password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="new-password"
+                className="w-full rounded-none border-0 border-b border-black/20 bg-transparent px-0 py-2.5 pr-11 text-[15px] text-[#191915] outline-none placeholder:text-black/30 focus:border-[#191915]"
+                placeholder="Choose a secure password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="absolute right-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-black/40 hover:bg-black/[0.06] hover:text-black"
+              >
+                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+              </button>
+            </div>
+          </div>
+
+          <button
             type="submit"
-            disabled={loading || !email.trim() || !password}
-            whileTap={{ scale: 0.97 }}
-            className="mt-2 w-full rounded-full py-3 text-sm font-semibold text-white transition-colors duration-150 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-            style={{ backgroundColor: '#FF4D3D' }}
+            disabled={loading || !name.trim() || !email.trim() || !password}
+            className="mt-2 flex w-full items-center justify-center rounded-full bg-[#191915] px-5 py-3.5 text-sm font-semibold text-white hover:bg-[#f15b43] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {loading ? 'Creating account...' : copy.auth.signup.cta}
-          </motion.button>
+            {loading ? 'Creating your workspace…' : 'Create my Life OS'}
+          </button>
         </form>
 
-        {/* Login link */}
-        <p
-          className="mt-6 text-center text-sm"
-          style={{ color: '#A0A0AA' }}
-        >
-          {copy.auth.signup.loginPrompt}{' '}
-          <button
-            onClick={() => navigate('/login')}
-            className="cursor-pointer font-medium underline transition-colors duration-150"
-            style={{ color: '#5DA8FF' }}
+        <p className="mt-7 text-sm text-black/50">
+          Already have a workspace?{' '}
+          <Link
+            to="/login"
+            state={location.state}
+            className="font-semibold text-[#191915] underline decoration-black/25 underline-offset-4 hover:decoration-black"
           >
-            {copy.auth.signup.loginLink}
-          </button>
+            Sign in
+          </Link>
         </p>
       </motion.div>
-    </div>
+    </AuthShell>
   )
 }

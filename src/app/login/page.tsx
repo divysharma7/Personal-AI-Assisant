@@ -1,13 +1,11 @@
 import { env } from '@/config/env'
-const API_BASE = env.VITE_API_URL
-
-
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Eye, EyeOff } from 'lucide-react'
-import { copy } from '@/lib/copy'
-import { ease } from '@/lib/motion'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import AuthShell from '@/components/auth/AuthShell'
+
+const API_BASE = env.VITE_API_URL
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -18,22 +16,22 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
     setError('')
     setLoading(true)
 
     try {
-      const res = await fetch(`${API_BASE}/api/auth/login`, {
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: username.trim(), password }),
         credentials: 'include',
       })
 
-      if (!res.ok) {
-        const data = await res.json()
-        setError(data.error || 'Invalid credentials')
+      if (!response.ok) {
+        const data = await response.json()
+        setError(data.error || 'We could not sign you in with those details.')
         setLoading(false)
         return
       }
@@ -41,202 +39,107 @@ export default function LoginPage() {
       const from = (location.state as { from?: string })?.from || '/'
       navigate(from)
     } catch {
-      setError('Something went wrong')
+      setError('Life OS could not reach the server. Please try again.')
       setLoading(false)
     }
   }
 
   return (
-    <div className="flex min-h-screen">
-      {/* ── LEFT: Branding half ── */}
-      <div
-        className="relative flex w-1/2 flex-col items-center justify-center overflow-hidden"
-        style={{
-          background: 'linear-gradient(135deg, #0E0E12, #1a0a2e, #0E0E12)',
-        }}
+    <AuthShell eyebrow="Welcome back">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       >
-        {/* Aurora glow */}
-        <div
-          className="login-aurora-glow absolute"
-          style={{
-            width: 400,
-            height: 400,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, var(--accent-soft) 0%, transparent 70%)',
-            filter: 'blur(80px)',
-            opacity: 0.5,
-          }}
-        />
-
-        {/* Wordmark */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
-          className="relative z-10 flex flex-col items-center gap-4"
+        <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-[#f15b43]">
+          Continue your day
+        </p>
+        <h2
+          className="text-[44px] font-normal leading-none tracking-[-0.045em]"
+          style={{ fontFamily: "'Instrument Serif', serif" }}
         >
-          <span
-            style={{
-              fontFamily: "'Instrument Serif', serif",
-              fontSize: 80,
-              letterSpacing: '0.15em',
-              color: 'var(--accent)',
-              lineHeight: 1,
-            }}
-          >
-            LAIF
-          </span>
-          <span
-            className="text-base"
-            style={{ color: 'var(--text-primary)', opacity: 0.4 }}
-          >
-            Your intelligent life manager
-          </span>
-        </motion.div>
-      </div>
+          Pick up where you left off.
+        </h2>
+        <p className="mb-9 mt-4 text-sm leading-6 text-black/50">
+          Your agenda, priorities, and focus sessions are waiting.
+        </p>
 
-      {/* ── RIGHT: Form half ── */}
-      <div
-        className="flex w-1/2 items-center justify-center"
-        style={{ backgroundColor: '#0E0E12' }}
-      >
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.15, ease: [0.4, 0, 0.2, 1] }}
-          className="w-full max-w-md rounded-2xl p-10"
-          style={{
-            backgroundColor: 'var(--bg-pane)',
-            border: '1px solid var(--border)',
-            boxShadow: 'var(--shadow-elevated)',
-          }}
-        >
-          {/* Heading */}
-          <h1
-            className="mb-2 text-center text-[28px]"
-            style={{ color: 'var(--text-primary)' }}
-          >
-            {copy.auth.login.title}
-          </h1>
-          <p
-            className="mb-8 text-center text-sm"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            {copy.auth.login.subtitle}
-          </p>
-
-          {/* Error */}
-          <AnimatePresence>
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={ease.fast}
-                role="alert"
-                aria-live="assertive"
-                className="mb-4 rounded-xl px-4 py-3 text-sm"
-                style={{
-                  backgroundColor: 'rgba(255, 77, 61, 0.1)',
-                  color: 'var(--accent)',
-                  border: '1px solid rgba(255, 77, 61, 0.2)',
-                }}
-              >
-                {error}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <AnimatePresence>
+          {error && (
             <motion.div
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.2, ease: [0.4, 0, 0.2, 1] }}
+              exit={{ opacity: 0 }}
+              role="alert"
+              aria-live="assertive"
+              className="mb-5 border-l-2 border-[#d9422d] bg-[#d9422d]/[0.06] px-4 py-3 text-sm text-[#9c2c1d]"
             >
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder={copy.auth.login.usernamePlaceholder}
-                aria-label="Username"
-                className="w-full rounded-xl px-4 py-4 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 transition-colors duration-150"
-                style={{
-                  backgroundColor: 'var(--bg-pane-2)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text-primary)',
-                }}
-                autoComplete="username"
-              />
+              {error}
             </motion.div>
+          )}
+        </AnimatePresence>
 
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.4, ease: [0.4, 0, 0.2, 1] }}
-              className="relative"
-            >
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label htmlFor="login-username" className="mb-2 block text-xs font-semibold">
+              Email or username
+            </label>
+            <input
+              id="login-username"
+              type="text"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              autoComplete="username"
+              className="w-full rounded-none border-0 border-b border-black/20 bg-transparent px-0 py-3 text-[15px] text-[#191915] outline-none placeholder:text-black/30 focus:border-[#191915]"
+              placeholder="you@example.com"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="login-password" className="mb-2 block text-xs font-semibold">
+              Password
+            </label>
+            <div className="relative">
               <input
+                id="login-password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={copy.auth.login.passwordPlaceholder}
-                aria-label="Password"
-                className="w-full rounded-xl px-4 py-4 pr-11 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 transition-colors duration-150"
-                style={{
-                  backgroundColor: 'var(--bg-pane-2)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text-primary)',
-                }}
+                onChange={(event) => setPassword(event.target.value)}
                 autoComplete="current-password"
+                className="w-full rounded-none border-0 border-b border-black/20 bg-transparent px-0 py-3 pr-11 text-[15px] text-[#191915] outline-none placeholder:text-black/30 focus:border-[#191915]"
+                placeholder="Enter your password"
               />
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={() => setShowPassword((value) => !value)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
-                className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
-                style={{ color: 'var(--text-faint)' }}
+                className="absolute right-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-black/40 hover:bg-black/[0.06] hover:text-black"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
               </button>
-            </motion.div>
+            </div>
+          </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.6, ease: [0.4, 0, 0.2, 1] }}
-            >
-              <motion.button
-                type="submit"
-                disabled={loading || !username.trim() || !password}
-                whileTap={{ scale: 0.97 }}
-                className="mt-2 w-full rounded-full py-3.5 text-sm font-semibold text-white transition-colors duration-150 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                style={{ backgroundColor: 'var(--accent)' }}
-              >
-                {loading ? 'Signing in...' : copy.auth.login.cta}
-              </motion.button>
-            </motion.div>
-          </form>
-
-          {/* Sign up link */}
-          <p
-            className="mt-6 text-center text-sm"
-            style={{ color: 'var(--text-muted)' }}
+          <button
+            type="submit"
+            disabled={loading || !username.trim() || !password}
+            className="flex w-full items-center justify-center rounded-full bg-[#191915] px-5 py-3.5 text-sm font-semibold text-white hover:bg-[#f15b43] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {copy.auth.login.signupPrompt}{' '}
-            <button
-              onClick={() => navigate('/signup')}
-              className="cursor-pointer font-medium underline transition-colors duration-150"
-              style={{ color: 'var(--info)' }}
-            >
-              {copy.auth.login.signupLink}
-            </button>
-          </p>
-        </motion.div>
-      </div>
+            {loading ? 'Opening Life OS…' : 'Enter Life OS'}
+          </button>
+        </form>
 
-      {/* Aurora animation styles */}
-      <style>{".login-aurora-glow { animation: login-aurora-float 6s ease-in-out infinite; } @keyframes login-aurora-float { 0%, 100% { transform: translate(-10%, -10%) scale(1); } 50% { transform: translate(10%, 10%) scale(1.15); } }"}</style>
-    </div>
+        <p className="mt-7 text-sm text-black/50">
+          New here?{' '}
+          <Link
+            to="/signup"
+            state={location.state}
+            className="font-semibold text-[#191915] underline decoration-black/25 underline-offset-4 hover:decoration-black"
+          >
+            Create your workspace
+          </Link>
+        </p>
+      </motion.div>
+    </AuthShell>
   )
 }

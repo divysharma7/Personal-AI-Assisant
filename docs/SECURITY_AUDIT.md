@@ -113,3 +113,25 @@ The following routes use `findByIdAndUpdate` with `_id` only — same bug class 
 | `api/chat/route.ts:282,455,560` | AI tool updates (updateTask, moveTask, postpone) | Already has userId via getAuthUserId |
 
 **Note**: The `api/chat/route.ts` entries are lower risk because each tool function calls `getAuthUserId()` internally. The user/me and integrations routes update the current user's own document so are also lower risk. The task sub-routes (schedule, indent, outdent, reparent, reorder) and focus/pomodoro are the priority fixes.
+
+## 2026-07-29 — Google OAuth deployment review
+
+Status before LOS-401:
+
+| Finding | Severity | Current behavior | Required resolution |
+| --- | --- | --- | --- |
+| Google tokens stored as plaintext | High | Access and refresh tokens are written directly to `users` | Encrypt at rest with a dedicated key |
+| Refresh token may be overwritten | High | Callback always includes `googleRefreshToken` in update data | Omit the field when Google returns no replacement |
+| Redirect target derived from CORS | Medium | Callback selects the first `CORS_ORIGINS` entry | Use an explicit validated `FRONTEND_URL` |
+| OAuth scopes are broader than necessary | Medium | Requests the full Calendar scope | Request event read/write and calendar-list read scopes |
+| Provider cancellation is a raw 400 | Low | Missing authorization code returns JSON | Validate state and return a neutral Settings redirect |
+
+Security invariants for the fix:
+
+- OAuth state is signed, expires in ten minutes, is bound to the authenticated
+  user and provider, and is consumed exactly once.
+- Authorization codes and token values are never logged or returned to clients.
+- The token encryption key is distinct from `JWT_SECRET` and must decode to
+  exactly 32 bytes.
+- The callback frontend redirect is fixed by server configuration and cannot be
+  supplied by a request parameter.

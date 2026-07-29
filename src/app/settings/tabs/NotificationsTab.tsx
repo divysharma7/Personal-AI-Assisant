@@ -14,7 +14,7 @@ export default function NotificationsTab() {
         }}
       >
         <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-          Notifications coming soon with the LAIF mobile app.
+          Notifications are coming soon with the Life OS mobile app.
         </p>
       </div>
 

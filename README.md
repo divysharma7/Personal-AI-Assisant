@@ -1,6 +1,6 @@
-# LAIF — Your Intelligent Life Manager
+# Life OS — Your Daily Operating System
 
-LAIF combines tasks, habits, calendar planning, focus sessions, workflows, and
+Life OS combines tasks, habits, calendar planning, focus sessions, workflows, and
 an AI assistant in one React application.
 
 ## Production

@@ -12,7 +12,7 @@ import type { TaskRecord } from '@/hooks/useTasks'
 import { useGlobalShortcuts } from '@/hooks/useGlobalShortcuts'
 import DetailPanelStack from '@/components/tasks/DetailPanelStack'
 
-const SHELL_EXCLUDED = ['/login', '/signup', '/onboarding']
+const SHELL_EXCLUDED = ['/login', '/signup', '/onboarding', '/focus']
 
 function DesktopOnlyNotice() {
   return (
@@ -240,43 +240,45 @@ export default function AppShell({ children }: { children: ReactNode }) {
         </div>
       </main>
 
-      {/* Right: Artwork pane OR Detail panel */}
-      <AnimatePresence mode="wait">
-        {showDetailPanel ? (
-          <motion.div
-            key="detail-panel"
-            initial={{ flex: '0 0 30%', opacity: 0 }}
-            animate={{ flex: '0 0 40%', opacity: 1 }}
-            exit={{ flex: '0 0 30%', opacity: 0 }}
-            transition={{ duration: motionTokens.duration.normal, ease: motionTokens.easing.sharp }}
-            className="h-full overflow-hidden"
-          >
-            <DetailPanelStack
-              stack={stackEntries}
-              onPushTask={handlePushTask}
-              onPopTask={handlePopTask}
-              onPopToIndex={handlePopToIndex}
-              onClose={handleClose}
-              onUpdate={handleUpdateTask}
-              onDelete={handleDeleteTask}
-              onAddComment={handleAddComment}
-              allTasks={tasks}
-              onCreateSubTask={handleCreateSubTask}
-            />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="artwork"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={ease.fast}
-            className="h-full"
-          >
-            <ArtworkPane />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Settings needs the full center width for its own secondary navigation. */}
+      {(pathname !== '/settings' || showDetailPanel) && (
+        <AnimatePresence mode="wait">
+          {showDetailPanel ? (
+            <motion.div
+              key="detail-panel"
+              initial={{ flex: '0 0 30%', opacity: 0 }}
+              animate={{ flex: '0 0 40%', opacity: 1 }}
+              exit={{ flex: '0 0 30%', opacity: 0 }}
+              transition={{ duration: motionTokens.duration.normal, ease: motionTokens.easing.sharp }}
+              className="h-full overflow-hidden"
+            >
+              <DetailPanelStack
+                stack={stackEntries}
+                onPushTask={handlePushTask}
+                onPopTask={handlePopTask}
+                onPopToIndex={handlePopToIndex}
+                onClose={handleClose}
+                onUpdate={handleUpdateTask}
+                onDelete={handleDeleteTask}
+                onAddComment={handleAddComment}
+                allTasks={tasks}
+                onCreateSubTask={handleCreateSubTask}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="artwork"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={ease.fast}
+              className="h-full"
+            >
+              <ArtworkPane />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
     </div>
   )
 }

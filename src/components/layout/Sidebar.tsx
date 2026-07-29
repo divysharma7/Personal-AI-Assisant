@@ -29,9 +29,10 @@ import type { TaskRecord } from '@/hooks/useTasks'
 import { useWorkflows } from '@/hooks/useWorkflows'
 import { CreateWorkflowDialog } from '@/components/tasks/kanban/CreateWorkflowDialog'
 
-/* ── Primary nav — 5 items matching Superlist screenshot ── */
+/* ── Primary nav ── */
 const NAV_ITEMS = [
   { label: 'Inbox', icon: Inbox, href: '/', badge: true },
+  { label: 'Agenda', icon: CalendarDays, href: '/agenda' },
   { label: 'Today', icon: CalendarDays, href: '/today', badge: true },
   { label: 'Tasks', icon: CheckCircle2, href: '/tasks' },
 ] as const
