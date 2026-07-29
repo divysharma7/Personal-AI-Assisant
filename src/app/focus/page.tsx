@@ -1,5 +1,6 @@
 import { env } from '@/config/env'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
   Check,
@@ -117,16 +118,17 @@ function playCompletionSound() {
 }
 
 export default function FocusPage() {
+  const [searchParams] = useSearchParams()
+  const linkedTaskId = searchParams.get('taskId')
+  const linkedTaskTitle = searchParams.get('task')
+
   const [preset, setPreset] = useState(presets[1])
   const [mode, setMode] = useState<Mode>('focus')
   const [remaining, setRemaining] = useState(presets[1].focus * 60)
   const [total, setTotal] = useState(presets[1].focus * 60)
   const [isRunning, setIsRunning] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
-  const [intention, setIntention] = useState(() => {
-    const params = new URLSearchParams(window.location.search)
-    return params.get('habit') || params.get('task') || ''
-  })
+  const [intention, setIntention] = useState(linkedTaskTitle || searchParams.get('habit') || '')
   const [autoStart, setAutoStart] = useState(false)
   const [stats, setStats] = useState<FocusStats | null>(null)
   const [statusMessage, setStatusMessage] = useState('')
@@ -204,6 +206,8 @@ export default function FocusPage() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
+          taskId: linkedTaskId || undefined,
+          taskTitle: linkedTaskTitle || intention || undefined,
           plannedDurationMin: preset.focus,
           plannedBreakMin: preset.short,
         }),
@@ -215,7 +219,7 @@ export default function FocusPage() {
     } catch {
       // The timer still starts offline and can be used without persistence.
     }
-  }, [preset])
+  }, [preset, linkedTaskId, linkedTaskTitle, intention])
 
   const start = useCallback(async () => {
     requestNotificationPermission()

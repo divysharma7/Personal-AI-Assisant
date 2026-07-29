@@ -22,7 +22,7 @@ import {
   CalendarClock,
 } from 'lucide-react'
 import { motionTokens, fadeSlideDown, ease as motionEase, scaleIn } from '@/lib/motion'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { useAgenda } from '@/hooks/useAgenda'
 import type { AgendaItem, UnscheduledTask } from '@/hooks/useAgenda'
@@ -385,6 +385,11 @@ function AgendaItemRow({
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-faint)' }}
             title="Start focus session"
             aria-label={`Start focus session for ${item.title}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              const params = new URLSearchParams({ taskId: item.id, task: item.title })
+              window.location.href = `/focus?${params.toString()}`
+            }}
           >
             <Focus size={16} strokeWidth={1.5} />
           </button>
