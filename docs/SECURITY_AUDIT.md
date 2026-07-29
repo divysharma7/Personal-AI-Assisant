@@ -116,15 +116,16 @@ The following routes use `findByIdAndUpdate` with `_id` only — same bug class 
 
 ## 2026-07-29 — Google OAuth deployment review
 
-Status before LOS-401:
+LOS-401 status: fixed locally on 2026-07-29; production configuration and
+deployment verification remain required.
 
 | Finding | Severity | Current behavior | Required resolution |
 | --- | --- | --- | --- |
-| Google tokens stored as plaintext | High | Access and refresh tokens are written directly to `users` | Encrypt at rest with a dedicated key |
-| Refresh token may be overwritten | High | Callback always includes `googleRefreshToken` in update data | Omit the field when Google returns no replacement |
-| Redirect target derived from CORS | Medium | Callback selects the first `CORS_ORIGINS` entry | Use an explicit validated `FRONTEND_URL` |
-| OAuth scopes are broader than necessary | Medium | Requests the full Calendar scope | Request event read/write and calendar-list read scopes |
-| Provider cancellation is a raw 400 | Low | Missing authorization code returns JSON | Validate state and return a neutral Settings redirect |
+| Google tokens stored as plaintext | High | Fixed locally | AES-256-GCM encryption with dedicated key |
+| Refresh token may be overwritten | High | Fixed locally | Field is omitted when Google returns no replacement |
+| Redirect target derived from CORS | Medium | Fixed locally | Redirect uses validated `FRONTEND_URL` |
+| OAuth scopes are broader than necessary | Medium | Fixed locally | Event read/write plus calendar-list read |
+| Provider cancellation is a raw 400 | Low | Fixed locally | State is consumed before neutral Settings redirect |
 
 Security invariants for the fix:
 
@@ -135,3 +136,11 @@ Security invariants for the fix:
   exactly 32 bytes.
 - The callback frontend redirect is fixed by server configuration and cannot be
   supplied by a request parameter.
+
+Verification added:
+
+- OAuth state signature, replay rejection, and pre-exchange rejection.
+- Scope and consent configuration.
+- Encrypted token storage and refresh-token preservation.
+- Cancellation redirect after valid state consumption.
+- Encryption round-trip, invalid-key rejection, and tamper detection.

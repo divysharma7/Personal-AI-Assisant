@@ -84,7 +84,7 @@
 | `/users/me/calendar-preferences` | GET, PATCH | ✓ | ~ manual | ✓ handleApiError | ✓ | Raw data | Manual whitelist validation |
 | `/users/me/mcp` | GET | ✓ | — | ✓ handleApiError | ✓ | Raw data | — |
 | `/integrations/google/auth` | GET | ✓ | — | ✓ handleApiError | ✓ | Redirect | OAuth flow |
-| `/integrations/google/callback` | GET | — | — | ✓ handleApiError | ✓ | Redirect | OAuth callback |
+| `/integrations/google/callback` | GET | ✓ | — | ✓ shared error handler | ✓ | Redirect | Signed, expiring, single-use state bound to authenticated user |
 | `/integrations/google/sync` | POST | ✓ | ✗ | ✓ handleApiError | ✓ | Raw data | — |
 | `/integrations/google/unsync` | POST | ✓ | ✗ | ✓ handleApiError | ✓ | Raw data | — |
 | `/integrations/google/disconnect` | POST | ✓ | ✗ | ✓ handleApiError | ✓ | Raw data | — |

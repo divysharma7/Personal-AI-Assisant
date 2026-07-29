@@ -1,7 +1,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { copy } from '@/lib/copy'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useGoogleCalendar } from '@/hooks/useGoogleCalendar'
@@ -18,7 +18,7 @@ import IntegrationsTab from './tabs/IntegrationsTab'
 import NotificationsTab from './tabs/NotificationsTab'
 import HabitsTab from './tabs/HabitsTab'
 
-type SettingsTab = 'profile' | 'datetime' | 'calendar-prefs' | 'shortcuts' | 'features' | 'integrations' | 'notifications' | 'collaborators' | 'habits'
+type SettingsTab = 'profile' | 'datetime' | 'calendar-prefs' | 'shortcuts' | 'features' | 'integrations' | 'notifications' | 'collaborators' | 'habits' | 'focus' | 'data'
 
 const TABS: {
   key: SettingsTab
@@ -30,10 +30,12 @@ const TABS: {
   { key: 'datetime', label: 'Date & Time', group: 'Personal', description: 'Timezone, week, and clock preferences' },
   { key: 'calendar-prefs', label: 'Calendar', group: 'Personal', description: 'How time appears across Life OS' },
   { key: 'habits', label: 'Habits', group: 'Personal', description: 'Create and maintain your rhythms' },
-  { key: 'features', label: 'Appearance & features', group: 'System', description: 'Theme, sound, and optional tools' },
+  { key: 'features', label: 'Personalization', group: 'System', description: 'Theme, sound, and optional tools' },
+  { key: 'focus', label: 'Focus', group: 'System', description: 'Protocols, timers, and deep work settings' },
   { key: 'integrations', label: copy.settings.tabs.integrations, group: 'System', description: 'Connected calendars and services' },
   { key: 'notifications', label: copy.settings.tabs.notifications, group: 'System', description: 'Choose what can interrupt you' },
-  { key: 'shortcuts', label: 'Shortcuts', group: 'System', description: 'Keyboard controls for faster work' },
+  { key: 'data', label: 'Data & privacy', group: 'System', description: 'Export, delete, and control your data' },
+  { key: 'shortcuts', label: 'Shortcuts', group: 'Workspace', description: 'Keyboard controls for faster work' },
   { key: 'collaborators', label: copy.settings.tabs.collaborators, group: 'Workspace', description: 'People with workspace access' },
 ]
 
@@ -41,9 +43,13 @@ const GROUPS = ['Personal', 'System', 'Workspace'] as const
 
 export default function SettingsPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { theme, setTheme } = useTheme()
   const { connected: googleConnected } = useGoogleCalendar()
-  const [activeTab, setActiveTab] = useState<SettingsTab>('profile')
+  const sectionParam = searchParams.get('section') as SettingsTab | null
+  const [activeTab, setActiveTab] = useState<SettingsTab>(
+    sectionParam && TABS.some(t => t.key === sectionParam) ? sectionParam : 'profile'
+  )
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
@@ -59,6 +65,11 @@ export default function SettingsPage() {
   useEffect(() => {
     setDetectedTz(Intl.DateTimeFormat().resolvedOptions().timeZone)
   }, [])
+
+  // Sync active tab to URL
+  useEffect(() => {
+    setSearchParams({ section: activeTab }, { replace: true })
+  }, [activeTab, setSearchParams])
 
   // Calendar settings
   const [calDefaultView, setCalDefaultView] = useState<'day' | 'week' | 'month'>('week')
@@ -252,6 +263,56 @@ export default function SettingsPage() {
           )}
 
           {activeTab === 'habits' && <HabitsTab />}
+
+          {activeTab === 'focus' && (
+            <motion.div key="focus" {...fade} transition={ease.normal}>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Focus protocols</h3>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                    25/5, 50/10, and 90/15 minute focus/break cycles. Configure your preferred default.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Auto-start</h3>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                    Automatically start Focus when you select a task from Agenda.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'data' && (
+            <motion.div key="data" {...fade} transition={ease.normal}>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Export data</h3>
+                  <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
+                    Download all your tasks, habits, and calendar data as JSON.
+                  </p>
+                  <button
+                    className="px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+                    style={{ backgroundColor: 'var(--overlay-1)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+                  >
+                    Export all data
+                  </button>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium mb-2" style={{ color: 'var(--priority-high)' }}>Danger zone</h3>
+                  <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
+                    Permanently delete your account and all associated data. This cannot be undone.
+                  </p>
+                  <button
+                    className="px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+                    style={{ backgroundColor: 'transparent', color: 'var(--priority-high)', border: '1px solid var(--priority-high)' }}
+                  >
+                    Delete account
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
         </div>
       </section>
