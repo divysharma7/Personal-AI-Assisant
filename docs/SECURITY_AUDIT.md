@@ -164,3 +164,23 @@ verification remain required.
   constraints and route validation.
 - Agenda reads require an active calendar belonging to a non-disconnected
   account.
+
+## 2026-07-29 — Google inbound-sync security review
+
+LOS-402 status: fixed locally; production credential and browser verification
+remain required.
+
+- Manual sync accepts only an account ID and derives user ownership from the
+  authenticated request.
+- Account acquisition, provider reads, cached event writes, and cancellation
+  deletes remain scoped to the account's authenticated user.
+- A missing or other-user account returns 404 and performs no provider work.
+- Access and refresh tokens are decrypted only inside the sync service.
+- Refreshed tokens are encrypted before database persistence.
+- Token values, authorization codes, and provider event bodies are not logged.
+- A database compare-and-update lock prevents simultaneous manual, OAuth, and
+  scheduled workers, with a 15-minute stale-lock recovery threshold.
+- Invalid credentials transition the account to `needs_attention` and require
+  reconnect; temporary or per-calendar failures transition it to `delayed`.
+- Google sync-token invalidation clears only the affected calendar token and
+  cannot delete provider data.

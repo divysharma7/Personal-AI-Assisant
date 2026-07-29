@@ -86,7 +86,7 @@
 | `/users/me/mcp` | GET | ✓ | — | ✓ handleApiError | ✓ | Raw data | — |
 | `/integrations/google/auth` | GET | ✓ | — | ✓ handleApiError | ✓ | Redirect | OAuth flow |
 | `/integrations/google/callback` | GET | ✓ | — | ✓ shared error handler | ✓ | Redirect | Signed, expiring, single-use state bound to authenticated user |
-| `/integrations/google/sync` | POST | ✓ | ✗ | ✓ handleApiError | ✓ | Raw data | — |
+| `/integrations/google/sync` | POST | ✓ | ✓ | ✓ shared error handler | ✓ | Sync result | LOS-402; ownership-scoped account lock |
 | `/integrations/google/unsync` | POST | ✓ | ✗ | ✓ handleApiError | ✓ | Raw data | — |
 | `/integrations/google/disconnect` | POST | ✓ | ✓ | ✓ shared error handler | ✓ | `{ ok, disconnected }` | Ownership-scoped account disconnect |
 | `/integrations/google/status` | GET | ✓ | — | ✓ handleApiError | ✓ | Raw data | — |

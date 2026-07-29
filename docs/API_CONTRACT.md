@@ -453,7 +453,7 @@ Enabling MCP without an explicitly supplied key generates a UUID key.
 | `GET /integrations/google/calendars` | none | Owned calendar-control array |
 | `PATCH /integrations/google/calendars/:calendarId` | Calendar inventory update | Updated calendar-control object |
 | `POST /integrations/google/disconnect` | optional `{ accountId }` | `{ ok, disconnected }` |
-| `POST /integrations/google/sync` | Body currently ignored | `{ ok: true, message }` placeholder |
+| `POST /integrations/google/sync` | `{ accountId }` | Inbound-sync result with health state and counters |
 | `POST /integrations/google/unsync` | Body currently ignored | `{ ok: true, message }` placeholder |
 
 OAuth tokens are encrypted and stored on owned calendar-account rows. Calendar
@@ -461,7 +461,11 @@ inventory is stored per account and controls Agenda visibility, availability,
 ordering, colors, and the default write target. See
 `docs/CALENDAR_INVENTORY_API_CONTRACT.md` for the complete frontend contract.
 
-The sync/unsync endpoints remain placeholders until LOS-402/LOS-403.
+Inbound Google synchronization is implemented by LOS-402. It performs calendar
+discovery, a bounded initial event import, incremental token-based refresh,
+cancellation removal, access-token refresh, and account-level locking. See
+`docs/GOOGLE_CALENDAR_SYNC_CONTRACT.md`. The unsync endpoint remains a
+placeholder until LOS-403.
 
 ### Device registration and placeholders
 

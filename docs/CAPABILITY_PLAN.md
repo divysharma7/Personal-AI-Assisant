@@ -174,5 +174,25 @@ Implemented locally on 2026-07-29:
 - Added an additive reviewed SQL migration with ownership foreign keys, CHECK
   constraints, and a partial unique default-write index.
 
-LOS-402 remains responsible for provider calendar discovery, incremental event
-sync, token refresh, retry policy, and sync-health transitions.
+### LOS-402 — Google Calendar inbound sync
+
+Implemented locally on 2026-07-29:
+
+- Published the manual-sync API contract and replaced the placeholder route.
+- Added paginated Google CalendarList discovery without overwriting user
+  calendar preferences.
+- Added a 90-day-past/365-day-future initial import and per-calendar incremental
+  sync tokens.
+- Added idempotent event upserts, provider cancellation removal, and bounded
+  recovery after Google invalidates a sync token.
+- Added encrypted token refresh persistence and reconnect-required health
+  transitions.
+- Added database-backed account locking with stale-lock recovery so manual,
+  post-OAuth, and scheduled workers cannot overlap.
+- Added immediate post-OAuth sync and five-minute configurable background
+  polling through the same service.
+- Added ownership, provider-failure, incremental-token, cancellation, locking,
+  route, and scheduler regression tests.
+
+Production migration, Google credentials, and authenticated browser verification
+remain deployment tasks. LOS-403 owns outbound write synchronization.
