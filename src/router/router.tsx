@@ -21,6 +21,7 @@ const routes: RouteObject[] = [
   { path: '/signup', ...lazyRoute(() => import('@/app/signup/page')) },
   { path: '/onboarding', ...lazyRoute(() => import('@/app/onboarding/page')) },
   { path: '/getting-started', ...lazyRoute(() => import('@/app/getting-started/page')) },
+  { path: '/api/auth/google/callback', ...lazyRoute(() => import('@/app/auth/google/callback/page')) },
 
   // ── Protected routes ───────────────────────────────────────────────
   {
