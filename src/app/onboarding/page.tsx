@@ -1,6 +1,7 @@
 import { env } from '@/config/env'
 import { useCallback, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { trackEvent } from '@/lib/analytics'
 import {
   ArrowLeft,
   CalendarDays,
@@ -86,6 +87,12 @@ export default function OnboardingPage() {
       }
 
       localStorage.setItem('life-os-onboarding-priorities', JSON.stringify(selectedPriorities))
+
+      // Privacy-safe milestone tracking — only fires once per day.
+      trackEvent('onboarding_completed', {
+        has_selected_priorities: selectedPriorities.length > 0,
+        chose_calendar: connectCalendar,
+      })
 
       if (connectCalendar) {
         window.location.assign(`${API_BASE}/api/integrations/google/auth`)

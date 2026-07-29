@@ -22,6 +22,8 @@ import {
   BarChart3,
   Target,
   MessageCircle,
+  Sunrise,
+  Moon,
 } from 'lucide-react'
 import { collapse, buttonPress, ease, motionTokens } from '@/lib/motion'
 import { useTasks } from '@/hooks/useTasks'
@@ -42,6 +44,8 @@ const FEATURES_NAV = [
   { label: 'Habits', icon: Flame, href: '/habits' },
   { label: 'Calendar', icon: Calendar, href: '/calendar' },
   { label: 'Focus', icon: Target, href: '/focus' },
+  { label: 'Plan', icon: Sunrise, href: '/plan' },
+  { label: 'Shutdown', icon: Moon, href: '/shutdown' },
   { label: 'Statistics', icon: BarChart3, href: '/statistics' },
   { label: 'Chat', icon: MessageCircle, href: '/chat' },
 ] as const

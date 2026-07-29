@@ -44,6 +44,8 @@ const routes: RouteObject[] = [
           { path: '/statistics', ...lazyRoute(() => import('@/app/statistics/page')) },
           { path: '/tasks', ...lazyRoute(() => import('@/app/tasks/page')) },
           { path: '/today', ...lazyRoute(() => import('@/app/today/page')) },
+          { path: '/plan', ...lazyRoute(() => import('@/app/plan/page')) },
+          { path: '/shutdown', ...lazyRoute(() => import('@/app/shutdown/page')) },
           { path: '/workflows/:id', ...lazyRoute(() => import('@/app/workflows/[id]/page')) },
         ],
       },

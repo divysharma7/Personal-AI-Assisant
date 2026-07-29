@@ -3,8 +3,9 @@ import { env } from '@/config/env'
 const API_BASE = env.VITE_API_URL
 
 
-import { useCallback } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { trackEvent } from '@/lib/analytics'
 
 const GCAL_STATUS_KEY = ['google-calendar-status'] as const
 const TASKS_KEY = ['tasks'] as const
@@ -29,6 +30,15 @@ export function useGoogleCalendar() {
   })
 
   const connected = status?.connected ?? false
+
+  // Track google_connected milestone when the connection is first detected.
+  const prevConnectedRef = useRef(connected)
+  useEffect(() => {
+    if (connected && !prevConnectedRef.current) {
+      trackEvent('google_connected')
+    }
+    prevConnectedRef.current = connected
+  }, [connected])
 
   const disconnectMutation = useMutation({
     mutationFn: async () => {

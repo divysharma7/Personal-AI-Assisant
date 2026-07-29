@@ -1,5 +1,6 @@
 import { env } from '@/config/env'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { trackEvent } from '@/lib/analytics'
 import { useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -298,6 +299,8 @@ export default function FocusPage() {
         ...(intention.trim() ? { postSessionNote: intention.trim().slice(0, 200) } : {}),
       })
       await fetchStats()
+      // Privacy-safe milestone: user completed a focus session.
+      trackEvent('first_focus_session')
     }
 
     if (notificationPermissionRef.current) {

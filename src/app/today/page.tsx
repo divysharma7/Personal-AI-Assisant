@@ -11,6 +11,7 @@ import {
   Printer,
 } from 'lucide-react'
 import { copy } from '@/lib/copy'
+import { trackEvent } from '@/lib/analytics'
 import { useTasks } from '@/hooks/useTasks'
 import type { TaskRecord } from '@/hooks/useTasks'
 import { useGoogleCalendar } from '@/hooks/useGoogleCalendar'
@@ -335,6 +336,8 @@ export default function TodayPage() {
       if (data.syncToGoogle && googleConnected) {
         await syncTask(timeBlockTaskId)
       }
+      // Privacy-safe milestone: user scheduled their first task.
+      trackEvent('first_task_scheduled')
       setTimeBlockTaskId(null)
     },
     [timeBlockTaskId, updateTask, googleConnected, syncTask]

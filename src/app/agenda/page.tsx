@@ -225,8 +225,8 @@ function AgendaItemRow({
   return (
     <motion.div
       layout={!prefersReduced}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={prefersReduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
+      animate={prefersReduced ? { opacity: 1 } : { opacity: 1, y: 0 }}
       transition={{ duration: motionTokens.duration.fast }}
       className="group flex items-start gap-3 px-4 py-3 rounded-xl transition-colors"
       style={{
@@ -439,6 +439,7 @@ function AgendaItemRow({
 // ── Earlier Toggle ─────────────────────────────────────────────
 
 function EarlierToggle({ count, expanded, onToggle }: { count: number; expanded: boolean; onToggle: () => void }) {
+  const prefersReduced = useReducedMotion()
   return (
     <button
       onClick={onToggle}
@@ -450,7 +451,7 @@ function EarlierToggle({ count, expanded, onToggle }: { count: number; expanded:
       aria-label={expanded ? `Collapse ${count} earlier items` : `Show ${count} earlier items`}
     >
       <motion.div
-        animate={{ rotate: expanded ? 0 : -90 }}
+        animate={prefersReduced ? {} : { rotate: expanded ? 0 : -90 }}
         transition={{ duration: motionTokens.duration.fast }}
       >
         <ChevronDown size={14} strokeWidth={1.5} />
@@ -566,14 +567,14 @@ function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={addToast}>
       {children}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] flex flex-col gap-2 pointer-events-none">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] flex flex-col gap-2 pointer-events-none" role="log" aria-live="polite" aria-relevant="additions">
         <AnimatePresence>
           {toasts.map((toast) => (
             <motion.div
               key={toast.id}
               initial={prefersReduced ? { opacity: 0 } : { opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
+              exit={prefersReduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
               transition={{ duration: motionTokens.duration.fast }}
               className="flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg pointer-events-auto"
               style={{ backgroundColor: 'var(--bg-pane-2)', border: '1px solid var(--border)' }}
@@ -868,7 +869,7 @@ function ConflictPopover({
       {...(prefersReduced ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } } : scaleIn)}
       transition={motionEase.fast}
       ref={popoverRef}
-      className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] rounded-xl p-5 z-[150]"
+      className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 max-w-[340px] w-[calc(100vw-2rem)] rounded-xl p-5 z-[150]"
       style={{ backgroundColor: 'var(--bg-pane-2)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-elevated)' }}
     >
       <div className="flex items-start gap-3 mb-4">
@@ -1062,7 +1063,9 @@ function TrayTaskRow({
       }}
       onDragEnd={onDragEnd}
       role="button"
+      tabIndex={0}
       aria-label={`Schedule ${task.title}`}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!isScheduling) onScheduleRequest(task, anchorRef) } }}
     >
       {/* Drag handle */}
       <GripVertical
@@ -1749,6 +1752,16 @@ export default function AgendaPage() {
               >
                 <AlertTriangle size={14} strokeWidth={2} />
                 <span>Could not refresh · showing cached data</span>
+                <button
+                  onClick={() => refetch()}
+                  className="ml-auto text-[11px] font-semibold px-2 py-1 rounded-lg transition-colors cursor-pointer"
+                  style={{ color: '#f59e0b', border: '1px solid #f59e0b' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(245,158,11,0.15)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                  aria-label="Retry loading agenda"
+                >
+                  Retry
+                </button>
               </div>
             )}
 
@@ -1780,6 +1793,23 @@ export default function AgendaPage() {
                       expanded={earlierExpanded}
                       onToggle={() => setEarlierExpanded((v) => !v)}
                     />
+                    {prefersReduced ? (
+                      earlierExpanded && (
+                        <div className="overflow-hidden" role="group" aria-label="Earlier items">
+                          <div className="flex flex-col gap-1 opacity-70">
+                            {earlierItems.map((item) => (
+                              <AgendaItemRow
+                                key={item.id}
+                                item={item}
+                                isNow={false}
+                                conflict={conflicts.get(item.id)}
+                                isTouchDevice={isTouchDevice}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    ) : (
                     <AnimatePresence>
                       {earlierExpanded && (
                         <motion.div
@@ -1805,6 +1835,7 @@ export default function AgendaPage() {
                         </motion.div>
                       )}
                     </AnimatePresence>
+                    )}
                   </div>
                 )}
 
@@ -1838,7 +1869,7 @@ export default function AgendaPage() {
 
                 {/* Empty state */}
                 {sortedItems.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="flex flex-col items-center justify-center py-20 text-center" role="status" aria-label="No agenda items for this day">
                     <CalendarDays size={40} strokeWidth={1} style={{ color: 'var(--text-faint)', marginBottom: 16 }} />
                     <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                       Your day has room
@@ -1857,7 +1888,7 @@ export default function AgendaPage() {
                 )}
 
                 {/* Sync status */}
-                <div className="mt-6 text-center">
+                <div className="mt-6 text-center" role="status" aria-live="polite">
                   <span className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
                     {agenda.sync.state === 'healthy' ? 'Calendar synced' : 'Sync delayed'}
                     {agenda.sync.lastSuccessfulAt && (
