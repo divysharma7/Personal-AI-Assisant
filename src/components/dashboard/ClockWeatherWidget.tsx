@@ -31,7 +31,7 @@ export default function ClockWeatherWidget() {
       } catch { /* ignore */ }
     }
 
-    fetch('https://wttr.in/?format=%t+%C')
+    fetch('https://wttr.in/?format=%t+%C', { headers: { 'Accept': 'text/plain' } })
       .then((r) => r.ok ? r.text() : Promise.reject())
       .then((text) => {
         if (cancelled) return
