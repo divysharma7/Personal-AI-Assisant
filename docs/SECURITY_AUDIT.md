@@ -144,3 +144,23 @@ Verification added:
 - Encrypted token storage and refresh-token preservation.
 - Cancellation redirect after valid state consumption.
 - Encryption round-trip, invalid-key rejection, and tamper detection.
+
+## 2026-07-29 — Calendar inventory ownership review
+
+LOS-301 status: fixed locally; production migration and authenticated browser
+verification remain required.
+
+- Calendar credentials are stored only on owned `calendar_accounts` rows for new
+  OAuth connections.
+- Accounts are unique by authenticated user, provider, and stable provider
+  account ID.
+- Calendars and cached external events retain direct `user_id` ownership in
+  addition to account/calendar relations.
+- Inventory reads and mutations scope by authenticated `userId`.
+- Another user's calendar ID returns 404 and cannot be updated.
+- Only connected, writable calendars can become the default write target.
+- The database enforces one non-hidden default write calendar per user.
+- Active/passive availability invariants are protected by database CHECK
+  constraints and route validation.
+- Agenda reads require an active calendar belonging to a non-disconnected
+  account.

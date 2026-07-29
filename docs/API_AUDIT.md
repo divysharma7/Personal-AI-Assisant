@@ -88,8 +88,11 @@
 | `/integrations/google/callback` | GET | ✓ | — | ✓ shared error handler | ✓ | Redirect | Signed, expiring, single-use state bound to authenticated user |
 | `/integrations/google/sync` | POST | ✓ | ✗ | ✓ handleApiError | ✓ | Raw data | — |
 | `/integrations/google/unsync` | POST | ✓ | ✗ | ✓ handleApiError | ✓ | Raw data | — |
-| `/integrations/google/disconnect` | POST | ✓ | ✗ | ✓ handleApiError | ✓ | Raw data | — |
+| `/integrations/google/disconnect` | POST | ✓ | ✓ | ✓ shared error handler | ✓ | `{ ok, disconnected }` | Ownership-scoped account disconnect |
 | `/integrations/google/status` | GET | ✓ | — | ✓ handleApiError | ✓ | Raw data | — |
+| `/integrations/google/accounts` | GET | ✓ | — | ✓ shared error handler | ✓ | Account-card array | LOS-301 |
+| `/integrations/google/calendars` | GET | ✓ | — | ✓ shared error handler | ✓ | Calendar-control array | LOS-301 |
+| `/integrations/google/calendars/:id` | PATCH | ✓ | ✓ | ✓ shared error handler | ✓ | Calendar-control object | Ownership and write-target invariants tested |
 | `/mcp` | GET, POST | ~/✓ | ✗ | ~ legacy api500 | ✓ | Raw data | GET is public (info disclosure). POST uses mcpApiKey. |
 | `/alexa` | GET, POST | — | — | — | ✓ | `{ error }` | **DISABLED** (returns 404) |
 | `/posthook_listener` | POST | — | ✗ | ✓ handleApiError | ✓ | Raw data | Public webhook. |

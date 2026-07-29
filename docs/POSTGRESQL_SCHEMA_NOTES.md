@@ -18,6 +18,7 @@ The schema covers the active application domains:
 - tasks, task hierarchy, habits, comments, reminders, activities, and completions
 - lists, list groups, collaborators, workflows, and workflow columns
 - calendar events, external calendar events, and reminders
+- connected calendar accounts, per-account calendars, and active/passive behavior
 - focus and Pomodoro sessions
 - chat sessions and messages
 - memories
@@ -38,6 +39,10 @@ frontend contract is intentionally revised.
 
 Every user-owned row has a required foreign key to `users.id`. Deleting a user
 cascades through owned data, including devices and web-push subscriptions.
+
+Calendar accounts and calendars each carry `user_id`. Cached external events
+retain their direct `user_id` ownership and additionally reference the account
+and calendar that produced them.
 
 Parent records cascade to true child/history rows:
 
@@ -131,6 +136,13 @@ on `lower(username)`, and a partial unique index that permits only one active
 inbox per owner. The workflow/column agreement check must remain in the import
 validator and application repository because a PostgreSQL CHECK constraint
 cannot query the referenced workflow-column row.
+
+The additive calendar-inventory migration also enforces:
+
+- active Agenda calendars must be visible
+- availability behavior matches active/passive behavior
+- calendar sort order is non-negative
+- one non-hidden default write calendar per user
 
 ## Data initialization
 

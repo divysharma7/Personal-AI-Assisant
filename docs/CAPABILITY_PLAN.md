@@ -152,9 +152,27 @@ Implemented locally on 2026-07-29:
 - Added IANA time-zone validation and DST-aware local-day boundaries.
 - Added deterministic ordering, sync status, and integration tests.
 
-Transition rule:
+LOS-301 integration:
 
-- Until LOS-301 adds owned account/calendar inventory, existing external events
-  are treated as active and have `accountId: null`.
-- LOS-301 must add active/passive filtering without changing the public Agenda
+- External events must reference an owned connected account and calendar to
+  enter Agenda.
+- Active/passive filtering is enforced without changing the public Agenda
   response shape documented in `docs/AGENDA_API_CONTRACT.md`.
+
+### LOS-301 — Calendar account and inventory
+
+Implemented locally on 2026-07-29:
+
+- Added owned `CalendarAccount` and `Calendar` Prisma models.
+- Added encrypted per-account credentials, provider identity, granted scopes,
+  connection status, sync timestamps, and reconnect state.
+- Added active/passive, visibility, availability, color, ordering, read-only,
+  primary, default-write, and per-calendar sync fields.
+- Added account and calendar inventory APIs matching the completed Settings UI.
+- OAuth now upserts by stable Google account identity.
+- Agenda now filters through active connected calendar relations.
+- Added an additive reviewed SQL migration with ownership foreign keys, CHECK
+  constraints, and a partial unique default-write index.
+
+LOS-402 remains responsible for provider calendar discovery, incremental event
+sync, token refresh, retry policy, and sync-health transitions.

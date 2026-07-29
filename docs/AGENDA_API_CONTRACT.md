@@ -90,9 +90,8 @@ External-event source:
 }
 ```
 
-`accountId` remains `null` for legacy user-level Google connections. LOS-301
-will populate it from the owned calendar-account model without changing this
-response shape.
+`accountId` identifies the owned connected account. Cached external events
+without an owned calendar relation are not eligible for Agenda.
 
 ### Sync state
 
@@ -103,8 +102,8 @@ response shape.
 - `needs_attention`
 - `not_connected`
 
-LOS-301/LOS-402 will make this account-aware. Until then, the endpoint reports
-the latest legacy external-event sync timestamp and connection flag.
+Sync state is account-aware. LOS-402 will update these states and timestamps
+from real provider jobs.
 
 ### Ordering
 
@@ -128,17 +127,17 @@ presentation groups without changing the contract.
 | 404 | `NOT_FOUND` | Authenticated user no longer exists |
 | 500 | `INTERNAL_ERROR` | Unexpected server failure |
 
-## Active/passive transition
+## Active/passive behavior
 
 The stable rule is:
 
 - Active calendars appear in Agenda and are busy.
 - Passive calendars do not appear in Agenda and are free.
 
-The current PostgreSQL foundation does not yet have owned account/calendar
-inventory rows. Until LOS-301 lands, existing external events are treated as
-active for backward compatibility. LOS-301 adds the filtering relation; it must
-not change this endpoint's public JSON shape.
+The backend enforces this rule while reading Agenda. External events must belong
+to a connected, non-hidden calendar with `isActiveInAgenda=true`. Moving a
+calendar to Passive removes its events from the next Agenda response without
+deleting provider data.
 
 ## Frontend replacement notes
 
@@ -150,4 +149,3 @@ not change this endpoint's public JSON shape.
 - Refetch this query after task schedule, unschedule, complete, habit check-in,
   Focus completion, calendar group change, or successful provider sync.
 - Keep the current cached-data error state while a refetch is failing.
-

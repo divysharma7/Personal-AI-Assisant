@@ -19,7 +19,8 @@ import type { ConnectedAccount, ConnectionStatus } from '@/hooks/useGoogleCalend
 
 // ── Relative time formatter ────────────────────────────────────
 
-function relativeTime(iso: string): string {
+function relativeTime(iso: string | null): string {
+  if (!iso) return 'Never synced'
   const diff = Date.now() - new Date(iso).getTime()
   const sec = Math.floor(diff / 1000)
   if (sec < 60) return 'Synced just now'

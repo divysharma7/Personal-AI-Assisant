@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { fade, ease } from '@/lib/motion'
 import CalendarControlsSection from '@/components/calendar/CalendarControlsSection'
-import { INITIAL_CALENDARS } from '@/hooks/useCalendarControls'
+import { useCalendarControls } from '@/hooks/useCalendarControls'
 
 interface CalendarPrefsTabProps {
   calSettingsToast: boolean
@@ -30,16 +30,20 @@ export default function CalendarPrefsTab({
   onDefaultViewChange,
   persistCalPref,
 }: CalendarPrefsTabProps) {
+  // ── Calendar data from API ────────────────────────────────
+  const { activeCalendars, passiveCalendars, isLoading: calendarsLoading } = useCalendarControls()
+  const allCalendars = [...activeCalendars, ...passiveCalendars]
+
   // ── Default write calendar (LOS-304) ─────────────────────────
 
   const writableCalendars = useMemo(
-    () => INITIAL_CALENDARS.filter((c) => !c.readOnly),
-    [],
+    () => allCalendars.filter((c) => !c.readOnly),
+    [allCalendars],
   )
 
   const readOnlyCalendars = useMemo(
-    () => INITIAL_CALENDARS.filter((c) => c.readOnly),
-    [],
+    () => allCalendars.filter((c) => c.readOnly),
+    [allCalendars],
   )
 
   // Auto-select the sole writable calendar; otherwise leave empty

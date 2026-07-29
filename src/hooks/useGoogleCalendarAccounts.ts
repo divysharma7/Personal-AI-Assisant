@@ -1,4 +1,6 @@
-import { useState, useCallback } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useCallback } from 'react'
+import { http } from '@/lib/api/client'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -8,105 +10,66 @@ export interface ConnectedAccount {
   id: string
   email: string
   displayName: string
-  avatarUrl?: string
+  avatarUrl?: string | null
   status: ConnectionStatus
-  lastSyncAt: string // ISO-8601
+  lastSyncAt: string | null
   calendars: { id: string; name: string; selected: boolean }[]
 }
 
-// ── Mock data ──────────────────────────────────────────────────
+const ACCOUNTS_KEY = ['google-accounts'] as const
 
-const MOCK_ACCOUNTS: ConnectedAccount[] = [
-  {
-    id: 'acc-1',
-    email: 'divya.s@gmail.com',
-    displayName: 'Divya S',
-    status: 'healthy',
-    lastSyncAt: new Date(Date.now() - 3 * 60_000).toISOString(), // 3 min ago
-    calendars: [
-      { id: 'primary', name: 'Primary', selected: true },
-      { id: 'work', name: 'Work', selected: true },
-      { id: 'holidays', name: 'Holidays in India', selected: false },
-    ],
-  },
-  {
-    id: 'acc-2',
-    email: 'divya.work@company.com',
-    displayName: 'Divya — Work',
-    status: 'delayed',
-    lastSyncAt: new Date(Date.now() - 45 * 60_000).toISOString(), // 45 min ago
-    calendars: [
-      { id: 'primary', name: 'Primary', selected: true },
-    ],
-  },
-]
+function fetchAccounts(): Promise<ConnectedAccount[]> {
+  return http.get<ConnectedAccount[]>('/api/integrations/google/accounts')
+}
 
 // ── Hook ───────────────────────────────────────────────────────
 
 export function useGoogleCalendarAccounts() {
-  const [accounts, setAccounts] = useState<ConnectedAccount[]>(MOCK_ACCOUNTS)
-  const [syncingIds, setSyncingIds] = useState<Set<string>>(new Set())
+  const queryClient = useQueryClient()
 
-  const syncNow = useCallback(async (accountId: string) => {
-    setSyncingIds((prev) => new Set(prev).add(accountId))
+  const query = useQuery({
+    queryKey: ACCOUNTS_KEY,
+    queryFn: fetchAccounts,
+    staleTime: 60_000, // 1 minute
+    retry: (failureCount, error: unknown) => {
+      const status = (error as { status?: number })?.status
+      if (status === 400 || status === 401 || status === 404) return false
+      return failureCount < 2
+    },
+  })
 
-    // Simulate a 2-second sync
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+  const accounts = query.data ?? []
 
-    setAccounts((prev) =>
-      prev.map((acc) =>
-        acc.id === accountId
-          ? { ...acc, status: 'healthy' as const, lastSyncAt: new Date().toISOString() }
-          : acc,
-      ),
-    )
-    setSyncingIds((prev) => {
-      const next = new Set(prev)
-      next.delete(accountId)
-      return next
-    })
+  // Sync/reconnect/disconnect are LOS-305 — stubs for now
+  const syncNow = useCallback(async (_accountId: string) => {
+    // TODO: POST /api/integrations/google/accounts/:id/sync (LOS-305)
   }, [])
 
   const retry = useCallback(async (accountId: string) => {
-    setAccounts((prev) =>
-      prev.map((acc) =>
-        acc.id === accountId ? { ...acc, status: 'syncing' as const } : acc,
-      ),
-    )
     await syncNow(accountId)
   }, [syncNow])
 
-  const reconnect = useCallback(async (accountId: string) => {
-    // In real impl this would redirect to Google OAuth
-    await retry(accountId)
-  }, [retry])
-
-  const disconnect = useCallback(async (accountId: string) => {
-    setAccounts((prev) => prev.filter((acc) => acc.id !== accountId))
+  const reconnect = useCallback(async (_accountId: string) => {
+    // TODO: Redirect to Google OAuth (LOS-305)
   }, [])
 
-  const toggleCalendar = useCallback((accountId: string, calendarId: string) => {
-    setAccounts((prev) =>
-      prev.map((acc) =>
-        acc.id === accountId
-          ? {
-            ...acc,
-            calendars: acc.calendars.map((cal) =>
-              cal.id === calendarId ? { ...cal, selected: !cal.selected } : cal,
-            ),
-          }
-          : acc,
-      ),
-    )
+  const disconnect = useCallback(async (_accountId: string) => {
+    // TODO: DELETE /api/integrations/google/accounts/:id (LOS-305)
+  }, [])
+
+  const toggleCalendar = useCallback((_accountId: string, _calendarId: string) => {
+    // TODO: Use useCalendarControls().toggleVisibility instead
   }, [])
 
   return {
     accounts,
-    syncingIds,
+    syncingIds: new Set<string>(),
     syncNow,
     retry,
     reconnect,
     disconnect,
     toggleCalendar,
+    isLoading: query.isLoading,
+    error: query.error,
   }
 }
