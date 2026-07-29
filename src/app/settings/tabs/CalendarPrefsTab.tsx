@@ -1,7 +1,9 @@
 
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { fade, ease } from '@/lib/motion'
 import CalendarControlsSection from '@/components/calendar/CalendarControlsSection'
+import { INITIAL_CALENDARS } from '@/hooks/useCalendarControls'
 
 interface CalendarPrefsTabProps {
   calSettingsToast: boolean
@@ -28,6 +30,26 @@ export default function CalendarPrefsTab({
   onDefaultViewChange,
   persistCalPref,
 }: CalendarPrefsTabProps) {
+  // ── Default write calendar (LOS-304) ─────────────────────────
+
+  const writableCalendars = useMemo(
+    () => INITIAL_CALENDARS.filter((c) => !c.readOnly),
+    [],
+  )
+
+  const readOnlyCalendars = useMemo(
+    () => INITIAL_CALENDARS.filter((c) => c.readOnly),
+    [],
+  )
+
+  // Auto-select the sole writable calendar; otherwise leave empty
+  const [defaultWriteId, setDefaultWriteId] = useState<string>(() =>
+    writableCalendars.length === 1 ? writableCalendars[0].id : '',
+  )
+
+  const selectedWritable = writableCalendars.find((c) => c.id === defaultWriteId)
+  const currentUnavailable = defaultWriteId !== '' && !selectedWritable
+
   return (
     <motion.div key="calendar-prefs" {...fade} transition={ease.normal} className="flex flex-col gap-6">
       {/* Toast */}
@@ -180,6 +202,115 @@ export default function CalendarPrefsTab({
             <option value="month">Month</option>
           </select>
         </div>
+      </div>
+
+      {/* Separator */}
+      <div className="h-px" style={{ backgroundColor: 'var(--border)' }} />
+
+      {/* Default Write Calendar (LOS-304) */}
+      <div>
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-faint)' }}>
+          Event Destination
+        </p>
+
+        {/* Unavailable warning */}
+        <AnimatePresence>
+          {currentUnavailable && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-3 rounded-lg px-3 py-2 text-xs font-medium"
+              style={{
+                backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                color: '#ef4444',
+              }}
+              role="alert"
+            >
+              Your previous event destination is no longer available.{' '}
+              <strong>Choose a new event destination</strong> to continue creating events.
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Selector label + dropdown */}
+        <div className="flex items-center justify-between">
+          <label
+            htmlFor="default-write-calendar"
+            className="text-sm"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            New event destination
+          </label>
+          <select
+            id="default-write-calendar"
+            value={defaultWriteId}
+            onChange={(e) => setDefaultWriteId(e.target.value)}
+            aria-label="Select default calendar for new events"
+            className="rounded-lg px-2 py-1.5 text-sm outline-none cursor-pointer"
+            style={{
+              backgroundColor: 'var(--bg-pane-2)',
+              border: '1px solid var(--border)',
+              color: 'var(--text-primary)',
+              maxWidth: 260,
+            }}
+          >
+            <option value="" disabled>
+              Choose a calendar…
+            </option>
+            {writableCalendars.map((cal) => (
+              <option key={cal.id} value={cal.id}>
+                {cal.name} — {cal.accountLabel} ({cal.accountEmail})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Selected calendar identity */}
+        {selectedWritable && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={ease.fast}
+            className="mt-3 flex items-center gap-2 rounded-lg px-3 py-2.5"
+            style={{
+              backgroundColor: 'var(--bg-pane-2)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            <span
+              className="h-3 w-3 flex-shrink-0 rounded-full"
+              style={{ backgroundColor: selectedWritable.color }}
+              aria-hidden
+            />
+            <div className="flex min-w-0 flex-col">
+              <span
+                className="truncate text-[13px] font-medium"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                {selectedWritable.name}
+              </span>
+              <span
+                className="truncate text-[11px]"
+                style={{ color: 'var(--text-faint)' }}
+              >
+                {selectedWritable.accountLabel}
+                <span className="mx-1 opacity-50">{'\u00B7'}</span>
+                {selectedWritable.accountEmail}
+              </span>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Read-only calendars note */}
+        {readOnlyCalendars.length > 0 && (
+          <p className="mt-3 text-[11px] leading-relaxed" style={{ color: 'var(--text-faint)' }}>
+            {readOnlyCalendars.length === 1
+              ? `${readOnlyCalendars[0].name} (${readOnlyCalendars[0].accountEmail}) is read-only and not available as an event destination.`
+              : `${readOnlyCalendars.map((c) => c.name).join(', ')} are read-only and not available as event destinations.`}
+          </p>
+        )}
       </div>
 
       {/* Separator */}

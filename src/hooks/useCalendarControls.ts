@@ -18,7 +18,7 @@ export interface CalendarEntry {
 
 // ── Mock data ──────────────────────────────────────────────────
 
-const INITIAL_CALENDARS: CalendarEntry[] = [
+export const INITIAL_CALENDARS: CalendarEntry[] = [
   {
     id: 'cal-1',
     name: 'Primary',
