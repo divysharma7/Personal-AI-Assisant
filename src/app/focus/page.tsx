@@ -2,6 +2,8 @@ import { env } from '@/config/env'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { trackEvent } from '@/lib/analytics'
 import { useSearchParams } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { fadeSlideUp, buttonPress, ease } from '@/lib/motion'
 import {
   ArrowLeft,
   Check,
@@ -416,66 +418,81 @@ export default function FocusPage() {
   const dashOffset = circumference * (1 - progress)
 
   return (
-    <div className="min-h-screen bg-[#efebe2] text-[#191915]">
-      <header className="flex items-center justify-between border-b border-black/10 px-5 py-4 sm:px-8">
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-primary)' }}>
+      <header className="flex items-center justify-between px-5 py-4 sm:px-8" style={{ borderBottom: '1px solid var(--border)' }}>
         <LifeOSMark />
         <div className="flex items-center gap-2">
-          <button
+          <motion.button
+            {...buttonPress}
             type="button"
             onClick={() => document.documentElement.requestFullscreen?.()}
             aria-label="Enter full screen"
-            className="flex h-9 w-9 items-center justify-center rounded-full text-black/45 hover:bg-black/[0.06] hover:text-black"
+            className="flex h-9 w-9 items-center justify-center rounded-full cursor-pointer"
+            style={{ color: 'var(--text-muted)', transition: 'background-color 150ms ease, color 150ms ease' }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
           >
             <Maximize size={17} />
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            {...buttonPress}
             type="button"
             onClick={() => window.history.back()}
-            className="flex items-center gap-2 rounded-full border border-black/15 px-4 py-2 text-xs font-semibold hover:bg-white/60"
+            className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold cursor-pointer"
+            style={{ border: '1px solid var(--border)', color: 'var(--text-muted)', transition: 'background-color 150ms ease' }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
           >
             <ArrowLeft size={15} />
             Leave focus
-          </button>
+          </motion.button>
         </div>
       </header>
 
       <main className="mx-auto grid w-full max-w-[1180px] gap-6 px-5 py-6 lg:grid-cols-[minmax(0,1fr)_330px] lg:px-8 lg:py-10">
-        <section className="relative overflow-hidden border border-black/10 bg-[#f8f5ee] p-5 sm:p-8 lg:min-h-[690px]">
-          <div className="absolute left-0 top-0 h-1 w-full bg-black/10">
+        <motion.section
+          {...fadeSlideUp}
+          transition={ease.normal}
+          className="relative overflow-hidden p-5 sm:p-8 lg:min-h-[690px] rounded-[16px]"
+          style={{ backgroundColor: 'var(--bg-pane)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}
+        >
+          <div className="absolute left-0 top-0 h-1 w-full" style={{ backgroundColor: 'var(--overlay-1)' }}>
             <div
-              className="h-full bg-[#f15b43]"
-              style={{ width: `${progress * 100}%`, transition: 'width 250ms linear' }}
+              className="h-full"
+              style={{ backgroundColor: 'var(--accent)', width: `${progress * 100}%`, transition: 'width 250ms linear' }}
             />
           </div>
 
           <div className="flex flex-wrap items-start justify-between gap-5">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-black/35">
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--text-faint)' }}>
                 Focus protocol
               </p>
               <h1
-                className="mt-2 text-[38px] font-normal leading-none tracking-[-0.04em]"
-                style={{ fontFamily: "'Instrument Serif', serif" }}
+                className="mt-2 text-[38px] leading-none"
+                style={{ fontFamily: 'Inter, system-ui, sans-serif', color: 'var(--text-primary)', fontWeight: 700, letterSpacing: '-0.02em' }}
               >
                 Do one thing well.
               </h1>
             </div>
 
-            <div className="flex rounded-full bg-black/[0.06] p-1" aria-label="Session type">
+            <div className="flex rounded-full p-1" style={{ backgroundColor: 'var(--overlay-1)' }} aria-label="Session type">
               {(['focus', 'shortBreak', 'longBreak'] as Mode[]).map((item) => (
-                <button
+                <motion.button
+                  {...buttonPress}
                   key={item}
                   type="button"
                   onClick={() => switchMode(item)}
                   aria-pressed={mode === item}
-                  className="rounded-full px-3 py-1.5 text-xs font-semibold"
+                  className="rounded-full px-3 py-1.5 text-xs font-semibold cursor-pointer"
                   style={{
-                    backgroundColor: mode === item ? '#191915' : 'transparent',
-                    color: mode === item ? '#f8f5ee' : 'rgba(25,25,21,0.45)',
+                    backgroundColor: mode === item ? 'var(--accent)' : 'transparent',
+                    color: mode === item ? '#fff' : 'var(--text-muted)',
+                    transition: 'background-color 150ms ease, color 150ms ease',
                   }}
                 >
                   {modeLabels[item]}
-                </button>
+                </motion.button>
               ))}
             </div>
           </div>
@@ -487,13 +504,13 @@ export default function FocusPage() {
                 viewBox="0 0 300 300"
                 className="absolute inset-0 h-full w-full -rotate-90"
               >
-                <circle cx="150" cy="150" r="132" fill="none" stroke="rgba(25,25,21,0.08)" strokeWidth="5" />
+                <circle cx="150" cy="150" r="132" fill="none" stroke="var(--overlay-2, rgba(222,221,249,0.07))" strokeWidth="5" />
                 <circle
                   cx="150"
                   cy="150"
                   r="132"
                   fill="none"
-                  stroke={mode === 'focus' ? '#f15b43' : '#7d78d7'}
+                  stroke={mode === 'focus' ? 'var(--accent)' : 'var(--accent-purple)'}
                   strokeWidth="5"
                   strokeLinecap="round"
                   strokeDasharray={circumference}
@@ -501,7 +518,7 @@ export default function FocusPage() {
                 />
               </svg>
               <div className="relative text-center">
-                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-black/35">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--text-faint)' }}>
                   {isPaused ? 'Paused' : isRunning ? 'In progress' : modeLabels[mode]}
                 </p>
                 <div
@@ -509,6 +526,7 @@ export default function FocusPage() {
                   aria-live="off"
                   aria-label={`${formatTime(remaining)} remaining`}
                   className="text-[72px] font-semibold leading-none tracking-[-0.065em] tabular-nums sm:text-[84px]"
+                  style={{ color: 'var(--text-primary)' }}
                 >
                   {formatTime(remaining)}
                 </div>
@@ -519,7 +537,8 @@ export default function FocusPage() {
               <div className="w-full max-w-md">
                 <label
                   htmlFor="focus-intention"
-                  className="mb-2 block text-center text-[10px] font-bold uppercase tracking-[0.16em] text-black/35"
+                  className="mb-2 block text-center text-[10px] font-bold uppercase tracking-[0.16em]"
+                  style={{ color: 'var(--text-faint)' }}
                 >
                   Session intention
                 </label>
@@ -528,127 +547,148 @@ export default function FocusPage() {
                   value={intention}
                   onChange={(event) => setIntention(event.target.value)}
                   placeholder="What will be true when this session ends?"
-                  className="w-full border-0 border-b border-black/20 bg-transparent px-2 py-3 text-center text-[15px] outline-none placeholder:text-black/25 focus:border-black"
+                  className="w-full border-0 border-b bg-transparent px-2 py-3 text-center text-[15px] outline-none focus:ring-0"
+                  style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
                 />
               </div>
             ) : (
-              <p className="max-w-sm text-center text-sm leading-6 text-black/45">
+              <p className="max-w-sm text-center text-sm leading-6" style={{ color: 'var(--text-muted)' }}>
                 Step away from the screen. Water, movement, and distance count.
               </p>
             )}
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <button
+              <motion.button
+                {...buttonPress}
                 type="button"
                 onClick={reset}
                 aria-label="Reset timer"
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-black/15 text-black/50 hover:bg-white hover:text-black"
+                className="flex h-11 w-11 items-center justify-center rounded-full cursor-pointer"
+                style={{ border: '1px solid var(--border)', color: 'var(--text-muted)', transition: 'background-color 150ms ease, color 150ms ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
               >
                 <RotateCcw size={17} />
-              </button>
-              <button
+              </motion.button>
+              <motion.button
+                {...buttonPress}
                 type="button"
                 onClick={() => {
                   if (isRunning) pause()
                   else if (isPaused) resume()
                   else void start()
                 }}
-                className="flex min-w-40 items-center justify-center gap-2 rounded-full bg-[#191915] px-7 py-3.5 text-sm font-semibold text-white hover:bg-[#f15b43]"
+                className="flex min-w-40 items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold cursor-pointer"
+                style={{ backgroundColor: 'var(--accent)', color: '#fff', transition: 'opacity 150ms ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
               >
                 {isRunning ? <Pause size={17} fill="currentColor" /> : <Play size={17} fill="currentColor" />}
                 {isRunning ? 'Pause' : isPaused ? 'Resume' : mode === 'focus' ? 'Begin focus' : 'Begin reset'}
-              </button>
-              <button
+              </motion.button>
+              <motion.button
+                {...buttonPress}
                 type="button"
                 onClick={() => switchMode(mode === 'focus' ? 'shortBreak' : 'focus')}
                 aria-label={mode === 'focus' ? 'Skip to reset' : 'Skip to focus'}
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-black/15 text-black/50 hover:bg-white hover:text-black"
+                className="flex h-11 w-11 items-center justify-center rounded-full cursor-pointer"
+                style={{ border: '1px solid var(--border)', color: 'var(--text-muted)', transition: 'background-color 150ms ease, color 150ms ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
               >
                 <SkipForward size={17} />
-              </button>
+              </motion.button>
             </div>
 
             {isRunning && mode === 'focus' && (
-              <button
+              <motion.button
+                {...buttonPress}
                 type="button"
                 onClick={extend}
-                className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-black/45 hover:text-black"
+                className="mt-4 flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
+                style={{ color: 'var(--text-muted)', transition: 'color 150ms ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)' }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)' }}
               >
                 <Plus size={14} />
                 Add 5 minutes
-              </button>
+              </motion.button>
             )}
 
             {statusMessage && (
-              <p role="status" aria-live="polite" className="mt-5 flex items-center gap-2 text-sm font-semibold text-[#447500]">
+              <p role="status" aria-live="polite" className="mt-5 flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--success)' }}>
                 <Check size={16} />
                 {statusMessage}
               </p>
             )}
           </div>
-        </section>
+        </motion.section>
 
-        <aside className="space-y-5">
-          <section className="border border-black/10 bg-[#dedbcf] p-5">
+        <motion.aside {...fadeSlideUp} transition={ease.normal} className="space-y-5">
+          <section className="p-5 rounded-[16px]" style={{ backgroundColor: 'var(--bg-pane-2)', border: '1px solid var(--border)' }}>
             <div className="mb-5 flex items-center gap-2">
-              <Target size={17} />
+              <Target size={17} style={{ color: 'var(--text-muted)' }} />
               <h2 className="text-sm font-semibold">Choose a rhythm</h2>
             </div>
             <div className="space-y-2">
               {presets.map((item) => (
-                <button
+                <motion.button
+                  {...buttonPress}
                   key={item.id}
                   type="button"
                   onClick={() => changePreset(item)}
                   disabled={isRunning}
                   aria-pressed={preset.id === item.id}
-                  className="flex w-full items-center justify-between border border-black/10 px-4 py-3 text-left disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
                   style={{
-                    backgroundColor: preset.id === item.id ? '#191915' : 'rgba(255,255,255,0.32)',
-                    color: preset.id === item.id ? '#f7f3ea' : '#191915',
+                    backgroundColor: preset.id === item.id ? 'var(--accent)' : 'var(--overlay-1)',
+                    color: preset.id === item.id ? '#fff' : 'var(--text-primary)',
+                    transition: 'background-color 150ms ease, color 150ms ease',
                   }}
                 >
                   <span>
                     <span className="block text-sm font-semibold tabular-nums">{item.label}</span>
-                    <span className={`mt-0.5 block text-[11px] ${preset.id === item.id ? 'text-white/45' : 'text-black/40'}`}>
+                    <span className="mt-0.5 block text-[11px]" style={{ color: preset.id === item.id ? 'rgba(255,255,255,0.6)' : 'var(--text-faint)' }}>
                       {item.description}
                     </span>
                   </span>
                   {preset.id === item.id && <Check size={16} />}
-                </button>
+                </motion.button>
               ))}
             </div>
           </section>
 
-          <section className="border border-black/10 bg-[#c8ee72] p-5">
+          <section className="p-5 rounded-[16px]" style={{ backgroundColor: 'var(--bg-pane-2)', border: '1px solid var(--border)' }}>
             <div className="flex items-center gap-2">
-              <Coffee size={17} />
+              <Coffee size={17} style={{ color: 'var(--text-muted)' }} />
               <h2 className="text-sm font-semibold">Today&apos;s focus</h2>
             </div>
             <div className="mt-6 grid grid-cols-2 gap-3">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-black/40">Sessions</p>
-                <p className="mt-1 text-3xl font-semibold tracking-[-0.04em] tabular-nums">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: 'var(--text-faint)' }}>Sessions</p>
+                <p className="mt-1 text-3xl font-semibold tracking-[-0.04em] tabular-nums" style={{ color: 'var(--accent)' }}>
                   {stats?.today.sessions ?? 0}
                 </p>
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-black/40">Focused</p>
-                <p className="mt-1 text-3xl font-semibold tracking-[-0.04em] tabular-nums">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: 'var(--text-faint)' }}>Focused</p>
+                <p className="mt-1 text-3xl font-semibold tracking-[-0.04em] tabular-nums" style={{ color: 'var(--accent)' }}>
                   {formatMinutes(stats?.today.totalMin ?? 0)}
                 </p>
               </div>
             </div>
-            <div className="mt-6 border-t border-black/15 pt-4 text-xs text-black/55">
-              Weekly total: <strong className="text-black">{formatMinutes(stats?.week.totalMin ?? 0)}</strong>
+            <div className="mt-6 pt-4 text-xs" style={{ borderTop: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+              Weekly total: <strong style={{ color: 'var(--text-primary)' }}>{formatMinutes(stats?.week.totalMin ?? 0)}</strong>
             </div>
           </section>
 
-          <section className="border border-black/10 bg-white/40 p-5">
+          <section className="p-5 rounded-[16px]" style={{ backgroundColor: 'var(--bg-pane-2)', border: '1px solid var(--border)' }}>
             <label className="flex cursor-pointer items-center justify-between gap-4">
               <span>
                 <span className="block text-sm font-semibold">Continue the rhythm</span>
-                <span className="mt-1 block text-xs leading-5 text-black/40">
+                <span className="mt-1 block text-xs leading-5" style={{ color: 'var(--text-faint)' }}>
                   Start the next reset or focus session automatically.
                 </span>
               </span>
@@ -656,15 +696,16 @@ export default function FocusPage() {
                 type="checkbox"
                 checked={autoStart}
                 onChange={(event) => setAutoStart(event.target.checked)}
-                className="h-4 w-4 shrink-0 accent-[#191915]"
+                className="h-4 w-4 shrink-0"
+                style={{ accentColor: 'var(--accent)' }}
               />
             </label>
           </section>
 
-          <p className="px-1 text-[11px] leading-5 text-black/35">
+          <p className="px-1 text-[11px] leading-5" style={{ color: 'var(--text-faint)' }}>
             Space starts or pauses · R resets
           </p>
-        </aside>
+        </motion.aside>
       </main>
     </div>
   )
