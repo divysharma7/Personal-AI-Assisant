@@ -9,7 +9,7 @@ interface ModeSelectorProps {
 }
 
 const modes: { value: TimerMode; label: string }[] = [
-  { value: 'POMO', label: 'Pomo' },
+  { value: 'POMO', label: 'Pomodoro' },
   { value: 'STOPWATCH', label: 'Stopwatch' },
 ]
 

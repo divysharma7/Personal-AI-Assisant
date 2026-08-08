@@ -7,6 +7,7 @@ import LifeOSMark from '@/components/brand/LifeOSMark'
 import TimerDisplay from '@/components/focus/TimerDisplay'
 import TimerControls from '@/components/focus/TimerControls'
 import ModeSelector from '@/components/focus/ModeSelector'
+import PresetSelector from '@/components/focus/PresetSelector'
 import TargetSelector from '@/components/focus/TargetSelector'
 import OverviewPanel from '@/components/focus/OverviewPanel'
 import RecordTimeline from '@/components/focus/RecordTimeline'
@@ -21,6 +22,19 @@ import { trackEvent } from '@/lib/analytics'
 
 const API_BASE = env.VITE_API_URL
 
+interface Preset {
+  id: string
+  label: string
+  description: string
+  focus: number // minutes
+}
+
+const presets: Preset[] = [
+  { id: '25-5', label: '25 / 5', description: 'Quick reset', focus: 25 },
+  { id: '50-10', label: '50 / 10', description: 'Sustained flow', focus: 50 },
+  { id: '90-15', label: '90 / 15', description: 'Deep work', focus: 90 },
+]
+
 export default function FocusPage() {
   const navigate = useNavigate()
 
@@ -33,6 +47,7 @@ export default function FocusPage() {
 
   // Local state
   const [mode, setMode] = useState<TimerMode>('POMO')
+  const [selectedPreset, setSelectedPreset] = useState<Preset>(presets[0])
   const [selectedTarget, setSelectedTarget] = useState<SelectedTarget | null>(null)
   const [intention, setIntention] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
@@ -40,8 +55,8 @@ export default function FocusPage() {
   const [statusMessage, setStatusMessage] = useState('')
   const sessionIdRef = useRef<string | null>(null)
 
-  // Timer duration from settings
-  const pomoDuration = settings?.pomoDurationSeconds || 1500
+  // Timer duration from settings or preset
+  const pomoDuration = mode === 'POMO' ? selectedPreset.focus * 60 : 0
 
   // Handle timer completion
   const handleComplete = useCallback(async () => {
@@ -509,6 +524,16 @@ export default function FocusPage() {
 
         {/* Sidebar */}
         <motion.aside {...fadeSlideUp} transition={ease.normal} className="space-y-5">
+          {/* Preset Selector - Only show in Pomo mode */}
+          {mode === 'POMO' && (
+            <PresetSelector
+              presets={presets}
+              selected={selectedPreset}
+              onSelect={setSelectedPreset}
+              disabled={timer.status !== 'IDLE'}
+            />
+          )}
+
           {/* Overview */}
           <OverviewPanel
             overview={dashboard?.overview || {
