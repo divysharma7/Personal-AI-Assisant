@@ -1,48 +1,57 @@
+'use client'
 
-import { useState, useMemo, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, MoreHorizontal, Check, ChevronRight } from 'lucide-react'
-import { buttonPress, ease, fadeSlideUp } from '@/lib/motion'
+import {
+  Archive,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  CircleDot,
+  Clock3,
+  Crosshair,
+  Grid2X2,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+} from 'lucide-react'
+import { addDays, format, isSameDay, startOfWeek } from 'date-fns'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import type { Habit } from '@/hooks/useHabits'
-import { format, subDays } from 'date-fns'
 import { playCompletionSound } from '@/lib/sounds'
+import './habit-list.css'
 
 interface HabitListProps {
   habits: Habit[]
   selectedId: string | null
   onSelect: (id: string) => void
   filter: 'active' | 'archived'
-  onFilterChange: (f: 'active' | 'archived') => void
+  onFilterChange: (filter: 'active' | 'archived') => void
   onCreateClick: () => void
   onMoreClick: () => void
   isLoading: boolean
-  onToggleToday?: (habit: Habit) => void
+  onToggleDate: (habit: Habit, date: string) => void
+  onEdit: (habit: Habit) => void
+  onArchive: (habit: Habit) => void
+  onDelete: (habit: Habit) => void
+  onStartFocus: (habit: Habit, mode: 'POMO' | 'STOPWATCH') => void
 }
 
-function getLast7Days(today: Date): { dateStr: string; dayName: string; dateNum: number; isToday: boolean }[] {
-  const result: { dateStr: string; dayName: string; dateNum: number; isToday: boolean }[] = []
-  for (let i = 6; i >= 0; i--) {
-    const d = subDays(today, i)
-    result.push({
-      dateStr: format(d, 'yyyy-MM-dd'),
-      dayName: format(d, 'EEE'),
-      dateNum: d.getDate(),
-      isToday: i === 0,
-    })
-  }
-  return result
+type HabitSection = 'Morning' | 'Night' | 'Others'
+
+function sectionForHabit(habit: Habit): HabitSection {
+  const value = `${habit.name} ${habit.description ?? ''}`.toLowerCase()
+  if (/morning|meditat|journal|wake|sunrise/.test(value)) return 'Morning'
+  if (/night|sleep|bed|daily check|reflect|wind down/.test(value)) return 'Night'
+  return 'Others'
 }
 
-/** Group habits by frequency as a proxy for "section" (model has no section field) */
-function groupHabits(habits: Habit[]): Map<string, Habit[]> {
-  const map = new Map<string, Habit[]>()
-  for (const h of habits) {
-    const key = h.frequency === 'daily' ? 'Daily' : h.frequency === 'weekdays' ? 'Weekdays' : h.frequency === 'weekly' ? 'Weekly' : 'Custom'
-    const group = map.get(key) ?? []
-    group.push(h)
-    map.set(key, group)
-  }
-  return map
+function weekDays(reference: Date) {
+  const monday = startOfWeek(reference, { weekStartsOn: 1 })
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = addDays(monday, index)
+    return { date, key: format(date, 'yyyy-MM-dd') }
+  })
 }
 
 export default function HabitList({
@@ -54,375 +63,194 @@ export default function HabitList({
   onCreateClick,
   onMoreClick,
   isLoading,
-  onToggleToday,
+  onToggleDate,
+  onEdit,
+  onArchive,
+  onDelete,
+  onStartFocus,
 }: HabitListProps) {
-  const [stableToday] = useState(() => new Date())
-  const last7 = useMemo(() => getLast7Days(stableToday), [stableToday])
-  const last7DateStrs = useMemo(() => last7.map((d) => d.dateStr), [last7])
-  const grouped = useMemo(() => groupHabits(habits), [habits])
-  const hasMultipleGroups = grouped.size > 1
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
+  const [today] = useState(() => new Date())
+  const [selectedDate, setSelectedDate] = useState(today)
+  const [collapsed, setCollapsed] = useState<Set<HabitSection>>(new Set())
+  const [moreOpen, setMoreOpen] = useState(false)
+  const [contextMenu, setContextMenu] = useState<{ habitId: string; x: number; y: number } | null>(null)
+  const [focusOpen, setFocusOpen] = useState(false)
+  const moreRef = useRef<HTMLDivElement>(null)
+  const days = useMemo(() => weekDays(today), [today])
+  const selectedDateKey = format(selectedDate, 'yyyy-MM-dd')
 
-  const toggleSection = useCallback((section: string) => {
-    setCollapsedSections((prev) => {
-      const next = new Set(prev)
+  const grouped = useMemo(() => {
+    const result = new Map<HabitSection, Habit[]>([['Morning', []], ['Night', []], ['Others', []]])
+    habits.forEach((habit) => result.get(sectionForHabit(habit))?.push(habit))
+    return Array.from(result.entries()).filter(([, items]) => items.length > 0)
+  }, [habits])
+
+  useEffect(() => {
+    const close = (event: MouseEvent) => {
+      const target = event.target as Element
+      if (moreRef.current && !moreRef.current.contains(target)) setMoreOpen(false)
+      if (!target.closest('.habit-list-context-menu')) {
+        setContextMenu(null)
+        setFocusOpen(false)
+      }
+    }
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setContextMenu(null)
+        setFocusOpen(false)
+        setMoreOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', close)
+    document.addEventListener('keydown', escape)
+    return () => {
+      document.removeEventListener('mousedown', close)
+      document.removeEventListener('keydown', escape)
+    }
+  }, [])
+
+  const toggleSection = (section: HabitSection) => {
+    setCollapsed((current) => {
+      const next = new Set(current)
       if (next.has(section)) next.delete(section)
       else next.add(section)
       return next
     })
-  }, [])
+  }
 
-  // Count how many habits are completed today across all habits (for the weekly strip)
-  const todayStr = last7[last7.length - 1]?.dateStr ?? ''
-  const todayCompletedCount = useMemo(
-    () => habits.filter((h) => h.completions.includes(todayStr)).length,
-    [habits, todayStr]
-  )
+  const openContextMenu = (habit: Habit, event: ReactMouseEvent) => {
+    event.preventDefault()
+    setFocusOpen(false)
+    setContextMenu({
+      habitId: habit._id,
+      x: Math.max(8, Math.min(event.clientX, window.innerWidth - 340)),
+      y: Math.max(8, Math.min(event.clientY, window.innerHeight - 170)),
+    })
+  }
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        borderRight: '1px solid var(--border)',
-        backgroundColor: 'var(--bg-pane)',
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '16px 20px 12px',
-        }}
-      >
-        <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-          Habit
-        </h2>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <motion.button
-            {...buttonPress}
-            onClick={onCreateClick}
-            aria-label="Create habit"
-            style={{
-              width: 36, height: 36, borderRadius: '50%',
-              border: '1.5px solid var(--border)', backgroundColor: 'transparent',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', color: 'var(--text-muted)',
-            }}
-          >
-            <Plus size={16} strokeWidth={1.5} />
-          </motion.button>
-          <motion.button
-            {...buttonPress}
-            onClick={onMoreClick}
-            aria-label="More options"
-            style={{
-              width: 36, height: 36, borderRadius: 6,
-              border: 'none', backgroundColor: 'transparent',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', color: 'var(--text-muted)',
-            }}
-          >
-            <MoreHorizontal size={16} strokeWidth={1.5} />
-          </motion.button>
-        </div>
-      </div>
-
-      {/* Tab pills */}
-      <div style={{ display: 'flex', gap: 4, padding: '0 20px 12px' }}>
-        {(['active', 'archived'] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => onFilterChange(tab)}
-            style={{
-              padding: '4px 14px', borderRadius: 20, border: 'none',
-              fontSize: 13, fontWeight: 500, cursor: 'pointer',
-              backgroundColor: filter === tab ? 'var(--accent)' : 'var(--overlay-1, var(--bg-hover))',
-              color: filter === tab ? '#fff' : 'var(--text-muted)',
-              textTransform: 'capitalize', transition: 'background-color 150ms ease, color 150ms ease',
-            }}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {/* Weekly overview strip */}
-      {habits.length > 0 && (
-        <WeeklyStrip last7={last7} habits={habits} todayCompletedCount={todayCompletedCount} />
-      )}
-
-      {/* Habit rows */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px' }}>
-        {isLoading ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 60 }}>
-            <div style={{
-              width: 24, height: 24,
-              border: '2px solid var(--accent)', borderTopColor: 'transparent',
-              borderRadius: '50%', animation: 'spin 1s linear infinite',
-            }} />
+    <section className="habit-list-shell" aria-label="Habits">
+      <header className="habit-list-header">
+        <button className="habit-list-title" type="button" onClick={() => setMoreOpen((open) => !open)}>
+          Habit <ChevronDown size={13} />
+        </button>
+        <div className="habit-list-header-actions">
+          <button type="button" onClick={onMoreClick} aria-label="Browse habit templates" title="Habit gallery"><Grid2X2 size={16} /></button>
+          <button type="button" onClick={onCreateClick} aria-label="Create habit" title="Create habit"><Plus size={19} /></button>
+          <div className="habit-list-more-anchor" ref={moreRef}>
+            <button type="button" onClick={() => setMoreOpen((open) => !open)} aria-label="Habit options"><MoreHorizontal size={18} /></button>
+            {moreOpen && (
+              <div className="habit-list-filter-menu" role="menu">
+                <button type="button" className={filter === 'active' ? 'is-active' : ''} onClick={() => { onFilterChange('active'); setMoreOpen(false) }}><span>Active habits</span>{filter === 'active' ? <Check size={14} /> : null}</button>
+                <button type="button" className={filter === 'archived' ? 'is-active' : ''} onClick={() => { onFilterChange('archived'); setMoreOpen(false) }}><span>Archived habits</span>{filter === 'archived' ? <Check size={14} /> : null}</button>
+              </div>
+            )}
           </div>
+        </div>
+      </header>
+
+      <div className="habit-week-strip" aria-label="Weekly completion overview">
+        {days.map(({ date, key }) => {
+          const completeCount = habits.filter((habit) => habit.completions.includes(key)).length
+          const ratio = habits.length > 0 ? completeCount / habits.length : 0
+          const selected = isSameDay(date, selectedDate)
+          const isToday = isSameDay(date, today)
+          return (
+            <button key={key} type="button" className={`${selected ? 'is-selected' : ''}${isToday ? ' is-today' : ''}`} onClick={() => setSelectedDate(date)} aria-label={`Show ${format(date, 'EEEE, MMMM d')}`}>
+              <span>{format(date, 'EEE')}</span>
+              <strong>{format(date, 'd')}</strong>
+              <span className={`habit-day-ring${ratio === 1 && habits.length > 0 ? ' is-complete' : ''}`} style={{ '--habit-progress': `${ratio * 360}deg` } as CSSProperties}>
+                {ratio === 1 && habits.length > 0 ? <Check size={11} /> : null}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="habit-list-date-label">{format(selectedDate, 'MMM d')} <button type="button" onClick={() => setSelectedDate(today)} aria-label="Return to today">×</button></div>
+
+      <div className="habit-list-scroll">
+        {isLoading ? (
+          <div className="habit-list-loading"><span /><span /><span /></div>
         ) : habits.length === 0 ? (
-          <motion.div
-            {...fadeSlideUp}
-            transition={ease.normal}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingTop: 60, textAlign: 'center' }}
-          >
-            <p style={{ fontSize: 14, color: 'var(--text-faint)' }}>No habits yet</p>
-            <motion.button
-              {...buttonPress}
-              onClick={onCreateClick}
-              style={{
-                marginTop: 12, padding: '8px 20px', borderRadius: 20, border: 'none',
-                backgroundColor: 'var(--accent)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              }}
-            >
-              Create Habit
-            </motion.button>
-          </motion.div>
-        ) : hasMultipleGroups ? (
-          // Grouped view
-          <div>
-            {Array.from(grouped.entries()).map(([section, sectionHabits]) => {
-              const collapsed = collapsedSections.has(section)
-              return (
-                <div key={section} style={{ marginBottom: 4 }}>
-                  <button
-                    onClick={() => toggleSection(section)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      padding: '6px 12px', width: '100%',
-                      border: 'none', backgroundColor: 'transparent',
-                      cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                      color: 'var(--text-faint)', textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                    }}
-                  >
-                    <ChevronRight
-                      size={12}
-                      strokeWidth={2}
-                      style={{
-                        transform: collapsed ? 'rotate(0deg)' : 'rotate(90deg)',
-                        transition: 'transform 150ms ease',
-                        color: 'var(--text-faint)',
-                      }}
-                    />
-                    {section} {sectionHabits.length}
-                  </button>
-                  {!collapsed && (
-                    <AnimatePresence>
-                      {sectionHabits.map((habit) => (
-                        <HabitRow
-                          key={habit._id}
-                          habit={habit}
-                          isSelected={selectedId === habit._id}
-                          last7={last7DateStrs}
-                          onSelect={onSelect}
-                          onToggleToday={onToggleToday}
-                        />
-                      ))}
-                    </AnimatePresence>
-                  )}
-                </div>
-              )
-            })}
+          <div className="habit-list-empty">
+            <span>✦</span><h3>{filter === 'archived' ? 'No archived habits' : 'Build a rhythm'}</h3><p>{filter === 'archived' ? 'Archived habits will appear here.' : 'Start with one small habit you can repeat.'}</p>
+            {filter === 'active' ? <button type="button" onClick={onCreateClick}>Create Habit</button> : null}
           </div>
         ) : (
-          <AnimatePresence>
-            {habits.map((habit) => (
-              <HabitRow
-                key={habit._id}
-                habit={habit}
-                isSelected={selectedId === habit._id}
-                last7={last7DateStrs}
-                onSelect={onSelect}
-                onToggleToday={onToggleToday}
-              />
-            ))}
-          </AnimatePresence>
+          grouped.map(([section, sectionHabits]) => (
+            <div className="habit-section" key={section}>
+              <button type="button" className="habit-section-heading" onClick={() => toggleSection(section)} aria-expanded={!collapsed.has(section)}>
+                <ChevronRight size={12} className={collapsed.has(section) ? '' : 'is-open'} /><strong>{section}</strong><span>{sectionHabits.length}</span>
+              </button>
+              <AnimatePresence initial={false}>
+                {!collapsed.has(section) && sectionHabits.map((habit) => {
+                  const completed = habit.completions.includes(selectedDateKey)
+                  const status = habit.completionStatuses?.[selectedDateKey]
+                  return (
+                    <motion.article
+                      layout
+                      key={habit._id}
+                      className={`habit-list-row${selectedId === habit._id ? ' is-selected' : ''}`}
+                      onClick={() => onSelect(habit._id)}
+                      onContextMenu={(event) => openContextMenu(habit, event)}
+                      tabIndex={0}
+                      onKeyDown={(event) => { if (event.key === 'Enter') onSelect(habit._id) }}
+                    >
+                      <span className="habit-list-row-icon" style={{ color: habit.color }}>{habit.icon || '✦'}</span>
+                      <div className="habit-list-row-copy">
+                        <h3>{habit.name}</h3>
+                        <p>
+                          <span className="habit-total-days">⚡ {habit.completions.length} {habit.completions.length === 1 ? 'Day' : 'Days'}</span>
+                          {habit.currentStreak > 0 ? <span> 🔥 {habit.currentStreak} {habit.currentStreak === 1 ? 'Day' : 'Days'}</span> : null}
+                          {status === 'skipped' ? <span> · Skipped</span> : null}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className={`habit-list-check${completed ? ' is-complete' : ''}`}
+                        style={{ '--habit-color': habit.color } as CSSProperties}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          if (!completed) playCompletionSound()
+                          onToggleDate(habit, selectedDateKey)
+                        }}
+                        aria-label={`${completed ? 'Undo' : 'Complete'} ${habit.name} on ${format(selectedDate, 'MMM d')}`}
+                      >
+                        {completed ? <Check size={14} /> : null}
+                      </button>
+                    </motion.article>
+                  )
+                })}
+              </AnimatePresence>
+            </div>
+          ))
         )}
       </div>
-    </div>
-  )
-}
 
-function WeeklyStrip({
-  last7,
-  habits,
-  todayCompletedCount: _todayCompletedCount,
-}: {
-  last7: { dateStr: string; dayName: string; dateNum: number; isToday: boolean }[]
-  habits: Habit[]
-  todayCompletedCount: number
-}) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 0,
-        padding: '8px 16px 12px',
-        borderBottom: '1px solid var(--border)',
-      }}
-    >
-      {last7.map((day) => {
-        const completedCount = habits.filter((h) => h.completions.includes(day.dateStr)).length
-        const allDone = habits.length > 0 && completedCount === habits.length
-        const someDone = completedCount > 0
+      {contextMenu && (() => {
+        const habit = habits.find((item) => item._id === contextMenu.habitId)
+        if (!habit) return null
         return (
-          <div
-            key={day.dateStr}
-            style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 3,
-            }}
-          >
-            <span
-              style={{
-                fontSize: 10,
-                fontWeight: 500,
-                color: day.isToday ? 'var(--accent)' : 'var(--text-faint)',
-                textTransform: 'uppercase',
-              }}
-            >
-              {day.dayName}
-            </span>
-            <div
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 12,
-                fontWeight: day.isToday ? 700 : 500,
-                backgroundColor: day.isToday ? 'var(--accent)' : 'transparent',
-                color: day.isToday ? '#fff' : 'var(--text-primary)',
-              }}
-            >
-              {day.dateNum}
-            </div>
-            <div
-              style={{
-                width: 18,
-                height: 18,
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: allDone ? 'var(--accent)' : 'transparent',
-                border: allDone ? 'none' : someDone ? '1.5px solid var(--accent)' : '1.5px solid var(--overlay-3, var(--border))',
-              }}
-            >
-              {allDone && <Check size={10} strokeWidth={3} color="#fff" />}
-              {someDone && !allDone && (
-                <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--accent)' }} />
+          <div className="habit-list-context-menu" role="menu" aria-label={`${habit.name} actions`} style={{ left: contextMenu.x, top: contextMenu.y }} onContextMenu={(event) => event.preventDefault()}>
+            <button type="button" role="menuitem" onClick={() => { onEdit(habit); setContextMenu(null) }}><Pencil size={15} /><span>Edit</span></button>
+            <button type="button" role="menuitem" onClick={() => { onArchive(habit); setContextMenu(null) }}><Archive size={15} /><span>{habit.archived ? 'Restore' : 'Archive'}</span></button>
+            <div className="habit-list-focus-cascade" onMouseLeave={() => setFocusOpen(false)}>
+              <button type="button" role="menuitem" className={focusOpen ? 'is-active' : ''} onMouseEnter={() => setFocusOpen(true)} onClick={() => setFocusOpen((open) => !open)}><Crosshair size={15} /><span>Start Focus</span><ChevronRight size={14} /></button>
+              {focusOpen && (
+                <div className="habit-list-focus-submenu" role="menu">
+                  <button type="button" role="menuitem" onClick={() => onStartFocus(habit, 'POMO')}><CircleDot size={14} /><span>Start Pomo</span></button>
+                  <button type="button" role="menuitem" onClick={() => onStartFocus(habit, 'STOPWATCH')}><Clock3 size={14} /><span>Start Stopwatch</span></button>
+                </div>
               )}
             </div>
+            <button type="button" className="is-danger" role="menuitem" onClick={() => {
+              if (window.confirm(`Delete “${habit.name}”?`)) onDelete(habit)
+              setContextMenu(null)
+            }}><Trash2 size={15} /><span>Delete</span></button>
           </div>
         )
-      })}
-    </div>
-  )
-}
-
-function HabitRow({
-  habit,
-  isSelected,
-  last7,
-  onSelect,
-  onToggleToday,
-}: {
-  habit: Habit
-  isSelected: boolean
-  last7: string[]
-  onSelect: (id: string) => void
-  onToggleToday?: (habit: Habit) => void
-}) {
-  const todayStr = last7[last7.length - 1]
-  const isCheckedToday = habit.completions.includes(todayStr)
-  const totalDays = habit.completions.length
-
-  const handleToggle = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation()
-      if (!isCheckedToday) playCompletionSound()
-      onToggleToday?.(habit)
-    },
-    [habit, isCheckedToday, onToggleToday]
-  )
-
-  return (
-    <motion.div
-      layout
-      onClick={() => onSelect(habit._id)}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10,
-        padding: '10px 12px',
-        borderRadius: 10,
-        cursor: 'pointer',
-        backgroundColor: isSelected ? 'var(--accent-soft)' : 'transparent',
-        transition: 'background-color 120ms ease',
-        marginBottom: 2,
-      }}
-      onMouseEnter={(e) => {
-        if (!isSelected) e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))'
-      }}
-      onMouseLeave={(e) => {
-        if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent'
-      }}
-    >
-      {/* Icon */}
-      <span style={{ fontSize: 22, flexShrink: 0, lineHeight: 1 }}>
-        {habit.icon}
-      </span>
-
-      {/* Name + stats */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <span
-          style={{
-            fontSize: 14, fontWeight: 500, color: 'var(--text-primary)',
-            display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}
-        >
-          {habit.name}
-        </span>
-        <span style={{ fontSize: 11, color: 'var(--text-faint)', display: 'block', marginTop: 2, fontVariantNumeric: 'tabular-nums' }}>
-          {totalDays > 0 && <>{'\u26A1'} {totalDays} {totalDays === 1 ? 'Day' : 'Days'}</>}
-          {totalDays > 0 && habit.currentStreak > 0 && ' \u00B7 '}
-          {habit.currentStreak > 0 && <>{'\uD83D\uDD25'} {habit.currentStreak} {habit.currentStreak === 1 ? 'Day' : 'Days'}</>}
-        </span>
-      </div>
-
-      {/* Today check-in toggle */}
-      <motion.button
-        {...buttonPress}
-        onClick={handleToggle}
-        style={{
-          width: 24,
-          height: 24,
-          borderRadius: '50%',
-          border: isCheckedToday ? 'none' : `2px solid ${habit.color || 'var(--accent)'}`,
-          backgroundColor: isCheckedToday ? (habit.color || 'var(--accent)') : 'transparent',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          flexShrink: 0,
-          transition: 'background-color 150ms ease, border-color 150ms ease',
-          padding: 0,
-        }}
-      >
-        {isCheckedToday && <Check size={13} strokeWidth={2.5} color="#fff" />}
-      </motion.button>
-    </motion.div>
+      })()}
+    </section>
   )
 }

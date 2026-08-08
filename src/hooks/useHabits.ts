@@ -15,18 +15,77 @@ export interface Habit {
   color: string
   icon: string
   completions: string[]
+  completionStatuses?: Record<string, HabitCheckinStatus>
   currentStreak: number
   bestStreak: number
   archived: boolean
   order: number
 }
 
+export type HabitCheckinStatus = 'achieved' | 'unachieved' | 'skipped' | 'frozen'
+
+interface HabitApiCompletion {
+  date: string
+  status: HabitCheckinStatus
+}
+
+interface HabitApiRecord {
+  _id: string
+  name?: string
+  title?: string
+  description?: string
+  frequency?: Habit['frequency']
+  habitFrequency?: { type?: Habit['frequency']; daysOfWeek?: number[] } | null
+  customDays?: number[]
+  color?: string
+  habitColor?: string | null
+  icon?: string
+  habitIcon?: string | null
+  completions?: Array<string | HabitApiCompletion>
+  currentStreak?: number
+  streakCurrent?: number
+  bestStreak?: number
+  streakBest?: number
+  archived?: boolean
+  status?: string
+  order?: number
+}
+
 const HABITS_KEY = ['habits'] as const
+
+function normalizeHabit(record: HabitApiRecord): Habit {
+  const rawCompletions = record.completions ?? []
+  const completionStatuses = Object.fromEntries(
+    rawCompletions
+      .filter((entry): entry is HabitApiCompletion => typeof entry !== 'string')
+      .map((entry) => [entry.date.slice(0, 10), entry.status]),
+  )
+  const completions = rawCompletions
+    .filter((entry) => typeof entry === 'string' || entry.status === 'achieved' || entry.status === 'frozen')
+    .map((entry) => typeof entry === 'string' ? entry.slice(0, 10) : entry.date.slice(0, 10))
+
+  return {
+    _id: record._id,
+    name: record.name ?? record.title ?? 'Untitled habit',
+    description: record.description,
+    frequency: record.frequency ?? record.habitFrequency?.type ?? 'daily',
+    customDays: record.customDays ?? record.habitFrequency?.daysOfWeek,
+    color: record.color ?? record.habitColor ?? '#7c83ff',
+    icon: record.icon ?? record.habitIcon ?? '✦',
+    completions,
+    completionStatuses,
+    currentStreak: record.currentStreak ?? record.streakCurrent ?? 0,
+    bestStreak: record.bestStreak ?? record.streakBest ?? 0,
+    archived: record.archived ?? record.status === 'dropped',
+    order: record.order ?? 0,
+  }
+}
 
 async function fetchHabits(): Promise<Habit[]> {
   const res = await fetch(`${API_BASE}/api/habits`, { credentials: 'include' })
   if (!res.ok) throw new Error('Failed to fetch habits')
-  return res.json()
+  const records = await res.json() as HabitApiRecord[]
+  return records.map(normalizeHabit)
 }
 
 function todayStr() {
@@ -67,7 +126,7 @@ export function useHabits() {
         credentials: 'include',
       })
       if (!res.ok) throw new Error('Failed to create habit')
-      return res.json() as Promise<Habit>
+      return normalizeHabit(await res.json() as HabitApiRecord)
     },
     onSettled: () => qc.invalidateQueries({ queryKey: HABITS_KEY }),
   })
@@ -81,7 +140,7 @@ export function useHabits() {
         credentials: 'include',
       })
       if (!res.ok) throw new Error('Failed to update habit')
-      return res.json() as Promise<Habit>
+      return normalizeHabit(await res.json() as HabitApiRecord)
     },
     onMutate: async ({ id, data }) => {
       await qc.cancelQueries({ queryKey: HABITS_KEY })
@@ -107,20 +166,62 @@ export function useHabits() {
     onSettled: () => qc.invalidateQueries({ queryKey: HABITS_KEY }),
   })
 
+  const checkinMutation = useMutation({
+    mutationFn: async ({ id, status, date }: { id: string; status: HabitCheckinStatus; date: string }) => {
+      const res = await fetch(`${API_BASE}/api/habits/${id}/checkin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date, status }),
+        credentials: 'include',
+      })
+      if (!res.ok) throw new Error('Failed to update habit check-in')
+      return normalizeHabit(await res.json() as HabitApiRecord)
+    },
+    onMutate: async ({ id, status, date }) => {
+      await qc.cancelQueries({ queryKey: HABITS_KEY })
+      const prev = qc.getQueryData<Habit[]>(HABITS_KEY)
+      qc.setQueryData<Habit[]>(HABITS_KEY, (old) => (old ?? []).map((habit) => {
+        if (habit._id !== id) return habit
+        const isComplete = status === 'achieved' || status === 'frozen'
+        const completions = isComplete
+          ? Array.from(new Set([...habit.completions, date]))
+          : habit.completions.filter((completionDate) => completionDate !== date)
+        return {
+          ...habit,
+          completions,
+          completionStatuses: { ...habit.completionStatuses, [date]: status },
+          currentStreak: calcStreak(completions),
+          bestStreak: Math.max(habit.bestStreak, calcStreak(completions)),
+        }
+      }))
+      return { prev }
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.prev) qc.setQueryData(HABITS_KEY, context.prev)
+    },
+    onSuccess: (updated) => {
+      qc.setQueryData<Habit[]>(HABITS_KEY, (old) => (old ?? []).map((habit) => habit._id === updated._id ? updated : habit))
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: HABITS_KEY }),
+  })
+
   const toggleToday = useCallback(async (habit: Habit) => {
     const today = todayStr()
     const completed = habit.completions.includes(today)
-    const newCompletions = completed
-      ? habit.completions.filter(d => d !== today)
-      : [...habit.completions, today]
-    const newStreak = calcStreak(newCompletions)
-    const newBest = Math.max(habit.bestStreak, newStreak)
-
-    await updateMutation.mutateAsync({
+    await checkinMutation.mutateAsync({
       id: habit._id,
-      data: { completions: newCompletions, currentStreak: newStreak, bestStreak: newBest },
+      date: today,
+      status: completed ? 'unachieved' : 'achieved',
     })
-  }, [updateMutation])
+  }, [checkinMutation])
+
+  const setStatusForDate = useCallback(async (habit: Habit, date: string, status: HabitCheckinStatus) => {
+    await checkinMutation.mutateAsync({ id: habit._id, date, status })
+  }, [checkinMutation])
+
+  const setTodayStatus = useCallback(async (habit: Habit, status: HabitCheckinStatus) => {
+    await setStatusForDate(habit, todayStr(), status)
+  }, [setStatusForDate])
 
   const createHabit = useCallback(async (data: Partial<Habit>) => {
     return createMutation.mutateAsync(data)
@@ -151,7 +252,7 @@ export function useHabits() {
   }, [])
 
   return {
-    habits, isLoading, createHabit, updateHabit, deleteHabit, toggleToday,
+    habits, isLoading, createHabit, updateHabit, deleteHabit, toggleToday, setTodayStatus, setStatusForDate,
     todayCompletionRate, weekCompletions, todayStr,
   }
 }

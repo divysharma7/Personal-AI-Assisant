@@ -183,6 +183,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   const showDetailPanel = stackEntries.length > 0
   const isTaskWorkspace = pathname === '/today' || pathname === '/next'
+  const isHabitWorkspace = pathname === '/habits'
 
   // No shell for auth/onboarding routes
   const noShell = SHELL_EXCLUDED.some((p) => pathname.startsWith(p))
@@ -257,7 +258,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
       </main>
 
       {/* Settings needs the full center width for its own secondary navigation. */}
-      {((pathname !== '/settings' && !isTaskWorkspace) || showDetailPanel) && (
+      {((pathname !== '/settings' && !isTaskWorkspace && !isHabitWorkspace) || showDetailPanel) && (
         <AnimatePresence mode="wait">
           {showDetailPanel ? (
             <motion.div

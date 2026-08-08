@@ -2,23 +2,31 @@
 
 import {
   Check,
+  ChevronRight,
   ChevronDown,
   Circle,
+  CircleDot,
+  Clock3,
   Ellipsis,
   Lightbulb,
+  ListChecks,
   ListTodo,
+  MinusSquare,
   Plus,
   Repeat2,
   SlidersHorizontal,
   Sparkles,
+  X,
 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent as ReactMouseEvent } from 'react'
 import { format, isSameDay } from 'date-fns'
 import { useNavigate } from 'react-router-dom'
 import { useHabits, type Habit } from '@/hooks/useHabits'
 import { useLists } from '@/hooks/useLists'
 import { useTasks, type TaskRecord } from '@/hooks/useTasks'
+import { useWorkflows } from '@/hooks/useWorkflows'
 import TaskViewMenu, { type WorkspaceView } from './TaskViewMenu'
+import TodayTaskContextMenu from './TodayTaskContextMenu'
 import './task-workspace.css'
 
 type WorkspaceRange = 'today' | 'next'
@@ -80,6 +88,7 @@ function TaskCard({
   listName,
   onToggle,
   onOpen,
+  onContextMenu,
 }: {
   task: TaskRecord
   showDetails: boolean
@@ -87,6 +96,7 @@ function TaskCard({
   listName?: string
   onToggle: () => void
   onOpen: () => void
+  onContextMenu: (event: ReactMouseEvent) => void
 }) {
   const completed = isDone(task.status)
   const due = parseTaskDate(task.dueDate)
@@ -95,6 +105,7 @@ function TaskCard({
     <article
       className={`workspace-card workspace-task-card${completed ? ' is-completed' : ''}${compact ? ' is-compact' : ''}`}
       onClick={onOpen}
+      onContextMenu={onContextMenu}
       tabIndex={0}
       onKeyDown={(event) => { if (event.key === 'Enter') onOpen() }}
     >
@@ -114,24 +125,68 @@ function TaskCard({
   )
 }
 
-function HabitCard({ habit, completed, compact, onToggle }: { habit: Habit; completed: boolean; compact: boolean; onToggle: () => void }) {
+function HabitCard({
+  habit,
+  completed,
+  status,
+  compact,
+  quickOpen,
+  onOpen,
+  onContextMenu,
+  onComplete,
+}: {
+  habit: Habit
+  completed: boolean
+  status?: string
+  compact: boolean
+  quickOpen: boolean
+  onOpen: () => void
+  onContextMenu: (event: ReactMouseEvent) => void
+  onComplete: () => void
+}) {
+  const statusLabel = status === 'skipped' ? 'Skipped' : status === 'unachieved' ? 'Uncompleted' : 'Today'
+
   return (
-    <article className={`workspace-card workspace-habit-card${completed ? ' is-completed' : ''}${compact ? ' is-compact' : ''}`}>
-      <button type="button" className="workspace-habit-icon" onClick={onToggle} aria-label={`${completed ? 'Undo' : 'Complete'} ${habit.name}`} style={{ color: habit.color || undefined }}>
-        {completed ? <Check size={15} /> : <span>{habit.icon || '✦'}</span>}
-      </button>
-      <div className="workspace-card-copy">
-        <h3>{habit.name}</h3>
-        <div className="workspace-card-meta"><span>Today</span>{habit.currentStreak > 0 ? <span>{habit.currentStreak} day streak</span> : null}</div>
-      </div>
-    </article>
+    <div className="workspace-habit-card-wrap">
+      <article
+        className={`workspace-card workspace-habit-card${completed ? ' is-completed' : ''}${quickOpen ? ' is-selected' : ''}${compact ? ' is-compact' : ''}`}
+        onClick={onOpen}
+        onContextMenu={onContextMenu}
+        onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onOpen() } }}
+        tabIndex={0}
+        aria-haspopup="dialog"
+        aria-expanded={quickOpen}
+      >
+        <span className="workspace-habit-icon" style={{ color: habit.color || undefined }}>
+          {completed ? <Check size={15} /> : <span>{habit.icon || '✦'}</span>}
+        </span>
+        <div className="workspace-card-copy">
+          <h3>{habit.name}</h3>
+          <div className="workspace-card-meta">
+            <span className={status === 'skipped' || status === 'unachieved' ? 'is-muted-status' : ''}>{statusLabel}</span>
+            {habit.currentStreak > 0 ? <span>{habit.currentStreak} day streak</span> : null}
+          </div>
+        </div>
+      </article>
+
+      {quickOpen && (
+        <div className="workspace-habit-quick-popover" role="dialog" aria-label={`${habit.name} quick check-in`} onClick={(event) => event.stopPropagation()}>
+          <div className="workspace-habit-quick-title">
+            <span className="workspace-habit-quick-icon" style={{ color: habit.color || undefined }}>{habit.icon || '✦'}</span>
+            <strong>{habit.name}</strong>
+          </div>
+          <button type="button" onClick={onComplete}>{completed ? 'Undo' : 'I Did It'}</button>
+        </div>
+      )}
+    </div>
   )
 }
 
 export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
-  const { tasks, isLoading, createTask, toggleComplete } = useTasks()
-  const { habits, isLoading: habitsLoading, toggleToday } = useHabits()
+  const { tasks, isLoading, createTask, updateTask, deleteTask, toggleComplete } = useTasks()
+  const { habits, isLoading: habitsLoading, setTodayStatus } = useHabits()
   const { lists } = useLists()
+  const { workflows } = useWorkflows()
   const navigate = useNavigate()
   const [view, setView] = useState<WorkspaceView>('columns')
   const [showCompleted, setShowCompleted] = useState(true)
@@ -142,6 +197,18 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
   const [composerOpen, setComposerOpen] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [completedOpen, setCompletedOpen] = useState(true)
+  const [quickHabitId, setQuickHabitId] = useState<string | null>(null)
+  const [habitMenu, setHabitMenu] = useState<{ habitId: string; x: number; y: number } | null>(null)
+  const [taskMenu, setTaskMenu] = useState<{ taskId: string; x: number; y: number } | null>(null)
+  const [focusMenuOpen, setFocusMenuOpen] = useState(false)
+  const [pinnedTaskIds, setPinnedTaskIds] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem('laif-pinned-task-ids')
+      return stored ? JSON.parse(stored) as string[] : []
+    } catch {
+      return []
+    }
+  })
   const menuRef = useRef<HTMLDivElement>(null)
 
   const now = useMemo(() => new Date(), [])
@@ -152,15 +219,39 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
   useEffect(() => {
     const close = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) setMenuOpen(false)
+      const target = event.target as Element
+      if (!target.closest('.workspace-habit-card-wrap') && !target.closest('.workspace-habit-context-menu')) {
+        setQuickHabitId(null)
+        setHabitMenu(null)
+        setFocusMenuOpen(false)
+      }
+      if (!target.closest('.workspace-task-card') && !target.closest('.workspace-task-context-menu')) setTaskMenu(null)
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setQuickHabitId(null)
+        setHabitMenu(null)
+        setFocusMenuOpen(false)
+        setTaskMenu(null)
+      }
     }
     document.addEventListener('mousedown', close)
-    return () => document.removeEventListener('mousedown', close)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('mousedown', close)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
   }, [])
+
+  useEffect(() => {
+    try { localStorage.setItem('laif-pinned-task-ids', JSON.stringify(pinnedTaskIds)) } catch { /* ignore */ }
+  }, [pinnedTaskIds])
 
   const listNames = useMemo(() => new Map(lists.map((list) => [list._id, list.title])), [lists])
 
   const visibleTasks = useMemo(() => tasks
     .filter((task) => !task.isHabit)
+    .filter((task) => task.status !== 'dropped')
     .filter((task) => {
       const due = parseTaskDate(task.dueDate)
       if (range === 'today') {
@@ -172,8 +263,12 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
       }
       return due ? due >= start && due <= rangeEnd : false
     })
-    .sort((a, b) => (parseTaskDate(a.dueDate)?.getTime() ?? 0) - (parseTaskDate(b.dueDate)?.getTime() ?? 0)),
-  [now, range, rangeEnd, start, tasks, todayEnd])
+    .sort((a, b) => {
+      const pinDifference = Number(pinnedTaskIds.includes(b._id)) - Number(pinnedTaskIds.includes(a._id))
+      if (pinDifference !== 0) return pinDifference
+      return (parseTaskDate(a.dueDate)?.getTime() ?? 0) - (parseTaskDate(b.dueDate)?.getTime() ?? 0)
+    }),
+  [now, pinnedTaskIds, range, rangeEnd, start, tasks, todayEnd])
 
   const activeTasks = useMemo(() => visibleTasks.filter((task) => !isDone(task.status)), [visibleTasks])
   const completedTasks = useMemo(() => visibleTasks.filter((task) => isDone(task.status)), [visibleTasks])
@@ -200,6 +295,84 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
 
   const openTask = (taskId: string) => window.dispatchEvent(new CustomEvent('laif:detail-task', { detail: { taskId } }))
 
+  useEffect(() => {
+    const linkedTaskId = new URLSearchParams(window.location.search).get('task')
+    if (linkedTaskId) window.dispatchEvent(new CustomEvent('laif:detail-task', { detail: { taskId: linkedTaskId } }))
+  }, [])
+
+  const openTaskMenu = (task: TaskRecord, event: ReactMouseEvent) => {
+    event.preventDefault()
+    setHabitMenu(null)
+    setQuickHabitId(null)
+    setTaskMenu({
+      taskId: task._id,
+      x: Math.max(8, Math.min(event.clientX, window.innerWidth - 408)),
+      y: Math.max(8, Math.min(event.clientY, window.innerHeight - 510)),
+    })
+  }
+
+  const startTaskFocus = (task: TaskRecord, mode: 'POMO' | 'STOPWATCH') => {
+    window.dispatchEvent(new CustomEvent('laif:start-focus', {
+      detail: { taskId: task._id, taskTitle: task.title, mode, targetType: 'TASK' },
+    }))
+  }
+
+  const addSubtask = async (task: TaskRecord) => {
+    const subtask = await createTask({
+      title: 'New subtask',
+      parentId: task._id,
+      status: 'todo',
+      priority: task.priority,
+      dueDate: task.dueDate,
+      listId: task.listId,
+      workflowId: task.workflowId,
+      sectionId: task.sectionId,
+    })
+    openTask(subtask._id)
+  }
+
+  const duplicateTask = async (task: TaskRecord) => {
+    await createTask({
+      title: `${task.title} copy`,
+      description: task.description,
+      status: 'todo',
+      priority: task.priority,
+      dueDate: task.dueDate,
+      listId: task.listId,
+      workflowId: task.workflowId,
+      sectionId: task.sectionId,
+      tags: task.tags,
+      estimatedEffort: task.estimatedEffort,
+      repeat: task.repeat,
+    })
+  }
+
+  const openHabitMenu = (habit: Habit, event: ReactMouseEvent) => {
+    event.preventDefault()
+    setQuickHabitId(null)
+    setFocusMenuOpen(false)
+    setHabitMenu({
+      habitId: habit._id,
+      x: Math.min(event.clientX, window.innerWidth - 184),
+      y: Math.min(event.clientY, window.innerHeight - 186),
+    })
+  }
+
+  const startHabitFocus = (habit: Habit, mode: 'POMO' | 'STOPWATCH') => {
+    window.dispatchEvent(new CustomEvent('laif:start-focus', {
+      detail: { taskId: habit._id, taskTitle: habit.name, mode, targetType: 'HABIT' },
+    }))
+    setHabitMenu(null)
+    setFocusMenuOpen(false)
+  }
+
+  const setHabitStatus = async (habit: Habit, status: 'achieved' | 'unachieved' | 'skipped') => {
+    await setTodayStatus(habit, status)
+    setHabitMenu(null)
+    setFocusMenuOpen(false)
+    if (status === 'achieved' || status === 'unachieved') setQuickHabitId(null)
+  }
+
   const submitTask = async (event: FormEvent) => {
     event.preventDefault()
     const title = newTaskTitle.trim()
@@ -218,6 +391,7 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
       listName={task.listId ? listNames.get(task.listId) : undefined}
       onToggle={() => void toggleComplete(task._id)}
       onOpen={() => openTask(task._id)}
+      onContextMenu={(event) => openTaskMenu(task, event)}
     />
   ))
 
@@ -313,7 +487,21 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
               <aside className="workspace-habit-column">
                 <div className="workspace-column-heading"><h3>Habit</h3><span>{todaysHabits.length}</span></div>
                 {todaysHabits.map((habit) => (
-                  <HabitCard key={habit._id} habit={habit} compact={compact} completed={habit.completions.includes(todayKey)} onToggle={() => void toggleToday(habit)} />
+                  <HabitCard
+                    key={habit._id}
+                    habit={habit}
+                    compact={compact}
+                    completed={habit.completions.includes(todayKey)}
+                    status={habit.completionStatuses?.[todayKey]}
+                    quickOpen={quickHabitId === habit._id}
+                    onOpen={() => {
+                      setHabitMenu(null)
+                      setFocusMenuOpen(false)
+                      setQuickHabitId((current) => current === habit._id ? null : habit._id)
+                    }}
+                    onContextMenu={(event) => openHabitMenu(habit, event)}
+                    onComplete={() => void setHabitStatus(habit, habit.completions.includes(todayKey) ? 'unachieved' : 'achieved')}
+                  />
                 ))}
                 {todaysHabits.length === 0 ? (
                   <button className="workspace-empty-add" type="button" onClick={() => navigate('/habits')}><Sparkles size={15} /> Add a habit</button>
@@ -323,6 +511,73 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
           )}
         </section>
       </main>
+
+      {habitMenu && (() => {
+        const habit = habits.find((item) => item._id === habitMenu.habitId)
+        if (!habit) return null
+        return (
+          <div
+            className="workspace-habit-context-menu"
+            style={{ left: habitMenu.x, top: habitMenu.y }}
+            role="menu"
+            aria-label={`${habit.name} actions`}
+            onContextMenu={(event) => event.preventDefault()}
+          >
+            <div className="workspace-habit-focus-menu" onMouseLeave={() => setFocusMenuOpen(false)}>
+              <button type="button" role="menuitem" onMouseEnter={() => setFocusMenuOpen(true)} onClick={() => setFocusMenuOpen((open) => !open)}>
+                <CircleDot size={16} /><span>Start Focus</span><ChevronRight size={14} className="workspace-menu-trailing" />
+              </button>
+              {focusMenuOpen && (
+                <div className="workspace-habit-focus-submenu" role="menu" aria-label="Focus mode">
+                  <button type="button" role="menuitem" onClick={() => startHabitFocus(habit, 'POMO')}><CircleDot size={15} /><span>Pomodoro</span></button>
+                  <button type="button" role="menuitem" onClick={() => startHabitFocus(habit, 'STOPWATCH')}><Clock3 size={15} /><span>Stopwatch</span></button>
+                </div>
+              )}
+            </div>
+            <button type="button" role="menuitem" onClick={() => navigate(`/habits?selected=${habit._id}`)}><ListChecks size={16} /><span>Habit Log</span></button>
+            <button type="button" role="menuitem" onClick={() => void setHabitStatus(habit, 'skipped')}><MinusSquare size={16} /><span>Skip</span></button>
+            <button type="button" role="menuitem" onClick={() => void setHabitStatus(habit, 'unachieved')}><X size={16} /><span>Uncompleted</span></button>
+          </div>
+        )
+      })()}
+
+      {taskMenu && (() => {
+        const task = tasks.find((item) => item._id === taskMenu.taskId)
+        if (!task) return null
+        const allTags = Array.from(new Set(tasks.flatMap((item) => item.tags ?? []))).sort((a, b) => a.localeCompare(b))
+        return (
+          <TodayTaskContextMenu
+            task={task}
+            position={{ x: taskMenu.x, y: taskMenu.y }}
+            lists={lists}
+            workflows={workflows}
+            allTags={allTags}
+            pinned={pinnedTaskIds.includes(task._id)}
+            onClose={() => setTaskMenu(null)}
+            onDateChange={(dueDate) => void updateTask(task._id, { dueDate })}
+            onPriorityChange={(priority) => void updateTask(task._id, { priority: priority as TaskRecord['priority'] })}
+            onAddSubtask={() => void addSubtask(task)}
+            onTogglePin={() => setPinnedTaskIds((current) => current.includes(task._id) ? current.filter((id) => id !== task._id) : [...current, task._id])}
+            onWontDo={() => void updateTask(task._id, { status: 'dropped' })}
+            onMoveToList={(listId) => void updateTask(task._id, { listId, workflowId: null, sectionId: null })}
+            onMoveToWorkflow={(workflowId, sectionId) => void updateTask(task._id, { workflowId, sectionId, listId: null })}
+            onTagsChange={(tags) => void updateTask(task._id, { tags })}
+            onStartFocus={(mode) => startTaskFocus(task, mode)}
+            onDuplicate={() => void duplicateTask(task)}
+            onCopyLink={() => void navigator.clipboard?.writeText(`${window.location.origin}/today?task=${task._id}`)}
+            onConvertToNote={() => {
+              void updateTask(task._id, {
+                notes: task.notes ?? { type: 'doc', content: [{ type: 'paragraph' }] },
+                tags: Array.from(new Set([...(task.tags ?? []), 'note'])),
+              })
+              openTask(task._id)
+            }}
+            onDelete={() => {
+              if (window.confirm(`Delete “${task.title}”?`)) void deleteTask(task._id)
+            }}
+          />
+        )
+      })()}
     </div>
   )
 }
@@ -330,4 +585,3 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
 function CalendarDaysIcon() {
   return <ListTodo size={23} />
 }
-

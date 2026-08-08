@@ -11,9 +11,10 @@ import type { CreateHabitData } from '@/components/habits/CreateHabitDialog'
 import HabitGallery from '@/components/habits/HabitGallery'
 import HabitCreationWizard from '@/components/habits/HabitCreationWizard'
 import type { HabitFormData } from '@/components/habits/HabitCreationWizard'
+import './habits.css'
 
 export default function HabitsPage() {
-  const { habits, isLoading, createHabit, updateHabit, deleteHabit, toggleToday } = useHabits()
+  const { habits, isLoading, createHabit, updateHabit, deleteHabit, toggleToday, setStatusForDate } = useHabits()
   const prefersReduced = useReducedMotion()
 
   const [filter, setFilter] = useState<'active' | 'archived'>('active')
@@ -50,6 +51,14 @@ export default function HabitsPage() {
       await toggleToday(habit)
     },
     [toggleToday]
+  )
+
+  const handleToggleDate = useCallback(
+    async (habit: Habit, date: string) => {
+      const completed = habit.completions.includes(date)
+      await setStatusForDate(habit, date, completed ? 'unachieved' : 'achieved')
+    },
+    [setStatusForDate]
   )
 
   const handleCreateFromDialog = useCallback(
@@ -128,28 +137,15 @@ export default function HabitsPage() {
     [deleteHabit, selectedId]
   )
 
-  const handleStartFocus = useCallback((habit: Habit) => {
-    window.location.href = `/focus?habit=${encodeURIComponent(habit.name)}`
+  const handleStartFocus = useCallback((habit: Habit, mode: 'POMO' | 'STOPWATCH') => {
+    window.dispatchEvent(new CustomEvent('laif:start-focus', {
+      detail: { taskId: habit._id, taskTitle: habit.name, mode, targetType: 'HABIT' },
+    }))
   }, [])
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        height: '100%',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Left panel - Habit list (~40%) */}
-      <div
-        style={{
-          width: '38%',
-          minWidth: 320,
-          maxWidth: 440,
-          flexShrink: 0,
-          height: '100%',
-        }}
-      >
+    <div className="habits-workspace">
+      <div className="habits-workspace-list">
         <HabitList
           habits={activeHabits}
           selectedId={selectedId}
@@ -159,12 +155,15 @@ export default function HabitsPage() {
           onCreateClick={() => setCreateDialogOpen(true)}
           onMoreClick={() => setGalleryOpen(true)}
           isLoading={isLoading}
-          onToggleToday={handleToggleToday}
+          onToggleDate={(habit, date) => void handleToggleDate(habit, date)}
+          onEdit={handleEdit}
+          onArchive={(habit) => void handleArchive(habit)}
+          onDelete={(habit) => void handleDelete(habit)}
+          onStartFocus={handleStartFocus}
         />
       </div>
 
-      {/* Right panel - Habit detail (~60%) */}
-      <div style={{ flex: 1, height: '100%', overflow: 'hidden' }}>
+      <div className="habits-workspace-detail">
         <AnimatePresence mode="wait">
           {selectedHabit ? (
             <motion.div
@@ -180,7 +179,7 @@ export default function HabitsPage() {
                 onEdit={handleEdit}
                 onArchive={handleArchive}
                 onDelete={handleDelete}
-                onStartFocus={handleStartFocus}
+                onStartFocus={(habit) => handleStartFocus(habit, 'POMO')}
               />
             </motion.div>
           ) : (
@@ -190,38 +189,16 @@ export default function HabitsPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={prefersReduced ? { duration: 0 } : ease.normal}
-              style={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--text-faint)',
-              }}
+              className="habits-workspace-empty"
             >
-              <span style={{ fontSize: 48, marginBottom: 16, opacity: 0.3 }}>
-                {activeHabits.length > 0 ? '\uD83D\uDC48' : '\uD83D\uDD25'}
-              </span>
-              <p style={{ fontSize: 15, fontWeight: 500 }}>
+              <span>{activeHabits.length > 0 ? '◌' : '✦'}</span>
+              <p>
                 {activeHabits.length > 0
                   ? 'Select a habit to see details'
                   : 'Create your first habit to get started'}
               </p>
               {activeHabits.length === 0 && !isLoading && (
-                <button
-                  onClick={() => setCreateDialogOpen(true)}
-                  style={{
-                    marginTop: 16,
-                    padding: '10px 24px',
-                    borderRadius: 20,
-                    border: 'none',
-                    backgroundColor: 'var(--accent)',
-                    color: '#fff',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
+                <button onClick={() => setCreateDialogOpen(true)}>
                   Create Habit
                 </button>
               )}

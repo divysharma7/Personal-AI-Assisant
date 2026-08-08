@@ -62,7 +62,7 @@ export default function TodaySidebar({ collapsed, onToggleCollapse }: TodaySideb
     const start = startOfToday()
     const todayEnd = endOfDays(0)
     const nextEnd = endOfDays(6)
-    const activeTasks = tasks.filter((task) => !task.isHabit && !isDone(task.status))
+    const activeTasks = tasks.filter((task) => !task.isHabit && !isDone(task.status) && task.status !== 'dropped')
     const inRange = (value: string | null | undefined, end: Date) => {
       if (!value) return false
       const date = new Date(value)

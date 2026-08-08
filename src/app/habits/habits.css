@@ -1,0 +1,37 @@
+.habits-workspace {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg-pane);
+}
+.habits-workspace-list {
+  width: 67%;
+  min-width: 0;
+  height: 100%;
+  flex: 0 0 67%;
+  overflow: hidden;
+}
+.habits-workspace-detail {
+  min-width: 300px;
+  height: 100%;
+  flex: 1;
+  overflow: hidden;
+  border-left: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-base) 96%, var(--bg-pane));
+}
+.habits-workspace-empty {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+}
+.habits-workspace-empty > span { margin-bottom: 12px; color: var(--accent); font-size: 38px; opacity: .22; }
+.habits-workspace-empty p { margin: 0; font-size: 12px; font-weight: 550; }
+.habits-workspace-empty button { margin-top: 16px; padding: 8px 17px; border: 0; border-radius: 8px; color: #fff; background: var(--accent); font-size: 11px; font-weight: 650; cursor: pointer; }
+@media (max-width: 1180px) {
+  .habits-workspace-list { width: 62%; min-width: 0; flex-basis: 62%; }
+  .habits-workspace-detail { min-width: 260px; }
+}
