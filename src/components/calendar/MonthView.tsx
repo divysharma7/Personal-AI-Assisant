@@ -1,6 +1,7 @@
 
 import { useMemo, useState, useCallback } from 'react'
-import { getMonthGrid, isSameDay, isToday, isPast } from './calendarUtils'
+import { getMonthGridSunday, isSameDay, isToday } from './calendarUtils'
+import { hexToRgba } from '@/lib/colorUtils'
 import type { CalendarEvent } from './types'
 
 interface MonthViewProps {
@@ -11,8 +12,8 @@ interface MonthViewProps {
   showHabitDots?: boolean
 }
 
-const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-const MAX_VISIBLE_EVENTS = 3
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const MAX_VISIBLE_EVENTS = 4
 
 interface TaskBar {
   event: CalendarEvent
@@ -65,7 +66,7 @@ export default function MonthView({
   onDayClick,
   showHabitDots = false,
 }: MonthViewProps) {
-  const cells = getMonthGrid(date)
+  const cells = getMonthGridSunday(date)
   const currentMonth = date.getMonth()
 
   // Build rows (each row = 7 cells = 1 week)
@@ -145,7 +146,7 @@ export default function MonthView({
   )
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden">
+    <div className="calendar-month-view flex flex-col flex-1 overflow-hidden">
       {/* Day name headers */}
       <div
         className="grid flex-shrink-0"
@@ -175,6 +176,7 @@ export default function MonthView({
             days={row.days}
             taskBars={row.taskBars}
             currentMonth={currentMonth}
+            selectedDate={date}
             events={events}
             showHabitDots={showHabitDots}
             onDayClick={onDayClick}
@@ -192,6 +194,7 @@ interface MonthRowProps {
   days: Date[]
   taskBars: TaskBar[]
   currentMonth: number
+  selectedDate: Date
   events: CalendarEvent[]
   showHabitDots: boolean
   onDayClick: (date: Date) => void
@@ -202,6 +205,7 @@ function MonthRow({
   days,
   taskBars,
   currentMonth,
+  selectedDate,
   events,
   showHabitDots,
   onDayClick,
@@ -229,8 +233,7 @@ function MonthRow({
       }}
     >
       {days.map((day, colIdx) => {
-        const today = isToday(day)
-        const past = isPast(day)
+        const today = isToday(day) || isSameDay(day, selectedDate)
         const isCurrentMonth = day.getMonth() === currentMonth
         const dayTasks = tasksPerDay.get(colIdx) ?? []
         // Only show bars that START in this column (bars spanning from earlier cols are rendered via CSS width)
@@ -251,7 +254,7 @@ function MonthRow({
             style={{
               borderRight: (colIdx + 1) % 7 !== 0 ? '1px solid var(--border)' : 'none',
               borderBottom: '1px solid var(--border)',
-              opacity: past && !today ? 0.7 : isCurrentMonth ? 1 : 0.4,
+              opacity: isCurrentMonth ? 1 : 0.34,
               transition: 'background-color 100ms ease',
             }}
             onClick={() => onDayClick(day)}
@@ -275,8 +278,7 @@ function MonthRow({
                   height: 24,
                   color: today ? '#FFFFFF' : 'var(--text-primary)',
                   backgroundColor: today ? 'var(--accent)' : 'transparent',
-                  outline: today ? '2px solid var(--accent)' : 'none',
-                  outlineOffset: 1,
+                  outline: 'none',
                 }}
               >
                 {day.getDate()}
@@ -341,8 +343,9 @@ function MonthTaskBar({ bar }: MonthTaskBarProps) {
         borderRadius: 3,
         fontSize: 10,
         fontWeight: 500,
-        backgroundColor: event.color + '33', // 20% opacity
-        borderLeft: `3px solid ${event.color}`,
+        color: '#f4f4f5',
+        backgroundColor: hexToRgba(event.color, 0.78),
+        border: '1px solid rgba(255,255,255,0.04)',
         opacity: isCompleted ? 0.5 : event.isExternal ? 0.7 : 1,
         textDecoration: isCompleted ? 'line-through' : 'none',
         // Multi-day bars span multiple columns
@@ -354,37 +357,28 @@ function MonthTaskBar({ bar }: MonthTaskBarProps) {
       onClick={(e) => {
         e.stopPropagation()
         window.dispatchEvent(
-          new CustomEvent('laif:open-task-detail', {
+          new CustomEvent('laif:detail-task', {
             detail: { taskId: event.id },
           })
         )
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = event.color + '44'
+        e.currentTarget.style.backgroundColor = hexToRgba(event.color, 0.92)
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = event.color + '33'
+        e.currentTarget.style.backgroundColor = hexToRgba(event.color, 0.78)
       }}
       title={event.title}
     >
-      {bar.isTimed && (
-        <span
-          style={{
-            color: 'var(--text-faint)',
-            fontSize: 9,
-            marginRight: 3,
-            flexShrink: 0,
-          }}
-        >
-          {bar.timePrefix} &bull;
-        </span>
-      )}
-      <span
-        className="truncate"
-        style={{ color: event.color }}
-      >
+      <span style={{ width: 8, height: 8, flex: '0 0 8px', marginRight: 3, border: '1px solid rgba(255,255,255,.48)', borderRadius: 2 }} />
+      <span className="truncate" style={{ color: '#f4f4f5' }}>
         {event.title}
       </span>
+      {bar.isTimed && (
+        <span style={{ marginLeft: 'auto', flexShrink: 0, color: 'rgba(255,255,255,0.58)', fontSize: 8 }}>
+          {bar.timePrefix}
+        </span>
+      )}
     </button>
   )
 }

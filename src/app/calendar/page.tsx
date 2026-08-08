@@ -1,7 +1,8 @@
 
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { fadeSlideUp, ease, motionTokens, getDirectionalVariants } from '@/lib/motion'
+import { ease, motionTokens, getDirectionalVariants } from '@/lib/motion'
+import { useNavigate } from 'react-router-dom'
 import { useTasks } from '@/hooks/useTasks'
 import type { TaskRecord } from '@/hooks/useTasks'
 import CalendarHeader from '@/components/calendar/CalendarHeader'
@@ -12,10 +13,8 @@ import MultiWeekView from '@/components/calendar/MultiWeekView'
 import MonthView from '@/components/calendar/MonthView'
 import YearView from '@/components/calendar/YearView'
 import AgendaView from '@/components/calendar/AgendaView'
-import OverdueLane from '@/components/calendar/OverdueLane'
-import UnscheduledPanel from '@/components/calendar/UnscheduledPanel'
 import ArrangeTasksPanel from '@/components/calendar/ArrangeTasksPanel'
-import MiniCalendarSidebar from '@/components/calendar/MiniCalendarSidebar'
+import CalendarViewDock from '@/components/calendar/CalendarViewDock'
 import ViewOptionsModal, { DEFAULT_VIEW_OPTIONS } from '@/components/calendar/ViewOptionsModal'
 import type { ViewOptions } from '@/components/calendar/ViewOptionsModal'
 import CalendarDndProvider from '@/components/calendar/CalendarDndProvider'
@@ -26,13 +25,19 @@ import type { TaskEditorSeed } from '@/components/calendar/TaskEditorSheet'
 import QuickAddPopover from '@/components/calendar/QuickAddPopover'
 import type { QuickAddData } from '@/components/calendar/QuickAddPopover'
 import BatchActionBar from '@/components/calendar/BatchActionBar'
-import { isSameDay } from '@/components/calendar/calendarUtils'
 import type { CalendarViewMode, CalendarEvent } from '@/components/calendar/types'
-import { Calendar } from 'lucide-react'
+import './calendar.css'
 
 // ── Priority colors (use CSS vars with fallback) ──
-const PRIORITY_COLORS: Record<string, string> = {
-  high: '#ef4444', medium: '#f59e0b', low: '#6b66da',
+const EVENT_PALETTE = ['#4e57ad', '#69898f', '#8b6878', '#86894e', '#76648f', '#6d7f86', '#8f786d']
+
+function calendarColorForTask(task: TaskRecord): string {
+  const seed = task.listId || task.title || task._id
+  let hash = 0
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = ((hash << 5) - hash + seed.charCodeAt(index)) | 0
+  }
+  return EVENT_PALETTE[Math.abs(hash) % EVENT_PALETTE.length]
 }
 
 function taskToEvent(t: TaskRecord): CalendarEvent | null {
@@ -40,32 +45,14 @@ function taskToEvent(t: TaskRecord): CalendarEvent | null {
   return {
     id: t._id, title: t.title,
     start: t.scheduledStart, end: t.scheduledEnd,
-    color: PRIORITY_COLORS[t.priority] || '#5DA8FF',
+    color: calendarColorForTask(t),
     priority: t.priority as 'high' | 'medium' | 'low' | undefined,
     listName: t.listId || undefined,
   }
 }
-
-function makeSyntheticEvent(t: TaskRecord, dateStr: string): CalendarEvent {
-  const d = new Date(dateStr); d.setHours(9, 0, 0, 0)
-  const end = new Date(d); end.setHours(10, 0, 0, 0)
-  return {
-    id: t._id, title: t.title,
-    start: d.toISOString(), end: end.toISOString(),
-    color: PRIORITY_COLORS[t.priority] || '#5DA8FF',
-    priority: t.priority as 'high' | 'medium' | 'low' | undefined,
-    listName: t.listId || undefined,
-  }
-}
-
-const LISTS = [
-  { id: 'inbox', name: 'Inbox', color: '#5DA8FF', visible: true },
-  { id: 'work', name: 'Work', color: '#f59e0b', visible: true },
-  { id: 'personal', name: 'Personal', color: '#34d399', visible: true },
-  { id: 'shopping', name: 'Shopping', color: '#ec4899', visible: true },
-]
 
 export default function CalendarPage() {
+  const navigateTo = useNavigate()
   const { tasks, createTask, updateTask } = useTasks()
   const prefersReduced = useReducedMotion()
 
@@ -78,11 +65,9 @@ export default function CalendarPage() {
   const [view, setView] = useState<CalendarViewMode>('week')
   const [currentDate, setCurrentDate] = useState(() => new Date())
   const [navigationDirection, setNavigationDirection] = useState<-1 | 0 | 1>(0)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [rightPanel, setRightPanel] = useState<'unscheduled' | 'arrange'>('unscheduled')
+  const [arrangeOpen, setArrangeOpen] = useState(false)
   const [viewOptionsOpen, setViewOptionsOpen] = useState(false)
   const [viewOptions, setViewOptions] = useState<ViewOptions>(DEFAULT_VIEW_OPTIONS)
-  const [lists, setLists] = useState(LISTS)
 
   // ── Event popover ──
   const [popoverEvent, setPopoverEvent] = useState<CalendarEvent | null>(null)
@@ -103,57 +88,32 @@ export default function CalendarPage() {
   const qaInputRef = useRef<HTMLInputElement>(null)
 
   // ── Filtering ──
-  const hiddenLists = useMemo(() => new Set(lists.filter(l => !l.visible).map(l => l.id)), [lists])
-  const isVisible = useCallback((t: TaskRecord) => !t.listId || !hiddenLists.has(t.listId), [hiddenLists])
-
   // ── Event computation ──
   const scheduled = useMemo<CalendarEvent[]>(
-    () => tasks.filter(isVisible).map(taskToEvent).filter(Boolean) as CalendarEvent[],
-    [tasks, isVisible]
+    () => tasks.map(taskToEvent).filter(Boolean) as CalendarEvent[],
+    [tasks]
   )
 
   // Tasks with dueDate but no scheduledStart → all-day band
   const allDayEvents = useMemo<CalendarEvent[]>(
-    () => tasks.filter(isVisible)
+    () => tasks
       .filter(t => t.dueDate && !t.scheduledStart && t.status !== 'done' && t.status !== 'dropped')
       .map(t => ({
         id: t._id, title: t.title,
         start: new Date(new Date(t.dueDate!).setHours(0, 0, 0, 0)).toISOString(),
         end: new Date(new Date(t.dueDate!).setHours(23, 59, 59, 999)).toISOString(),
-        color: PRIORITY_COLORS[t.priority] || '#5DA8FF',
+        color: calendarColorForTask(t),
         priority: t.priority as 'high' | 'medium' | 'low' | undefined,
         listName: t.listId || undefined,
         isAllDay: true,
       })),
-    [tasks, isVisible]
+    [tasks]
   )
 
   // Merge scheduled + all-day for views that support the all-day lane
   const calendarEvents = useMemo<CalendarEvent[]>(
     () => [...scheduled, ...allDayEvents],
     [scheduled, allDayEvents]
-  )
-
-  const overdue = useMemo<CalendarEvent[]>(() => {
-    const now = new Date(); now.setHours(0, 0, 0, 0)
-    return tasks.filter(isVisible).filter(t => {
-      if (t.status === 'done' || t.status === 'dropped') return false
-      return (t.scheduledStart && new Date(t.scheduledStart) < now) ||
-             (t.dueDate && new Date(t.dueDate) < now)
-    }).map(t => {
-      if (t.scheduledStart && t.scheduledEnd) {
-        const ev = taskToEvent(t)
-        if (!ev) return null
-        return { ...ev, daysOverdue: Math.ceil((now.getTime() - new Date(t.scheduledStart).getTime()) / 86400000) }
-      }
-      return { ...makeSyntheticEvent(t, t.dueDate!), daysOverdue: Math.ceil((now.getTime() - new Date(t.dueDate!).getTime()) / 86400000) }
-    }).filter(Boolean) as CalendarEvent[]
-  }, [tasks, isVisible])
-
-  const unscheduled = useMemo<CalendarEvent[]>(
-    () => tasks.filter(isVisible).filter(t => !t.scheduledStart && !t.dueDate && t.status !== 'done' && t.status !== 'dropped')
-      .map(t => ({ id: t._id, title: t.title, start: '', end: '', color: PRIORITY_COLORS[t.priority] || '#5DA8FF', priority: t.priority as 'high' | 'medium' | 'low' | undefined })),
-    [tasks, isVisible]
   )
 
   // ── Navigation ──
@@ -360,57 +320,12 @@ export default function CalendarPage() {
     setSelectedEventIds(new Set())
   }, [])
 
-  // Compute task counts for sidebar smart lists
-  const taskCounts = useMemo(() => {
-    const now = new Date(); now.setHours(0, 0, 0, 0)
-    const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1)
-    const nextWeek = new Date(now); nextWeek.setDate(nextWeek.getDate() + 7)
-    const activeTasks = tasks.filter(t => t.status !== 'done' && t.status !== 'dropped')
-    return {
-      today: activeTasks.filter(t => (t.dueDate && isSameDay(new Date(t.dueDate), now)) || (t.scheduledStart && isSameDay(new Date(t.scheduledStart), now))).length,
-      tomorrow: activeTasks.filter(t => (t.dueDate && isSameDay(new Date(t.dueDate), tomorrow)) || (t.scheduledStart && isSameDay(new Date(t.scheduledStart), tomorrow))).length,
-      week: activeTasks.filter(t => {
-        const d = t.dueDate ? new Date(t.dueDate) : t.scheduledStart ? new Date(t.scheduledStart) : null
-        return d && d >= now && d < nextWeek
-      }).length,
-      overdue: overdue.length,
-      completed: tasks.filter(t => t.status === 'done').length,
-      total: activeTasks.length,
-    }
-  }, [tasks, overdue])
-
-  const showRightPanel = view !== 'year' && view !== 'agenda' && view !== 'multiweek'
-
   return (
-    <div className="flex h-full" style={{ backgroundColor: 'var(--bg-pane)', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div className="calendar-shell">
       {/* ── Left: Mini Calendar Sidebar ── */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.div
-            initial={prefersReduced ? false : { width: 0, opacity: 0 }}
-            animate={{ width: 260, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={prefersReduced ? { duration: 0 } : { duration: motionTokens.duration.fast, ease: motionTokens.easing.sharp }}
-            className="flex-shrink-0 overflow-hidden"
-            style={{ borderRight: '1px solid var(--border)' }}
-          >
-            <MiniCalendarSidebar
-              currentDate={currentDate}
-              events={scheduled}
-              onDateSelect={(d) => setCurrentDate(d)}
-              lists={lists}
-              onToggleList={(id) => setLists(prev => prev.map(l => l.id === id ? { ...l, visible: !l.visible } : l))}
-              onCollapse={() => setSidebarOpen(false)}
-              taskCounts={taskCounts}
-              selectedView={view}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* ── Center: Calendar Canvas ── */}
       <CalendarDndProvider>
-        <div className="relative flex flex-1 flex-col overflow-hidden">
+        <div className="calendar-canvas">
           {/* Header */}
           <CalendarHeader
             currentDate={currentDate}
@@ -418,9 +333,9 @@ export default function CalendarPage() {
             onViewChange={setView}
             onNavigate={navigate}
             onQuickAdd={() => setQuickAddOpen(v => !v)}
-            onToggleSidebar={() => setSidebarOpen(v => !v)}
             onOpenViewOptions={() => setViewOptionsOpen(true)}
-            onOpenArrangeTasks={() => setRightPanel(p => p === 'arrange' ? 'unscheduled' : 'arrange')}
+            onOpenArrangeTasks={() => setArrangeOpen(v => !v)}
+            onBackToApp={() => navigateTo('/')}
           />
 
           {/* Quick Add popover */}
@@ -428,16 +343,14 @@ export default function CalendarPage() {
             {quickAddOpen && (
               <motion.div
                 ref={qaRef}
+                className="calendar-quick-add"
                 initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={ease.normal}
                 style={{
                   position: 'absolute', top: 52, left: '50%', transform: 'translateX(-50%)',
-                  width: 380, padding: 16, borderRadius: 14, zIndex: 30,
-                  backgroundColor: 'var(--bg-pane-2, var(--bg-pane))',
-                  border: '1px solid var(--overlay-2, var(--border))',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+                  width: 380, padding: 16, borderRadius: 10, zIndex: 70,
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -471,27 +384,8 @@ export default function CalendarPage() {
           </AnimatePresence>
 
           {/* Overdue lane */}
-          {overdue.length > 0 && <OverdueLane events={overdue} />}
-
-          {tasks.length === 0 && (
-            <motion.div
-              {...fadeSlideUp}
-              transition={ease.normal}
-              className="flex flex-col items-center justify-center py-20 text-center"
-            >
-              <Calendar size={48} strokeWidth={1} style={{ color: 'var(--text-faint)', opacity: 0.3 }} />
-              <h3 className="mt-4 text-lg font-medium" style={{ color: 'var(--text-primary)' }}>
-                Nothing scheduled
-              </h3>
-              <p className="mt-1 max-w-xs text-sm" style={{ color: 'var(--text-muted)' }}>
-                Drag on the calendar or schedule a task to see events here
-              </p>
-            </motion.div>
-          )}
-
           {/* Views — with directional slide transitions */}
-          <div className="flex flex-1 overflow-hidden">
-            <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="calendar-view-stage">
               <AnimatePresence mode="wait">
                 {(() => {
                   const dirVariants = getDirectionalVariants(navigationDirection)
@@ -532,15 +426,23 @@ export default function CalendarPage() {
                   )
                 })()}
               </AnimatePresence>
-            </div>
-
-            {/* Right panel */}
-            {showRightPanel && (
-              rightPanel === 'arrange'
-                ? <ArrangeTasksPanel open onClose={() => setRightPanel('unscheduled')} />
-                : <UnscheduledPanel events={unscheduled} />
-            )}
           </div>
+
+          <CalendarViewDock view={view} onViewChange={setView} />
+
+          <AnimatePresence>
+            {arrangeOpen && (
+              <motion.aside
+                className="calendar-arrange-overlay"
+                initial={prefersReduced ? false : { opacity: 0, x: 18 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 18 }}
+                transition={prefersReduced ? { duration: 0 } : ease.normal}
+              >
+                <ArrangeTasksPanel open onClose={() => setArrangeOpen(false)} />
+              </motion.aside>
+            )}
+          </AnimatePresence>
 
           <DragOverlay />
 

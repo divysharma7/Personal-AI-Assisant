@@ -4,7 +4,7 @@ import {
   isToday,
   timeToGridRow,
   gridRowSpan,
-  getHourLabels,
+  getHourLabels24,
 } from '../calendarUtils'
 import CalendarBlock from '../CalendarBlock'
 import DraggableBlock from '../DraggableBlock'
@@ -19,7 +19,7 @@ import {
 import HiddenHoursDivider from './HiddenHoursDivider'
 import { useCalendarStore } from '@/stores/calendarStore'
 
-const HOUR_LABELS = getHourLabels()
+const HOUR_LABELS = getHourLabels24()
 /** Total grid columns: 1 time-label + 7 day columns */
 const GRID_COLUMNS = 8
 
@@ -154,14 +154,6 @@ export default function WeekTimeGrid({ weekDays, eventsByDay }: WeekTimeGridProp
       className="flex-1 overflow-y-auto"
       style={{ scrollBehavior: 'smooth' }}
     >
-      {eventsByDay.every((dayEvents) => dayEvents.length === 0) && (
-        <div
-          className="flex items-center justify-center py-12"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          <span className="text-sm">No scheduled tasks this week</span>
-        </div>
-      )}
       <div
         className="cal-grid"
         style={{

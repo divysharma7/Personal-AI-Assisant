@@ -1,40 +1,47 @@
-
-import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
-  CalendarDays,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
-  Plus,
-  MoreHorizontal,
-  SlidersHorizontal,
+  Keyboard,
   ListChecks,
+  LogOut,
+  MoreHorizontal,
+  PanelLeft,
+  Plus,
   Printer,
   Share2,
-  Keyboard,
+  SlidersHorizontal,
 } from 'lucide-react'
-import { buttonPress, fadeSlideDown, ease } from '@/lib/motion'
-import { isToday as checkIsToday } from './calendarUtils'
+import { buttonPress, ease, fadeSlideDown } from '@/lib/motion'
 import type { CalendarHeaderProps, CalendarViewMode } from './types'
 
-const VIEW_OPTIONS: { key: CalendarViewMode; label: string; shortcut: string }[] = [
-  { key: 'day', label: 'Day', shortcut: 'D / 1' },
-  { key: '3day', label: '3 Day', shortcut: '3' },
-  { key: 'week', label: 'Week', shortcut: 'W / 2' },
-  { key: 'multiweek', label: '2 Week', shortcut: '' },
-  { key: 'month', label: 'Month', shortcut: 'M / 4' },
-  { key: 'year', label: 'Year', shortcut: 'Y / 5' },
-  { key: 'agenda', label: 'Agenda', shortcut: 'A / 6' },
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
 ]
 
-/** Format a TickTick-style month+year label: "January 2026" */
-function formatMonthYear(date: Date): string {
-  const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
-  ]
-  return `${months[date.getMonth()]} ${date.getFullYear()}`
+const VIEW_OPTIONS: { key: CalendarViewMode; label: string; shortcut?: string }[] = [
+  { key: 'year', label: 'Year', shortcut: 'Y' },
+  { key: 'month', label: 'Month', shortcut: 'M' },
+  { key: 'week', label: 'Week', shortcut: 'W' },
+  { key: 'day', label: 'Day', shortcut: 'D' },
+  { key: 'agenda', label: 'Agenda', shortcut: 'A' },
+  { key: '3day', label: 'Multi-Day', shortcut: '3' },
+  { key: 'multiweek', label: '2 Weeks' },
+]
+
+const menuButtonClass = 'flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12px] font-medium'
+
+type Props = CalendarHeaderProps & {
+  onOpenViewOptions?: () => void
+  onOpenArrangeTasks?: () => void
+  onBackToApp?: () => void
+}
+
+function headerTitle(date: Date, view: CalendarViewMode) {
+  return view === 'year' ? String(date.getFullYear()) : MONTHS[date.getMonth()]
 }
 
 export default function CalendarHeader({
@@ -43,390 +50,111 @@ export default function CalendarHeader({
   onViewChange,
   onNavigate,
   onQuickAdd,
-  onToggleSidebar: _onToggleSidebar,
   onOpenViewOptions,
   onOpenArrangeTasks,
-}: CalendarHeaderProps & {
-  onToggleSidebar?: () => void
-  onOpenViewOptions?: () => void
-  onOpenArrangeTasks?: () => void
-}) {
-  const todayActive = checkIsToday(currentDate)
-  const [moreMenuOpen, setMoreMenuOpen] = useState(false)
-  const [viewDropdownOpen, setViewDropdownOpen] = useState(false)
-  const moreMenuRef = useRef<HTMLDivElement>(null)
-  const viewDropdownRef = useRef<HTMLDivElement>(null)
-
-  const activeViewLabel = VIEW_OPTIONS.find((o) => o.key === view)?.label ?? 'Week'
+  onBackToApp,
+}: Props) {
+  const [moreOpen, setMoreOpen] = useState(false)
+  const [viewOpen, setViewOpen] = useState(false)
+  const moreRef = useRef<HTMLDivElement>(null)
+  const viewRef = useRef<HTMLDivElement>(null)
+  const activeLabel = VIEW_OPTIONS.find((option) => option.key === view)?.label ?? 'Week'
 
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (moreMenuOpen && moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
-        setMoreMenuOpen(false)
-      }
-      if (viewDropdownOpen && viewDropdownRef.current && !viewDropdownRef.current.contains(e.target as Node)) {
-        setViewDropdownOpen(false)
-      }
+    function closeMenus(event: MouseEvent) {
+      const target = event.target as Node
+      if (moreOpen && moreRef.current && !moreRef.current.contains(target)) setMoreOpen(false)
+      if (viewOpen && viewRef.current && !viewRef.current.contains(target)) setViewOpen(false)
     }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [moreMenuOpen, viewDropdownOpen])
+    document.addEventListener('mousedown', closeMenus)
+    return () => document.removeEventListener('mousedown', closeMenus)
+  }, [moreOpen, viewOpen])
 
   return (
-    <div
-      className="sticky top-0 z-20 flex items-center justify-between px-5"
-      style={{
-        height: 52,
-        backgroundColor: 'var(--bg-pane)',
-        borderBottom: '1px solid var(--border)',
-      }}
-    >
-      {/* LEFT: Calendar icon + Month Year */}
-      <div className="flex items-center gap-2.5">
-        <CalendarDays
-          size={20}
-          strokeWidth={1.5}
-          style={{ color: 'var(--accent)' }}
-        />
-        <h2
-          style={{
-            fontSize: 18,
-            fontWeight: 600,
-            color: 'var(--text-primary)',
-            margin: 0,
-            lineHeight: 1.2,
-            userSelect: 'none',
-          }}
-        >
-          {formatMonthYear(currentDate)}
-        </h2>
+    <header className="calendar-header">
+      <div className="calendar-header__title">
+        <motion.button {...buttonPress} className="calendar-header__app-button" onClick={onBackToApp} aria-label="Back to app">
+          <PanelLeft size={16} strokeWidth={1.6} />
+        </motion.button>
+        <h1>{headerTitle(currentDate, view)}</h1>
       </div>
 
-      {/* RIGHT: controls group */}
-      <div className="flex items-center gap-2">
-        {/* + Add button — accent circle */}
-        <motion.button
-          {...buttonPress}
-          onClick={onQuickAdd}
-          className="flex items-center justify-center rounded-full cursor-pointer"
-          style={{
-            width: 32,
-            height: 32,
-            backgroundColor: 'var(--accent)',
-            color: '#fff',
-            border: 'none',
-            transition: 'opacity 150ms ease',
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.85' }}
-          onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
-          aria-label="Quick add"
-        >
-          <Plus size={18} strokeWidth={2} />
+      <div className="calendar-header__controls">
+        <motion.button {...buttonPress} className="calendar-control calendar-control--square" onClick={onQuickAdd} aria-label="Quick add event">
+          <Plus size={17} strokeWidth={1.7} />
         </motion.button>
 
-        {/* View dropdown */}
-        <div className="relative" ref={viewDropdownRef}>
-          <button
-            onClick={() => setViewDropdownOpen(!viewDropdownOpen)}
-            className="flex items-center gap-1 cursor-pointer"
-            style={{
-              height: 32,
-              padding: '0 10px',
-              borderRadius: 6,
-              border: '1px solid var(--border)',
-              backgroundColor: 'transparent',
-              color: 'var(--text-primary)',
-              fontSize: 13,
-              fontWeight: 500,
-              transition: 'background-color 150ms ease',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-          >
-            {activeViewLabel}
-            <ChevronDown size={14} strokeWidth={1.5} style={{ color: 'var(--text-muted)' }} />
+        <div className="relative" ref={viewRef}>
+          <button className="calendar-control calendar-control--view" onClick={() => setViewOpen((open) => !open)} aria-haspopup="menu" aria-expanded={viewOpen}>
+            {activeLabel}
+            <ChevronDown size={12} strokeWidth={1.6} />
           </button>
           <AnimatePresence>
-            {viewDropdownOpen && (
-              <motion.div
-                {...fadeSlideDown}
-                transition={ease.normal}
-                className="absolute right-0 top-full z-50 mt-1 rounded-lg py-1"
-                style={{
-                  minWidth: 160,
-                  backgroundColor: 'var(--bg-pane)',
-                  border: '1px solid var(--overlay-2, var(--border))',
-                  boxShadow: 'var(--shadow-elevated)',
-                }}
-              >
-                {VIEW_OPTIONS.map((opt) => {
-                  const isActive = view === opt.key
-                  return (
-                    <button
-                      key={opt.key}
-                      onClick={() => {
-                        onViewChange(opt.key)
-                        setViewDropdownOpen(false)
-                      }}
-                      className="flex w-full items-center justify-between px-3 py-1.5 text-[13px] font-medium cursor-pointer"
-                      style={{
-                        color: isActive ? 'var(--accent)' : 'var(--text-primary)',
-                        backgroundColor: isActive ? 'var(--overlay-1, rgba(108,108,158,0.06))' : 'transparent',
-                        border: 'none',
-                        transition: 'background-color 120ms ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isActive) e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))'
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isActive) e.currentTarget.style.backgroundColor = 'transparent'
-                      }}
-                    >
-                      <span>{opt.label}</span>
-                      {opt.shortcut && (
-                        <span
-                          className="text-[11px]"
-                          style={{
-                            color: 'var(--text-faint)',
-                            padding: '1px 5px',
-                            borderRadius: 4,
-                            backgroundColor: 'var(--overlay-1, rgba(108,108,158,0.06))',
-                          }}
-                        >
-                          {opt.shortcut}
-                        </span>
-                      )}
-                    </button>
-                  )
-                })}
+            {viewOpen && (
+              <motion.div {...fadeSlideDown} transition={ease.normal} className="calendar-menu calendar-menu--views" role="menu">
+                {VIEW_OPTIONS.map((option) => (
+                  <button
+                    key={option.key}
+                    className={menuButtonClass}
+                    data-active={view === option.key}
+                    onClick={() => {
+                      onViewChange(option.key)
+                      setViewOpen(false)
+                    }}
+                    role="menuitem"
+                  >
+                    <span>{option.label}</span>
+                    {option.shortcut && <kbd>{option.shortcut}</kbd>}
+                  </button>
+                ))}
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* Navigation group: < Today > */}
-        <div
-          className="flex items-center"
-          style={{
-            borderRadius: 6,
-            border: '1px solid var(--border)',
-            overflow: 'hidden',
-          }}
-        >
-          <motion.button
-            {...buttonPress}
-            onClick={() => onNavigate(-1)}
-            className="flex items-center justify-center cursor-pointer"
-            style={{
-              width: 36,
-              height: 36,
-              backgroundColor: 'transparent',
-              border: 'none',
-              color: 'var(--text-muted)',
-              transition: 'background-color 120ms ease, color 120ms ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))'
-              e.currentTarget.style.color = 'var(--text-primary)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-              e.currentTarget.style.color = 'var(--text-muted)'
-            }}
-            aria-label="Previous"
-          >
-            <ChevronLeft size={16} strokeWidth={1.5} />
+        <div className="calendar-nav-group">
+          <motion.button {...buttonPress} onClick={() => onNavigate(-1)} aria-label="Previous period">
+            <ChevronLeft size={15} strokeWidth={1.6} />
           </motion.button>
-
-          <motion.button
-            {...buttonPress}
-            onClick={() => onNavigate(0)}
-            className="cursor-pointer"
-            style={{
-              position: 'relative',
-              height: 36,
-              padding: '0 10px',
-              fontSize: 13,
-              fontWeight: 500,
-              backgroundColor: todayActive ? 'var(--accent)' : 'transparent',
-              color: todayActive ? '#fff' : 'var(--text-primary)',
-              border: 'none',
-              borderLeft: '1px solid var(--border)',
-              borderRight: '1px solid var(--border)',
-              transition: 'background-color 120ms ease, color 120ms ease',
-            }}
-            onMouseEnter={(e) => {
-              if (!todayActive) {
-                e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))'
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!todayActive) {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }
-            }}
-          >
+          <motion.button {...buttonPress} className="calendar-nav-group__today" onClick={() => onNavigate(0)}>
             Today
-            {!todayActive && (
-              <span
-                style={{
-                  position: 'absolute',
-                  top: 3,
-                  right: 3,
-                  width: 5,
-                  height: 5,
-                  borderRadius: 999,
-                  backgroundColor: '#ef4444',
-                }}
-              />
-            )}
           </motion.button>
-
-          <motion.button
-            {...buttonPress}
-            onClick={() => onNavigate(1)}
-            className="flex items-center justify-center cursor-pointer"
-            style={{
-              width: 36,
-              height: 36,
-              backgroundColor: 'transparent',
-              border: 'none',
-              color: 'var(--text-muted)',
-              transition: 'background-color 120ms ease, color 120ms ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))'
-              e.currentTarget.style.color = 'var(--text-primary)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-              e.currentTarget.style.color = 'var(--text-muted)'
-            }}
-            aria-label="Next"
-          >
-            <ChevronRight size={16} strokeWidth={1.5} />
+          <motion.button {...buttonPress} onClick={() => onNavigate(1)} aria-label="Next period">
+            <ChevronRight size={15} strokeWidth={1.6} />
           </motion.button>
         </div>
 
-        {/* More menu (...) */}
-        <div className="relative" ref={moreMenuRef}>
-          <motion.button
-            {...buttonPress}
-            onClick={() => setMoreMenuOpen(!moreMenuOpen)}
-            className="flex items-center justify-center rounded-md cursor-pointer"
-            style={{
-              width: 32,
-              height: 32,
-              backgroundColor: 'transparent',
-              border: 'none',
-              color: 'var(--text-faint)',
-              transition: 'background-color 120ms ease, color 120ms ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))'
-              e.currentTarget.style.color = 'var(--text-muted)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-              e.currentTarget.style.color = 'var(--text-faint)'
-            }}
-            aria-label="More options"
-          >
-            <MoreHorizontal size={18} strokeWidth={1.5} />
+        <div className="relative" ref={moreRef}>
+          <motion.button {...buttonPress} className="calendar-control calendar-control--more" onClick={() => setMoreOpen((open) => !open)} aria-label="More calendar options" aria-haspopup="menu" aria-expanded={moreOpen}>
+            <MoreHorizontal size={18} strokeWidth={1.6} />
           </motion.button>
           <AnimatePresence>
-            {moreMenuOpen && (
-              <motion.div
-                {...fadeSlideDown}
-                transition={ease.normal}
-                className="absolute right-0 top-full z-50 mt-1 w-[200px] rounded-lg py-1"
-                style={{
-                  backgroundColor: 'var(--bg-pane)',
-                  border: '1px solid var(--overlay-2, var(--border))',
-                  boxShadow: 'var(--shadow-elevated)',
-                }}
-              >
-                <button
-                  onClick={() => {
-                    onOpenViewOptions?.()
-                    setMoreMenuOpen(false)
-                  }}
-                  className="flex w-full items-center gap-2.5 px-3 py-1.5 text-[13px] font-medium cursor-pointer"
-                  style={{ color: 'var(--text-primary)', backgroundColor: 'transparent', border: 'none', transition: 'background-color 120ms ease' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                >
-                  <SlidersHorizontal size={14} strokeWidth={1.5} style={{ color: 'var(--text-muted)' }} />
-                  View Options
+            {moreOpen && (
+              <motion.div {...fadeSlideDown} transition={ease.normal} className="calendar-menu calendar-menu--more" role="menu">
+                <button className={menuButtonClass} onClick={() => { onOpenViewOptions?.(); setMoreOpen(false) }}>
+                  <SlidersHorizontal size={14} /> View options
                 </button>
-                <button
-                  onClick={() => {
-                    onOpenArrangeTasks?.()
-                    setMoreMenuOpen(false)
-                  }}
-                  className="flex w-full items-center gap-2.5 px-3 py-1.5 text-[13px] font-medium cursor-pointer"
-                  style={{ color: 'var(--text-primary)', backgroundColor: 'transparent', border: 'none', transition: 'background-color 120ms ease' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                >
-                  <ListChecks size={14} strokeWidth={1.5} style={{ color: 'var(--text-muted)' }} />
-                  Arrange Tasks
+                <button className={menuButtonClass} onClick={() => { onOpenArrangeTasks?.(); setMoreOpen(false) }}>
+                  <ListChecks size={14} /> Arrange tasks
                 </button>
-                <div className="mx-2 my-1 h-px" style={{ backgroundColor: 'var(--border)' }} />
-                <button
-                  onClick={() => {
-                    window.print()
-                    setMoreMenuOpen(false)
-                  }}
-                  className="flex w-full items-center gap-2.5 px-3 py-1.5 text-[13px] font-medium cursor-pointer"
-                  style={{ color: 'var(--text-primary)', backgroundColor: 'transparent', border: 'none', transition: 'background-color 120ms ease' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                >
-                  <Printer size={14} strokeWidth={1.5} style={{ color: 'var(--text-muted)' }} />
-                  Print
+                <div className="calendar-menu__separator" />
+                <button className={menuButtonClass} onClick={() => { window.print(); setMoreOpen(false) }}>
+                  <Printer size={14} /> Print
                 </button>
-                <button
-                  onClick={() => {
-                    if (navigator.share) {
-                      navigator.share({ title: 'Calendar', url: window.location.href })
-                    }
-                    setMoreMenuOpen(false)
-                  }}
-                  className="flex w-full items-center gap-2.5 px-3 py-1.5 text-[13px] font-medium cursor-pointer"
-                  style={{ color: 'var(--text-primary)', backgroundColor: 'transparent', border: 'none', transition: 'background-color 120ms ease' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                >
-                  <Share2 size={14} strokeWidth={1.5} style={{ color: 'var(--text-muted)' }} />
-                  Share
+                <button className={menuButtonClass} onClick={() => { void navigator.share?.({ title: 'Calendar', url: window.location.href }); setMoreOpen(false) }}>
+                  <Share2 size={14} /> Share
                 </button>
-                <button
-                  onClick={() => {
-                    window.dispatchEvent(new CustomEvent('laif:show-keyboard-shortcuts'))
-                    setMoreMenuOpen(false)
-                  }}
-                  className="flex w-full items-center justify-between px-3 py-1.5 text-[13px] font-medium cursor-pointer"
-                  style={{ color: 'var(--text-primary)', backgroundColor: 'transparent', border: 'none', transition: 'background-color 120ms ease' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <Keyboard size={14} strokeWidth={1.5} style={{ color: 'var(--text-muted)' }} />
-                    Keyboard Shortcuts
-                  </span>
-                  <span className="text-[11px]" style={{
-                    color: 'var(--text-faint)',
-                    padding: '1px 5px',
-                    borderRadius: 4,
-                    backgroundColor: 'var(--overlay-1, rgba(108,108,158,0.06))',
-                  }}>?</span>
+                <button className={menuButtonClass} onClick={() => { window.dispatchEvent(new CustomEvent('laif:show-keyboard-shortcuts')); setMoreOpen(false) }}>
+                  <Keyboard size={14} /> Keyboard shortcuts
+                </button>
+                <button className={menuButtonClass} onClick={() => { onBackToApp?.(); setMoreOpen(false) }}>
+                  <LogOut size={14} /> Back to app
                 </button>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
-    </div>
+    </header>
   )
 }

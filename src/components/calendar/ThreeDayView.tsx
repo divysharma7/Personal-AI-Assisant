@@ -5,21 +5,19 @@ import {
   isToday,
   timeToGridRow,
   gridRowSpan,
-  getHourLabels,
+  getHourLabels24,
 } from './calendarUtils'
 import CalendarBlock from './CalendarBlock'
 import DraggableBlock from './DraggableBlock'
 import DroppableSlot from './DroppableSlot'
-import CapacityBar from './CapacityBar'
 import type { CalendarEvent } from './types'
-import { MOCK_CAPACITY } from './mockData'
 
 interface ThreeDayViewProps {
   date: Date
   events: CalendarEvent[]
 }
 
-const HOUR_LABELS = getHourLabels()
+const HOUR_LABELS = getHourLabels24()
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 /**
@@ -121,7 +119,7 @@ export default function ThreeDayView({ date, events }: ThreeDayViewProps) {
   }, [threeDays])
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden">
+    <div className="calendar-multiday-view flex flex-col flex-1 overflow-hidden">
       {/* Day header row */}
       <div
         className="grid flex-shrink-0"
@@ -159,18 +157,6 @@ export default function ThreeDayView({ date, events }: ThreeDayViewProps) {
               >
                 {day.getDate()}
               </span>
-              <div className="w-full px-1">
-                <CapacityBar
-                  scheduledHours={
-                    eventsByDay[i].reduce((acc, ev) => {
-                      const s = new Date(ev.start)
-                      const e = new Date(ev.end)
-                      return acc + (e.getTime() - s.getTime()) / (1000 * 60 * 60)
-                    }, 0)
-                  }
-                  capacityHours={MOCK_CAPACITY.capacityHours}
-                />
-              </div>
             </div>
           )
         })}
@@ -242,14 +228,6 @@ export default function ThreeDayView({ date, events }: ThreeDayViewProps) {
 
       {/* Time grid body */}
       <div className="flex-1 overflow-y-auto">
-        {eventsByDay.every((dayEvents) => dayEvents.length === 0) && (
-          <div
-            className="flex items-center justify-center py-12"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            <span className="text-sm">No scheduled tasks for these 3 days</span>
-          </div>
-        )}
         <div
           className="cal-grid"
           style={{

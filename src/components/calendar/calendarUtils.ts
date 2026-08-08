@@ -37,8 +37,16 @@ export function formatDuration(start: Date, end: Date): string {
 export function startOfWeek(date: Date): Date {
   const d = new Date(date)
   const day = d.getDay()
-  const diff = day === 0 ? -6 : 1 - day // Monday = 1
+  const diff = day === 0 ? -6 : 1 - day
   d.setDate(d.getDate() + diff)
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
+/** Get the Sunday-based week boundary used by the full-canvas calendar views. */
+export function startOfWeekSunday(date: Date): Date {
+  const d = new Date(date)
+  d.setDate(d.getDate() - d.getDay())
   d.setHours(0, 0, 0, 0)
   return d
 }
@@ -88,6 +96,17 @@ export function getMonthGrid(date: Date): Date[] {
     cells.push(d)
   }
   return cells
+}
+
+/** Get the same fixed month grid with Sunday as the first column. */
+export function getMonthGridSunday(date: Date): Date[] {
+  const firstOfMonth = new Date(date.getFullYear(), date.getMonth(), 1)
+  const gridStart = startOfWeekSunday(firstOfMonth)
+  return Array.from({ length: 42 }, (_, index) => {
+    const cell = new Date(gridStart)
+    cell.setDate(gridStart.getDate() + index)
+    return cell
+  })
 }
 
 /**
@@ -156,6 +175,11 @@ export function getHourLabels(): string[] {
     labels.push(`${hour12} ${ampm}`)
   }
   return labels
+}
+
+/** Generate 24-hour labels used by the reference-style time grid. */
+export function getHourLabels24(): string[] {
+  return Array.from({ length: 24 }, (_, hour) => `${String(hour).padStart(2, '0')}:00`)
 }
 
 /**

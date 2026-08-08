@@ -1,8 +1,8 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { getHourLabels } from '../calendarUtils'
+import { getHourLabels24 } from '../calendarUtils'
 
-const HOUR_LABELS = getHourLabels()
+const HOUR_LABELS = getHourLabels24()
 
 interface HiddenHoursDividerProps {
   position: 'top' | 'bottom'
@@ -16,10 +16,9 @@ interface HiddenHoursDividerProps {
   gridColumns: number
 }
 
-/** Format hour as "12 AM", "7 AM", "9 PM", etc. */
+/** Format an hour using the calendar's 24-hour display. */
 function formatHour(h: number): string {
-  if (h === 0 || h === 24) return '12 AM'
-  if (h === 12) return '12 PM'
+  if (h === 24) return '00:00'
   return HOUR_LABELS[h % 24]
 }
 

@@ -12,7 +12,7 @@ import type { TaskRecord } from '@/hooks/useTasks'
 import { useGlobalShortcuts } from '@/hooks/useGlobalShortcuts'
 import DetailPanelStack from '@/components/tasks/DetailPanelStack'
 
-const SHELL_EXCLUDED = ['/login', '/signup', '/onboarding', '/focus']
+const SHELL_EXCLUDED = ['/login', '/signup', '/onboarding', '/calendar']
 
 function DesktopOnlyNotice() {
   return (

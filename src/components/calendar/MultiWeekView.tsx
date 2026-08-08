@@ -1,6 +1,7 @@
 
 import { useMemo } from 'react'
-import { isSameDay, isToday, isPast, startOfWeek } from './calendarUtils'
+import { isSameDay, isToday, startOfWeekSunday } from './calendarUtils'
+import { hexToRgba } from '@/lib/colorUtils'
 import type { CalendarEvent } from './types'
 
 interface MultiWeekViewProps {
@@ -9,8 +10,13 @@ interface MultiWeekViewProps {
   onDayClick: (date: Date) => void
 }
 
-const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-const MAX_VISIBLE_EVENTS = 3
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const MAX_VISIBLE_EVENTS = 4
+
+function eventTime(event: CalendarEvent) {
+  const start = new Date(event.start)
+  return `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
+}
 
 /**
  * MultiWeekView — compact 2-week (14-day) grid.
@@ -24,7 +30,7 @@ export default function MultiWeekView({
   onDayClick,
 }: MultiWeekViewProps) {
   const cells = useMemo(() => {
-    const weekStart = startOfWeek(date)
+    const weekStart = startOfWeekSunday(date)
     const days: Date[] = []
     for (let i = 0; i < 14; i++) {
       const d = new Date(weekStart)
@@ -37,7 +43,7 @@ export default function MultiWeekView({
   const currentMonth = date.getMonth()
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden">
+    <div className="calendar-multiweek-view flex flex-col flex-1 overflow-hidden">
       {/* Day name headers */}
       <div
         className="grid flex-shrink-0"
@@ -66,8 +72,7 @@ export default function MultiWeekView({
         }}
       >
         {cells.map((cellDate, i) => {
-          const today = isToday(cellDate)
-          const past = isPast(cellDate)
+          const today = isToday(cellDate) || isSameDay(cellDate, date)
           const isCurrentMonth = cellDate.getMonth() === currentMonth
           const cellEvents = events.filter(
             (ev) => ev.start && isSameDay(new Date(ev.start), cellDate) && !ev.isHabit
@@ -82,7 +87,7 @@ export default function MultiWeekView({
               style={{
                 borderRight: (i + 1) % 7 !== 0 ? '1px solid var(--border)' : 'none',
                 borderBottom: '1px solid var(--border)',
-                opacity: past && !today ? 0.7 : isCurrentMonth ? 1 : 0.4,
+                opacity: isCurrentMonth ? 1 : 0.58,
                 minHeight: 80,
               }}
               onClick={() => onDayClick(cellDate)}
@@ -102,8 +107,7 @@ export default function MultiWeekView({
                     height: 24,
                     color: today ? '#FFFFFF' : 'var(--text-primary)',
                     backgroundColor: today ? 'var(--accent)' : 'transparent',
-                    outline: today ? '2px solid var(--accent)' : 'none',
-                    outlineOffset: 1,
+                    outline: 'none',
                   }}
                 >
                   {cellDate.getDate()}
@@ -125,22 +129,24 @@ export default function MultiWeekView({
                 {visibleEvents.map((ev) => (
                   <button
                     key={ev.id}
-                    className="text-left truncate rounded px-1 py-px text-[10px] font-medium cursor-pointer"
+                    className="flex items-center gap-1 truncate rounded px-1 py-px text-left text-[10px] font-medium cursor-pointer"
                     style={{
-                      backgroundColor: ev.color,
+                      backgroundColor: hexToRgba(ev.color, 0.78),
                       color: '#FFFFFF',
                       opacity: ev.isExternal ? 0.7 : 1,
                     }}
                     onClick={(e) => {
                       e.stopPropagation()
                       window.dispatchEvent(
-                        new CustomEvent('laif:open-task-detail', {
+                        new CustomEvent('laif:detail-task', {
                           detail: { taskId: ev.id },
                         })
                       )
                     }}
                   >
-                    {ev.title}
+                    <span style={{ width: 8, height: 8, flex: '0 0 8px', border: '1px solid rgba(255,255,255,.48)', borderRadius: 2 }} />
+                    <span className="truncate">{ev.title}</span>
+                    <span style={{ marginLeft: 'auto', color: 'rgba(255,255,255,.55)', fontSize: 8 }}>{eventTime(ev)}</span>
                   </button>
                 ))}
 

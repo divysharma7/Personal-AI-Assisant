@@ -3,7 +3,7 @@ import { useState, useCallback, useMemo } from 'react'
 import {
   timeToGridRow,
   gridRowSpan,
-  getHourLabels,
+  getHourLabels24,
   isSameDay,
   isToday,
 } from './calendarUtils'
@@ -11,10 +11,8 @@ import CalendarBlock from './CalendarBlock'
 import DraggableBlock from './DraggableBlock'
 import DroppableSlot from './DroppableSlot'
 // CalendarEmpty removed — always show time grid so users can click slots
-import CapacityBar from './CapacityBar'
 import HiddenHoursDivider from './week/HiddenHoursDivider'
 import type { CalendarEvent } from './types'
-import { MOCK_CAPACITY } from './mockData'
 import { useCalendarStore } from '@/stores/calendarStore'
 
 interface DayViewProps {
@@ -22,7 +20,7 @@ interface DayViewProps {
   events: CalendarEvent[]
 }
 
-const HOUR_LABELS = getHourLabels()
+const HOUR_LABELS = getHourLabels24()
 /** Total grid columns in day view: 1 time-label + 1 content column */
 const DAY_GRID_COLUMNS = 2
 
@@ -144,7 +142,12 @@ export default function DayView({ date, events }: DayViewProps) {
   }
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden">
+    <div className="calendar-day-view flex flex-col flex-1 overflow-hidden">
+      <div className="calendar-day-heading">
+        <span className="calendar-day-heading__weekday">{date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+        <span className="calendar-day-heading__date" data-today={isToday(date)}>{date.getDate()}</span>
+      </div>
+
       {/* Habit chips row */}
       {habitEvents.length > 0 && (
         <div
@@ -193,14 +196,6 @@ export default function DayView({ date, events }: DayViewProps) {
           </div>
         </div>
       )}
-
-      {/* Capacity bar */}
-      <div className="px-4 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
-        <CapacityBar
-          scheduledHours={MOCK_CAPACITY.scheduledHours}
-          capacityHours={MOCK_CAPACITY.capacityHours}
-        />
-      </div>
 
       {/* Time grid */}
       <div className="flex-1 overflow-y-auto">

@@ -1,6 +1,4 @@
-
 import { Link as LinkIcon } from 'lucide-react'
-import { formatDuration } from './calendarUtils'
 import { hexToRgba } from '@/lib/colorUtils'
 import type { CalendarEvent } from './types'
 
@@ -10,30 +8,14 @@ interface CalendarBlockProps {
   isGhost?: boolean
   isReadOnly?: boolean
   onClick?: () => void
-  /** Compact mode for week view (narrower, no duration) */
   compact?: boolean
-  /** Optional callback when checkbox is toggled */
   onToggleComplete?: (eventId: string) => void
 }
 
-/**
- * Format time for display: "2:00 PM"
- */
 function formatTime(date: Date): string {
-  const h = date.getHours()
-  const m = date.getMinutes()
-  const ampm = h >= 12 ? 'PM' : 'AM'
-  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h
-  const mins = m === 0 ? '' : `:${m.toString().padStart(2, '0')}`
-  return `${hour12}${mins} ${ampm}`
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
-/**
- * CalendarBlock — visual representation of a task/event on the calendar grid.
- *
- * TickTick-style: soft pastel backgrounds derived from list color,
- * circle checkbox, title + time range, subtle left border.
- */
 export default function CalendarBlock({
   event,
   style,
@@ -43,223 +25,94 @@ export default function CalendarBlock({
   compact = false,
   onToggleComplete,
 }: CalendarBlockProps) {
-  // Focus sessions: thin bar
   if (event.isFocusSession) {
     return (
-      <div
-        className="cal-block"
-        style={{
-          ...style,
-          height: 8,
-          backgroundColor: '#6B6B75',
-          opacity: 0.5,
-          cursor: 'default',
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 6px',
-        }}
-      >
-        <span
-          className="text-[9px] truncate"
-          style={{ color: '#A0A0AA' }}
-        >
-          {event.title}
-        </span>
+      <div className="cal-block" style={{ ...style, height: 8, background: '#55565d', opacity: 0.6 }}>
+        <span className="truncate text-[9px]" style={{ color: '#c4c4c9' }}>{event.title}</span>
       </div>
     )
   }
 
-  // Habit chips: small rounded pill
   if (event.isHabit) {
     return (
-      <div
-        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 cursor-pointer"
-        style={{
-          backgroundColor: hexToRgba(event.color, 0.15),
-          border: `1px solid ${hexToRgba(event.color, 0.3)}`,
-          ...style,
-        }}
+      <button
+        className="inline-flex cursor-pointer items-center gap-1 rounded px-2 py-0.5"
+        style={{ border: `1px solid ${hexToRgba(event.color, 0.55)}`, background: hexToRgba(event.color, 0.7), color: '#fff' }}
         onClick={onClick}
       >
-        <span
-          className="text-[10px] font-medium truncate"
-          style={{ color: event.color }}
-        >
-          {event.title}
-        </span>
-      </div>
+        <span className="truncate text-[10px] font-semibold">{event.title}</span>
+      </button>
     )
   }
 
-  const start = event.start ? new Date(event.start) : null
-  const end = event.end ? new Date(event.end) : null
-  const duration = start && end ? formatDuration(start, end) : null
-  // Block is "tall enough" if it spans more than 30 minutes
-  const isTallEnough =
-    start && end && end.getTime() - start.getTime() >= 30 * 60 * 1000
-
-  // Time range string: "2:00 PM - 3:00 PM"
-  const timeRange =
-    start && end ? `${formatTime(start)}-${formatTime(end)}` : null
-
-  // Pastel background from event color
-  const bgColor = hexToRgba(event.color, event.isExternal ? 0.08 : 0.12)
-  const borderLeftColor = hexToRgba(event.color, 0.45)
-  const titleColor = event.color
+  const start = new Date(event.start)
+  const end = new Date(event.end)
+  const tallEnough = end.getTime() - start.getTime() >= 30 * 60 * 1000
+  const timeRange = `${formatTime(start)}–${formatTime(end)}`
+  const readOnly = isReadOnly || event.isReadOnly
 
   return (
     <div
       className={isGhost ? 'cal-block cal-block-ghost' : 'cal-block'}
       style={{
-        backgroundColor: bgColor,
-        borderLeft: `2.5px solid ${borderLeftColor}`,
-        cursor: isReadOnly || event.isReadOnly ? 'default' : 'pointer',
+        ...style,
+        position: 'relative',
         display: 'flex',
+        minHeight: 0,
+        cursor: readOnly ? 'default' : 'pointer',
         flexDirection: 'column',
         justifyContent: 'flex-start',
-        minHeight: 0,
-        overflow: 'hidden',
-        position: 'relative',
-        padding: compact ? '3px 6px' : '4px 8px',
         gap: 1,
-        ...style,
+        overflow: 'hidden',
+        padding: compact ? '3px 5px' : '5px 7px',
+        border: '1px solid rgba(255,255,255,0.055)',
+        borderRadius: 3,
+        background: hexToRgba(event.color, event.isExternal ? 0.5 : 0.84),
+        boxShadow: 'inset 1px 0 rgba(255,255,255,0.09)',
       }}
       onClick={onClick}
     >
-      {/* Top row: checkbox + title */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
-        {/* Circle checkbox with 44px touch target */}
+      <div style={{ display: 'flex', minWidth: 0, alignItems: 'center', gap: 4 }}>
         <button
           type="button"
-          onClick={(e) => {
-            e.stopPropagation()
+          className="calendar-event-checkbox"
+          onClick={(clickEvent) => {
+            clickEvent.stopPropagation()
             onToggleComplete?.(event.id)
-          }}
-          style={{
-            width: 44,
-            height: 44,
-            margin: -15,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-            flexShrink: 0,
           }}
           aria-label={event.isCompleted ? 'Mark incomplete' : 'Mark complete'}
         >
-          <span
-            style={{
-              width: 14,
-              height: 14,
-              minWidth: 14,
-              borderRadius: '50%',
-              border: event.isCompleted
-                ? 'none'
-                : `1.5px solid ${hexToRgba(event.color, 0.5)}`,
-              backgroundColor: event.isCompleted ? event.color : 'transparent',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
+          <span data-complete={event.isCompleted ? 'true' : 'false'}>
             {event.isCompleted && (
-              <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
-                <path
-                  d="M2 5.5L4 7.5L8 3"
-                  stroke="white"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+              <svg width="7" height="7" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+                <path d="M2 5.5 4 7.5 8 3" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             )}
           </span>
         </button>
-
-        {/* Title */}
         <span
           className="truncate"
           style={{
-            fontSize: compact ? 11 : 12,
-            fontWeight: 500,
-            color: titleColor,
-            lineHeight: 1.3,
+            color: '#f4f4f5',
+            fontSize: compact ? 10 : 11,
+            fontWeight: 620,
+            lineHeight: 1.25,
+            opacity: event.isCompleted ? 0.58 : 1,
             textDecoration: event.isCompleted ? 'line-through' : 'none',
-            opacity: event.isCompleted ? 0.6 : 1,
           }}
         >
-          {event.isExternal && (
-            <LinkIcon
-              size={compact ? 9 : 10}
-              strokeWidth={2}
-              className="inline mr-1"
-              style={{ verticalAlign: 'middle', opacity: 0.7 }}
-            />
-          )}
+          {event.isExternal && <LinkIcon className="mr-1 inline" size={9} strokeWidth={2} />}
           {event.title}
         </span>
       </div>
 
-      {/* Time range label — shown when tall enough */}
-      {isTallEnough && timeRange && (
-        <span
-          style={{
-            fontSize: 10,
-            color: hexToRgba(event.color, 0.6),
-            fontWeight: 400,
-            paddingLeft: 19,
-            lineHeight: 1.3,
-          }}
-        >
+      {tallEnough && (
+        <span style={{ paddingLeft: 14, color: 'rgba(255,255,255,0.62)', fontSize: 9, lineHeight: 1.25 }}>
           {timeRange}
         </span>
       )}
 
-      {/* Duration label — only on non-compact tall blocks */}
-      {!compact && isTallEnough && duration && !timeRange && (
-        <span
-          style={{
-            fontSize: 10,
-            color: 'var(--text-faint)',
-            opacity: 0.7,
-            paddingLeft: 19,
-          }}
-        >
-          {duration}
-        </span>
-      )}
-
-      {/* Resize handle at bottom — visible ↕ icon on hover (TickTick-style) */}
-      {!isReadOnly && !event.isReadOnly && (
-        <div
-          className="cal-resize-handle"
-          style={{
-            position: 'absolute',
-            bottom: -8,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: 24,
-            height: 16,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'ns-resize',
-            opacity: 0,
-            transition: 'opacity 150ms ease',
-            zIndex: 15,
-            pointerEvents: 'auto',
-          }}
-        >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path d="M8 2L5 5H11L8 2Z" fill="var(--text-muted, #6b7280)" />
-            <path d="M8 14L5 11H11L8 14Z" fill="var(--text-muted, #6b7280)" />
-            <rect x="7" y="6" width="2" height="4" rx="1" fill="var(--text-muted, #6b7280)" />
-          </svg>
-        </div>
-      )}
+      {!readOnly && <div className="cal-resize-handle" aria-hidden="true" />}
     </div>
   )
 }

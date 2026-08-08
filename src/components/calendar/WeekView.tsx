@@ -1,7 +1,7 @@
 
 import { useMemo } from 'react'
 import {
-  startOfWeek,
+  startOfWeekSunday,
   isSameDay,
 } from './calendarUtils'
 import type { CalendarEvent } from './types'
@@ -31,7 +31,7 @@ function isAllDayEvent(ev: CalendarEvent): boolean {
 }
 
 export default function WeekView({ date, events }: WeekViewProps) {
-  const weekStart = startOfWeek(date)
+  const weekStart = startOfWeekSunday(date)
   const weekDays = useMemo(() =>
     Array.from({ length: 7 }, (_, i) => {
       const d = new Date(weekStart)
@@ -60,8 +60,8 @@ export default function WeekView({ date, events }: WeekViewProps) {
   )
 
   return (
-    <div className="flex flex-col flex-1 overflow-hidden">
-      <WeekDayHeader weekDays={weekDays} eventsByDay={eventsByDay} />
+    <div className="calendar-week-view flex flex-col flex-1 overflow-hidden">
+      <WeekDayHeader weekDays={weekDays} eventsByDay={eventsByDay} selectedDate={date} />
       <WeekAllDayBar weekDays={weekDays} allDayByDay={allDayByDay} />
       <WeekTimeGrid weekDays={weekDays} eventsByDay={eventsByDay} />
     </div>
