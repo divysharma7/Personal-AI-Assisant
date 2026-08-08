@@ -1,99 +1,563 @@
-import { env } from '@/config/env'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { trackEvent } from '@/lib/analytics'
-import { useSearchParams } from 'react-router-dom'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { fadeSlideUp, buttonPress, ease } from '@/lib/motion'
-import {
-  ArrowLeft,
-  Check,
-  Coffee,
-  Maximize,
-  Pause,
-  Play,
-  Plus,
-  RotateCcw,
-  SkipForward,
-  Target,
-} from 'lucide-react'
+import { ArrowLeft, Maximize, Plus, Settings, BarChart3, MoreHorizontal } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import LifeOSMark from '@/components/brand/LifeOSMark'
+import TimerDisplay from '@/components/focus/TimerDisplay'
+import TimerControls from '@/components/focus/TimerControls'
+import ModeSelector from '@/components/focus/ModeSelector'
+import TargetSelector from '@/components/focus/TargetSelector'
+import OverviewPanel from '@/components/focus/OverviewPanel'
+import RecordTimeline from '@/components/focus/RecordTimeline'
+import AddRecordModal, { type AddRecordFormData } from '@/components/focus/AddRecordModal'
+import { useFocusTimer, type TimerMode } from '@/hooks/useFocusTimer'
+import { useFocusDashboard, useRefreshDashboard, useInfiniteFocusRecords } from '@/hooks/useFocusDashboard'
+import { useAddFocusRecord } from '@/hooks/useAddFocusRecord'
+import { useFocusSettings, secondsToMinutes } from '@/hooks/useFocusSettings'
+import type { SelectedTarget } from '@/hooks/useFocusTargets'
+import { env } from '@/config/env'
+import { trackEvent } from '@/lib/analytics'
 
 const API_BASE = env.VITE_API_URL
 
-type Mode = 'focus' | 'shortBreak' | 'longBreak'
+export default function FocusPage() {
+  const navigate = useNavigate()
 
-interface Preset {
-  id: string
-  label: string
-  description: string
-  focus: number
-  short: number
-  long: number
+  // Data fetching
+  const { data: dashboard, isLoading: isLoadingDashboard } = useFocusDashboard()
+  const { data: settings } = useFocusSettings()
+  const { data: recordsData, loadMore, hasMore, isLoading: isLoadingRecords } = useInfiniteFocusRecords()
+  const addRecordMutation = useAddFocusRecord()
+  const refreshDashboard = useRefreshDashboard()
+
+  // Local state
+  const [mode, setMode] = useState<TimerMode>('POMO')
+  const [selectedTarget, setSelectedTarget] = useState<SelectedTarget | null>(null)
+  const [intention, setIntention] = useState('')
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
+  const [statusMessage, setStatusMessage] = useState('')
+  const sessionIdRef = useRef<string | null>(null)
+
+  // Timer duration from settings
+  const pomoDuration = settings?.pomoDurationSeconds || 1500
+
+  // Handle timer completion
+  const handleComplete = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/focus/sessions/active/complete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          postSessionNote: intention.trim() || undefined,
+        }),
+      })
+
+      if (response.ok) {
+        sessionIdRef.current = null
+        setStatusMessage(mode === 'POMO'
+          ? 'Session complete. Take a real reset.'
+          : 'Session recorded.')
+        refreshDashboard()
+        if (mode === 'POMO') trackEvent('first_focus_session')
+
+        // Play sound if enabled
+        if (mode === 'POMO' && settings?.soundEnabled !== false) {
+          playCompletionSound()
+        }
+
+        // Show notification if enabled
+        if (mode === 'POMO' && settings?.notificationsEnabled !== false) {
+          showNotification()
+        }
+      }
+    } catch (err) {
+      console.error('Failed to complete session:', err)
+    }
+  }, [mode, intention, settings, refreshDashboard])
+
+  const timer = useFocusTimer({
+    mode,
+    durationSeconds: mode === 'POMO' ? pomoDuration : 0,
+    onComplete: () => { void handleComplete() },
+  })
+
+  const updateSession = useCallback(async (
+    action: 'pause' | 'resume' | 'cancel',
+  ) => {
+    const sessionId = sessionIdRef.current
+    if (!sessionId) return
+
+    const response = await fetch(`${API_BASE}/api/focus/sessions/${sessionId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        action,
+        ...(action === 'cancel' ? { endedReason: 'user_cancelled' } : {}),
+      }),
+    })
+    if (!response.ok) throw new Error(`Failed to ${action} focus session`)
+    if (action === 'cancel') sessionIdRef.current = null
+  }, [])
+
+  // Start session
+  const handleStart = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/focus/sessions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          mode,
+          targetType: selectedTarget?.type || 'NONE',
+          targetId: selectedTarget?.id || null,
+          taskTitle: selectedTarget?.title || undefined,
+          plannedDurationMin: mode === 'POMO' ? secondsToMinutes(pomoDuration) : undefined,
+        }),
+      })
+
+      if (response.ok) {
+        const session = await response.json()
+        sessionIdRef.current = session._id
+        timer.start()
+        setStatusMessage('')
+      }
+    } catch (err) {
+      console.error('Failed to start session:', err)
+    }
+  }, [mode, selectedTarget, intention, pomoDuration, timer])
+
+  // Finish stopwatch session
+  const handleFinish = useCallback(() => {
+    timer.finish()
+  }, [timer])
+
+  const handlePause = useCallback(() => {
+    timer.pause()
+    void updateSession('pause').catch((err) => console.error(err))
+  }, [timer, updateSession])
+
+  const handleResume = useCallback(() => {
+    timer.resume()
+    void updateSession('resume').catch((err) => console.error(err))
+  }, [timer, updateSession])
+
+  const handleReset = useCallback(() => {
+    timer.reset()
+    void updateSession('cancel').catch((err) => console.error(err))
+  }, [timer, updateSession])
+
+  // Add manual record
+  const handleAddRecord = useCallback((data: AddRecordFormData) => {
+    addRecordMutation.mutate(data, {
+      onSuccess: () => {
+        setShowAddModal(false)
+        setStatusMessage('Record added.')
+        setTimeout(() => setStatusMessage(''), 3000)
+      },
+    })
+  }, [addRecordMutation])
+
+  // Restore active session on mount
+  useEffect(() => {
+    if (dashboard?.activeSession) {
+      const session = dashboard.activeSession
+      sessionIdRef.current = session._id
+      setMode(session.mode as TimerMode)
+
+      const endedForElapsedAt = session.pausedAt
+        ? new Date(session.pausedAt).getTime()
+        : Date.now()
+      const elapsedSeconds = Math.max(0, Math.floor(
+        (endedForElapsedAt - new Date(session.startedAt).getTime() - (session.totalPausedMs || 0)) / 1000,
+      ))
+      const plannedSeconds = ((session.plannedDurationMin || 25) + (session.extendedByMin || 0)) * 60
+
+      if (session.mode === 'POMO' && elapsedSeconds >= plannedSeconds) {
+        timer.reset()
+        void handleComplete()
+      } else {
+        timer.restore(elapsedSeconds, session.pausedAt ? 'PAUSED' : 'RUNNING')
+      }
+
+      if (session.taskTitleSnapshot) {
+        setIntention(session.taskTitleSnapshot)
+      }
+
+      if (session.targetType && session.targetType !== 'NONE') {
+        setSelectedTarget({
+          type: session.targetType,
+          id: session.taskId || session.habitId || undefined,
+          title: session.taskTitleSnapshot || undefined,
+        })
+      }
+    }
+  }, [dashboard?.activeSession, handleComplete, timer.reset, timer.restore])
+
+  return (
+    <div
+      className="min-h-screen"
+      style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-primary)' }}
+    >
+      {/* Header */}
+      <header
+        className="flex items-center justify-between px-5 py-4 sm:px-8"
+        style={{ borderBottom: '1px solid var(--border)' }}
+      >
+        <LifeOSMark />
+        <div className="flex items-center gap-2">
+          {/* Add Record Button */}
+          <motion.button
+            {...buttonPress}
+            type="button"
+            onClick={() => setShowAddModal(true)}
+            aria-label="Add focus record"
+            className="flex h-9 w-9 items-center justify-center rounded-full cursor-pointer"
+            style={{
+              color: 'var(--text-muted)',
+              transition: 'background-color 150ms ease, color 150ms ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--overlay-1)'
+              e.currentTarget.style.color = 'var(--text-primary)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+              e.currentTarget.style.color = 'var(--text-muted)'
+            }}
+          >
+            <Plus size={17} />
+          </motion.button>
+
+          {/* Fullscreen Button */}
+          <motion.button
+            {...buttonPress}
+            type="button"
+            onClick={() => document.documentElement.requestFullscreen?.()}
+            aria-label="Enter full screen"
+            className="flex h-9 w-9 items-center justify-center rounded-full cursor-pointer"
+            style={{
+              color: 'var(--text-muted)',
+              transition: 'background-color 150ms ease, color 150ms ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--overlay-1)'
+              e.currentTarget.style.color = 'var(--text-primary)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+              e.currentTarget.style.color = 'var(--text-muted)'
+            }}
+          >
+            <Maximize size={17} />
+          </motion.button>
+
+          {/* Menu */}
+          <div className="relative">
+            <motion.button
+              {...buttonPress}
+              type="button"
+              onClick={() => setShowMenu(!showMenu)}
+              aria-label="More options"
+              className="flex h-9 w-9 items-center justify-center rounded-full cursor-pointer"
+              style={{
+                color: 'var(--text-muted)',
+                transition: 'background-color 150ms ease, color 150ms ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--overlay-1)'
+                e.currentTarget.style.color = 'var(--text-primary)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+                e.currentTarget.style.color = 'var(--text-muted)'
+              }}
+            >
+              <MoreHorizontal size={17} />
+            </motion.button>
+
+            {/* Dropdown Menu */}
+            {showMenu && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="absolute right-0 top-full mt-2 z-50 rounded-xl overflow-hidden min-w-48"
+                style={{
+                  backgroundColor: 'var(--bg-pane)',
+                  border: '1px solid var(--border)',
+                  boxShadow: 'var(--shadow-card, 0 4px 24px rgba(0,0,0,0.2))',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/focus/statistics')
+                    setShowMenu(false)
+                  }}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-sm cursor-pointer"
+                  style={{ color: 'var(--text-primary)', transition: 'background-color 150ms ease' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                >
+                  <BarChart3 size={16} style={{ color: 'var(--text-muted)' }} />
+                  Statistics
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/focus/settings')
+                    setShowMenu(false)
+                  }}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-sm cursor-pointer"
+                  style={{
+                    color: 'var(--text-primary)',
+                    borderTop: '1px solid var(--border)',
+                    transition: 'background-color 150ms ease',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                >
+                  <Settings size={16} style={{ color: 'var(--text-muted)' }} />
+                  Focus Settings
+                </button>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Back Button */}
+          <motion.button
+            {...buttonPress}
+            type="button"
+            onClick={() => window.history.back()}
+            className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold cursor-pointer"
+            style={{
+              border: '1px solid var(--border)',
+              color: 'var(--text-muted)',
+              transition: 'background-color 150ms ease',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+          >
+            <ArrowLeft size={15} />
+            Leave focus
+          </motion.button>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="mx-auto grid w-full max-w-[1180px] gap-6 px-5 py-6 lg:grid-cols-[minmax(0,1fr)_330px] lg:px-8 lg:py-10">
+        {/* Timer Section */}
+        <motion.section
+          {...fadeSlideUp}
+          transition={ease.normal}
+          className="relative overflow-hidden p-5 sm:p-8 lg:min-h-[690px] rounded-[16px]"
+          style={{
+            backgroundColor: 'var(--bg-pane)',
+            border: '1px solid var(--border)',
+            boxShadow: 'var(--shadow-card)',
+          }}
+        >
+          {/* Progress Bar */}
+          {mode === 'POMO' && (
+            <div
+              className="absolute left-0 top-0 h-1 w-full"
+              style={{ backgroundColor: 'var(--overlay-1)' }}
+            >
+              <div
+                className="h-full"
+                style={{
+                  backgroundColor: 'var(--accent)',
+                  width: `${timer.progress * 100}%`,
+                  transition: 'width 250ms linear',
+                }}
+              />
+            </div>
+          )}
+
+          {/* Header */}
+          <div className="flex flex-wrap items-start justify-between gap-5">
+            <div>
+              <p
+                className="text-[10px] font-bold uppercase tracking-[0.18em]"
+                style={{ color: 'var(--text-faint)' }}
+              >
+                Focus protocol
+              </p>
+              <h1
+                className="mt-2 text-[38px] leading-none"
+                style={{
+                  fontFamily: 'Inter, system-ui, sans-serif',
+                  color: 'var(--text-primary)',
+                  fontWeight: 700,
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                Do one thing well.
+              </h1>
+            </div>
+
+            <ModeSelector
+              mode={mode}
+              status={timer.status}
+              onChange={setMode}
+            />
+          </div>
+
+          {/* Timer */}
+          <div className="mx-auto mt-7 flex max-w-[520px] flex-col items-center">
+            <TimerDisplay
+              mode={mode}
+              remainingSeconds={timer.remainingSeconds}
+              elapsedSeconds={timer.elapsedSeconds}
+              status={timer.status}
+              progress={timer.progress}
+            />
+
+            {/* Target Selector or Intention */}
+            {mode === 'POMO' ? (
+              <div className="w-full max-w-md mt-6">
+                <TargetSelector
+                  selected={selectedTarget}
+                  onSelect={setSelectedTarget}
+                  onClear={() => setSelectedTarget(null)}
+                  disabled={timer.status !== 'IDLE'}
+                />
+                <div className="mt-4">
+                  <label
+                    htmlFor="focus-intention"
+                    className="mb-2 block text-center text-[10px] font-bold uppercase tracking-[0.16em]"
+                    style={{ color: 'var(--text-faint)' }}
+                  >
+                    Session intention
+                  </label>
+                  <input
+                    id="focus-intention"
+                    value={intention}
+                    onChange={(event) => setIntention(event.target.value)}
+                    placeholder="What will be true when this session ends?"
+                    className="w-full border-0 border-b bg-transparent px-2 py-3 text-center text-[15px] outline-none focus:ring-0"
+                    style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="w-full max-w-md mt-6">
+                <TargetSelector
+                  selected={selectedTarget}
+                  onSelect={setSelectedTarget}
+                  onClear={() => setSelectedTarget(null)}
+                  disabled={timer.status !== 'IDLE'}
+                />
+                <p
+                  className="max-w-sm text-center text-sm leading-6 mt-4"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  Focus on your work. Click finish when done.
+                </p>
+              </div>
+            )}
+
+            {/* Controls */}
+            <div className="mt-8">
+              <TimerControls
+                status={timer.status}
+                mode={mode}
+                onStart={handleStart}
+                onPause={handlePause}
+                onResume={handleResume}
+                onFinish={handleFinish}
+                onReset={handleReset}
+              />
+            </div>
+
+            {/* Status Message */}
+            {statusMessage && (
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                role="status"
+                aria-live="polite"
+                className="mt-5 flex items-center gap-2 text-sm font-semibold"
+                style={{ color: 'var(--success)' }}
+              >
+                {statusMessage}
+              </motion.p>
+            )}
+          </div>
+        </motion.section>
+
+        {/* Sidebar */}
+        <motion.aside {...fadeSlideUp} transition={ease.normal} className="space-y-5">
+          {/* Overview */}
+          <OverviewPanel
+            overview={dashboard?.overview || {
+              todayPomo: 0,
+              todayFocusSeconds: 0,
+              totalPomo: 0,
+              totalFocusSeconds: 0,
+            }}
+          />
+
+          {/* Focus Records */}
+          <section
+            className="p-5 rounded-[16px]"
+            style={{
+              backgroundColor: 'var(--bg-pane-2)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            <h2
+              className="text-sm font-semibold mb-4"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              Focus Records
+            </h2>
+            <RecordTimeline
+              records={recordsData?.records || []}
+              onLoadMore={loadMore}
+              hasMore={recordsData?.hasMore || false}
+              isLoading={isLoadingRecords}
+            />
+          </section>
+
+          {/* Keyboard Shortcuts */}
+          <p
+            className="px-1 text-[11px] leading-5"
+            style={{ color: 'var(--text-faint)' }}
+          >
+            Space starts or pauses · R resets
+          </p>
+        </motion.aside>
+      </main>
+
+      {/* Add Record Modal */}
+      <AddRecordModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSubmit={handleAddRecord}
+        isSubmitting={addRecordMutation.isPending}
+      />
+
+      {/* Click outside to close menu */}
+      {showMenu && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setShowMenu(false)}
+        />
+      )}
+    </div>
+  )
 }
 
-interface FocusStats {
-  today: { sessions: number; totalMin: number }
-  week: { sessions: number; totalMin: number }
-  total: { sessions: number; totalMin: number }
-  avgSessionMin: number
-}
-
-interface ActiveSession {
-  _id: string
-  plannedDurationMin?: number
-  extendedByMin?: number
-  startedAt: string
-  pausedAt?: string | null
-  totalPausedMs?: number
-  taskTitleSnapshot?: string | null
-}
-
-const presets: Preset[] = [
-  {
-    id: 'reset',
-    label: '25 / 5',
-    description: 'Quick reset',
-    focus: 25,
-    short: 5,
-    long: 15,
-  },
-  {
-    id: 'flow',
-    label: '50 / 10',
-    description: 'Sustained flow',
-    focus: 50,
-    short: 10,
-    long: 20,
-  },
-  {
-    id: 'deep',
-    label: '90 / 15',
-    description: 'Deep work',
-    focus: 90,
-    short: 15,
-    long: 30,
-  },
-]
-
-const modeLabels: Record<Mode, string> = {
-  focus: 'Focus',
-  shortBreak: 'Reset',
-  longBreak: 'Long reset',
-}
-
-function formatTime(seconds: number): string {
-  const minutes = Math.floor(seconds / 60)
-  const remainder = seconds % 60
-  return `${String(minutes).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`
-}
-
-function formatMinutes(minutes: number): string {
-  if (minutes < 60) return `${minutes}m`
-  const hours = Math.floor(minutes / 60)
-  const remainder = minutes % 60
-  return remainder ? `${hours}h ${remainder}m` : `${hours}h`
-}
-
+// Helper functions
 function playCompletionSound() {
   try {
     const context = new AudioContext()
@@ -120,593 +584,12 @@ function playCompletionSound() {
   }
 }
 
-export default function FocusPage() {
-  const [searchParams] = useSearchParams()
-  const linkedTaskId = searchParams.get('taskId')
-  const linkedTaskTitle = searchParams.get('task')
+function showNotification() {
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
 
-  const [preset, setPreset] = useState(presets[1])
-  const [mode, setMode] = useState<Mode>('focus')
-  const [remaining, setRemaining] = useState(presets[1].focus * 60)
-  const [total, setTotal] = useState(presets[1].focus * 60)
-  const [isRunning, setIsRunning] = useState(false)
-  const [isPaused, setIsPaused] = useState(false)
-  const [intention, setIntention] = useState(linkedTaskTitle || searchParams.get('habit') || '')
-  const [autoStart, setAutoStart] = useState(false)
-  const [stats, setStats] = useState<FocusStats | null>(null)
-  const [statusMessage, setStatusMessage] = useState('')
-
-  const startedAtRef = useRef(0)
-  const targetSecondsRef = useRef(presets[1].focus * 60)
-  const frameRef = useRef(0)
-  const sessionIdRef = useRef<string | null>(null)
-  const completedRef = useRef(false)
-  const notificationPermissionRef = useRef(false)
-
-  const fetchStats = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_BASE}/api/focus/stats`, { credentials: 'include' })
-      if (response.ok) setStats(await response.json())
-    } catch {
-      // Stats should never block a focus session.
-    }
-  }, [])
-
-  const updateSession = useCallback(async (
-    action: 'pause' | 'resume' | 'extend' | 'complete' | 'cancel',
-    extra: Record<string, unknown> = {},
-  ) => {
-    const sessionId = sessionIdRef.current
-    if (!sessionId) return
-
-    try {
-      await fetch(`${API_BASE}/api/focus/sessions/${sessionId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ action, ...extra }),
-      })
-      if (action === 'complete' || action === 'cancel') sessionIdRef.current = null
-    } catch {
-      // The local timer remains usable if persistence is temporarily unavailable.
-    }
-  }, [])
-
-  const requestNotificationPermission = useCallback(() => {
-    if (typeof Notification === 'undefined') return
-    if (Notification.permission === 'granted') {
-      notificationPermissionRef.current = true
-      return
-    }
-    if (Notification.permission === 'default') {
-      Notification.requestPermission().then((permission) => {
-        notificationPermissionRef.current = permission === 'granted'
-      })
-    }
-  }, [])
-
-  const durationFor = useCallback((nextMode: Mode, nextPreset = preset) => {
-    if (nextMode === 'focus') return nextPreset.focus * 60
-    if (nextMode === 'shortBreak') return nextPreset.short * 60
-    return nextPreset.long * 60
-  }, [preset])
-
-  const beginCountdown = useCallback((seconds: number, preserveTotal = false) => {
-    cancelAnimationFrame(frameRef.current)
-    targetSecondsRef.current = seconds
-    startedAtRef.current = performance.now()
-    completedRef.current = false
-    if (!preserveTotal) setTotal(seconds)
-    setRemaining(seconds)
-    setIsPaused(false)
-    setIsRunning(true)
-  }, [])
-
-  const createFocusSession = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_BASE}/api/focus/sessions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          taskId: linkedTaskId || undefined,
-          taskTitle: linkedTaskTitle || intention || undefined,
-          plannedDurationMin: preset.focus,
-          plannedBreakMin: preset.short,
-        }),
-      })
-      if (response.ok) {
-        const session = await response.json()
-        sessionIdRef.current = session._id
-      }
-    } catch {
-      // The timer still starts offline and can be used without persistence.
-    }
-  }, [preset, linkedTaskId, linkedTaskTitle, intention])
-
-  const start = useCallback(async () => {
-    requestNotificationPermission()
-    const seconds = durationFor(mode)
-    if (mode === 'focus') void createFocusSession()
-    beginCountdown(seconds)
-    setStatusMessage('')
-  }, [beginCountdown, createFocusSession, durationFor, mode, requestNotificationPermission])
-
-  const pause = useCallback(() => {
-    cancelAnimationFrame(frameRef.current)
-    setIsPaused(true)
-    setIsRunning(false)
-    if (mode === 'focus') void updateSession('pause')
-  }, [mode, updateSession])
-
-  const resume = useCallback(() => {
-    if (mode === 'focus') void updateSession('resume')
-    beginCountdown(remaining, true)
-  }, [beginCountdown, mode, remaining, updateSession])
-
-  const reset = useCallback(() => {
-    cancelAnimationFrame(frameRef.current)
-    if (mode === 'focus' && sessionIdRef.current) {
-      void updateSession('cancel', { endedReason: 'user_cancelled' })
-    }
-    const seconds = durationFor(mode)
-    setRemaining(seconds)
-    setTotal(seconds)
-    setIsRunning(false)
-    setIsPaused(false)
-    setStatusMessage('')
-  }, [durationFor, mode, updateSession])
-
-  const switchMode = useCallback((nextMode: Mode) => {
-    cancelAnimationFrame(frameRef.current)
-    if (sessionIdRef.current) void updateSession('cancel', { endedReason: 'user_cancelled' })
-    const seconds = durationFor(nextMode)
-    setMode(nextMode)
-    setRemaining(seconds)
-    setTotal(seconds)
-    setIsRunning(false)
-    setIsPaused(false)
-    setStatusMessage('')
-  }, [durationFor, updateSession])
-
-  const changePreset = useCallback((nextPreset: Preset) => {
-    if (isRunning) return
-    setPreset(nextPreset)
-    const seconds = durationFor(mode, nextPreset)
-    setRemaining(seconds)
-    setTotal(seconds)
-    setIsPaused(false)
-  }, [durationFor, isRunning, mode])
-
-  const extend = useCallback(() => {
-    const extraSeconds = 5 * 60
-    targetSecondsRef.current += extraSeconds
-    setRemaining((value) => value + extraSeconds)
-    setTotal((value) => value + extraSeconds)
-    if (mode === 'focus') void updateSession('extend', { additionalMin: 5 })
-  }, [mode, updateSession])
-
-  const complete = useCallback(async () => {
-    if (completedRef.current) return
-    completedRef.current = true
-    cancelAnimationFrame(frameRef.current)
-    setRemaining(0)
-    setIsRunning(false)
-    setIsPaused(false)
-    playCompletionSound()
-
-    if (mode === 'focus') {
-      await updateSession('complete', {
-        endedReason: 'timer_ended',
-        ...(intention.trim() ? { postSessionNote: intention.trim().slice(0, 200) } : {}),
-      })
-      await fetchStats()
-      // Privacy-safe milestone: user completed a focus session.
-      trackEvent('first_focus_session')
-    }
-
-    if (notificationPermissionRef.current) {
-      try {
-        new Notification('Life OS', { body: `${modeLabels[mode]} complete.` })
-      } catch {
-        // Notifications are optional.
-      }
-    }
-
-    const nextMode: Mode = mode === 'focus' ? 'shortBreak' : 'focus'
-    setStatusMessage(mode === 'focus' ? 'Session complete. Take a real reset.' : 'Reset complete. Ready when you are.')
-
-    if (autoStart) {
-      window.setTimeout(() => {
-        setMode(nextMode)
-        if (nextMode === 'focus') void createFocusSession()
-        beginCountdown(durationFor(nextMode))
-      }, 2200)
-    }
-  }, [autoStart, beginCountdown, createFocusSession, durationFor, fetchStats, intention, mode, updateSession])
-
-  const tick = useCallback(() => {
-    const elapsed = (performance.now() - startedAtRef.current) / 1000
-    const nextRemaining = Math.max(0, Math.ceil(targetSecondsRef.current - elapsed))
-    setRemaining(nextRemaining)
-
-    if (nextRemaining <= 0) {
-      void complete()
-      return
-    }
-
-    frameRef.current = requestAnimationFrame(tick)
-  }, [complete])
-
-  useEffect(() => {
-    if (isRunning) {
-      frameRef.current = requestAnimationFrame(tick)
-    }
-    return () => cancelAnimationFrame(frameRef.current)
-  }, [isRunning, tick])
-
-  useEffect(() => {
-    fetchStats()
-
-    const restoreActiveSession = async () => {
-      try {
-        const response = await fetch(`${API_BASE}/api/focus/sessions/active`, { credentials: 'include' })
-        if (!response.ok) return
-        const session = await response.json() as ActiveSession | null
-        if (!session?.startedAt) return
-
-        const plannedSeconds = ((session.plannedDurationMin || 25) + (session.extendedByMin || 0)) * 60
-        const endAt = session.pausedAt ? new Date(session.pausedAt).getTime() : Date.now()
-        const elapsedSeconds = Math.floor(
-          (endAt - new Date(session.startedAt).getTime() - (session.totalPausedMs || 0)) / 1000,
-        )
-        const secondsLeft = Math.max(0, plannedSeconds - elapsedSeconds)
-        if (secondsLeft <= 0) return
-
-        sessionIdRef.current = session._id
-        setMode('focus')
-        setTotal(plannedSeconds)
-        setRemaining(secondsLeft)
-        targetSecondsRef.current = secondsLeft
-        if (session.taskTitleSnapshot) setIntention(session.taskTitleSnapshot)
-
-        if (session.pausedAt) {
-          setIsPaused(true)
-          setIsRunning(false)
-        } else {
-          startedAtRef.current = performance.now()
-          setIsRunning(true)
-        }
-      } catch {
-        // Start with a fresh local timer if restoration fails.
-      }
-    }
-
-    void restoreActiveSession()
-  }, [fetchStats])
-
-  useEffect(() => {
-    document.title = isRunning
-      ? `${formatTime(remaining)} — ${modeLabels[mode]}`
-      : 'Focus — Life OS'
-    return () => {
-      document.title = 'Life OS'
-    }
-  }, [isRunning, mode, remaining])
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement
-      if (target.matches('input, textarea, select, [contenteditable="true"]')) return
-
-      if (event.code === 'Space') {
-        event.preventDefault()
-        if (isRunning) pause()
-        else if (isPaused) resume()
-        else void start()
-      }
-
-      if (event.key.toLowerCase() === 'r') reset()
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isPaused, isRunning, pause, reset, resume, start])
-
-  const progress = total > 0 ? Math.min(1, Math.max(0, (total - remaining) / total)) : 0
-  const circumference = 2 * Math.PI * 132
-  const dashOffset = circumference * (1 - progress)
-
-  return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-primary)' }}>
-      <header className="flex items-center justify-between px-5 py-4 sm:px-8" style={{ borderBottom: '1px solid var(--border)' }}>
-        <LifeOSMark />
-        <div className="flex items-center gap-2">
-          <motion.button
-            {...buttonPress}
-            type="button"
-            onClick={() => document.documentElement.requestFullscreen?.()}
-            aria-label="Enter full screen"
-            className="flex h-9 w-9 items-center justify-center rounded-full cursor-pointer"
-            style={{ color: 'var(--text-muted)', transition: 'background-color 150ms ease, color 150ms ease' }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
-          >
-            <Maximize size={17} />
-          </motion.button>
-          <motion.button
-            {...buttonPress}
-            type="button"
-            onClick={() => window.history.back()}
-            className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold cursor-pointer"
-            style={{ border: '1px solid var(--border)', color: 'var(--text-muted)', transition: 'background-color 150ms ease' }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-          >
-            <ArrowLeft size={15} />
-            Leave focus
-          </motion.button>
-        </div>
-      </header>
-
-      <main className="mx-auto grid w-full max-w-[1180px] gap-6 px-5 py-6 lg:grid-cols-[minmax(0,1fr)_330px] lg:px-8 lg:py-10">
-        <motion.section
-          {...fadeSlideUp}
-          transition={ease.normal}
-          className="relative overflow-hidden p-5 sm:p-8 lg:min-h-[690px] rounded-[16px]"
-          style={{ backgroundColor: 'var(--bg-pane)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}
-        >
-          <div className="absolute left-0 top-0 h-1 w-full" style={{ backgroundColor: 'var(--overlay-1)' }}>
-            <div
-              className="h-full"
-              style={{ backgroundColor: 'var(--accent)', width: `${progress * 100}%`, transition: 'width 250ms linear' }}
-            />
-          </div>
-
-          <div className="flex flex-wrap items-start justify-between gap-5">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--text-faint)' }}>
-                Focus protocol
-              </p>
-              <h1
-                className="mt-2 text-[38px] leading-none"
-                style={{ fontFamily: 'Inter, system-ui, sans-serif', color: 'var(--text-primary)', fontWeight: 700, letterSpacing: '-0.02em' }}
-              >
-                Do one thing well.
-              </h1>
-            </div>
-
-            <div className="flex rounded-full p-1" style={{ backgroundColor: 'var(--overlay-1)' }} aria-label="Session type">
-              {(['focus', 'shortBreak', 'longBreak'] as Mode[]).map((item) => (
-                <motion.button
-                  {...buttonPress}
-                  key={item}
-                  type="button"
-                  onClick={() => switchMode(item)}
-                  aria-pressed={mode === item}
-                  className="rounded-full px-3 py-1.5 text-xs font-semibold cursor-pointer"
-                  style={{
-                    backgroundColor: mode === item ? 'var(--accent)' : 'transparent',
-                    color: mode === item ? '#fff' : 'var(--text-muted)',
-                    transition: 'background-color 150ms ease, color 150ms ease',
-                  }}
-                >
-                  {modeLabels[item]}
-                </motion.button>
-              ))}
-            </div>
-          </div>
-
-          <div className="mx-auto mt-7 flex max-w-[520px] flex-col items-center">
-            <div className="relative flex h-[300px] w-[300px] items-center justify-center sm:h-[340px] sm:w-[340px]">
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 300 300"
-                className="absolute inset-0 h-full w-full -rotate-90"
-              >
-                <circle cx="150" cy="150" r="132" fill="none" stroke="var(--overlay-2, rgba(222,221,249,0.07))" strokeWidth="5" />
-                <circle
-                  cx="150"
-                  cy="150"
-                  r="132"
-                  fill="none"
-                  stroke={mode === 'focus' ? 'var(--accent)' : 'var(--accent-purple)'}
-                  strokeWidth="5"
-                  strokeLinecap="round"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={dashOffset}
-                />
-              </svg>
-              <div className="relative text-center">
-                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--text-faint)' }}>
-                  {isPaused ? 'Paused' : isRunning ? 'In progress' : modeLabels[mode]}
-                </p>
-                <div
-                  role="timer"
-                  aria-live="off"
-                  aria-label={`${formatTime(remaining)} remaining`}
-                  className="text-[72px] font-semibold leading-none tracking-[-0.065em] tabular-nums sm:text-[84px]"
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  {formatTime(remaining)}
-                </div>
-              </div>
-            </div>
-
-            {mode === 'focus' ? (
-              <div className="w-full max-w-md">
-                <label
-                  htmlFor="focus-intention"
-                  className="mb-2 block text-center text-[10px] font-bold uppercase tracking-[0.16em]"
-                  style={{ color: 'var(--text-faint)' }}
-                >
-                  Session intention
-                </label>
-                <input
-                  id="focus-intention"
-                  value={intention}
-                  onChange={(event) => setIntention(event.target.value)}
-                  placeholder="What will be true when this session ends?"
-                  className="w-full border-0 border-b bg-transparent px-2 py-3 text-center text-[15px] outline-none focus:ring-0"
-                  style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
-                />
-              </div>
-            ) : (
-              <p className="max-w-sm text-center text-sm leading-6" style={{ color: 'var(--text-muted)' }}>
-                Step away from the screen. Water, movement, and distance count.
-              </p>
-            )}
-
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <motion.button
-                {...buttonPress}
-                type="button"
-                onClick={reset}
-                aria-label="Reset timer"
-                className="flex h-11 w-11 items-center justify-center rounded-full cursor-pointer"
-                style={{ border: '1px solid var(--border)', color: 'var(--text-muted)', transition: 'background-color 150ms ease, color 150ms ease' }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
-              >
-                <RotateCcw size={17} />
-              </motion.button>
-              <motion.button
-                {...buttonPress}
-                type="button"
-                onClick={() => {
-                  if (isRunning) pause()
-                  else if (isPaused) resume()
-                  else void start()
-                }}
-                className="flex min-w-40 items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold cursor-pointer"
-                style={{ backgroundColor: 'var(--accent)', color: '#fff', transition: 'opacity 150ms ease' }}
-                onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
-              >
-                {isRunning ? <Pause size={17} fill="currentColor" /> : <Play size={17} fill="currentColor" />}
-                {isRunning ? 'Pause' : isPaused ? 'Resume' : mode === 'focus' ? 'Begin focus' : 'Begin reset'}
-              </motion.button>
-              <motion.button
-                {...buttonPress}
-                type="button"
-                onClick={() => switchMode(mode === 'focus' ? 'shortBreak' : 'focus')}
-                aria-label={mode === 'focus' ? 'Skip to reset' : 'Skip to focus'}
-                className="flex h-11 w-11 items-center justify-center rounded-full cursor-pointer"
-                style={{ border: '1px solid var(--border)', color: 'var(--text-muted)', transition: 'background-color 150ms ease, color 150ms ease' }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
-              >
-                <SkipForward size={17} />
-              </motion.button>
-            </div>
-
-            {isRunning && mode === 'focus' && (
-              <motion.button
-                {...buttonPress}
-                type="button"
-                onClick={extend}
-                className="mt-4 flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
-                style={{ color: 'var(--text-muted)', transition: 'color 150ms ease' }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-muted)' }}
-              >
-                <Plus size={14} />
-                Add 5 minutes
-              </motion.button>
-            )}
-
-            {statusMessage && (
-              <p role="status" aria-live="polite" className="mt-5 flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--success)' }}>
-                <Check size={16} />
-                {statusMessage}
-              </p>
-            )}
-          </div>
-        </motion.section>
-
-        <motion.aside {...fadeSlideUp} transition={ease.normal} className="space-y-5">
-          <section className="p-5 rounded-[16px]" style={{ backgroundColor: 'var(--bg-pane-2)', border: '1px solid var(--border)' }}>
-            <div className="mb-5 flex items-center gap-2">
-              <Target size={17} style={{ color: 'var(--text-muted)' }} />
-              <h2 className="text-sm font-semibold">Choose a rhythm</h2>
-            </div>
-            <div className="space-y-2">
-              {presets.map((item) => (
-                <motion.button
-                  {...buttonPress}
-                  key={item.id}
-                  type="button"
-                  onClick={() => changePreset(item)}
-                  disabled={isRunning}
-                  aria-pressed={preset.id === item.id}
-                  className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-                  style={{
-                    backgroundColor: preset.id === item.id ? 'var(--accent)' : 'var(--overlay-1)',
-                    color: preset.id === item.id ? '#fff' : 'var(--text-primary)',
-                    transition: 'background-color 150ms ease, color 150ms ease',
-                  }}
-                >
-                  <span>
-                    <span className="block text-sm font-semibold tabular-nums">{item.label}</span>
-                    <span className="mt-0.5 block text-[11px]" style={{ color: preset.id === item.id ? 'rgba(255,255,255,0.6)' : 'var(--text-faint)' }}>
-                      {item.description}
-                    </span>
-                  </span>
-                  {preset.id === item.id && <Check size={16} />}
-                </motion.button>
-              ))}
-            </div>
-          </section>
-
-          <section className="p-5 rounded-[16px]" style={{ backgroundColor: 'var(--bg-pane-2)', border: '1px solid var(--border)' }}>
-            <div className="flex items-center gap-2">
-              <Coffee size={17} style={{ color: 'var(--text-muted)' }} />
-              <h2 className="text-sm font-semibold">Today&apos;s focus</h2>
-            </div>
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: 'var(--text-faint)' }}>Sessions</p>
-                <p className="mt-1 text-3xl font-semibold tracking-[-0.04em] tabular-nums" style={{ color: 'var(--accent)' }}>
-                  {stats?.today.sessions ?? 0}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: 'var(--text-faint)' }}>Focused</p>
-                <p className="mt-1 text-3xl font-semibold tracking-[-0.04em] tabular-nums" style={{ color: 'var(--accent)' }}>
-                  {formatMinutes(stats?.today.totalMin ?? 0)}
-                </p>
-              </div>
-            </div>
-            <div className="mt-6 pt-4 text-xs" style={{ borderTop: '1px solid var(--border)', color: 'var(--text-muted)' }}>
-              Weekly total: <strong style={{ color: 'var(--text-primary)' }}>{formatMinutes(stats?.week.totalMin ?? 0)}</strong>
-            </div>
-          </section>
-
-          <section className="p-5 rounded-[16px]" style={{ backgroundColor: 'var(--bg-pane-2)', border: '1px solid var(--border)' }}>
-            <label className="flex cursor-pointer items-center justify-between gap-4">
-              <span>
-                <span className="block text-sm font-semibold">Continue the rhythm</span>
-                <span className="mt-1 block text-xs leading-5" style={{ color: 'var(--text-faint)' }}>
-                  Start the next reset or focus session automatically.
-                </span>
-              </span>
-              <input
-                type="checkbox"
-                checked={autoStart}
-                onChange={(event) => setAutoStart(event.target.checked)}
-                className="h-4 w-4 shrink-0"
-                style={{ accentColor: 'var(--accent)' }}
-              />
-            </label>
-          </section>
-
-          <p className="px-1 text-[11px] leading-5" style={{ color: 'var(--text-faint)' }}>
-            Space starts or pauses · R resets
-          </p>
-        </motion.aside>
-      </main>
-    </div>
-  )
+  try {
+    new Notification('Life OS', { body: 'Focus session complete.' })
+  } catch {
+    // Notifications are optional.
+  }
 }

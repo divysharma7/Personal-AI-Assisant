@@ -1,7 +1,6 @@
 import { env } from '@/config/env'
 const API_BASE = env.VITE_API_URL
 
-
 import {
   createContext,
   useCallback,
@@ -14,21 +13,29 @@ import {
 
 export interface FocusState {
   isActive: boolean
-  taskId: string | null
-  taskTitle: string
+  mode: 'POMO' | 'STOPWATCH'
+  targetType: 'TASK' | 'HABIT' | 'NONE'
+  targetId: string | null
+  targetTitle: string
   remainingSeconds: number
   totalSeconds: number
 }
 
 interface FocusContextValue {
   focus: FocusState
-  startSession: (taskId: string, taskTitle: string) => Promise<void>
+  startSession: (
+    taskId: string,
+    taskTitle: string,
+    options?: { mode?: 'POMO' | 'STOPWATCH'; targetType?: 'TASK' | 'HABIT' }
+  ) => Promise<void>
 }
 
 const DEFAULT_STATE: FocusState = {
   isActive: false,
-  taskId: null,
-  taskTitle: '',
+  mode: 'POMO',
+  targetType: 'NONE',
+  targetId: null,
+  targetTitle: '',
   remainingSeconds: 0,
   totalSeconds: 0,
 }
@@ -52,12 +59,16 @@ export default function FocusProvider({ children }: { children: ReactNode }) {
           const endAt = data.pausedAt ? new Date(data.pausedAt).getTime() : Date.now()
           const elapsed = Math.floor((endAt - startedAt - (data.totalPausedMs || 0)) / 1000)
           const remaining = Math.max(0, duration - elapsed)
+          const isStopwatch = data.mode === 'STOPWATCH'
+
           setFocus({
-            isActive: remaining > 0 && !data.pausedAt,
-            taskId: data.taskId || null,
-            taskTitle: data.taskTitleSnapshot || '',
-            remainingSeconds: remaining,
-            totalSeconds: duration,
+            isActive: !data.pausedAt && (isStopwatch || remaining > 0),
+            mode: data.mode || 'POMO',
+            targetType: data.targetType || 'NONE',
+            targetId: data.taskId || data.habitId || null,
+            targetTitle: data.taskTitleSnapshot || '',
+            remainingSeconds: isStopwatch ? 0 : remaining,
+            totalSeconds: isStopwatch ? 0 : duration,
           })
           return
         }
@@ -101,34 +112,51 @@ export default function FocusProvider({ children }: { children: ReactNode }) {
   // Listen for 'laif:start-focus' custom events
   useEffect(() => {
     function handleStartFocus(e: Event) {
-      const custom = e as CustomEvent<{ taskId: string; taskTitle: string }>
-      const { taskId, taskTitle } = custom.detail
-      startSession(taskId, taskTitle)
+      const custom = e as CustomEvent<{
+        taskId: string
+        taskTitle: string
+        mode?: 'POMO' | 'STOPWATCH'
+        targetType?: 'TASK' | 'HABIT'
+      }>
+      const { taskId, taskTitle, mode, targetType } = custom.detail
+      startSession(taskId, taskTitle, { mode, targetType })
     }
     window.addEventListener('laif:start-focus', handleStartFocus)
     return () => window.removeEventListener('laif:start-focus', handleStartFocus)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const startSession = useCallback(
-    async (taskId: string, taskTitle: string) => {
+    async (
+      taskId: string,
+      taskTitle: string,
+      options?: { mode?: 'POMO' | 'STOPWATCH'; targetType?: 'TASK' | 'HABIT' }
+    ) => {
       try {
+        const mode = options?.mode || 'POMO'
+        const targetType = options?.targetType || 'TASK'
+
         const res = await fetch(`${API_BASE}/api/focus/sessions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            taskId,
-            plannedDurationMin: 25,
-            plannedBreakMin: 5,
+            mode,
+            targetType,
+            targetId: taskId,
+            taskTitle,
           }),
           credentials: 'include',
         })
         if (res.ok) {
+          const session = await res.json()
+          const duration = mode === 'POMO' ? (session.plannedDurationMin || 25) * 60 : 0
           setFocus({
             isActive: true,
-            taskId,
-            taskTitle,
-            remainingSeconds: 1500,
-            totalSeconds: 1500,
+            mode,
+            targetType,
+            targetId: taskId,
+            targetTitle: taskTitle,
+            remainingSeconds: duration,
+            totalSeconds: duration,
           })
           window.location.href = '/focus'
         }

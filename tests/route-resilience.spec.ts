@@ -159,7 +159,7 @@ test.describe('Focus Page — Session Controls', () => {
 
   test('focus page shows idle state with start button', async ({ page }) => {
     // Button says "Start" in idle, or session controls if active
-    const startBtn = page.getByText(/^Start$/i).first()
+    const startBtn = page.getByText(/^(Begin focus|Start)$/i).first()
     const activeSession = page.getByText(/Pause|Resume|End/i).first()
 
     const hasStart = await startBtn.isVisible().catch(() => false)
@@ -169,13 +169,13 @@ test.describe('Focus Page — Session Controls', () => {
   })
 
   test('focus timer and stopwatch tabs are accessible', async ({ page }) => {
-    // UI shows "Focus Timer" and "Stopwatch" tabs
-    await expect(page.getByText('Focus Timer').first()).toBeVisible()
+    // UI shows Pomo and Stopwatch modes
+    await expect(page.getByText('Pomo').first()).toBeVisible()
     await expect(page.getByText('Stopwatch').first()).toBeVisible()
   })
 
   test('focus stats section shows labels', async ({ page }) => {
-    const today = page.getByText('Today').first()
+    const today = page.getByText("Today's focus").first()
     await expect(today).toBeVisible()
   })
 })
