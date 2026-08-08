@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useState, useCallback, type ReactNode } from 'react'
 import Sidebar from './Sidebar'
+import TodaySidebar from './TodaySidebar'
 import ArtworkPane from './ArtworkPane'
 import { copy } from '@/lib/copy'
 import { fade, ease, motionTokens } from '@/lib/motion'
@@ -68,6 +69,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
       setPanelStack([])
       setSidebarCollapsed(true)
     }
+  }, [pathname])
+
+  // Today and Next 7 Days use a navigation-first workspace. Always reveal its
+  // secondary sidebar when the user enters either page; it can still be
+  // collapsed again from the rail for distraction-free work.
+  useEffect(() => {
+    if (pathname === '/today' || pathname === '/next') setSidebarCollapsed(false)
   }, [pathname])
 
   // Listen for detail-task events from InboxPage
@@ -174,6 +182,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     .filter(Boolean) as { task: TaskRecord; comments: TaskRecord['comments'] }[]
 
   const showDetailPanel = stackEntries.length > 0
+  const isTaskWorkspace = pathname === '/today' || pathname === '/next'
 
   // No shell for auth/onboarding routes
   const noShell = SHELL_EXCLUDED.some((p) => pathname.startsWith(p))
@@ -189,7 +198,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div
-      className="relative flex h-screen p-[6px] gap-[6px]"
+      className={`relative flex h-screen ${isTaskWorkspace ? 'gap-0 p-0' : 'gap-[6px] p-[6px]'}`}
       style={{ backgroundColor: 'var(--bg-canvas)' }}
     >
       <a
@@ -214,23 +223,30 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
       {/* Left: Sidebar — always visible, collapsed or expanded */}
       <motion.div
-        animate={{ width: sidebarCollapsed ? 48 : 260 }}
+        animate={{ width: isTaskWorkspace ? (sidebarCollapsed ? 38 : 243) : (sidebarCollapsed ? 48 : 260) }}
         transition={{ duration: motionTokens.duration.fast, ease: motionTokens.easing.sharp }}
         className="flex-shrink-0 overflow-hidden"
       >
-        <Sidebar
-          collapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        />
+        {isTaskWorkspace ? (
+          <TodaySidebar
+            collapsed={sidebarCollapsed}
+            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          />
+        ) : (
+          <Sidebar
+            collapsed={sidebarCollapsed}
+            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          />
+        )}
       </motion.div>
 
       {/* Center: Main content */}
       <main
         id="main-content"
-        className="relative flex min-w-[540px] flex-1 flex-col overflow-y-auto rounded-[var(--outer-radius,20px)]"
+        className={`relative flex min-w-[540px] flex-1 flex-col overflow-y-auto ${isTaskWorkspace ? 'rounded-none' : 'rounded-[var(--outer-radius,20px)]'}`}
         style={{
-          backgroundColor: 'var(--bg-pane)',
-          backgroundImage: 'var(--bg-atmosphere)',
+          backgroundColor: isTaskWorkspace ? '#19191a' : 'var(--bg-pane)',
+          backgroundImage: isTaskWorkspace ? 'none' : 'var(--bg-atmosphere)',
           transition: 'flex 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
@@ -241,7 +257,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
       </main>
 
       {/* Settings needs the full center width for its own secondary navigation. */}
-      {(pathname !== '/settings' || showDetailPanel) && (
+      {((pathname !== '/settings' && !isTaskWorkspace) || showDetailPanel) && (
         <AnimatePresence mode="wait">
           {showDetailPanel ? (
             <motion.div
