@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  BarChart3,
   CalendarDays,
   CheckCircle2,
   ChevronLeft,
@@ -8,17 +9,25 @@ import {
   CircleHelp,
   Clock3,
   Focus,
+  Grid3X3,
   Inbox,
+  Kanban,
+  ListChecks,
   ListTodo,
-  Search,
+  MessageCircle,
+  Moon,
+  Plus,
   Settings,
   Sparkles,
+  Sunrise,
   Trash2,
 } from 'lucide-react'
-import { useMemo, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useLists } from '@/hooks/useLists'
 import { useTasks } from '@/hooks/useTasks'
+import { useWorkflows } from '@/hooks/useWorkflows'
+import { CreateWorkflowDialog } from '@/components/tasks/kanban/CreateWorkflowDialog'
 import '@/components/today/task-workspace.css'
 
 interface TodaySidebarProps {
@@ -57,8 +66,10 @@ function RailLink({ to, label, children }: { to: string; label: string; children
 export default function TodaySidebar({ collapsed, onToggleCollapse }: TodaySidebarProps) {
   const { tasks } = useTasks()
   const { lists } = useLists()
+  const { workflows } = useWorkflows()
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  const [createWorkflowOpen, setCreateWorkflowOpen] = useState(false)
 
   const counts = useMemo(() => {
     const start = startOfToday()
@@ -91,8 +102,13 @@ export default function TodaySidebar({ collapsed, onToggleCollapse }: TodaySideb
     () => lists.filter((list) => !list.deletedAt && !list.isInbox).slice(0, 9),
     [lists],
   )
+  const activeWorkflows = useMemo(
+    () => workflows.filter((workflow) => !workflow.archived),
+    [workflows],
+  )
 
   return (
+    <>
     <aside className="today-sidebar" aria-label="Workspace navigation">
       <div className="today-icon-rail">
         <button className="today-avatar" type="button" onClick={() => navigate('/profile')} aria-label="Open profile">
@@ -100,15 +116,39 @@ export default function TodaySidebar({ collapsed, onToggleCollapse }: TodaySideb
         </button>
 
         <div className="today-rail-primary">
+          <RailLink to="/" label="Inbox"><Inbox size={18} /></RailLink>
           <RailLink to="/today" label="Today"><CheckCircle2 size={18} /></RailLink>
+          <RailLink to="/next" label="Next 7 Days"><CalendarDays size={18} /></RailLink>
+          <RailLink to="/tasks" label="Tasks"><ListTodo size={18} /></RailLink>
+          <RailLink to="/lists" label="Lists"><ListChecks size={18} /></RailLink>
+          <RailLink to="/agenda" label="Agenda"><Clock3 size={18} /></RailLink>
           <RailLink to="/calendar" label="Calendar"><CalendarDays size={18} /></RailLink>
           <RailLink to="/habits" label="Habits"><Sparkles size={18} /></RailLink>
-          <RailLink to="/agenda" label="Agenda"><Clock3 size={18} /></RailLink>
           <RailLink to="/focus" label="Focus"><Focus size={18} /></RailLink>
-          <RailLink to="/tasks" label="Search tasks"><Search size={18} /></RailLink>
+          <RailLink to="/plan" label="Plan"><Sunrise size={18} /></RailLink>
+          <RailLink to="/shutdown" label="Shutdown"><Moon size={18} /></RailLink>
+          <RailLink to="/statistics" label="Statistics"><BarChart3 size={18} /></RailLink>
+          <RailLink to="/chat" label="Chatbot"><MessageCircle size={18} /></RailLink>
+          <RailLink to="/matrix" label="Priority Matrix"><Grid3X3 size={18} /></RailLink>
+          {activeWorkflows.length > 0 ? (
+            <RailLink to={`/workflows/${activeWorkflows[0]._id}`} label="Workflows"><Kanban size={18} /></RailLink>
+          ) : (
+            <button className="today-rail-link" type="button" onClick={() => setCreateWorkflowOpen(true)} aria-label="Create workflow" title="Workflows">
+              <Kanban size={18} />
+            </button>
+          )}
         </div>
 
         <div className="today-rail-bottom">
+          <button
+            className="today-rail-link"
+            type="button"
+            onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', ctrlKey: true }))}
+            aria-label="Create new task"
+            title="Create new task"
+          >
+            <Plus size={18} />
+          </button>
           <button className="today-rail-link" type="button" onClick={onToggleCollapse} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
             {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
           </button>
@@ -157,6 +197,41 @@ export default function TodaySidebar({ collapsed, onToggleCollapse }: TodaySideb
           </section>
 
           <section className="today-sidebar-section">
+            <div className="today-sidebar-section-heading">
+              <p className="today-sidebar-label">Workflows</p>
+              <button type="button" onClick={() => setCreateWorkflowOpen(true)} aria-label="Create workflow" title="Create workflow"><Plus size={13} /></button>
+            </div>
+            <div className="today-sidebar-list">
+              {activeWorkflows.slice(0, 7).map((workflow) => (
+                <NavLink key={workflow._id} to={`/workflows/${workflow._id}`} className="today-sidebar-row">
+                  <span className="today-list-emoji">{workflow.icon || '▦'}</span>
+                  <span>{workflow.name}</span>
+                  <small />
+                </NavLink>
+              ))}
+              {activeWorkflows.length === 0 ? (
+                <button className="today-sidebar-empty" type="button" onClick={() => setCreateWorkflowOpen(true)}>
+                  Create your first workflow
+                </button>
+              ) : null}
+            </div>
+          </section>
+
+          <section className="today-sidebar-section">
+            <p className="today-sidebar-label">Features</p>
+            <div className="today-sidebar-list">
+              <NavLink to="/calendar" className="today-sidebar-row"><CalendarDays size={15} /><span>Calendar</span><small /></NavLink>
+              <NavLink to="/habits" className="today-sidebar-row"><Sparkles size={15} /><span>Habits</span><small /></NavLink>
+              <NavLink to="/focus" className="today-sidebar-row"><Focus size={15} /><span>Focus</span><small /></NavLink>
+              <NavLink to="/plan" className="today-sidebar-row"><Sunrise size={15} /><span>Plan</span><small /></NavLink>
+              <NavLink to="/shutdown" className="today-sidebar-row"><Moon size={15} /><span>Shutdown</span><small /></NavLink>
+              <NavLink to="/statistics" className="today-sidebar-row"><BarChart3 size={15} /><span>Statistics</span><small /></NavLink>
+              <NavLink to="/chat" className="today-sidebar-row"><MessageCircle size={15} /><span>Chatbot</span><small /></NavLink>
+              <NavLink to="/matrix" className="today-sidebar-row"><Grid3X3 size={15} /><span>Priority Matrix</span><small /></NavLink>
+            </div>
+          </section>
+
+          <section className="today-sidebar-section">
             <p className="today-sidebar-label">Filters</p>
             <button className="today-sidebar-tip" type="button" onClick={() => navigate('/tasks')}>
               Display tasks filtered by list, date, priority, tag, and more
@@ -183,5 +258,7 @@ export default function TodaySidebar({ collapsed, onToggleCollapse }: TodaySideb
         </div>
       )}
     </aside>
+    <CreateWorkflowDialog open={createWorkflowOpen} onClose={() => setCreateWorkflowOpen(false)} />
+    </>
   )
 }
