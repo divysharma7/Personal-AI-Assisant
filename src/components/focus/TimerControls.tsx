@@ -40,12 +40,10 @@ export default function TimerControls({
     ? 'Pause'
     : isPaused
       ? 'Resume'
-      : mode === 'POMO'
-        ? 'Begin focus'
-        : 'Start'
+      : 'Start'
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-3">
+    <div className="flex min-h-12 flex-wrap items-center justify-center gap-3">
       {/* Reset Button */}
       {!isIdle && (
         <motion.button
@@ -53,10 +51,9 @@ export default function TimerControls({
           type="button"
           onClick={onReset}
           aria-label="Reset timer"
-          className="flex h-11 w-11 items-center justify-center rounded-full cursor-pointer"
+          className="focus-utility-button flex h-10 w-10 items-center justify-center rounded-full cursor-pointer"
           style={{
-            border: '1px solid var(--border)',
-            color: 'var(--text-muted)',
+            color: 'var(--focus-muted)',
             transition: 'background-color 150ms ease, color 150ms ease',
           }}
           onMouseEnter={(e) => {
@@ -77,20 +74,16 @@ export default function TimerControls({
         {...buttonPress}
         type="button"
         onClick={handlePrimaryAction}
-        className="flex min-w-40 items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold cursor-pointer"
+        className="focus-primary-button flex h-[42px] min-w-[148px] items-center justify-center gap-2 rounded-full px-8 text-[12px] font-semibold cursor-pointer"
         style={{
-          backgroundColor: 'var(--accent)',
+          backgroundColor: 'var(--focus-accent)',
           color: '#fff',
           transition: 'opacity 150ms ease',
         }}
         onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
         onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
       >
-        {isRunning ? (
-          <Pause size={17} fill="currentColor" />
-        ) : (
-          <Play size={17} fill="currentColor" />
-        )}
+        {isRunning ? <Pause className="sr-only" size={1} /> : <Play className="sr-only" size={1} />}
         {primaryLabel}
       </motion.button>
 
@@ -101,10 +94,9 @@ export default function TimerControls({
           type="button"
           onClick={onFinish}
           aria-label="Finish session"
-          className="flex h-11 w-11 items-center justify-center rounded-full cursor-pointer"
+          className="focus-utility-button flex h-10 w-10 items-center justify-center rounded-full cursor-pointer"
           style={{
-            border: '1px solid var(--border)',
-            color: 'var(--text-muted)',
+            color: 'var(--focus-muted)',
             transition: 'background-color 150ms ease, color 150ms ease',
           }}
           onMouseEnter={(e) => {
@@ -127,7 +119,7 @@ export default function TimerControls({
           type="button"
           onClick={onSkip}
           aria-label="Skip to next"
-          className="flex h-11 w-11 items-center justify-center rounded-full cursor-pointer"
+          className="focus-utility-button flex h-10 w-10 items-center justify-center rounded-full cursor-pointer"
           style={{
             border: '1px solid var(--border)',
             color: 'var(--text-muted)',

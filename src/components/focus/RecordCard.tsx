@@ -1,5 +1,4 @@
-import { Target, Clock, MessageSquare } from 'lucide-react'
-import { formatDuration, formatTimeRange } from '@/lib/formatDuration'
+import { Clock3 } from 'lucide-react'
 
 export interface FocusRecord {
   _id: string
@@ -17,119 +16,51 @@ export interface FocusRecord {
 
 interface RecordCardProps {
   record: FocusRecord
+  isLast?: boolean
 }
 
-export default function RecordCard({ record }: RecordCardProps) {
-  const targetLabel = record.targetType === 'NONE'
-    ? 'No target'
-    : record.targetTitleSnapshot || 'Unknown'
+const timeFormatter = new Intl.DateTimeFormat(undefined, {
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+})
 
-  const isPomo = record.mode === 'POMO'
+function formatCompactDuration(seconds: number) {
+  const totalMinutes = Math.max(1, Math.round(seconds / 60))
+  if (totalMinutes < 60) return `${totalMinutes}m`
+
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  return minutes ? `${hours}h ${minutes}m` : `${hours}h`
+}
+
+export default function RecordCard({ record, isLast = false }: RecordCardProps) {
+  const targetLabel = record.targetType === 'NONE'
+    ? null
+    : record.targetTitleSnapshot || 'Untitled'
 
   return (
-    <div
-      className="flex items-start gap-3 rounded-xl px-4 py-3"
-      style={{
-        backgroundColor: 'var(--overlay-1)',
-        transition: 'background-color 150ms ease',
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-2)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1)' }}
-    >
-      {/* Target Icon */}
-      <div
-        className="flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0 mt-0.5"
-        style={{
-          backgroundColor: isPomo ? 'var(--accent)' : 'var(--accent-purple, var(--accent))',
-          opacity: 0.15,
-        }}
-      >
-        <Target
-          size={14}
-          style={{
-            color: isPomo ? 'var(--accent)' : 'var(--accent-purple, var(--accent))',
-          }}
-        />
+    <article className="focus-record-row">
+      <div className="focus-record-marker" aria-hidden="true">
+        <span className="focus-record-dot">
+          <Clock3 size={10} strokeWidth={2.4} />
+        </span>
+        {!isLast && <span className="focus-record-line" />}
       </div>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p
-              className="text-sm font-medium truncate"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              {targetLabel}
-            </p>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span
-                className="text-[10px] font-bold uppercase tracking-[0.1em] px-1.5 py-0.5 rounded"
-                style={{
-                  backgroundColor: isPomo ? 'var(--accent)' : 'var(--accent-purple, var(--accent))',
-                  color: '#fff',
-                  opacity: 0.9,
-                }}
-              >
-                {isPomo ? 'Pomo' : 'Stopwatch'}
-              </span>
-              {record.source === 'MANUAL' && (
-                <span
-                  className="text-[10px] font-medium"
-                  style={{ color: 'var(--text-faint)' }}
-                >
-                  Manual
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Duration & Time */}
-          <div className="text-right flex-shrink-0">
-            <p
-              className="text-sm font-semibold tabular-nums"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              {formatDuration(record.durationSeconds)}
-            </p>
-            <p
-              className="text-[11px] tabular-nums"
-              style={{ color: 'var(--text-muted)' }}
-            >
-              {formatTimeRange(record.startTime, record.endTime)}
-            </p>
-          </div>
-        </div>
-
-        {/* Pomo Count */}
-        {isPomo && record.pomoCount > 0 && (
-          <div className="flex items-center gap-1 mt-1.5">
-            <Clock size={11} style={{ color: 'var(--text-faint)' }} />
-            <span
-              className="text-[11px]"
-              style={{ color: 'var(--text-faint)' }}
-            >
-              {record.pomoCount} {record.pomoCount === 1 ? 'pomo' : 'pomos'}
-            </span>
-          </div>
-        )}
-
-        {/* Note */}
-        {record.note && (
-          <div className="flex items-start gap-1 mt-1.5">
-            <MessageSquare
-              size={11}
-              style={{ color: 'var(--text-faint)', flexShrink: 0, marginTop: 2 }}
-            />
-            <p
-              className="text-[11px] leading-relaxed line-clamp-2"
-              style={{ color: 'var(--text-muted)' }}
-            >
-              {record.note}
-            </p>
-          </div>
-        )}
+      <div className="min-w-0 pb-4">
+        <p className="focus-record-time tabular-nums">
+          {timeFormatter.format(new Date(record.startTime))}
+          <span aria-hidden="true"> – </span>
+          {timeFormatter.format(new Date(record.endTime))}
+        </p>
+        {targetLabel && <p className="focus-record-title truncate">{targetLabel}</p>}
+        {record.note && <p className="focus-record-note line-clamp-1">{record.note}</p>}
       </div>
-    </div>
+
+      <span className="focus-record-duration tabular-nums">
+        {formatCompactDuration(record.durationSeconds)}
+      </span>
+    </article>
   )
 }

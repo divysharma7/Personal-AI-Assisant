@@ -88,15 +88,15 @@ test.describe('Focus feature acceptance', () => {
     apiState = { starts: [], completions: 0 }
     await mockFocusApi(page, apiState)
     await page.goto('/focus')
-    await expect(page.getByRole('heading', { name: 'Do one thing well.' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Pomodoro' })).toBeVisible()
   })
 
   test('shows configured timer, overview, and Task/Habit target selection', async ({ page }) => {
     await expect(page.getByRole('button', { name: 'Pomo' })).toHaveAttribute('aria-pressed', 'true')
-    await expect(page.getByText("Today's focus")).toBeVisible()
-    await expect(page.getByText('Total Pomos')).toBeVisible()
+    await expect(page.getByText("Today's Focus")).toBeVisible()
+    await expect(page.getByText('Total Pomo')).toBeVisible()
 
-    await page.getByRole('button', { name: 'What are you working on?' }).click()
+    await page.getByRole('button', { name: 'Choose focus target' }).click()
     await expect(page.getByRole('button', { name: 'Tasks' })).toBeVisible()
     await expect(page.getByText('Write Focus tests')).toBeVisible()
     await page.getByRole('button', { name: 'Habits' }).click()
@@ -116,7 +116,7 @@ test.describe('Focus feature acceptance', () => {
   })
 
   test('automatically persists a Pomo when its countdown expires', async ({ page }) => {
-    await page.getByRole('button', { name: 'Begin focus' }).click()
+    await page.getByRole('button', { name: 'Start' }).click()
 
     await expect.poll(() => apiState.starts.length).toBe(1)
     await expect.poll(() => apiState.completions, { timeout: 5_000 }).toBe(1)

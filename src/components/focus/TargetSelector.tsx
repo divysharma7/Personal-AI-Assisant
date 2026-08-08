@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { fadeSlideUp } from '@/lib/motion'
-import { Search, X, Check, Target } from 'lucide-react'
+import { Search, X, Check, Target, ChevronRight } from 'lucide-react'
 import { useFocusTargets, type TargetType, type SelectedTarget, type FocusTarget } from '@/hooks/useFocusTargets'
 
 interface TargetSelectorProps {
@@ -9,6 +9,7 @@ interface TargetSelectorProps {
   onSelect: (target: SelectedTarget) => void
   onClear: () => void
   disabled?: boolean
+  variant?: 'card' | 'minimal'
 }
 
 export default function TargetSelector({
@@ -16,6 +17,7 @@ export default function TargetSelector({
   onSelect,
   onClear,
   disabled = false,
+  variant = 'card',
 }: TargetSelectorProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<TargetType>('TASK')
@@ -58,10 +60,38 @@ export default function TargetSelector({
     setSearchQuery('')
   }, [onClear])
 
+  const hasSelection = selected && selected.type !== 'NONE'
+
   return (
-    <div ref={containerRef} className="relative w-full max-w-md">
+    <div
+      ref={containerRef}
+      className={`relative w-full max-w-md ${variant === 'minimal' ? 'focus-target-selector' : ''}`}
+    >
       {/* Selected Target Display / Trigger */}
-      {selected && selected.type !== 'NONE' ? (
+      {variant === 'minimal' ? (
+        <div className="flex items-center justify-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => !disabled && setIsOpen(true)}
+            disabled={disabled}
+            aria-label="Choose focus target"
+            className="focus-target-trigger flex max-w-[280px] items-center gap-1 rounded-full px-2 py-1 text-[12px] font-medium disabled:cursor-default"
+          >
+            <span className="truncate">{hasSelection ? selected.title || 'Focus' : 'Focus'}</span>
+            {!disabled && <ChevronRight size={13} aria-hidden="true" />}
+          </button>
+          {hasSelection && !disabled && (
+            <button
+              type="button"
+              onClick={handleClear}
+              aria-label="Clear selection"
+              className="focus-target-clear grid h-6 w-6 place-items-center rounded-full"
+            >
+              <X size={12} />
+            </button>
+          )}
+        </div>
+      ) : hasSelection ? (
         <div
           className="flex items-center justify-between gap-2 rounded-xl px-4 py-3"
           style={{
@@ -133,10 +163,10 @@ export default function TargetSelector({
         {isOpen && (
           <motion.div
             {...fadeSlideUp}
-            className="absolute left-0 right-0 top-full mt-2 z-50 rounded-xl overflow-hidden"
+            className={`focus-target-popover absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl ${variant === 'minimal' ? 'mx-auto w-[min(340px,calc(100vw-32px))]' : ''}`}
             style={{
-              backgroundColor: 'var(--bg-pane)',
-              border: '1px solid var(--border)',
+              backgroundColor: 'var(--focus-surface-raised, var(--bg-pane))',
+              border: '1px solid var(--focus-border, var(--border))',
               boxShadow: 'var(--shadow-card, 0 4px 24px rgba(0,0,0,0.2))',
             }}
           >

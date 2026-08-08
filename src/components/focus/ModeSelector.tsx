@@ -9,7 +9,7 @@ interface ModeSelectorProps {
 }
 
 const modes: { value: TimerMode; label: string }[] = [
-  { value: 'POMO', label: 'Pomodoro' },
+  { value: 'POMO', label: 'Pomo' },
   { value: 'STOPWATCH', label: 'Stopwatch' },
 ]
 
@@ -18,8 +18,7 @@ export default function ModeSelector({ mode, status, onChange }: ModeSelectorPro
 
   return (
     <div
-      className="flex rounded-full p-1"
-      style={{ backgroundColor: 'var(--overlay-1)' }}
+      className="focus-mode-switch flex rounded-full p-[3px]"
       aria-label="Timer mode"
     >
       {modes.map((item) => (
@@ -30,10 +29,10 @@ export default function ModeSelector({ mode, status, onChange }: ModeSelectorPro
           onClick={() => onChange(item.value)}
           disabled={isDisabled}
           aria-pressed={mode === item.value}
-          className="rounded-full px-3 py-1.5 text-xs font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="min-w-[78px] rounded-full px-4 py-1.5 text-[11px] font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           style={{
-            backgroundColor: mode === item.value ? 'var(--accent)' : 'transparent',
-            color: mode === item.value ? '#fff' : 'var(--text-muted)',
+            backgroundColor: mode === item.value ? 'rgba(255,255,255,0.08)' : 'transparent',
+            color: mode === item.value ? 'var(--focus-text)' : 'var(--focus-muted)',
             transition: 'background-color 150ms ease, color 150ms ease',
           }}
         >

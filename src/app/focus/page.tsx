@@ -1,13 +1,11 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
 import { motion } from 'framer-motion'
-import { fadeSlideUp, buttonPress, ease } from '@/lib/motion'
-import { ArrowLeft, Maximize, Plus, Settings, BarChart3, MoreHorizontal } from 'lucide-react'
+import { buttonPress } from '@/lib/motion'
+import { ArrowLeft, Plus, Settings, BarChart3, MoreHorizontal } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import LifeOSMark from '@/components/brand/LifeOSMark'
 import TimerDisplay from '@/components/focus/TimerDisplay'
 import TimerControls from '@/components/focus/TimerControls'
 import ModeSelector from '@/components/focus/ModeSelector'
-import PresetSelector from '@/components/focus/PresetSelector'
 import TargetSelector from '@/components/focus/TargetSelector'
 import OverviewPanel from '@/components/focus/OverviewPanel'
 import RecordTimeline from '@/components/focus/RecordTimeline'
@@ -19,35 +17,20 @@ import { useFocusSettings, secondsToMinutes } from '@/hooks/useFocusSettings'
 import type { SelectedTarget } from '@/hooks/useFocusTargets'
 import { env } from '@/config/env'
 import { trackEvent } from '@/lib/analytics'
+import './focus.css'
 
 const API_BASE = env.VITE_API_URL
 
-interface Preset {
-  id: string
-  label: string
-  description: string
-  focus: number // minutes
-}
-
-const presets: Preset[] = [
-  { id: '25-5', label: '25 / 5', description: 'Quick reset', focus: 25 },
-  { id: '50-10', label: '50 / 10', description: 'Sustained flow', focus: 50 },
-  { id: '90-15', label: '90 / 15', description: 'Deep work', focus: 90 },
-]
-
 export default function FocusPage() {
   const navigate = useNavigate()
-
-  // Data fetching
   const { data: dashboard, isLoading: isLoadingDashboard } = useFocusDashboard()
   const { data: settings } = useFocusSettings()
-  const { data: recordsData, loadMore, hasMore, isLoading: isLoadingRecords } = useInfiniteFocusRecords()
+  const { data: recordsData, loadMore, isLoading: isLoadingRecords } = useInfiniteFocusRecords()
   const addRecordMutation = useAddFocusRecord()
   const refreshDashboard = useRefreshDashboard()
 
-  // Local state
   const [mode, setMode] = useState<TimerMode>('POMO')
-  const [selectedPreset, setSelectedPreset] = useState<Preset>(presets[0])
+  const [activeDurationSeconds, setActiveDurationSeconds] = useState<number | null>(null)
   const [selectedTarget, setSelectedTarget] = useState<SelectedTarget | null>(null)
   const [intention, setIntention] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
@@ -55,10 +38,8 @@ export default function FocusPage() {
   const [statusMessage, setStatusMessage] = useState('')
   const sessionIdRef = useRef<string | null>(null)
 
-  // Timer duration from settings or preset
-  const pomoDuration = mode === 'POMO' ? selectedPreset.focus * 60 : 0
+  const pomoDuration = activeDurationSeconds ?? settings?.pomoDurationSeconds ?? 1500
 
-  // Handle timer completion
   const handleComplete = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/focus/sessions/active/complete`, {
@@ -68,31 +49,23 @@ export default function FocusPage() {
           'X-Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
         },
         credentials: 'include',
-        body: JSON.stringify({
-          postSessionNote: intention.trim() || undefined,
-        }),
+        body: JSON.stringify({ postSessionNote: intention.trim() || undefined }),
       })
 
-      if (response.ok) {
-        sessionIdRef.current = null
-        setStatusMessage(mode === 'POMO'
-          ? 'Session complete. Take a real reset.'
-          : 'Session recorded.')
-        refreshDashboard()
-        if (mode === 'POMO') trackEvent('first_focus_session')
+      if (!response.ok) throw new Error('Failed to complete focus session')
 
-        // Play sound if enabled
-        if (mode === 'POMO' && settings?.soundEnabled !== false) {
-          playCompletionSound()
-        }
+      sessionIdRef.current = null
+      setActiveDurationSeconds(null)
+      setIntention('')
+      setStatusMessage(mode === 'POMO' ? 'Session complete. Take a real reset.' : 'Session recorded.')
+      refreshDashboard()
+      if (mode === 'POMO') trackEvent('first_focus_session')
 
-        // Show notification if enabled
-        if (mode === 'POMO' && settings?.notificationsEnabled !== false) {
-          showNotification()
-        }
-      }
-    } catch (err) {
-      console.error('Failed to complete session:', err)
+      if (mode === 'POMO' && settings?.soundEnabled !== false) playCompletionSound()
+      if (mode === 'POMO' && settings?.notificationsEnabled !== false) showNotification()
+    } catch (error) {
+      console.error('Failed to complete session:', error)
+      setStatusMessage('Could not save this session. Please try again.')
     }
   }, [mode, intention, settings, refreshDashboard])
 
@@ -101,10 +74,9 @@ export default function FocusPage() {
     durationSeconds: mode === 'POMO' ? pomoDuration : 0,
     onComplete: () => { void handleComplete() },
   })
+  const { reset: resetTimer, restore: restoreTimer } = timer
 
-  const updateSession = useCallback(async (
-    action: 'pause' | 'resume' | 'cancel',
-  ) => {
+  const updateSession = useCallback(async (action: 'pause' | 'resume' | 'cancel') => {
     const sessionId = sessionIdRef.current
     if (!sessionId) return
 
@@ -121,7 +93,6 @@ export default function FocusPage() {
     if (action === 'cancel') sessionIdRef.current = null
   }, [])
 
-  // Start session
   const handleStart = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/focus/sessions`, {
@@ -137,38 +108,42 @@ export default function FocusPage() {
         }),
       })
 
-      if (response.ok) {
-        const session = await response.json()
-        sessionIdRef.current = session._id
-        timer.start()
-        setStatusMessage('')
-      }
-    } catch (err) {
-      console.error('Failed to start session:', err)
-    }
-  }, [mode, selectedTarget, intention, pomoDuration, timer])
+      if (!response.ok) throw new Error('Failed to start focus session')
 
-  // Finish stopwatch session
-  const handleFinish = useCallback(() => {
-    timer.finish()
-  }, [timer])
+      const session = await response.json()
+      sessionIdRef.current = session._id
+      if (mode === 'POMO') setActiveDurationSeconds(pomoDuration)
+      timer.start()
+      setStatusMessage('')
+    } catch (error) {
+      console.error('Failed to start session:', error)
+      setStatusMessage('Could not start a session. Please try again.')
+    }
+  }, [mode, selectedTarget, pomoDuration, timer])
+
+  const handleFinish = useCallback(() => timer.finish(), [timer])
 
   const handlePause = useCallback(() => {
     timer.pause()
-    void updateSession('pause').catch((err) => console.error(err))
+    void updateSession('pause').catch((error) => console.error(error))
   }, [timer, updateSession])
 
   const handleResume = useCallback(() => {
     timer.resume()
-    void updateSession('resume').catch((err) => console.error(err))
+    void updateSession('resume').catch((error) => console.error(error))
   }, [timer, updateSession])
 
   const handleReset = useCallback(() => {
     timer.reset()
-    void updateSession('cancel').catch((err) => console.error(err))
+    setActiveDurationSeconds(null)
+    void updateSession('cancel').catch((error) => console.error(error))
   }, [timer, updateSession])
 
-  // Add manual record
+  const handleModeChange = useCallback((nextMode: TimerMode) => {
+    setActiveDurationSeconds(null)
+    setMode(nextMode)
+  }, [])
+
   const handleAddRecord = useCallback((data: AddRecordFormData) => {
     addRecordMutation.mutate(data, {
       onSuccess: () => {
@@ -179,404 +154,195 @@ export default function FocusPage() {
     })
   }, [addRecordMutation])
 
-  // Restore active session on mount
   useEffect(() => {
-    if (dashboard?.activeSession) {
-      const session = dashboard.activeSession
-      sessionIdRef.current = session._id
-      setMode(session.mode as TimerMode)
+    if (!dashboard?.activeSession) return
 
-      const endedForElapsedAt = session.pausedAt
-        ? new Date(session.pausedAt).getTime()
-        : Date.now()
-      const elapsedSeconds = Math.max(0, Math.floor(
-        (endedForElapsedAt - new Date(session.startedAt).getTime() - (session.totalPausedMs || 0)) / 1000,
-      ))
-      const plannedSeconds = ((session.plannedDurationMin || 25) + (session.extendedByMin || 0)) * 60
+    const session = dashboard.activeSession
+    sessionIdRef.current = session._id
+    setMode(session.mode as TimerMode)
 
-      if (session.mode === 'POMO' && elapsedSeconds >= plannedSeconds) {
-        timer.reset()
-        void handleComplete()
-      } else {
-        timer.restore(elapsedSeconds, session.pausedAt ? 'PAUSED' : 'RUNNING')
-      }
+    const endedForElapsedAt = session.pausedAt ? new Date(session.pausedAt).getTime() : Date.now()
+    const elapsedSeconds = Math.max(0, Math.floor(
+      (endedForElapsedAt - new Date(session.startedAt).getTime() - (session.totalPausedMs || 0)) / 1000,
+    ))
+    const plannedSeconds = ((session.plannedDurationMin || 25) + (session.extendedByMin || 0)) * 60
+    setActiveDurationSeconds(session.mode === 'POMO' ? plannedSeconds : null)
 
-      if (session.taskTitleSnapshot) {
-        setIntention(session.taskTitleSnapshot)
-      }
-
-      if (session.targetType && session.targetType !== 'NONE') {
-        setSelectedTarget({
-          type: session.targetType,
-          id: session.taskId || session.habitId || undefined,
-          title: session.taskTitleSnapshot || undefined,
-        })
-      }
+    if (session.mode === 'POMO' && elapsedSeconds >= plannedSeconds) {
+      resetTimer()
+      void handleComplete()
+    } else {
+      restoreTimer(elapsedSeconds, session.pausedAt ? 'PAUSED' : 'RUNNING')
     }
-  }, [dashboard?.activeSession, handleComplete, timer.reset, timer.restore])
+
+    if (session.targetType && session.targetType !== 'NONE') {
+      setSelectedTarget({
+        type: session.targetType,
+        id: session.taskId || session.habitId || undefined,
+        title: session.taskTitleSnapshot || undefined,
+      })
+    }
+  }, [dashboard?.activeSession, handleComplete, resetTimer, restoreTimer])
+
+  const overview = dashboard?.overview || {
+    todayPomo: 0,
+    todayFocusSeconds: 0,
+    totalPomo: 0,
+    totalFocusSeconds: 0,
+  }
 
   return (
-    <div
-      className="min-h-screen"
-      style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-primary)' }}
-    >
-      {/* Loading State */}
+    <div className="focus-shell">
       {isLoadingDashboard && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'var(--bg-canvas)' }}>
-          <div className="flex flex-col items-center gap-4">
-            <div
-              className="h-8 w-8 animate-spin rounded-full border-3"
-              style={{ borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }}
-            />
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading Focus...</p>
-          </div>
+        <div className="focus-loading" role="status">
+          <div className="focus-spinner" />
+          <span>Loading focus…</span>
         </div>
       )}
 
-      {/* Header */}
-      <header
-        className="flex items-center justify-between px-5 py-4 sm:px-8"
-        style={{ borderBottom: '1px solid var(--border)' }}
-      >
-        <LifeOSMark />
-        <div className="flex items-center gap-2">
-          {/* Add Record Button */}
-          <motion.button
-            {...buttonPress}
-            type="button"
-            onClick={() => setShowAddModal(true)}
-            aria-label="Add focus record"
-            className="flex h-9 w-9 items-center justify-center rounded-full cursor-pointer"
-            style={{
-              color: 'var(--text-muted)',
-              transition: 'background-color 150ms ease, color 150ms ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--overlay-1)'
-              e.currentTarget.style.color = 'var(--text-primary)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-              e.currentTarget.style.color = 'var(--text-muted)'
-            }}
-          >
-            <Plus size={17} />
-          </motion.button>
+      <section className="focus-primary" aria-label="Focus timer">
+        <header className="focus-header">
+          <h1 className="focus-title">Pomodoro</h1>
 
-          {/* Fullscreen Button */}
-          <motion.button
-            {...buttonPress}
-            type="button"
-            onClick={() => document.documentElement.requestFullscreen?.()}
-            aria-label="Enter full screen"
-            className="flex h-9 w-9 items-center justify-center rounded-full cursor-pointer"
-            style={{
-              color: 'var(--text-muted)',
-              transition: 'background-color 150ms ease, color 150ms ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--overlay-1)'
-              e.currentTarget.style.color = 'var(--text-primary)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-              e.currentTarget.style.color = 'var(--text-muted)'
-            }}
-          >
-            <Maximize size={17} />
-          </motion.button>
+          <div className="focus-mode-slot">
+            <ModeSelector mode={mode} status={timer.status} onChange={handleModeChange} />
+          </div>
 
-          {/* Menu */}
-          <div className="relative">
+          <div className="focus-header-actions">
             <motion.button
               {...buttonPress}
               type="button"
-              onClick={() => setShowMenu(!showMenu)}
-              aria-label="More options"
-              className="flex h-9 w-9 items-center justify-center rounded-full cursor-pointer"
-              style={{
-                color: 'var(--text-muted)',
-                transition: 'background-color 150ms ease, color 150ms ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--overlay-1)'
-                e.currentTarget.style.color = 'var(--text-primary)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-                e.currentTarget.style.color = 'var(--text-muted)'
-              }}
+              onClick={() => setShowAddModal(true)}
+              aria-label="Add focus record"
+              className="focus-icon-button"
             >
-              <MoreHorizontal size={17} />
+              <Plus size={17} />
             </motion.button>
 
-            {/* Dropdown Menu */}
-            {showMenu && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="absolute right-0 top-full mt-2 z-50 rounded-xl overflow-hidden min-w-48"
-                style={{
-                  backgroundColor: 'var(--bg-pane)',
-                  border: '1px solid var(--border)',
-                  boxShadow: 'var(--shadow-card, 0 4px 24px rgba(0,0,0,0.2))',
-                }}
+            <div className="relative">
+              <motion.button
+                {...buttonPress}
+                type="button"
+                onClick={() => setShowMenu((open) => !open)}
+                aria-label="More options"
+                aria-expanded={showMenu}
+                className="focus-icon-button"
               >
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigate('/focus/statistics')
-                    setShowMenu(false)
-                  }}
-                  className="flex w-full items-center gap-3 px-4 py-3 text-sm cursor-pointer"
-                  style={{ color: 'var(--text-primary)', transition: 'background-color 150ms ease' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                <MoreHorizontal size={18} />
+              </motion.button>
+
+              {showMenu && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="focus-dropdown absolute right-0 top-full z-50 mt-2 min-w-[240px] overflow-hidden rounded-xl"
                 >
-                  <BarChart3 size={16} style={{ color: 'var(--text-muted)' }} />
-                  Statistics
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigate('/focus/settings')
-                    setShowMenu(false)
-                  }}
-                  className="flex w-full items-center gap-3 px-4 py-3 text-sm cursor-pointer"
-                  style={{
-                    color: 'var(--text-primary)',
-                    borderTop: '1px solid var(--border)',
-                    transition: 'background-color 150ms ease',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-                >
-                  <Settings size={16} style={{ color: 'var(--text-muted)' }} />
-                  Focus Settings
-                </button>
-              </motion.div>
-            )}
-          </div>
-
-          {/* Back Button */}
-          <motion.button
-            {...buttonPress}
-            type="button"
-            onClick={() => window.history.back()}
-            className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold cursor-pointer"
-            style={{
-              border: '1px solid var(--border)',
-              color: 'var(--text-muted)',
-              transition: 'background-color 150ms ease',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
-          >
-            <ArrowLeft size={15} />
-            Leave focus
-          </motion.button>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="mx-auto grid w-full max-w-[1180px] gap-6 px-5 py-6 lg:grid-cols-[minmax(0,1fr)_330px] lg:px-8 lg:py-10">
-        {/* Timer Section */}
-        <motion.section
-          {...fadeSlideUp}
-          transition={ease.normal}
-          className="relative overflow-hidden p-5 sm:p-8 lg:min-h-[690px] rounded-[16px]"
-          style={{
-            backgroundColor: 'var(--bg-pane)',
-            border: '1px solid var(--border)',
-            boxShadow: 'var(--shadow-card)',
-          }}
-        >
-          {/* Progress Bar */}
-          {mode === 'POMO' && (
-            <div
-              className="absolute left-0 top-0 h-1 w-full"
-              style={{ backgroundColor: 'var(--overlay-1)' }}
-            >
-              <div
-                className="h-full"
-                style={{
-                  backgroundColor: 'var(--accent)',
-                  width: `${timer.progress * 100}%`,
-                  transition: 'width 250ms linear',
-                }}
-              />
+                  <MenuButton icon={<BarChart3 size={15} />} onClick={() => navigate('/focus/statistics')}>
+                    Statistics
+                  </MenuButton>
+                  <MenuButton icon={<Settings size={15} />} onClick={() => navigate('/focus/settings')}>
+                    Focus settings
+                  </MenuButton>
+                  <MenuButton icon={<ArrowLeft size={15} />} onClick={() => navigate('/')}>
+                    Back to app
+                  </MenuButton>
+                  <div className="focus-note-block">
+                    <label htmlFor="focus-intention">Session note</label>
+                    <input
+                      id="focus-intention"
+                      value={intention}
+                      onChange={(event) => setIntention(event.target.value)}
+                      placeholder="What are you focusing on?"
+                    />
+                  </div>
+                </motion.div>
+              )}
             </div>
-          )}
-
-          {/* Header */}
-          <div className="flex flex-wrap items-start justify-between gap-5">
-            <div>
-              <p
-                className="text-[10px] font-bold uppercase tracking-[0.18em]"
-                style={{ color: 'var(--text-faint)' }}
-              >
-                Focus protocol
-              </p>
-              <h1
-                className="mt-2 text-[38px] leading-none"
-                style={{
-                  fontFamily: 'Inter, system-ui, sans-serif',
-                  color: 'var(--text-primary)',
-                  fontWeight: 700,
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                Do one thing well.
-              </h1>
-            </div>
-
-            <ModeSelector
-              mode={mode}
-              status={timer.status}
-              onChange={setMode}
-            />
           </div>
+        </header>
 
-          {/* Timer */}
-          <div className="mx-auto mt-7 flex max-w-[520px] flex-col items-center">
-            <TimerDisplay
-              mode={mode}
-              remainingSeconds={timer.remainingSeconds}
-              elapsedSeconds={timer.elapsedSeconds}
-              status={timer.status}
-              progress={timer.progress}
-            />
-
-            {/* Target Selector or Intention */}
-            {mode === 'POMO' ? (
-              <div className="w-full max-w-md mt-6">
-                <TargetSelector
-                  selected={selectedTarget}
-                  onSelect={setSelectedTarget}
-                  onClear={() => setSelectedTarget(null)}
-                  disabled={timer.status !== 'IDLE'}
-                />
-                <div className="mt-4">
-                  <label
-                    htmlFor="focus-intention"
-                    className="mb-2 block text-center text-[10px] font-bold uppercase tracking-[0.16em]"
-                    style={{ color: 'var(--text-faint)' }}
-                  >
-                    Session intention
-                  </label>
-                  <input
-                    id="focus-intention"
-                    value={intention}
-                    onChange={(event) => setIntention(event.target.value)}
-                    placeholder="What will be true when this session ends?"
-                    className="w-full border-0 border-b bg-transparent px-2 py-3 text-center text-[15px] outline-none focus:ring-0"
-                    style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-                    onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)' }}
-                    onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="w-full max-w-md mt-6">
-                <TargetSelector
-                  selected={selectedTarget}
-                  onSelect={setSelectedTarget}
-                  onClear={() => setSelectedTarget(null)}
-                  disabled={timer.status !== 'IDLE'}
-                />
-                <p
-                  className="max-w-sm text-center text-sm leading-6 mt-4"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  Focus on your work. Click finish when done.
-                </p>
-              </div>
-            )}
-
-            {/* Controls */}
-            <div className="mt-8">
-              <TimerControls
-                status={timer.status}
-                mode={mode}
-                onStart={handleStart}
-                onPause={handlePause}
-                onResume={handleResume}
-                onFinish={handleFinish}
-                onReset={handleReset}
-              />
-            </div>
-
-            {/* Status Message */}
-            {statusMessage && (
-              <motion.p
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                role="status"
-                aria-live="polite"
-                className="mt-5 flex items-center gap-2 text-sm font-semibold"
-                style={{ color: 'var(--success)' }}
-              >
-                {statusMessage}
-              </motion.p>
-            )}
-          </div>
-        </motion.section>
-
-        {/* Sidebar */}
-        <motion.aside {...fadeSlideUp} transition={ease.normal} className="space-y-5">
-          {/* Preset Selector - Only show in Pomo mode */}
-          {mode === 'POMO' && (
-            <PresetSelector
-              presets={presets}
-              selected={selectedPreset}
-              onSelect={setSelectedPreset}
+        <main className="focus-stage">
+          <div className="focus-target-wrap">
+            <TargetSelector
+              selected={selectedTarget}
+              onSelect={setSelectedTarget}
+              onClear={() => setSelectedTarget(null)}
               disabled={timer.status !== 'IDLE'}
+              variant="minimal"
             />
-          )}
+          </div>
 
-          {/* Overview */}
-          <OverviewPanel
-            overview={dashboard?.overview || {
-              todayPomo: 0,
-              todayFocusSeconds: 0,
-              totalPomo: 0,
-              totalFocusSeconds: 0,
-            }}
+          <TimerDisplay
+            mode={mode}
+            remainingSeconds={timer.remainingSeconds}
+            elapsedSeconds={timer.elapsedSeconds}
+            status={timer.status}
+            progress={timer.progress}
           />
 
-          {/* Focus Records */}
-          <section
-            className="p-5 rounded-[16px]"
-            style={{
-              backgroundColor: 'var(--bg-pane-2)',
-              border: '1px solid var(--border)',
-            }}
-          >
-            <h2
-              className="text-sm font-semibold mb-4"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              Focus Records
-            </h2>
-            <RecordTimeline
-              records={recordsData?.records || []}
-              onLoadMore={loadMore}
-              hasMore={recordsData?.hasMore || false}
-              isLoading={isLoadingRecords}
+          <div className="focus-timer-controls">
+            <TimerControls
+              status={timer.status}
+              mode={mode}
+              onStart={handleStart}
+              onPause={handlePause}
+              onResume={handleResume}
+              onFinish={handleFinish}
+              onReset={handleReset}
             />
-          </section>
+          </div>
 
-          {/* Keyboard Shortcuts */}
-          <p
-            className="px-1 text-[11px] leading-5"
-            style={{ color: 'var(--text-faint)' }}
-          >
-            Space starts or pauses · R resets
-          </p>
-        </motion.aside>
-      </main>
+          {statusMessage && (
+            <motion.p
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              role="status"
+              aria-live="polite"
+              className="focus-status-message"
+            >
+              {statusMessage}
+            </motion.p>
+          )}
+        </main>
+      </section>
 
-      {/* Add Record Modal */}
+      <aside className="focus-insights" aria-label="Focus overview and records">
+        <div className="focus-overview-section">
+          <OverviewPanel overview={overview} />
+        </div>
+
+        <section className="focus-history-section">
+          <div className="focus-history-header">
+            <h2 className="focus-panel-heading">Focus Record</h2>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setShowAddModal(true)}
+                className="focus-icon-button"
+                aria-label="Add focus record"
+              >
+                <Plus size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/focus/statistics')}
+                className="focus-icon-button"
+                aria-label="View focus statistics"
+              >
+                <MoreHorizontal size={17} />
+              </button>
+            </div>
+          </div>
+
+          <RecordTimeline
+            records={recordsData?.records || []}
+            onLoadMore={loadMore}
+            hasMore={recordsData?.hasMore || false}
+            isLoading={isLoadingRecords}
+          />
+        </section>
+      </aside>
+
       <AddRecordModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
@@ -584,18 +350,26 @@ export default function FocusPage() {
         isSubmitting={addRecordMutation.isPending}
       />
 
-      {/* Click outside to close menu */}
-      {showMenu && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setShowMenu(false)}
-        />
-      )}
+      {showMenu && <button className="focus-menu-backdrop" onClick={() => setShowMenu(false)} aria-label="Close menu" />}
     </div>
   )
 }
 
-// Helper functions
+interface MenuButtonProps {
+  icon: ReactNode
+  children: ReactNode
+  onClick: () => void
+}
+
+function MenuButton({ icon, children, onClick }: MenuButtonProps) {
+  return (
+    <button type="button" onClick={onClick} className="focus-menu-item">
+      {icon}
+      <span>{children}</span>
+    </button>
+  )
+}
+
 function playCompletionSound() {
   try {
     const context = new AudioContext()
