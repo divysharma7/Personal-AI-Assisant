@@ -2,9 +2,7 @@
 import { useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useState, useCallback, type ReactNode } from 'react'
-import Sidebar from './Sidebar'
 import TodaySidebar from './TodaySidebar'
-import ArtworkPane from './ArtworkPane'
 import { copy } from '@/lib/copy'
 import { fade, ease, motionTokens } from '@/lib/motion'
 import { useFocusState } from '@/contexts/FocusContext'
@@ -13,7 +11,7 @@ import type { TaskRecord } from '@/hooks/useTasks'
 import { useGlobalShortcuts } from '@/hooks/useGlobalShortcuts'
 import DetailPanelStack from '@/components/tasks/DetailPanelStack'
 
-const SHELL_EXCLUDED = ['/login', '/signup', '/onboarding', '/calendar']
+const SHELL_EXCLUDED = ['/login', '/signup', '/onboarding']
 
 function DesktopOnlyNotice() {
   return (
@@ -40,8 +38,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation()
   const [isDesktop, setIsDesktop] = useState(true)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    try { return localStorage.getItem('laif-sidebar-collapsed') === 'true' }
-    catch { return false }
+    try {
+      const stored = localStorage.getItem('laif-sidebar-collapsed')
+      return stored === null ? true : stored === 'true'
+    }
+    catch { return true }
   })
   const [, setDetailTaskId] = useState<string | null>(null)
   const [panelStack, setPanelStack] = useState<string[]>([])
@@ -69,13 +70,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
       setPanelStack([])
       setSidebarCollapsed(true)
     }
-  }, [pathname])
-
-  // Today and Next 7 Days use a navigation-first workspace. Always reveal its
-  // secondary sidebar when the user enters either page; it can still be
-  // collapsed again from the rail for distraction-free work.
-  useEffect(() => {
-    if (pathname === '/today' || pathname === '/next') setSidebarCollapsed(false)
   }, [pathname])
 
   // Listen for detail-task events from InboxPage
@@ -182,9 +176,9 @@ export default function AppShell({ children }: { children: ReactNode }) {
     .filter(Boolean) as { task: TaskRecord; comments: TaskRecord['comments'] }[]
 
   const showDetailPanel = stackEntries.length > 0
-  const isTaskWorkspace = pathname === '/today' || pathname === '/next'
-  const isHabitWorkspace = pathname === '/habits'
-
+  // Every authenticated workspace uses the same quiet, compact frame. The
+  // 38px rail remains available everywhere and the richer navigation drawer
+  // is one click away without permanently taking attention from the work.
   // No shell for auth/onboarding routes
   const noShell = SHELL_EXCLUDED.some((p) => pathname.startsWith(p))
   if (noShell) return <>{children}</>
@@ -199,7 +193,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div
-      className={`relative flex h-screen ${isTaskWorkspace ? 'gap-0 p-0' : 'gap-[6px] p-[6px]'}`}
+      className="relative flex h-screen gap-0 p-0"
       style={{ backgroundColor: 'var(--bg-canvas)' }}
     >
       <a
@@ -224,30 +218,23 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
       {/* Left: Sidebar — always visible, collapsed or expanded */}
       <motion.div
-        animate={{ width: isTaskWorkspace ? (sidebarCollapsed ? 38 : 243) : (sidebarCollapsed ? 48 : 260) }}
+        animate={{ width: sidebarCollapsed ? 38 : 243 }}
         transition={{ duration: motionTokens.duration.fast, ease: motionTokens.easing.sharp }}
         className="flex-shrink-0 overflow-hidden"
       >
-        {isTaskWorkspace ? (
-          <TodaySidebar
-            collapsed={sidebarCollapsed}
-            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-          />
-        ) : (
-          <Sidebar
-            collapsed={sidebarCollapsed}
-            onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-          />
-        )}
+        <TodaySidebar
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
       </motion.div>
 
       {/* Center: Main content */}
       <main
         id="main-content"
-        className={`relative flex min-w-[540px] flex-1 flex-col overflow-y-auto ${isTaskWorkspace ? 'rounded-none' : 'rounded-[var(--outer-radius,20px)]'}`}
+        className="relative flex min-w-[540px] flex-1 flex-col overflow-y-auto rounded-none"
         style={{
-          backgroundColor: isTaskWorkspace ? '#19191a' : 'var(--bg-pane)',
-          backgroundImage: isTaskWorkspace ? 'none' : 'var(--bg-atmosphere)',
+          backgroundColor: '#19191a',
+          backgroundImage: 'none',
           transition: 'flex 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
@@ -257,43 +244,31 @@ export default function AppShell({ children }: { children: ReactNode }) {
         </div>
       </main>
 
-      {/* Settings needs the full center width for its own secondary navigation. */}
-      {((pathname !== '/settings' && !isTaskWorkspace && !isHabitWorkspace) || showDetailPanel) && (
+      {/* Task details remain contextual; decorative side art is intentionally
+          omitted so every route keeps the user's work as the visual anchor. */}
+      {showDetailPanel && (
         <AnimatePresence mode="wait">
-          {showDetailPanel ? (
-            <motion.div
-              key="detail-panel"
-              initial={{ flex: '0 0 30%', opacity: 0 }}
-              animate={{ flex: '0 0 40%', opacity: 1 }}
-              exit={{ flex: '0 0 30%', opacity: 0 }}
-              transition={{ duration: motionTokens.duration.normal, ease: motionTokens.easing.sharp }}
-              className="h-full overflow-hidden"
-            >
-              <DetailPanelStack
-                stack={stackEntries}
-                onPushTask={handlePushTask}
-                onPopTask={handlePopTask}
-                onPopToIndex={handlePopToIndex}
-                onClose={handleClose}
-                onUpdate={handleUpdateTask}
-                onDelete={handleDeleteTask}
-                onAddComment={handleAddComment}
-                allTasks={tasks}
-                onCreateSubTask={handleCreateSubTask}
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="artwork"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={ease.fast}
-              className="h-full"
-            >
-              <ArtworkPane />
-            </motion.div>
-          )}
+          <motion.div
+            key="detail-panel"
+            initial={{ flex: '0 0 30%', opacity: 0 }}
+            animate={{ flex: '0 0 40%', opacity: 1 }}
+            exit={{ flex: '0 0 30%', opacity: 0 }}
+            transition={{ duration: motionTokens.duration.normal, ease: motionTokens.easing.sharp }}
+            className="h-full overflow-hidden"
+          >
+            <DetailPanelStack
+              stack={stackEntries}
+              onPushTask={handlePushTask}
+              onPopTask={handlePopTask}
+              onPopToIndex={handlePopToIndex}
+              onClose={handleClose}
+              onUpdate={handleUpdateTask}
+              onDelete={handleDeleteTask}
+              onAddComment={handleAddComment}
+              allTasks={tasks}
+              onCreateSubTask={handleCreateSubTask}
+            />
+          </motion.div>
         </AnimatePresence>
       )}
     </div>

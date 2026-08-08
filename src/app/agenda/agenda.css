@@ -1,0 +1,97 @@
+.agenda-workspace {
+  --agenda-border: #2b2b2d;
+  --agenda-surface: #222223;
+  min-height: 100%;
+  color: #e7e7e8;
+  background: #19191a !important;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.agenda-workspace-header {
+  height: 49px;
+  min-height: 49px;
+  padding: 0 16px 0 18px !important;
+  border-bottom-color: #242425 !important;
+}
+
+.agenda-workspace-header > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.agenda-workspace-header > div:first-child > div {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.agenda-workspace-header h1 {
+  margin: 0;
+  color: #efeff0 !important;
+  font-size: 17px !important;
+  font-weight: 650 !important;
+  line-height: 1;
+}
+
+.agenda-workspace-header p {
+  margin: 0;
+  overflow: hidden;
+  color: #77777c !important;
+  font-size: 10px !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agenda-workspace-lane {
+  padding: 18px 20px 80px !important;
+  scrollbar-color: #3d3d40 transparent;
+}
+
+.agenda-workspace-list {
+  max-width: 680px !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.agenda-item-row {
+  min-height: 54px;
+  margin-bottom: 6px;
+  border-top: 1px solid var(--agenda-border);
+  border-right: 1px solid var(--agenda-border);
+  border-bottom: 1px solid var(--agenda-border);
+  border-radius: 8px !important;
+  background: var(--agenda-surface);
+  cursor: default;
+  transition: background-color .15s ease, border-color .15s ease, transform .15s ease !important;
+}
+
+.agenda-item-row[tabindex="0"] { cursor: pointer; }
+.agenda-item-row[tabindex="0"]:hover {
+  border-color: #3b3b3e;
+  transform: translateY(-1px);
+}
+
+.agenda-item-row:focus-visible {
+  outline: 1px solid #6572f5;
+  outline-offset: 2px;
+}
+
+.agenda-priority-tray {
+  padding: 18px 16px !important;
+  border-left-color: #28282a !important;
+  background: #1c1c1d;
+}
+
+@media (max-width: 1279px) {
+  .agenda-workspace-list { max-width: 720px !important; }
+}
+
+@media print {
+  .agenda-workspace-header,
+  .agenda-priority-tray { display: none !important; }
+  .agenda-workspace,
+  .agenda-item-row { color: #111 !important; background: #fff !important; }
+}

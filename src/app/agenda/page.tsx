@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, type RefObject, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, type MouseEvent as ReactMouseEvent, type ReactNode, type RefObject, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronLeft,
@@ -22,11 +22,17 @@ import {
   CalendarClock,
 } from 'lucide-react'
 import { motionTokens, fadeSlideDown, ease as motionEase, scaleIn } from '@/lib/motion'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { useAgenda } from '@/hooks/useAgenda'
 import type { AgendaItem, UnscheduledTask } from '@/hooks/useAgenda'
 import { http } from '@/lib/api/client'
+import { useTasks, type TaskRecord } from '@/hooks/useTasks'
+import { useLists } from '@/hooks/useLists'
+import { useWorkflows } from '@/hooks/useWorkflows'
+import TodayTaskContextMenu from '@/components/today/TodayTaskContextMenu'
+import '@/components/today/task-workspace.css'
+import './agenda.css'
 
 // ── Helpers ────────────────────────────────────────────────────
 
@@ -195,11 +201,17 @@ function AgendaItemRow({
   isNow,
   conflict,
   isTouchDevice,
+  onOpen,
+  onComplete,
+  onContextMenu,
 }: {
   item: AgendaItem
   isNow: boolean
   conflict?: ConflictInfo
   isTouchDevice: boolean
+  onOpen?: () => void
+  onComplete?: () => void
+  onContextMenu?: (event: ReactMouseEvent) => void
 }) {
   const Icon = KIND_ICONS[item.kind] || Clock
   const prefersReduced = useReducedMotion()
@@ -228,7 +240,7 @@ function AgendaItemRow({
       initial={prefersReduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
       animate={prefersReduced ? { opacity: 1 } : { opacity: 1, y: 0 }}
       transition={{ duration: motionTokens.duration.fast }}
-      className="group flex items-start gap-3 px-4 py-3 rounded-xl transition-colors"
+      className="agenda-item-row group flex items-start gap-3 px-4 py-3 rounded-xl transition-colors"
       style={{
         backgroundColor: isNow ? 'var(--overlay-1)' : 'transparent',
         borderLeft: `3px solid ${item.color}`,
@@ -243,6 +255,12 @@ function AgendaItemRow({
       }}
       onFocus={() => setActionsVisible(true)}
       onBlur={() => { if (!isTouchDevice) setActionsVisible(false) }}
+      onClick={item.kind === 'task' ? onOpen : undefined}
+      onContextMenu={item.kind === 'task' ? onContextMenu : undefined}
+      tabIndex={item.kind === 'task' ? 0 : undefined}
+      onKeyDown={(event) => {
+        if (item.kind === 'task' && event.key === 'Enter') onOpen?.()
+      }}
       role="listitem"
       aria-label={srLabel}
     >
@@ -373,6 +391,10 @@ function AgendaItemRow({
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-faint)' }}
             title="Complete task"
             aria-label={`Complete ${item.title}`}
+            onClick={(event) => {
+              event.stopPropagation()
+              onComplete?.()
+            }}
           >
             <CheckCircle2 size={16} strokeWidth={1.5} />
           </button>
@@ -387,8 +409,9 @@ function AgendaItemRow({
             aria-label={`Start focus session for ${item.title}`}
             onClick={(e) => {
               e.stopPropagation()
-              const params = new URLSearchParams({ taskId: item.id, task: item.title })
-              window.location.href = `/focus?${params.toString()}`
+              window.dispatchEvent(new CustomEvent('laif:start-focus', {
+                detail: { taskId: item.id, taskTitle: item.title, mode: 'POMO', targetType: 'TASK' },
+              }))
             }}
           >
             <Focus size={16} strokeWidth={1.5} />
@@ -402,6 +425,10 @@ function AgendaItemRow({
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--text-faint)' }}
             title="Open task"
             aria-label={`Open ${item.title}`}
+            onClick={(event) => {
+              event.stopPropagation()
+              onOpen?.()
+            }}
           >
             <ExternalLink size={16} strokeWidth={1.5} />
           </button>
@@ -1488,6 +1515,18 @@ export default function AgendaPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const scrollRef = useRef<HTMLDivElement>(null)
   const prefersReduced = useReducedMotion()
+  const { tasks, createTask, updateTask, deleteTask, toggleComplete } = useTasks()
+  const { lists } = useLists()
+  const { workflows } = useWorkflows()
+  const [taskMenu, setTaskMenu] = useState<{ taskId: string; x: number; y: number } | null>(null)
+  const [pinnedTaskIds, setPinnedTaskIds] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem('laif-pinned-task-ids')
+      return stored ? JSON.parse(stored) as string[] : []
+    } catch {
+      return []
+    }
+  })
 
   const todayStr = new Date().toISOString().split('T')[0]
   const dateParam = searchParams.get('date') || todayStr
@@ -1512,9 +1551,92 @@ export default function AgendaPage() {
   const [showMobileSheet, setShowMobileSheet] = useState(false)
   const [scheduleTarget, setScheduleTarget] = useState<ScheduleTarget | null>(null)
 
+  useEffect(() => {
+    try { localStorage.setItem('laif-pinned-task-ids', JSON.stringify(pinnedTaskIds)) } catch { /* ignore */ }
+  }, [pinnedTaskIds])
+
+  useEffect(() => {
+    const closeTaskMenu = (event: MouseEvent) => {
+      const target = event.target as Element
+      if (!target.closest('.workspace-task-context-menu')) setTaskMenu(null)
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setTaskMenu(null)
+    }
+    document.addEventListener('mousedown', closeTaskMenu)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('mousedown', closeTaskMenu)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [])
+
   // Fetch agenda from API
   const { agenda, isLoading: apiLoading, isFetching, error: apiError, refetch, invalidate } = useAgenda(selectedDate)
   const dateObj = useMemo(() => new Date(selectedDate + 'T12:00:00'), [selectedDate])
+  const allTags = useMemo(
+    () => Array.from(new Set(tasks.flatMap((task) => task.tags ?? []))).sort((a, b) => a.localeCompare(b)),
+    [tasks],
+  )
+
+  const openTask = useCallback((taskId: string) => {
+    window.dispatchEvent(new CustomEvent('laif:detail-task', { detail: { taskId } }))
+  }, [])
+
+  const openTaskMenu = useCallback((item: AgendaItem, event: ReactMouseEvent) => {
+    if (!tasks.some((task) => task._id === item.id)) return
+    event.preventDefault()
+    event.stopPropagation()
+    setTaskMenu({
+      taskId: item.id,
+      x: Math.max(8, Math.min(event.clientX, window.innerWidth - 408)),
+      y: Math.max(8, Math.min(event.clientY, window.innerHeight - 510)),
+    })
+  }, [tasks])
+
+  const startTaskFocus = useCallback((task: TaskRecord, mode: 'POMO' | 'STOPWATCH') => {
+    window.dispatchEvent(new CustomEvent('laif:start-focus', {
+      detail: { taskId: task._id, taskTitle: task.title, mode, targetType: 'TASK' },
+    }))
+  }, [])
+
+  const addSubtask = useCallback(async (task: TaskRecord) => {
+    const subtask = await createTask({
+      title: 'New subtask',
+      parentId: task._id,
+      status: 'todo',
+      priority: task.priority,
+      dueDate: task.dueDate,
+      listId: task.listId,
+      workflowId: task.workflowId,
+      sectionId: task.sectionId,
+    })
+    openTask(subtask._id)
+  }, [createTask, openTask])
+
+  const duplicateTask = useCallback(async (task: TaskRecord) => {
+    await createTask({
+      title: `${task.title} copy`,
+      description: task.description,
+      status: 'todo',
+      priority: task.priority,
+      dueDate: task.dueDate,
+      listId: task.listId,
+      workflowId: task.workflowId,
+      sectionId: task.sectionId,
+      tags: task.tags,
+      estimatedEffort: task.estimatedEffort,
+      repeat: task.repeat,
+    })
+  }, [createTask])
+
+  const taskRowActions = useCallback((item: AgendaItem) => ({
+    onOpen: () => openTask(item.id),
+    onComplete: () => {
+      void toggleComplete(item.id).then(() => invalidate())
+    },
+    onContextMenu: (event: ReactMouseEvent) => openTaskMenu(item, event),
+  }), [invalidate, openTask, openTaskMenu, toggleComplete])
 
   // Derive loading/error states
   const loading = apiLoading || isFetching
@@ -1794,10 +1916,10 @@ export default function AgendaPage() {
 
   return (
     <ToastProvider>
-    <div className="flex flex-col h-full" style={{ background: 'var(--bg-canvas)' }}>
+    <div className="agenda-workspace flex flex-col h-full" style={{ background: 'var(--bg-canvas)' }}>
       {/* ── Header ── */}
       <div
-        className="flex items-center justify-between px-6 py-4 flex-shrink-0"
+        className="agenda-workspace-header flex items-center justify-between px-6 py-4 flex-shrink-0"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
         <div className="flex items-center gap-4">
@@ -1858,16 +1980,16 @@ export default function AgendaPage() {
       </div>
 
       {/* ── Content ── */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="agenda-workspace-body flex flex-1 overflow-hidden">
         {/* ── Main lane ── */}
         <div
           ref={scrollRef}
           data-agenda-scroll="true"
-          className="flex-1 overflow-y-auto px-6 py-4 relative"
+          className="agenda-workspace-lane flex-1 overflow-y-auto px-6 py-4 relative"
           onDragOver={handleAgendaDragOver}
           onDrop={handleAgendaDrop}
         >
-          <div className="max-w-[560px] mx-auto">
+          <div className="agenda-workspace-list max-w-[560px] mx-auto">
 
             {/* Loading state */}
             {loading && <LoadingState />}
@@ -1909,6 +2031,7 @@ export default function AgendaPage() {
                         item={item}
                         isNow={false}
                         isTouchDevice={isTouchDevice}
+                        {...taskRowActions(item)}
                       />
                     ))}
                   </div>
@@ -1933,6 +2056,7 @@ export default function AgendaPage() {
                                 isNow={false}
                                 conflict={conflicts.get(item.id)}
                                 isTouchDevice={isTouchDevice}
+                                {...taskRowActions(item)}
                               />
                             ))}
                           </div>
@@ -1958,6 +2082,7 @@ export default function AgendaPage() {
                                 isNow={false}
                                 conflict={conflicts.get(item.id)}
                                 isTouchDevice={isTouchDevice}
+                                {...taskRowActions(item)}
                               />
                             ))}
                           </div>
@@ -1987,6 +2112,7 @@ export default function AgendaPage() {
                             isNow={isNow}
                             conflict={conflicts.get(item.id)}
                             isTouchDevice={isTouchDevice}
+                            {...taskRowActions(item)}
                           />
                         </div>
                       </div>
@@ -2045,7 +2171,7 @@ export default function AgendaPage() {
 
         {/* ── Priority tray (desktop only) ── */}
         <div
-          className="hidden xl:block w-[280px] flex-shrink-0 overflow-y-auto py-4 pr-6"
+          className="agenda-priority-tray hidden xl:block w-[280px] flex-shrink-0 overflow-y-auto py-4 pr-6"
           style={{ borderLeft: '1px solid var(--border)' }}
         >
           <UnscheduledTray
@@ -2122,6 +2248,44 @@ export default function AgendaPage() {
       )}
 
       {/* ── Mobile bottom sheet ── */}
+      {taskMenu && (() => {
+        const task = tasks.find((item) => item._id === taskMenu.taskId)
+        if (!task) return null
+        const refreshAfter = (promise: Promise<unknown>) => { void promise.then(() => invalidate()) }
+        return (
+          <TodayTaskContextMenu
+            task={task}
+            position={{ x: taskMenu.x, y: taskMenu.y }}
+            lists={lists}
+            workflows={workflows}
+            allTags={allTags}
+            pinned={pinnedTaskIds.includes(task._id)}
+            onClose={() => setTaskMenu(null)}
+            onDateChange={(dueDate) => refreshAfter(updateTask(task._id, { dueDate }))}
+            onPriorityChange={(priority) => refreshAfter(updateTask(task._id, { priority: priority as TaskRecord['priority'] }))}
+            onAddSubtask={() => void addSubtask(task)}
+            onTogglePin={() => setPinnedTaskIds((current) => current.includes(task._id) ? current.filter((id) => id !== task._id) : [...current, task._id])}
+            onWontDo={() => refreshAfter(updateTask(task._id, { status: 'dropped' }))}
+            onMoveToList={(listId) => refreshAfter(updateTask(task._id, { listId, workflowId: null, sectionId: null }))}
+            onMoveToWorkflow={(workflowId, sectionId) => refreshAfter(updateTask(task._id, { workflowId, sectionId, listId: null }))}
+            onTagsChange={(tags) => void updateTask(task._id, { tags })}
+            onStartFocus={(mode) => startTaskFocus(task, mode)}
+            onDuplicate={() => void duplicateTask(task)}
+            onCopyLink={() => void navigator.clipboard?.writeText(`${window.location.origin}/agenda?task=${task._id}`)}
+            onConvertToNote={() => {
+              void updateTask(task._id, {
+                notes: task.notes ?? { type: 'doc', content: [{ type: 'paragraph' }] },
+                tags: Array.from(new Set([...(task.tags ?? []), 'note'])),
+              })
+              openTask(task._id)
+            }}
+            onDelete={() => {
+              if (window.confirm(`Delete “${task.title}”?`)) refreshAfter(deleteTask(task._id))
+            }}
+          />
+        )
+      })()}
+
       <AnimatePresence>
         {showMobileSheet && (
           <BottomSheetTray

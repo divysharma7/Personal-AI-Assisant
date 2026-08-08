@@ -20,7 +20,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent as ReactMouseEvent } from 'react'
 import { format, isSameDay } from 'date-fns'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useHabits, type Habit } from '@/hooks/useHabits'
 import { useLists } from '@/hooks/useLists'
 import { useTasks, type TaskRecord } from '@/hooks/useTasks'
@@ -29,7 +29,8 @@ import TaskViewMenu, { type WorkspaceView } from './TaskViewMenu'
 import TodayTaskContextMenu from './TodayTaskContextMenu'
 import './task-workspace.css'
 
-type WorkspaceRange = 'today' | 'next'
+type WorkspaceRange = 'today' | 'next' | 'all'
+type AllTasksFilter = 'all' | 'upcoming' | 'done'
 
 interface TaskWorkspaceProps {
   range: WorkspaceRange
@@ -188,7 +189,13 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
   const { lists } = useLists()
   const { workflows } = useWorkflows()
   const navigate = useNavigate()
-  const [view, setView] = useState<WorkspaceView>('columns')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [allTasksFilter, setAllTasksFilter] = useState<AllTasksFilter>(() => {
+    if (searchParams.get('status') === 'done') return 'done'
+    if (searchParams.get('filter') === 'upcoming') return 'upcoming'
+    return 'all'
+  })
+  const [view, setView] = useState<WorkspaceView>(() => range === 'all' ? 'list' : 'columns')
   const [showCompleted, setShowCompleted] = useState(true)
   const [showDetails, setShowDetails] = useState(true)
   const [compact, setCompact] = useState(false)
@@ -247,6 +254,20 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
     try { localStorage.setItem('laif-pinned-task-ids', JSON.stringify(pinnedTaskIds)) } catch { /* ignore */ }
   }, [pinnedTaskIds])
 
+  useEffect(() => {
+    if (range !== 'all') return
+    const status = searchParams.get('status')
+    const filter = searchParams.get('filter')
+    setAllTasksFilter(status === 'done' ? 'done' : filter === 'upcoming' ? 'upcoming' : 'all')
+  }, [range, searchParams])
+
+  const changeAllTasksFilter = (filter: AllTasksFilter) => {
+    setAllTasksFilter(filter)
+    if (filter === 'done') setSearchParams({ status: 'done' }, { replace: true })
+    else if (filter === 'upcoming') setSearchParams({ filter: 'upcoming' }, { replace: true })
+    else setSearchParams({}, { replace: true })
+  }
+
   const listNames = useMemo(() => new Map(lists.map((list) => [list._id, list.title])), [lists])
 
   const visibleTasks = useMemo(() => tasks
@@ -254,6 +275,11 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
     .filter((task) => task.status !== 'dropped')
     .filter((task) => {
       const due = parseTaskDate(task.dueDate)
+      if (range === 'all') {
+        if (allTasksFilter === 'done') return isDone(task.status)
+        if (allTasksFilter === 'upcoming') return !isDone(task.status) && Boolean(due && due >= start)
+        return true
+      }
       if (range === 'today') {
         if (isDone(task.status)) {
           const completedAt = parseTaskDate(task.completedAt)
@@ -266,9 +292,12 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
     .sort((a, b) => {
       const pinDifference = Number(pinnedTaskIds.includes(b._id)) - Number(pinnedTaskIds.includes(a._id))
       if (pinDifference !== 0) return pinDifference
-      return (parseTaskDate(a.dueDate)?.getTime() ?? 0) - (parseTaskDate(b.dueDate)?.getTime() ?? 0)
+      const aDate = parseTaskDate(a.dueDate)?.getTime() ?? Number.MAX_SAFE_INTEGER
+      const bDate = parseTaskDate(b.dueDate)?.getTime() ?? Number.MAX_SAFE_INTEGER
+      if (aDate !== bDate) return aDate - bDate
+      return (a.title || '').localeCompare(b.title || '')
     }),
-  [now, pinnedTaskIds, range, rangeEnd, start, tasks, todayEnd])
+  [allTasksFilter, now, pinnedTaskIds, range, rangeEnd, start, tasks, todayEnd])
 
   const activeTasks = useMemo(() => visibleTasks.filter((task) => !isDone(task.status)), [visibleTasks])
   const completedTasks = useMemo(() => visibleTasks.filter((task) => isDone(task.status)), [visibleTasks])
@@ -377,7 +406,12 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
     event.preventDefault()
     const title = newTaskTitle.trim()
     if (!title) return
-    await createTask({ title, status: 'todo', priority: 'none', dueDate: now.toISOString() })
+    await createTask({
+      title,
+      status: 'todo',
+      priority: 'none',
+      dueDate: range === 'all' ? null : now.toISOString(),
+    })
     setNewTaskTitle('')
     setComposerOpen(false)
   }
@@ -395,12 +429,16 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
     />
   ))
 
-  const loading = isLoading || habitsLoading
-  const title = range === 'today' ? 'Today' : 'Next 7 Days'
-  const dateLabel = range === 'today' ? format(now, 'EEEE, MMMM d') : `${format(start, 'MMM d')} – ${format(rangeEnd, 'MMM d')}`
+  const loading = isLoading || (range !== 'all' && habitsLoading)
+  const title = range === 'today' ? 'Today' : range === 'next' ? 'Next 7 Days' : 'Tasks'
+  const dateLabel = range === 'today'
+    ? format(now, 'EEEE, MMMM d')
+      : range === 'next'
+      ? `${format(start, 'MMM d')} – ${format(rangeEnd, 'MMM d')}`
+      : allTasksFilter === 'done' ? 'Completed work' : allTasksFilter === 'upcoming' ? 'Upcoming work' : 'All active work'
 
   return (
-    <div className={`task-workspace view-${view}${compact ? ' is-compact' : ''}`}>
+    <div className={`task-workspace range-${range} view-${view}${compact ? ' is-compact' : ''}`}>
       <header className="task-workspace-header">
         <div className="task-workspace-title">
           <ListTodo size={18} />
@@ -434,8 +472,31 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
         <section className="task-date-section">
           <div className="task-date-heading">
             <div><h2>{dateLabel}</h2><span>{activeTasks.length + completedTasks.length}</span></div>
-            <button type="button" onClick={() => setComposerOpen(true)} aria-label="Add task"><Plus size={17} /></button>
+            {range !== 'all' || allTasksFilter !== 'done' ? (
+              <button type="button" onClick={() => setComposerOpen(true)} aria-label="Add task"><Plus size={17} /></button>
+            ) : null}
           </div>
+
+          {range === 'all' ? (
+            <div className="workspace-filter-bar" role="tablist" aria-label="Task filters">
+              {([
+                ['all', 'Open'],
+                ['upcoming', 'Upcoming'],
+                ['done', 'Completed'],
+              ] as const).map(([filter, label]) => (
+                <button
+                  key={filter}
+                  type="button"
+                  role="tab"
+                  aria-selected={allTasksFilter === filter}
+                  className={allTasksFilter === filter ? 'is-active' : ''}
+                  onClick={() => changeAllTasksFilter(filter)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          ) : null}
 
           {loading ? (
             <div className="workspace-loading"><span /><span /><span /></div>
@@ -453,12 +514,12 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
                   </section>
                 )) : (
                   <>
-                    <div className="workspace-column-heading"><h3>Tasks</h3><span>{activeTasks.length}</span></div>
+                    <div className="workspace-column-heading"><h3>{range === 'all' ? 'Open tasks' : 'Tasks'}</h3><span>{activeTasks.length}</span></div>
                     {renderTasks(activeTasks)}
                   </>
                 )}
 
-                {composerOpen && (
+                {composerOpen && allTasksFilter !== 'done' && (
                   <form className="workspace-composer" onSubmit={submitTask}>
                     <Circle size={15} />
                     <input autoFocus value={newTaskTitle} onChange={(event) => setNewTaskTitle(event.target.value)} placeholder="What needs to be done?" onKeyDown={(event) => { if (event.key === 'Escape') setComposerOpen(false) }} />
@@ -466,11 +527,11 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
                   </form>
                 )}
 
-                {range === 'today' && activeTasks.length === 0 && !composerOpen ? (
+                {(range === 'today' || (range === 'all' && allTasksFilter !== 'done')) && activeTasks.length === 0 && !composerOpen ? (
                   <button type="button" className="workspace-empty-add" onClick={() => setComposerOpen(true)}><Plus size={15} /> Add a task</button>
                 ) : null}
 
-                {range === 'today' && showCompleted && completedTasks.length > 0 && (
+                {(range === 'today' || range === 'all') && showCompleted && completedTasks.length > 0 && (
                   <section className="workspace-completed-group">
                     <button type="button" className="workspace-completed-toggle" onClick={() => setCompletedOpen((open) => !open)}>
                       <ChevronDown size={13} className={completedOpen ? '' : 'is-closed'} /> Completed <span>{completedTasks.length}</span>
@@ -484,7 +545,7 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
                 ) : null}
               </div>
 
-              <aside className="workspace-habit-column">
+              {range !== 'all' ? <aside className="workspace-habit-column">
                 <div className="workspace-column-heading"><h3>Habit</h3><span>{todaysHabits.length}</span></div>
                 {todaysHabits.map((habit) => (
                   <HabitCard
@@ -506,7 +567,7 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
                 {todaysHabits.length === 0 ? (
                   <button className="workspace-empty-add" type="button" onClick={() => navigate('/habits')}><Sparkles size={15} /> Add a habit</button>
                 ) : null}
-              </aside>
+              </aside> : null}
             </div>
           )}
         </section>
@@ -564,7 +625,7 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
             onTagsChange={(tags) => void updateTask(task._id, { tags })}
             onStartFocus={(mode) => startTaskFocus(task, mode)}
             onDuplicate={() => void duplicateTask(task)}
-            onCopyLink={() => void navigator.clipboard?.writeText(`${window.location.origin}/today?task=${task._id}`)}
+            onCopyLink={() => void navigator.clipboard?.writeText(`${window.location.origin}${window.location.pathname}?task=${task._id}`)}
             onConvertToNote={() => {
               void updateTask(task._id, {
                 notes: task.notes ?? { type: 'doc', content: [{ type: 'paragraph' }] },

@@ -9,6 +9,7 @@ import {
   Clock3,
   Focus,
   Inbox,
+  ListTodo,
   Search,
   Settings,
   Sparkles,
@@ -18,6 +19,7 @@ import { useMemo, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useLists } from '@/hooks/useLists'
 import { useTasks } from '@/hooks/useTasks'
+import '@/components/today/task-workspace.css'
 
 interface TodaySidebarProps {
   collapsed: boolean
@@ -76,6 +78,7 @@ export default function TodaySidebar({ collapsed, onToggleCollapse }: TodaySideb
       }).length,
       next: activeTasks.filter((task) => inRange(task.dueDate, nextEnd)).length,
       inbox: activeTasks.filter((task) => !task.listId).length,
+      tasks: activeTasks.length,
       completed: tasks.filter((task) => !task.isHabit && isDone(task.status)).length,
       list: new Map(lists.map((list) => [
         list._id,
@@ -122,6 +125,12 @@ export default function TodaySidebar({ collapsed, onToggleCollapse }: TodaySideb
             </NavLink>
             <NavLink to="/next" className={({ isActive }) => `today-sidebar-row${isActive ? ' is-active' : ''}`}>
               <CalendarDays size={15} /><span>Next 7 Days</span><small>{counts.next || ''}</small>
+            </NavLink>
+            <NavLink to="/agenda" className={({ isActive }) => `today-sidebar-row${isActive ? ' is-active' : ''}`}>
+              <Clock3 size={15} /><span>Agenda</span><small />
+            </NavLink>
+            <NavLink to="/tasks" className={({ isActive }) => `today-sidebar-row${isActive ? ' is-active' : ''}`}>
+              <ListTodo size={15} /><span>All Tasks</span><small>{counts.tasks || ''}</small>
             </NavLink>
             <NavLink to="/" className={({ isActive }) => `today-sidebar-row${isActive && pathname === '/' ? ' is-active' : ''}`}>
               <Inbox size={15} /><span>Inbox</span><small>{counts.inbox || ''}</small>

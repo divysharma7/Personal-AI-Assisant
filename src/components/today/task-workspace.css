@@ -182,6 +182,31 @@
 .workspace-columns { display: grid; grid-template-columns: 222px 222px; gap: 20px; align-items: start; }
 .task-workspace.view-list .workspace-columns { grid-template-columns: minmax(360px, 464px); }
 .task-workspace.view-list .workspace-habit-column { margin-top: 12px; }
+.task-workspace.range-all .task-date-section { max-width: 680px; }
+.task-workspace.range-all .task-date-heading { width: min(100%, 560px); }
+.task-workspace.range-all .workspace-columns { grid-template-columns: minmax(360px, 560px); }
+.task-workspace.range-all .workspace-card { min-height: 46px; }
+.workspace-filter-bar {
+  display: flex;
+  width: min(100%, 560px);
+  align-items: center;
+  gap: 5px;
+  margin: -3px 0 14px;
+}
+.workspace-filter-bar button {
+  min-height: 27px;
+  padding: 0 10px;
+  border: 1px solid #303033;
+  border-radius: 7px;
+  color: #85858a;
+  background: transparent;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease, background-color .15s ease;
+}
+.workspace-filter-bar button:hover { color: #d7d7d9; border-color: #3d3d40; }
+.workspace-filter-bar button.is-active { color: #f1f1f2; border-color: #414145; background: #2c2c2e; }
 .workspace-task-column, .workspace-habit-column { min-width: 0; }
 .workspace-column-heading { display: flex; align-items: center; gap: 5px; height: 24px; padding: 0 1px; }
 .workspace-column-heading h3 { margin: 0; color: #ececed; font-size: 12px; font-weight: 650; }
