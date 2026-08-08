@@ -205,6 +205,19 @@ export default function FocusPage() {
       className="min-h-screen"
       style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-primary)' }}
     >
+      {/* Loading State */}
+      {isLoadingDashboard && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'var(--bg-canvas)' }}>
+          <div className="flex flex-col items-center gap-4">
+            <div
+              className="h-8 w-8 animate-spin rounded-full border-3"
+              style={{ borderColor: 'var(--border)', borderTopColor: 'var(--accent)' }}
+            />
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading Focus...</p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header
         className="flex items-center justify-between px-5 py-4 sm:px-8"
