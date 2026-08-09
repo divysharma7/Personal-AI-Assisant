@@ -51,16 +51,13 @@ export default function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       >
-        <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-[#f15b43]">
+        <p className="auth-eyebrow mb-3">
           Continue your day
         </p>
-        <h2
-          className="text-[44px] font-normal leading-none tracking-[-0.045em]"
-          style={{ fontFamily: "'Instrument Serif', serif" }}
-        >
+        <h2 className="auth-heading">
           Pick up where you left off.
         </h2>
-        <p className="mb-9 mt-4 text-sm leading-6 text-black/50">
+        <p className="auth-body mb-9 mt-4">
           Your agenda, priorities, and focus sessions are waiting.
         </p>
 
@@ -72,7 +69,7 @@ export default function LoginPage() {
               exit={{ opacity: 0 }}
               role="alert"
               aria-live="assertive"
-              className="mb-5 border-l-2 border-[#d9422d] bg-[#d9422d]/[0.06] px-4 py-3 text-sm text-[#9c2c1d]"
+              className="auth-error mb-5"
             >
               {error}
             </motion.div>
@@ -81,7 +78,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="login-username" className="mb-2 block text-xs font-semibold">
+            <label htmlFor="login-username" className="auth-label">
               Email or username
             </label>
             <input
@@ -90,13 +87,13 @@ export default function LoginPage() {
               value={username}
               onChange={(event) => setUsername(event.target.value)}
               autoComplete="username"
-              className="w-full rounded-none border-0 border-b border-black/20 bg-transparent px-0 py-3 text-[15px] text-[#191915] outline-none placeholder:text-black/30 focus:border-[#191915]"
+              className="auth-input"
               placeholder="you@example.com"
             />
           </div>
 
           <div>
-            <label htmlFor="login-password" className="mb-2 block text-xs font-semibold">
+            <label htmlFor="login-password" className="auth-label">
               Password
             </label>
             <div className="relative">
@@ -106,14 +103,14 @@ export default function LoginPage() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 autoComplete="current-password"
-                className="w-full rounded-none border-0 border-b border-black/20 bg-transparent px-0 py-3 pr-11 text-[15px] text-[#191915] outline-none placeholder:text-black/30 focus:border-[#191915]"
+                className="auth-input pr-11"
                 placeholder="Enter your password"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((value) => !value)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
-                className="absolute right-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-black/40 hover:bg-black/[0.06] hover:text-black"
+                className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-[var(--brand-text-muted)] hover:bg-white/[0.05] hover:text-[var(--brand-text)]"
               >
                 {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
               </button>
@@ -123,18 +120,18 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading || !username.trim() || !password}
-            className="flex w-full items-center justify-center rounded-full bg-[#191915] px-5 py-3.5 text-sm font-semibold text-white hover:bg-[#f15b43] disabled:cursor-not-allowed disabled:opacity-40"
+            className="auth-primary-button w-full"
           >
             {loading ? 'Opening Life OS…' : 'Enter Life OS'}
           </button>
         </form>
 
-        <p className="mt-7 text-sm text-black/50">
+        <p className="mt-7 text-sm text-[var(--brand-text-secondary)]">
           New here?{' '}
           <Link
             to="/signup"
             state={location.state}
-            className="font-semibold text-[#191915] underline decoration-black/25 underline-offset-4 hover:decoration-black"
+            className="auth-link"
           >
             Create your workspace
           </Link>

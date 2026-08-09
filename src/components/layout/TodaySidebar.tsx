@@ -27,6 +27,7 @@ import { useLists } from '@/hooks/useLists'
 import { useTasks } from '@/hooks/useTasks'
 import { useWorkflows } from '@/hooks/useWorkflows'
 import { CreateWorkflowDialog } from '@/components/tasks/kanban/CreateWorkflowDialog'
+import LifeOSMark from '@/components/brand/LifeOSMark'
 import '@/components/today/task-workspace.css'
 
 interface TodaySidebarProps {
@@ -132,7 +133,7 @@ export default function TodaySidebar({ collapsed, onToggleCollapse }: TodaySideb
     <aside className="today-sidebar" aria-label="Workspace navigation">
       <div className="today-icon-rail">
         <button className="today-avatar" type="button" onClick={() => navigate('/profile')} aria-label="Open profile">
-          <span>LA</span>
+          <LifeOSMark compact size="sm" />
         </button>
 
         <div className="today-rail-primary">

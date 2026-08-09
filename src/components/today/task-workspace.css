@@ -24,14 +24,15 @@
 .today-avatar {
   width: 34px;
   height: 34px;
-  border: 1px solid var(--border-strong);
+  display: grid;
+  place-items: center;
+  border: 0;
   border-radius: 7px;
-  background: var(--avatar-bg);
-  color: var(--text-on-dark);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .03em;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color .15s ease, transform .15s ease;
 }
+.today-avatar:hover { background: var(--bg-hover); transform: translateY(-1px); }
 
 .today-rail-primary {
   display: flex;

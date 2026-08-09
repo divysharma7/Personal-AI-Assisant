@@ -1,17 +1,158 @@
 .auth-brand-shell {
-  --brand-paper: #f3efe6;
-  --brand-paper-bright: #f7f3ea;
-  --brand-panel: #dedbcf;
-  --brand-ink: #191915;
-  --brand-coral: #f15b43;
-  --brand-lime: #c8ee72;
-  --brand-violet: #7d78d7;
-  --brand-error: #a72f20;
+  --brand-bg: #171718;
+  --brand-panel: #1c1c1e;
+  --brand-panel-raised: #222225;
+  --brand-panel-soft: #262629;
+  --brand-line: #313136;
+  --brand-line-strong: #414148;
+  --brand-text: #f4f4f5;
+  --brand-text-secondary: #b1b1b7;
+  --brand-text-muted: #808087;
+  --brand-indigo: #6472ff;
+  --brand-indigo-hover: #7481ff;
+  --brand-indigo-soft: rgba(100, 114, 255, 0.13);
+  --brand-danger: #ef625b;
   min-height: 100vh;
-  background: var(--brand-paper);
-  color: var(--brand-ink);
+  color-scheme: dark;
+  background:
+    radial-gradient(circle at 78% 14%, rgba(100, 114, 255, 0.07), transparent 31rem),
+    var(--brand-bg);
+  color: var(--brand-text);
 }
 
 .auth-brand-shell :focus-visible {
-  outline-color: var(--brand-coral);
+  outline: 2px solid var(--brand-indigo);
+  outline-offset: 3px;
+}
+
+.auth-brand-aside {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(160deg, rgba(100, 114, 255, 0.075), transparent 42%),
+    var(--brand-panel);
+}
+
+.auth-brand-aside::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: linear-gradient(to bottom, black, transparent 80%);
+}
+
+.auth-orbit-watermark {
+  position: absolute;
+  right: -102px;
+  bottom: -112px;
+  width: 340px;
+  height: 340px;
+  border: 1px solid rgba(100, 114, 255, 0.2);
+  border-radius: 44%;
+  transform: rotate(-12deg);
+  box-shadow:
+    0 0 0 40px rgba(100, 114, 255, 0.026),
+    0 0 0 80px rgba(100, 114, 255, 0.018);
+}
+
+.auth-eyebrow {
+  color: var(--brand-indigo-hover);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.auth-heading {
+  color: var(--brand-text);
+  font-size: clamp(34px, 4.4vw, 52px);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+}
+
+.auth-body {
+  color: var(--brand-text-secondary);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.auth-label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--brand-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.auth-input {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--brand-line);
+  border-radius: 10px;
+  background: var(--brand-panel-raised);
+  padding: 11px 13px;
+  color: var(--brand-text);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.auth-input::placeholder { color: var(--brand-text-muted); }
+.auth-input:hover { border-color: var(--brand-line-strong); }
+.auth-input:focus {
+  border-color: var(--brand-indigo);
+  background: var(--brand-panel-soft);
+  box-shadow: 0 0 0 3px var(--brand-indigo-soft);
+}
+
+.auth-primary-button {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 10px;
+  background: var(--brand-indigo);
+  padding: 0 18px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+
+.auth-primary-button:hover:not(:disabled) {
+  background: var(--brand-indigo-hover);
+  box-shadow: 0 8px 24px rgba(100, 114, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.auth-primary-button:disabled { cursor: not-allowed; opacity: 0.42; }
+
+.auth-link {
+  color: var(--brand-text);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--brand-line-strong);
+  text-underline-offset: 4px;
+}
+
+.auth-link:hover { text-decoration-color: var(--brand-indigo); }
+
+.auth-error {
+  border: 1px solid color-mix(in srgb, var(--brand-danger) 42%, var(--brand-line));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--brand-danger) 8%, transparent);
+  padding: 10px 12px;
+  color: #ffaaa5;
+  font-size: 12px;
+}
+
+@media (max-width: 1023px) {
+  .auth-brand-shell { background: var(--brand-bg); }
 }
