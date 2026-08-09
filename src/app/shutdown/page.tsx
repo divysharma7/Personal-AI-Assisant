@@ -498,7 +498,7 @@ export default function ShutdownPage() {
             : 'All tasks resolved'
         }
         active
-        accent={undecidedTasks.length > 0 ? '#f59e0b' : 'var(--success)'}
+        accent={undecidedTasks.length > 0 ? 'var(--warning)' : 'var(--success)'}
       >
         {unfinishedTasks.length === 0 ? (
           <div className="flex items-center gap-3 py-2">
@@ -519,8 +519,8 @@ export default function ShutdownPage() {
                   role="listitem"
                   className="rounded-xl px-4 py-3"
                   style={{
-                    backgroundColor: hasDecision ? 'var(--overlay-1)' : 'color-mix(in srgb, #f59e0b 6%, transparent)',
-                    border: hasDecision ? '1px solid transparent' : '1px solid color-mix(in srgb, #f59e0b 20%, transparent)',
+                    backgroundColor: hasDecision ? 'var(--overlay-1)' : 'var(--warning-soft)',
+                    border: hasDecision ? '1px solid transparent' : '1px solid var(--warning-border)',
                     transition: 'background-color 150ms ease, border-color 150ms ease',
                   }}
                 >
@@ -601,9 +601,9 @@ export default function ShutdownPage() {
         {undecidedTasks.length > 0 && (
           <div
             className="flex items-center gap-2 mt-3 rounded-lg px-3 py-2"
-            style={{ backgroundColor: 'color-mix(in srgb, #f59e0b 6%, transparent)' }}
+            style={{ backgroundColor: 'var(--warning-soft)' }}
           >
-            <AlertCircle size={14} strokeWidth={1.5} style={{ color: '#f59e0b', flexShrink: 0 }} />
+            <AlertCircle size={14} strokeWidth={1.5} style={{ color: 'var(--warning)', flexShrink: 0 }} />
             <p className="text-[12px]" style={{ color: 'var(--text-muted)' }}>
               Every unfinished task needs a decision before you can close the day.
             </p>
@@ -617,7 +617,7 @@ export default function ShutdownPage() {
         title="Tomorrow preview"
         subtitle="What&apos;s already on the calendar"
         active
-        accent="var(--accent-purple, #8f89fa)"
+        accent="var(--accent-purple)"
       >
         {tomorrowEvents.length === 0 && tomorrowTasks.length === 0 ? (
           <div className="py-2">

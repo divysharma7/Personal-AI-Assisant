@@ -147,15 +147,15 @@ export default function HabitDetail({ habit, onToggleToday, onEdit, onArchive, o
         flexDirection: 'column',
         height: '100%',
         overflowY: 'auto',
-        padding: '24px 28px',
+        padding: '18px 20px',
         backgroundColor: 'var(--bg-base)',
       }}
     >
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 31, marginBottom: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 32, lineHeight: 1 }}>{habit.icon}</span>
-          <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+          <span style={{ fontSize: 22, lineHeight: 1 }}>{habit.icon}</span>
+          <h2 className="type-page-title" style={{ color: 'var(--text-primary)', margin: 0 }}>
             {habit.name}
           </h2>
         </div>

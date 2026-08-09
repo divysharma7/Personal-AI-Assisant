@@ -198,38 +198,32 @@ export default function InboxPage() {
   }, [detailTaskId])
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto">
-    <div className="mx-auto w-full max-w-[720px] px-6 py-8">
+    <div className="workspace-page overflow-y-auto">
+    <div className="w-full max-w-[820px] px-5 py-5">
       {/* ── Dashboard Header ── */}
-      <div className="mb-8">
+      <div className="mb-6">
         <div className="flex items-start justify-between mb-2">
-          <h1 style={{
-            color: 'var(--text-primary)',
-            fontSize: 36,
-            fontWeight: 700,
-            fontFamily: 'Inter, system-ui, sans-serif',
-            letterSpacing: '-0.02em',
-          }}>
+          <h1 className="type-page-title" style={{ color: 'var(--text-primary)' }}>
             {greeting}
           </h1>
           <ClockWeatherWidget />
         </div>
-        <p className="text-[15px] mb-1" style={{ color: 'var(--text-muted)' }}>
+        <p className="type-meta mb-0.5" style={{ color: 'var(--text-muted)' }}>
           {todayDate}
         </p>
-        <p className="text-[13px]" style={{ color: 'var(--text-faint)' }}>
+        <p className="type-meta" style={{ color: 'var(--text-faint)' }}>
           {glanceLine}
         </p>
       </div>
 
       {/* ── AI Brief ── */}
-      <div className="mb-8">
+      <div className="mb-6">
         <AIBriefWidget />
       </div>
 
           {/* ── Habits Strip ── */}
           {activeHabits.length > 0 && (
-            <div className="mb-8">
+            <div className="mb-6">
               <div className="flex items-center gap-2 mb-3">
                 <Flame size={14} strokeWidth={1.5} style={{ color: 'var(--text-faint)' }} />
                 <span className="text-[12px] font-medium" style={{ color: 'var(--text-faint)' }}>
@@ -247,12 +241,12 @@ export default function InboxPage() {
                       key={habit._id}
                       {...buttonPress}
                       onClick={() => toggleHabitToday(habit)}
-                      className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium cursor-pointer"
+                      className="surface-card flex min-h-8 cursor-pointer items-center gap-1.5 px-2.5 py-1.5 text-[12px] font-medium"
                       style={{
                         border: `1.5px solid ${checked ? habit.color : 'var(--border)'}`,
                         backgroundColor: checked ? `${habit.color}18` : 'transparent',
                         color: checked ? habit.color : 'var(--text-muted)',
-                        transition: 'all 150ms ease',
+                        transition: 'color 150ms ease, border-color 150ms ease, background-color 150ms ease',
                       }}
                     >
                       <span style={{ fontSize: 14 }}>{habit.icon || '🔥'}</span>
@@ -267,14 +261,12 @@ export default function InboxPage() {
                 })}
                 <Link
                   to="/habits"
-                  className="flex items-center gap-1 rounded-full px-3 py-1.5 text-[13px] font-medium no-underline"
+                  className="surface-card flex min-h-8 items-center gap-1 px-2.5 py-1.5 text-[12px] font-medium no-underline hover:border-[var(--accent)] hover:text-[var(--accent)]"
                   style={{
                     border: '1.5px dashed var(--border)',
                     color: 'var(--text-faint)',
-                    transition: 'all 150ms ease',
+                    transition: 'color 150ms ease, border-color 150ms ease',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-faint)' }}
                 >
                   View all
                 </Link>
@@ -284,7 +276,7 @@ export default function InboxPage() {
 
           {/* ── Today's Tasks ── */}
           {todayTasks.length > 0 && (
-            <div className="mb-8">
+            <div className="mb-6">
               <div className="flex items-center gap-2 mb-3">
                 <Calendar size={14} strokeWidth={1.5} style={{ color: 'var(--text-faint)' }} />
                 <span className="text-[12px] font-medium" style={{ color: 'var(--text-faint)' }}>
@@ -322,18 +314,16 @@ export default function InboxPage() {
             {/* ── New task row ── */}
             <div style={{ marginBottom: 20 }}>
               <div
+                className="surface-card hover:bg-[var(--bg-hover)]"
                 onClick={() => {
                   if (!newTaskFocused) {
                     setNewTaskFocused(true)
                     setTimeout(() => inputRef.current?.focus(), 10)
                   }
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, rgba(108,108,158,0.05))' }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '12px 8px',
-                  borderRadius: 10,
+                  padding: '10px 11px',
                   cursor: 'text',
                   color: 'var(--text-faint)',
                   transition: 'background-color 150ms ease',
@@ -356,15 +346,14 @@ export default function InboxPage() {
                     aria-label="New task title"
                     style={{
                       flex: 1, background: 'transparent', outline: 'none', border: 'none',
-                      fontSize: 15, fontWeight: 500, color: 'var(--text-primary)',
-                      fontFamily: 'Inter, system-ui, sans-serif', padding: 0,
+                      fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', padding: 0,
                     }}
                     autoFocus
                   />
                 ) : (
                   <>
-                    <span style={{ flex: 1, fontSize: 15, fontWeight: 500, fontFamily: 'Inter, system-ui, sans-serif' }}>New task</span>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-faint)' }}>{copy.newTask.shortcutHint}</span>
+                    <span className="type-body" style={{ flex: 1 }}>New task</span>
+                    <span className="type-meta" style={{ color: 'var(--text-faint)' }}>{copy.newTask.shortcutHint}</span>
                   </>
                 )}
               </div>
@@ -451,7 +440,7 @@ export default function InboxPage() {
 
           {/* Time Block Picker */}
           {timeBlockTaskId && (
-            <div role="presentation" className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }} onClick={() => setTimeBlockTaskId(null)} onKeyDown={(e) => { if (e.key === 'Escape') setTimeBlockTaskId(null) }}>
+            <div role="presentation" className="modal-scrim" onClick={() => setTimeBlockTaskId(null)} onKeyDown={(e) => { if (e.key === 'Escape') setTimeBlockTaskId(null) }}>
               <div role="dialog" aria-modal="true" aria-label="Schedule time block" className="relative" onClick={(e) => e.stopPropagation()}>
                 <TimeBlockPicker
                   open={!!timeBlockTaskId}

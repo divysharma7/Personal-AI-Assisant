@@ -3,7 +3,7 @@
   height: 100%;
   min-height: 0;
   overflow: hidden;
-  background: var(--bg-pane);
+  background: var(--bg-canvas);
 }
 .habits-workspace-list {
   width: 67%;
@@ -18,7 +18,7 @@
   flex: 1;
   overflow: hidden;
   border-left: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg-base) 96%, var(--bg-pane));
+  background: var(--bg-pane);
 }
 .habits-workspace-empty {
   display: flex;
@@ -29,8 +29,8 @@
   color: var(--text-faint);
 }
 .habits-workspace-empty > span { margin-bottom: 12px; color: var(--accent); font-size: 38px; opacity: .22; }
-.habits-workspace-empty p { margin: 0; font-size: 12px; font-weight: 550; }
-.habits-workspace-empty button { margin-top: 16px; padding: 8px 17px; border: 0; border-radius: 8px; color: #fff; background: var(--accent); font-size: 11px; font-weight: 650; cursor: pointer; }
+.habits-workspace-empty p { margin: 0; font-size: 12px; font-weight: 500; }
+.habits-workspace-empty button { margin-top: 16px; padding: 8px 17px; border: 0; border-radius: var(--radius-md); color: var(--text-on-dark); background: var(--accent-strong); font-size: 12px; font-weight: 600; cursor: pointer; }
 .habits-mobile-back { display: none; }
 @media (max-width: 1180px) {
   .habits-workspace-list { width: 62%; min-width: 0; flex-basis: 62%; }
@@ -41,5 +41,5 @@
   .habits-workspace-list { width: 100%; flex-basis: 100%; }
   .habits-workspace-detail { display: none; min-width: 0; }
   .habits-workspace-detail.is-open { position: absolute; inset: 0; z-index: 20; display: block; width: 100%; background: var(--bg-pane); }
-  .habits-mobile-back { display: block; position: absolute; top: 8px; left: 10px; z-index: 30; min-height: 40px; border: 0; border-radius: 9px; padding: 0 12px; color: var(--text-primary); background: var(--bg-hover); font-size: 12px; font-weight: 650; }
+  .habits-mobile-back { display: block; position: absolute; top: 8px; left: 10px; z-index: 30; min-height: 40px; border: 0; border-radius: 9px; padding: 0 12px; color: var(--text-primary); background: var(--bg-hover); font-size: 12px; font-weight: 600; }
 }

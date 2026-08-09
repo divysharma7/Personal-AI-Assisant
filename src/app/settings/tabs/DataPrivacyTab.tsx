@@ -55,7 +55,7 @@ export default function DataPrivacyTab() {
 
   return (
     <div className="space-y-5">
-      <section className="rounded-2xl border p-5" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-pane-2)' }}>
+      <section className="surface-card p-4">
         <div className="flex items-start gap-3">
           <span className="grid h-10 w-10 place-items-center rounded-xl" style={{ backgroundColor: 'var(--accent-soft)', color: 'var(--accent)' }}>
             <Download size={18} aria-hidden="true" />
@@ -79,7 +79,7 @@ export default function DataPrivacyTab() {
         </div>
       </section>
 
-      <section className="rounded-2xl border p-5" style={{ borderColor: 'color-mix(in srgb, var(--priority-high) 35%, var(--border))', backgroundColor: 'var(--bg-pane-2)' }}>
+      <section className="surface-card p-4" style={{ borderColor: 'var(--danger-border)' }}>
         <div className="flex items-start gap-3">
           <span className="grid h-10 w-10 place-items-center rounded-xl" style={{ backgroundColor: 'color-mix(in srgb, var(--priority-high) 12%, transparent)', color: 'var(--priority-high)' }}>
             <ShieldAlert size={18} aria-hidden="true" />

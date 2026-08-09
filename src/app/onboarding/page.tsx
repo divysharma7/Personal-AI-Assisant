@@ -12,6 +12,7 @@ import {
   Target,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import '@/components/auth/auth-brand.css'
 import LifeOSMark from '@/components/brand/LifeOSMark'
 
 const API_BASE = env.VITE_API_URL
@@ -107,8 +108,8 @@ export default function OnboardingPage() {
   }, [connectCalendar, emailsOptIn, name, navigate, selectedPriorities])
 
   return (
-    <div className="min-h-screen bg-[#f3efe6] text-[#191915] lg:grid lg:grid-cols-[280px_1fr]">
-      <aside className="border-b border-black/10 bg-[#191915] px-6 py-5 text-[#f7f3ea] lg:min-h-screen lg:border-b-0 lg:border-r lg:border-white/10 lg:p-8">
+    <div className="auth-brand-shell lg:grid lg:grid-cols-[280px_1fr]">
+      <aside className="border-b border-black/10 bg-[var(--brand-ink)] px-6 py-5 text-[var(--brand-paper-bright)] lg:min-h-screen lg:border-b-0 lg:border-r lg:border-white/10 lg:p-8">
         <LifeOSMark tone="paper" />
 
         <nav aria-label="Onboarding progress" className="mt-8 lg:mt-24">
@@ -126,8 +127,8 @@ export default function OnboardingPage() {
                   <span
                     className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
                     style={{
-                      backgroundColor: active ? '#c8ee72' : complete ? '#f15b43' : 'rgba(255,255,255,0.08)',
-                      color: active ? '#191915' : '#f7f3ea',
+                      backgroundColor: active ? 'var(--brand-lime)' : complete ? 'var(--brand-coral)' : 'rgba(255,255,255,0.08)',
+                      color: active ? 'var(--brand-ink)' : 'var(--brand-paper-bright)',
                     }}
                   >
                     {complete ? <Check size={13} strokeWidth={2.5} /> : number}
@@ -149,7 +150,7 @@ export default function OnboardingPage() {
       <main className="relative flex min-h-[calc(100vh-78px)] items-center justify-center overflow-hidden px-5 py-12 lg:min-h-screen lg:px-12">
         <div
           aria-hidden="true"
-          className="absolute -right-28 -top-28 h-72 w-72 rounded-full border-[58px] border-[#c8ee72]/60"
+          className="absolute -right-28 -top-28 h-72 w-72 rounded-full border-[58px] border-[var(--brand-lime)] opacity-60"
         />
         <div className="relative z-10 w-full max-w-[720px]">
           <div className="mb-10 flex items-center justify-between">

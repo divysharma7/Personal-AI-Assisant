@@ -104,7 +104,7 @@ export default function AddRecordModal({
             exit={{ opacity: 0 }}
             onClick={handleClose}
             className="fixed inset-0 z-40"
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+            style={{ backgroundColor: 'var(--scrim)' }}
           />
 
           {/* Modal */}
@@ -113,7 +113,7 @@ export default function AddRecordModal({
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
           >
             <div
-              className="relative w-full max-w-md rounded-2xl p-6"
+              className="modal-shell relative w-full max-w-md p-5"
               style={{
                 backgroundColor: 'var(--bg-pane)',
                 border: '1px solid var(--border)',

@@ -27,31 +27,31 @@ export default function RitualPage({
   footer,
 }: RitualPageProps) {
   return (
-    <div className="flex flex-col h-full overflow-y-auto" role="main">
-      <div className="mx-auto w-full max-w-[640px] px-6 py-8">
+    <div className="workspace-page overflow-y-auto" role="main">
+      <div className="mx-auto w-full max-w-[720px] px-5 py-5">
         {/* Page header */}
         <motion.header
           {...fadeSlideUp}
           transition={ease.normal}
-          className="mb-8"
+          className="mb-6"
         >
           <div className="flex items-center gap-3 mb-2">
             <span
-              className="flex h-10 w-10 items-center justify-center rounded-xl"
+              className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)]"
               style={{ backgroundColor: 'var(--overlay-2)', color: 'var(--accent)' }}
             >
               {icon}
             </span>
             <div>
               <h1
-                className="text-[28px] font-bold tracking-[-0.02em]"
+                className="type-page-title"
                 style={{ color: 'var(--text-primary)' }}
               >
                 {title}
               </h1>
             </div>
           </div>
-          <p className="text-[14px] leading-relaxed ml-[52px]" style={{ color: 'var(--text-muted)' }}>
+          <p className="type-meta ml-11" style={{ color: 'var(--text-muted)' }}>
             {subtitle}
           </p>
         </motion.header>

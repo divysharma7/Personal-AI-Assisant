@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import './auth-brand.css'
 import LifeOSMark from '@/components/brand/LifeOSMark'
 
 interface AuthShellProps {
@@ -7,15 +8,15 @@ interface AuthShellProps {
 }
 
 const dailyLoop = [
-  { time: '08:30', title: 'Plan the day', color: '#f15b43' },
-  { time: '10:00', title: 'Protect deep work', color: '#191915' },
-  { time: '17:30', title: 'Close the loop', color: '#7d78d7' },
+  { time: '08:30', title: 'Plan the day', color: 'var(--brand-coral)' },
+  { time: '10:00', title: 'Protect deep work', color: 'var(--brand-ink)' },
+  { time: '17:30', title: 'Close the loop', color: 'var(--brand-violet)' },
 ]
 
 export default function AuthShell({ children, eyebrow }: AuthShellProps) {
   return (
-    <div className="min-h-screen bg-[#f3efe6] text-[#191915] lg:grid lg:grid-cols-[minmax(360px,0.9fr)_minmax(520px,1.1fr)]">
-      <aside className="relative hidden min-h-screen overflow-hidden border-r border-black/10 bg-[#dedbcf] p-10 lg:flex lg:flex-col">
+    <div className="auth-brand-shell lg:grid lg:grid-cols-[minmax(360px,0.9fr)_minmax(520px,1.1fr)]">
+      <aside className="relative hidden min-h-screen overflow-hidden border-r border-black/10 bg-[var(--brand-panel)] p-10 lg:flex lg:flex-col">
         <LifeOSMark />
 
         <div className="my-auto max-w-lg py-16">
@@ -52,7 +53,7 @@ export default function AuthShell({ children, eyebrow }: AuthShellProps) {
         <p className="text-xs text-black/40">Plan → focus → reset</p>
         <div
           aria-hidden="true"
-          className="absolute -bottom-32 -right-24 h-80 w-80 rounded-full border-[64px] border-[#c8ee72]/80"
+          className="absolute -bottom-32 -right-24 h-80 w-80 rounded-full border-[64px] border-[var(--brand-lime)] opacity-80"
         />
       </aside>
 

@@ -168,13 +168,10 @@ export default function TaskContextMenu({
       {...fadeSlideDown}
       transition={ease.fast}
       ref={menuRef}
-      className="fixed z-[9999] w-[220px] rounded-[var(--radius-lg,16px)] py-1"
+      className="popover-shell fixed z-[9999] w-[220px]"
       style={{
         left: position.x,
         top: position.y,
-        backgroundColor: 'var(--bg-pane)',
-        border: '1px solid var(--overlay-2, var(--border))',
-        boxShadow: 'var(--shadow-elevated)',
       }}
     >
       {items.map((item, _i) => (
@@ -184,18 +181,12 @@ export default function TaskContextMenu({
               item.onClick?.()
               if (!item.onClick) onClose()
             }}
-            className="flex w-full items-center gap-2.5 px-3 py-1.5 text-[14px] font-medium transition-sl cursor-pointer"
+            className={`menu-item cursor-pointer ${item.destructive ? 'is-destructive' : ''}`}
             style={{
-              color: item.destructive ? '#ef4444' : 'var(--text-primary)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
+              color: item.destructive ? 'var(--danger)' : undefined,
             }}
           >
-            <span style={{ color: item.destructive ? '#ef4444' : 'var(--text-muted)' }}>
+            <span style={{ color: item.destructive ? 'var(--danger)' : 'var(--text-muted)' }}>
               {item.icon}
             </span>
             <span className="flex-1 text-left">{item.label}</span>

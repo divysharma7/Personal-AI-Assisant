@@ -31,43 +31,28 @@ export default function FocusStatisticsPage() {
   ) || 1
 
   return (
-    <div
-      className="min-h-screen"
-      style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-primary)' }}
-    >
+    <div className="workspace-page">
       {/* Header */}
       <header
-        className="flex items-center gap-3 px-5 py-4 sm:px-8"
+        className="workspace-header justify-start gap-3"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
         <button
           type="button"
           onClick={() => navigate('/focus')}
-          className="flex h-9 w-9 items-center justify-center rounded-full cursor-pointer"
-          style={{
-            color: 'var(--text-muted)',
-            transition: 'background-color 150ms ease, color 150ms ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--overlay-1)'
-            e.currentTarget.style.color = 'var(--text-primary)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent'
-            e.currentTarget.style.color = 'var(--text-muted)'
-          }}
+          className="control-icon"
           aria-label="Back to Focus"
         >
           <ArrowLeft size={18} />
         </button>
         <div className="flex items-center gap-2">
           <BarChart3 size={20} style={{ color: 'var(--accent)' }} />
-          <h1 className="text-lg font-semibold">Focus Statistics</h1>
+          <h1 className="type-page-title">Focus Statistics</h1>
         </div>
       </header>
 
       {/* Content */}
-      <main className="mx-auto max-w-4xl px-5 py-8 sm:px-8">
+      <main className="w-full max-w-[960px] px-5 py-6 sm:px-8">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <div
@@ -79,21 +64,16 @@ export default function FocusStatisticsPage() {
             />
           </div>
         ) : (
-          <motion.div {...fadeSlideUp} className="space-y-8">
+          <motion.div {...fadeSlideUp} className="space-y-4">
             {/* Period Selector */}
-            <div className="flex gap-2">
+            <div className="segmented-control">
               {(['day', 'week', 'month'] as GroupBy[]).map((period) => (
                 <button
                   key={period}
                   type="button"
                   onClick={() => setSearchParams({ group: period }, { replace: true })}
                   aria-pressed={groupBy === period}
-                  className="rounded-full px-4 py-2 text-xs font-semibold capitalize cursor-pointer"
-                  style={{
-                    backgroundColor: groupBy === period ? 'var(--accent)' : 'var(--overlay-1)',
-                    color: groupBy === period ? '#fff' : 'var(--text-muted)',
-                    transition: 'background-color 150ms ease, color 150ms ease',
-                  }}
+                  className="capitalize"
                 >
                   {period}
                 </button>
@@ -102,15 +82,11 @@ export default function FocusStatisticsPage() {
 
             {/* Focus Duration Chart */}
             <section
-              className="rounded-2xl p-6"
-              style={{
-                backgroundColor: 'var(--bg-pane)',
-                border: '1px solid var(--border)',
-              }}
+              className="surface-card p-4"
             >
               <div className="flex items-center gap-2 mb-6">
                 <Clock size={18} style={{ color: 'var(--accent)' }} />
-                <h2 className="text-sm font-semibold">
+                <h2 className="type-section-title">
                   Focus Duration by {groupBy.charAt(0).toUpperCase() + groupBy.slice(1)}
                 </h2>
               </div>
@@ -179,10 +155,10 @@ export default function FocusStatisticsPage() {
             </section>
 
             {/* Top Tasks & Habits */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               {/* Top Tasks */}
               <section
-                className="rounded-2xl p-6"
+                className="surface-card p-4"
                 style={{
                   backgroundColor: 'var(--bg-pane)',
                   border: '1px solid var(--border)',
@@ -190,7 +166,7 @@ export default function FocusStatisticsPage() {
               >
                 <div className="flex items-center gap-2 mb-5">
                   <Target size={18} style={{ color: 'var(--accent)' }} />
-                  <h2 className="text-sm font-semibold">Top Tasks</h2>
+                  <h2 className="type-section-title">Top Tasks</h2>
                 </div>
 
                 {stats?.topTasks && stats.topTasks.length > 0 ? (
@@ -241,7 +217,7 @@ export default function FocusStatisticsPage() {
 
               {/* Top Habits */}
               <section
-                className="rounded-2xl p-6"
+                className="surface-card p-4"
                 style={{
                   backgroundColor: 'var(--bg-pane)',
                   border: '1px solid var(--border)',
@@ -249,7 +225,7 @@ export default function FocusStatisticsPage() {
               >
                 <div className="flex items-center gap-2 mb-5">
                   <Target size={18} style={{ color: 'var(--accent-purple, var(--accent))' }} />
-                  <h2 className="text-sm font-semibold">Top Habits</h2>
+                  <h2 className="type-section-title">Top Habits</h2>
                 </div>
 
                 {stats?.topHabits && stats.topHabits.length > 0 ? (
@@ -301,7 +277,7 @@ export default function FocusStatisticsPage() {
 
             {/* Hour Distribution */}
             <section
-              className="rounded-2xl p-6"
+              className="surface-card p-4"
               style={{
                 backgroundColor: 'var(--bg-pane)',
                 border: '1px solid var(--border)',
@@ -309,7 +285,7 @@ export default function FocusStatisticsPage() {
             >
               <div className="flex items-center gap-2 mb-6">
                 <Clock size={18} style={{ color: 'var(--accent)' }} />
-                <h2 className="text-sm font-semibold">Focus by Hour of Day</h2>
+                <h2 className="type-section-title">Focus by Hour of Day</h2>
               </div>
 
               {stats?.hourDistribution ? (

@@ -86,8 +86,8 @@ export default function GlobalCommandPalette({ open, tasks, onClose, onNavigate,
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[10001] flex items-start justify-center bg-black/55 px-4 pt-[12vh]" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Search and commands" className="w-full max-w-xl overflow-hidden rounded-2xl border shadow-2xl" style={{ backgroundColor: 'var(--bg-pane-2)', borderColor: 'var(--border)' }}>
+    <div className="fixed inset-0 z-[10001] flex items-start justify-center bg-[var(--scrim)] px-4 pt-[12vh]" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Search and commands" className="modal-shell w-full max-w-xl overflow-hidden">
         <label className="flex min-h-14 items-center gap-3 border-b px-4" style={{ borderColor: 'var(--border)' }}>
           <Search size={18} aria-hidden="true" style={{ color: 'var(--text-faint)' }} />
           <span className="sr-only">Search tasks and destinations</span>

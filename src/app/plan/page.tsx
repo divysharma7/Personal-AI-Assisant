@@ -452,7 +452,7 @@ export default function PlanPage() {
                   className="text-[10px] font-medium px-1.5 py-0.5 rounded"
                   style={{
                     backgroundColor: 'var(--overlay-2)',
-                    color: task.priority === 'high' ? '#ef4444' : task.priority === 'medium' ? '#f59e0b' : 'var(--text-faint)',
+                    color: task.priority === 'high' ? 'var(--priority-high)' : task.priority === 'medium' ? 'var(--priority-medium)' : 'var(--text-faint)',
                   }}
                 >
                   {task.priority}
@@ -469,7 +469,7 @@ export default function PlanPage() {
         title="Choose one outcome"
         subtitle="What is the most important result for today?"
         active={currentStep >= 2}
-        accent="var(--accent-purple, #8f89fa)"
+        accent="var(--accent-purple)"
       >
         <div className="flex flex-col gap-3">
           <label htmlFor="outcome-input" className="sr-only">
@@ -511,7 +511,7 @@ export default function PlanPage() {
         title="Protect time"
         subtitle="Suggested focus windows based on your availability"
         active={currentStep >= 3}
-        accent="var(--accent-custom-1, #bcdb71)"
+        accent="var(--accent-custom-1)"
       >
         {/* Capacity bar */}
         <div className="mb-4">
@@ -539,9 +539,9 @@ export default function PlanPage() {
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               style={{
                 backgroundColor: capacity.committedPercent > 80
-                  ? '#ef4444'
+                  ? 'var(--priority-high)'
                   : capacity.committedPercent > 50
-                    ? '#f59e0b'
+                    ? 'var(--priority-medium)'
                     : 'var(--accent)',
               }}
             />
@@ -554,7 +554,7 @@ export default function PlanPage() {
             className="flex items-start gap-3 rounded-xl px-4 py-3"
             style={{ backgroundColor: 'var(--overlay-1)' }}
           >
-            <AlertTriangle size={16} strokeWidth={1.5} style={{ color: '#f59e0b', flexShrink: 0, marginTop: 2 }} />
+            <AlertTriangle size={16} strokeWidth={1.5} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: 2 }} />
             <div>
               <p className="text-[13px] font-medium" style={{ color: 'var(--text-primary)' }}>
                 No focus time available
@@ -713,7 +713,7 @@ export default function PlanPage() {
         title="Confirm day"
         subtitle="Review your plan and start the day"
         active={currentStep >= 4}
-        accent="var(--success, #34d399)"
+        accent="var(--success)"
       >
         <div className="flex flex-col gap-4">
           {/* Summary */}

@@ -157,13 +157,13 @@ export default function TaskDetailPanel({
     <motion.div
       {...slideFromRight}
       transition={springs.snappy}
-      className="flex h-full w-full flex-col overflow-hidden rounded-[var(--outer-radius,20px)]"
-      style={{ backgroundColor: 'var(--bg-pane)' }}
+      className="flex h-full w-full flex-col overflow-hidden rounded-[var(--radius-xl)]"
+      style={{ backgroundColor: 'var(--bg-card)' }}
     >
       {/* ── Header — x left, status dot + ... right ── */}
       <div
         className="sticky top-0 z-10 flex items-center justify-between px-5 py-3"
-        style={{ backgroundColor: 'var(--bg-pane)' }}
+        style={{ backgroundColor: 'var(--bg-card)', borderBottom: '1px solid var(--border)' }}
       >
         {/* Close x */}
         <motion.button
@@ -276,7 +276,7 @@ export default function TaskDetailPanel({
                   setIsEditingTitle(false)
                 }
               }}
-              className="mb-3 w-full bg-transparent text-[28px] font-bold outline-none"
+              className="type-page-title mb-3 w-full bg-transparent outline-none"
               style={{
                 color: 'var(--text-primary)',
                 textDecoration: isCompleted ? 'line-through' : 'none',
@@ -287,7 +287,7 @@ export default function TaskDetailPanel({
           ) : (
             <div className="mb-3 flex items-start justify-between gap-3">
               <h2
-                className="flex-1 text-[28px] font-bold cursor-text"
+                className="type-page-title flex-1 cursor-text"
                 style={{
                   color: 'var(--text-primary)',
                   textDecoration: isCompleted ? 'line-through' : 'none',

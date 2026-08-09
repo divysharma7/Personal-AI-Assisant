@@ -308,7 +308,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         id="main-content"
         className="relative flex min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto rounded-none"
         style={{
-          backgroundColor: '#19191a',
+          backgroundColor: 'var(--bg-canvas)',
           backgroundImage: 'none',
           transition: 'flex 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}

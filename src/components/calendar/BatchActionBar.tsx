@@ -76,7 +76,7 @@ function DropdownButton({
               marginBottom: 8,
               minWidth: 160,
               borderRadius: 12,
-              backgroundColor: 'var(--bg-pane-2, #2a293b)',
+                    backgroundColor: 'var(--bg-pane-2)',
               border: '1px solid var(--overlay-2, var(--border))',
               boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
               overflow: 'hidden',

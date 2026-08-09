@@ -103,7 +103,7 @@ export default function CreateHabitDialog({ open, onClose, onCreate }: CreateHab
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: 'var(--scrim)',
           }}
           onClick={onClose}
         >
@@ -112,9 +112,9 @@ export default function CreateHabitDialog({ open, onClose, onCreate }: CreateHab
             transition={ease.normal}
             style={{
               width: 440,
-              borderRadius: 16,
-              backgroundColor: 'var(--bg-pane)',
-              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-xl)',
+              backgroundColor: 'var(--bg-elevated)',
+              border: '1px solid var(--border-strong)',
               boxShadow: 'var(--shadow-modal)',
             }}
             onClick={(e) => e.stopPropagation()}
@@ -129,7 +129,7 @@ export default function CreateHabitDialog({ open, onClose, onCreate }: CreateHab
                 borderBottom: '1px solid var(--border)',
               }}
             >
-              <h2 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              <h2 className="type-page-title" style={{ color: 'var(--text-primary)', margin: 0 }}>
                 Create Habit
               </h2>
               <motion.button

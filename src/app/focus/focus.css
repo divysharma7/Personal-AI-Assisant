@@ -1,27 +1,15 @@
 .focus-shell {
-  --focus-bg: #19191a;
-  --focus-rail: #1b1b1c;
-  --focus-surface: #202021;
-  --focus-surface-raised: #272728;
-  --focus-border: rgba(255, 255, 255, 0.065);
-  --focus-text: #f4f4f5;
-  --focus-muted: #8a8a8f;
-  --focus-faint: #65656a;
-  --focus-accent: #626cf6;
-  --focus-accent-soft: rgba(98, 108, 246, 0.16);
-  --focus-tick: rgba(255, 255, 255, 0.105);
-
-  /* Focus is intentionally immersive and dark in every app theme. */
-  --bg-canvas: var(--focus-bg);
-  --bg-pane: var(--focus-surface-raised);
-  --bg-pane-2: var(--focus-surface);
-  --border: var(--focus-border);
-  --text-primary: var(--focus-text);
-  --text-muted: var(--focus-muted);
-  --text-faint: var(--focus-faint);
-  --accent: var(--focus-accent);
-  --overlay-1: rgba(255, 255, 255, 0.045);
-  --overlay-2: rgba(255, 255, 255, 0.075);
+  --focus-bg: var(--bg-canvas);
+  --focus-rail: var(--bg-rail);
+  --focus-surface: var(--bg-pane);
+  --focus-surface-raised: var(--bg-elevated);
+  --focus-border: var(--border);
+  --focus-text: var(--text-primary);
+  --focus-muted: var(--text-muted);
+  --focus-faint: var(--text-faint);
+  --focus-accent: var(--accent);
+  --focus-accent-soft: var(--accent-soft);
+  --focus-tick: var(--border-strong);
 
   position: relative;
   display: grid;
@@ -31,7 +19,6 @@
   overflow: hidden;
   background: var(--focus-bg);
   color: var(--focus-text);
-  color-scheme: dark;
 }
 
 .focus-primary {
@@ -49,8 +36,9 @@
 }
 
 .focus-title {
-  font-size: 16px;
-  font-weight: 650;
+  font-size: 17px;
+  line-height: 24px;
+  font-weight: 600;
   letter-spacing: -0.025em;
 }
 
@@ -59,7 +47,7 @@
 }
 
 .focus-mode-switch {
-  background: rgba(255, 255, 255, 0.045);
+  background: var(--overlay-1);
 }
 
 .focus-header-actions {
@@ -83,7 +71,7 @@
 
 .focus-icon-button:hover,
 .focus-icon-button:focus-visible {
-  background: rgba(255, 255, 255, 0.055);
+    background: var(--bg-hover);
   color: var(--focus-text);
 }
 
@@ -112,7 +100,7 @@
 
 .focus-target-trigger:hover:not(:disabled),
 .focus-target-trigger:focus-visible {
-  background: rgba(255, 255, 255, 0.035);
+  background: var(--overlay-1);
   color: var(--focus-text);
 }
 
@@ -124,12 +112,12 @@
 
 .focus-target-clear:hover,
 .focus-target-clear:focus-visible {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-hover);
   color: var(--focus-text);
 }
 
 .focus-target-popover {
-  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.42);
+  box-shadow: var(--shadow-elevated);
 }
 
 .focus-timer-controls {
@@ -137,7 +125,7 @@
 }
 
 .focus-primary-button {
-  box-shadow: 0 12px 34px rgba(98, 108, 246, 0.14);
+  box-shadow: 0 12px 34px var(--accent-glow);
   transition: filter 150ms ease, transform 150ms ease !important;
 }
 
@@ -148,14 +136,14 @@
 
 .focus-utility-button {
   border: 1px solid var(--focus-border);
-  background: rgba(255, 255, 255, 0.035);
+  background: var(--overlay-1);
 }
 
 .focus-status-message {
   position: absolute;
   bottom: 30px;
   font-size: 12px;
-  color: #9ba2ff;
+  color: var(--accent-light);
 }
 
 .focus-retry-button {
@@ -165,10 +153,10 @@
   border: 1px solid var(--focus-border);
   border-radius: 999px;
   padding: 0 16px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--overlay-1);
   color: var(--focus-text);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .focus-insights {
@@ -186,7 +174,7 @@
 .focus-panel-heading {
   color: var(--focus-text);
   font-size: 14px;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.015em;
 }
 
@@ -205,9 +193,9 @@
 
 .focus-metric-value {
   margin-top: 7px;
-  color: #dce1ff;
+  color: var(--text-primary);
   font-size: 20px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1;
   letter-spacing: -0.035em;
 }
@@ -261,7 +249,7 @@
   place-items: center;
   border-radius: 50%;
   background: var(--focus-accent-soft);
-  color: #7c85ff;
+  color: var(--accent-light);
 }
 
 .focus-record-line {
@@ -282,7 +270,7 @@
 
 .focus-record-title {
   margin-top: 3px;
-  color: #e4e4e7;
+  color: var(--text-secondary);
   font-size: 11px;
   font-weight: 600;
 }
@@ -366,7 +354,7 @@
   margin-bottom: 7px;
   color: var(--focus-faint);
   font-size: 9px;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }

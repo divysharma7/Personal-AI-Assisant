@@ -14,9 +14,9 @@ import type { Reminder } from './ReminderSection'
 // ── Priority config (laif uses string priorities) ──
 
 const PRIORITY_OPTIONS = [
-  { value: 'low', label: 'Low', color: '#6b66da' },
-  { value: 'medium', label: 'Medium', color: '#f59e0b' },
-  { value: 'high', label: 'High', color: '#ef4444' },
+  { value: 'low', label: 'Low', color: 'var(--priority-low)' },
+  { value: 'medium', label: 'Medium', color: 'var(--priority-medium)' },
+  { value: 'high', label: 'High', color: 'var(--priority-high)' },
 ] as const
 
 // ── Date/time helpers ──
@@ -488,7 +488,7 @@ export default function TaskEditorSheet({ task, seed, open, onClose }: TaskEdito
                     fontSize: 13,
                     fontWeight: 600,
                     backgroundColor: 'transparent',
-                    color: '#ef4444',
+                    color: 'var(--danger)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 6,

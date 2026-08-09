@@ -18,7 +18,7 @@ export default function IntegrationsTab({ googleConnected }: IntegrationsTabProp
     <>
       <motion.section key="integrations" {...fade} transition={ease.normal} aria-labelledby="integrations-title">
         <header className="mb-6">
-          <h2 id="integrations-title" className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Integrations</h2>
+          <h2 id="integrations-title" className="type-section-title">Integrations</h2>
           <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
             Connect services that are ready for reliable, end-to-end use.
           </p>
@@ -27,7 +27,7 @@ export default function IntegrationsTab({ googleConnected }: IntegrationsTabProp
         <button
           type="button"
           onClick={() => setSetupOpen(true)}
-          className="flex min-h-16 w-full items-center gap-4 rounded-2xl border p-4 text-left transition-colors hover:bg-[var(--bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+          className="surface-card flex min-h-16 w-full items-center gap-4 p-4 text-left transition-colors hover:bg-[var(--bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
           style={{ backgroundColor: 'var(--bg-pane-2)', borderColor: 'var(--border)' }}
           aria-describedby="google-calendar-description"
         >

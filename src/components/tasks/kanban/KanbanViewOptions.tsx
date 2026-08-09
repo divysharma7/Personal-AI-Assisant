@@ -46,7 +46,7 @@ export default function KanbanViewOptions({ open, onClose }: KanbanViewOptionsPr
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.3)',
+        backgroundColor: 'var(--scrim)',
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
@@ -58,12 +58,13 @@ export default function KanbanViewOptions({ open, onClose }: KanbanViewOptionsPr
         transition={ease.slow}
         style={{
           width: 360,
-          borderRadius: 16,
+          borderRadius: 'var(--radius-xl)',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          backgroundColor: 'var(--bg-pane)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+          backgroundColor: 'var(--bg-elevated)',
+          border: '1px solid var(--border-strong)',
+          boxShadow: 'var(--shadow-modal)',
         }}
       >
         {/* Header */}

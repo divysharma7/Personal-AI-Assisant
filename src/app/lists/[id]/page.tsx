@@ -173,9 +173,9 @@ export default function ListPage() {
 
       {/* Big title — list icon + name */}
       <div className="mb-5 flex items-center gap-3">
-        <span className="text-4xl">{listIcon}</span>
+        <span className="text-xl">{listIcon}</span>
         <h1
-          className="text-[32px]"
+          className="type-page-title"
           style={{ color: 'var(--text-primary)' }}
         >
           {isLoading ? '...' : listTitle}

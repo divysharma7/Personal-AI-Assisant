@@ -32,7 +32,7 @@ export default function NotificationsTab() {
 
   return (
     <div className="space-y-5">
-      <section className="rounded-2xl border p-5" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-pane-2)' }}>
+      <section className="surface-card p-4">
         <div className="flex items-start gap-3">
           <span
             className="grid h-10 w-10 place-items-center rounded-xl"
@@ -60,7 +60,7 @@ export default function NotificationsTab() {
         </div>
       </section>
 
-      <section className="rounded-2xl border p-5" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-pane-2)' }}>
+      <section className="surface-card p-4">
         <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Focus Notifications</h3>
         <p className="mt-1 text-xs text-pretty" style={{ color: 'var(--text-muted)' }}>
           Browser permission controls whether alerts can be delivered. Focus settings control whether Life OS should send them.

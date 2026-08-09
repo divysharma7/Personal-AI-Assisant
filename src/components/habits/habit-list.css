@@ -1,7 +1,7 @@
 .habit-list-shell {
-  --habit-surface: color-mix(in srgb, var(--bg-pane) 92%, #151719);
-  --habit-card: color-mix(in srgb, var(--bg-pane-2) 88%, #232527);
-  --habit-line: color-mix(in srgb, var(--border) 78%, transparent);
+  --habit-surface: var(--bg-canvas);
+  --habit-card: var(--bg-card);
+  --habit-line: var(--border);
   display: flex;
   height: 100%;
   min-width: 0;
@@ -12,9 +12,9 @@
   font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
 }
 .habit-list-header {
-  height: 58px;
+  height: 49px;
   display: flex;
-  flex: 0 0 58px;
+  flex: 0 0 49px;
   align-items: center;
   justify-content: space-between;
   padding: 0 18px 0 20px;
@@ -27,8 +27,9 @@
   border: 0;
   color: var(--text-primary);
   background: transparent;
-  font-size: 18px;
-  font-weight: 690;
+  font-size: 17px;
+  line-height: 24px;
+  font-weight: 600;
   letter-spacing: -.02em;
   cursor: pointer;
 }
@@ -105,7 +106,7 @@
 .habit-week-strip > button:hover { color: var(--text-muted); background: var(--overlay-1, var(--bg-hover)); transform: translateY(-1px); }
 .habit-week-strip > button.is-selected { color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, transparent); }
 .habit-week-strip > button > span:first-child { font-size: 9px; font-weight: 600; }
-.habit-week-strip > button > strong { font-size: 10px; font-weight: 650; }
+.habit-week-strip > button > strong { font-size: 10px; font-weight: 600; }
 .habit-day-ring {
   --habit-progress: 0deg;
   position: relative;
@@ -116,7 +117,7 @@
   place-items: center;
   border-radius: 50%;
   color: #fff;
-  background: conic-gradient(var(--accent) var(--habit-progress), var(--overlay-3, #393b3e) 0);
+  background: conic-gradient(var(--accent) var(--habit-progress), var(--overlay-3) 0);
 }
 .habit-day-ring::after { position: absolute; width: 15px; height: 15px; border-radius: 50%; background: var(--habit-surface); content: ''; }
 .habit-week-strip > button.is-selected .habit-day-ring::after { background: color-mix(in srgb, var(--habit-surface) 82%, var(--accent)); }
@@ -152,7 +153,7 @@
 }
 .habit-section-heading svg { color: var(--text-faint); transition: transform .15s ease; }
 .habit-section-heading svg.is-open { transform: rotate(90deg); }
-.habit-section-heading strong { font-weight: 650; }
+.habit-section-heading strong { font-weight: 600; }
 .habit-section-heading span { color: var(--text-faint); font-size: 9px; }
 .habit-list-row {
   display: flex;
@@ -183,7 +184,7 @@
   font-size: 16px;
 }
 .habit-list-row-copy { min-width: 0; flex: 1; }
-.habit-list-row-copy h3 { margin: 0; overflow: hidden; color: var(--text-primary); font-size: 12px; font-weight: 650; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+.habit-list-row-copy h3 { margin: 0; overflow: hidden; color: var(--text-primary); font-size: 12px; font-weight: 600; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
 .habit-list-row-copy p { margin: 3px 0 0; color: var(--text-faint); font-size: 9px; font-variant-numeric: tabular-nums; }
 .habit-total-days { color: color-mix(in srgb, var(--accent) 80%, var(--text-muted)); }
 .habit-list-check {
@@ -196,7 +197,7 @@
   border: 0;
   border-radius: 50%;
   color: #fff;
-  background: var(--overlay-2, #343638);
+  background: var(--overlay-2);
   cursor: pointer;
   transition: background-color .15s ease, transform .15s ease;
 }
@@ -208,7 +209,7 @@
 @keyframes habitListPulse { 50% { opacity: .55; } }
 .habit-list-empty { display: flex; flex-direction: column; align-items: center; padding: 70px 20px; text-align: center; }
 .habit-list-empty > span { color: var(--accent); font-size: 25px; }.habit-list-empty h3 { margin: 12px 0 3px; font-size: 14px; }.habit-list-empty p { margin: 0; color: var(--text-faint); font-size: 11px; }
-.habit-list-empty button { margin-top: 16px; padding: 8px 16px; border: 0; border-radius: 8px; color: #fff; background: var(--accent); font-size: 11px; font-weight: 650; cursor: pointer; }
+.habit-list-empty button { margin-top: 16px; padding: 8px 16px; border: 0; border-radius: 8px; color: var(--text-on-dark); background: var(--accent-strong); font-size: 11px; font-weight: 600; cursor: pointer; }
 
 .habit-list-context-menu {
   position: fixed;
@@ -241,7 +242,7 @@
 .habit-list-context-menu button:hover,
 .habit-list-context-menu button.is-active { background: var(--overlay-2, var(--bg-hover)); }
 .habit-list-context-menu button.is-danger,
-.habit-list-context-menu button.is-danger svg { color: var(--priority-high, #df6b66); }
+.habit-list-context-menu button.is-danger svg { color: var(--priority-high); }
 .habit-list-focus-cascade { position: relative; }
 .habit-list-focus-submenu { position: absolute; top: -5px; left: calc(100% + 5px); width: 164px; padding: 5px 0; border: 1px solid var(--habit-line); border-radius: 9px; background: var(--bg-pane-2); box-shadow: 0 14px 34px rgba(0, 0, 0, .4); }
 .habit-list-focus-submenu button { grid-template-columns: 18px minmax(0, 1fr); }

@@ -26,7 +26,7 @@ function WeekMiniGrid({ habit, targetDate: _targetDate, weekCompletions }: {
           className="h-2.5 w-2.5 rounded-[2px]"
           style={{
             backgroundColor: d.completed
-              ? '#34D399'
+              ? 'var(--success)'
               : 'var(--bg-hover)',
             border: d.isToday ? '1px solid var(--text-faint)' : 'none',
           }}
@@ -115,10 +115,10 @@ export default function CheckinPage() {
     : 0
 
   return (
-    <div className="flex flex-col px-6 py-5">
+    <div className="workspace-page px-5 py-5">
       {/* Title */}
       <h1
-        className="mb-2 text-[32px]"
+        className="type-page-title mb-2"
         style={{ color: 'var(--text-primary)' }}
       >
         {COPY.title}
@@ -245,7 +245,7 @@ export default function CheckinPage() {
                     if (!isChecked) setContextHabitId(habit._id)
                   }}
                   aria-label={`Toggle ${habit.name}`}
-                  className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl transition-colors duration-150 cursor-pointer"
+                  className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] transition-colors duration-150 cursor-pointer"
                   style={{
                     border: isChecked ? 'none' : '2px solid var(--border)',
                     backgroundColor: isChecked ? 'var(--accent)' : 'transparent',
@@ -271,12 +271,7 @@ export default function CheckinPage() {
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={ease.fast}
-                      className="absolute right-12 z-50 w-52 rounded-xl p-2"
-                      style={{
-                        backgroundColor: 'var(--bg-pane-2)',
-                        border: '1px solid var(--border)',
-                        boxShadow: 'var(--shadow-elevated)',
-                      }}
+                      className="popover-shell absolute right-12 z-50 w-52"
                     >
                       <p className="mb-2 px-2 text-xs font-semibold" style={{ color: 'var(--text-faint)' }}>
                         {COPY.markUnachieved}
@@ -286,19 +281,7 @@ export default function CheckinPage() {
                           <button
                             key={reason}
                             onClick={() => setContextHabitId(null)}
-                            className="rounded-full px-3 py-1 text-xs font-medium transition-colors duration-150 cursor-pointer"
-                            style={{
-                              backgroundColor: 'var(--bg-hover)',
-                              color: 'var(--text-muted)',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = 'var(--accent)'
-                              e.currentTarget.style.color = '#FFFFFF'
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-                              e.currentTarget.style.color = 'var(--text-muted)'
-                            }}
+                            className="menu-item w-auto cursor-pointer"
                           >
                             {reason}
                           </button>

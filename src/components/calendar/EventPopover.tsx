@@ -100,7 +100,7 @@ export default function EventPopover({ event, anchor, onClose, onOpenDetail }: E
         transition={{ duration: motionTokens.duration.fast }}
         style={{
           position: 'fixed', top, left, zIndex: 9999, width: 380, borderRadius: 14,
-          backgroundColor: 'var(--bg-pane-2, #2a293b)',
+                    backgroundColor: 'var(--bg-pane-2)',
           border: '1px solid var(--overlay-2, var(--border))',
           boxShadow: 'var(--shadow-elevated, 0 12px 40px rgba(0,0,0,0.3))',
           padding: 20, textAlign: 'center',
@@ -122,7 +122,7 @@ export default function EventPopover({ event, anchor, onClose, onOpenDetail }: E
       style={{
         position: 'fixed', top, left, zIndex: 9999,
         width: 380, borderRadius: 14,
-        backgroundColor: 'var(--bg-pane-2, #2a293b)',
+                    backgroundColor: 'var(--bg-pane-2)',
         border: '1px solid var(--overlay-2, var(--border))',
         boxShadow: 'var(--shadow-elevated, 0 12px 40px rgba(0,0,0,0.3))',
         fontFamily: 'Inter, system-ui, sans-serif',

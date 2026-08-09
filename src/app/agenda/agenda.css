@@ -1,17 +1,17 @@
 .agenda-workspace {
-  --agenda-border: #2b2b2d;
-  --agenda-surface: #222223;
+  --agenda-border: var(--border);
+  --agenda-surface: var(--bg-card);
   min-height: 100%;
-  color: #e7e7e8;
-  background: #19191a !important;
+  color: var(--text-primary);
+  background: var(--bg-canvas);
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
 }
 
 .agenda-workspace-header {
   height: 49px;
   min-height: 49px;
-  padding: 0 16px 0 18px !important;
-  border-bottom-color: #242425 !important;
+  padding: 0 16px 0 18px;
+  border-bottom-color: var(--border);
 }
 
 .agenda-workspace-header > div:first-child {
@@ -30,17 +30,17 @@
 
 .agenda-workspace-header h1 {
   margin: 0;
-  color: #efeff0 !important;
-  font-size: 17px !important;
-  font-weight: 650 !important;
+  color: var(--text-primary);
+  font-size: 17px;
+  font-weight: 600;
   line-height: 1;
 }
 
 .agenda-workspace-header p {
   margin: 0;
   overflow: hidden;
-  color: #77777c !important;
-  font-size: 10px !important;
+  color: var(--text-muted);
+  font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -62,7 +62,7 @@
   border-top: 1px solid var(--agenda-border);
   border-right: 1px solid var(--agenda-border);
   border-bottom: 1px solid var(--agenda-border);
-  border-radius: 8px !important;
+  border-radius: var(--radius-md);
   background: var(--agenda-surface);
   cursor: default;
   transition: background-color .15s ease, border-color .15s ease, transform .15s ease !important;
@@ -70,19 +70,19 @@
 
 .agenda-item-row[tabindex="0"] { cursor: pointer; }
 .agenda-item-row[tabindex="0"]:hover {
-  border-color: #3b3b3e;
+  border-color: var(--border-strong);
   transform: translateY(-1px);
 }
 
 .agenda-item-row:focus-visible {
-  outline: 1px solid #6572f5;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 .agenda-priority-tray {
   padding: 18px 16px !important;
-  border-left-color: #28282a !important;
-  background: #1c1c1d;
+  border-left-color: var(--border);
+  background: var(--bg-rail);
 }
 
 @media (max-width: 1279px) {

@@ -20,7 +20,7 @@ export default function FeaturesTab({ theme, setTheme }: FeaturesTabProps) {
   return (
     <motion.div key="features" {...fade} transition={ease.normal} className="flex flex-col gap-4">
       <section style={cardStyle}>
-        <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+        <h3 className="type-section-title">
           {copy.settings.features.themeLabel}
         </h3>
         <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
@@ -43,7 +43,7 @@ export default function FeaturesTab({ theme, setTheme }: FeaturesTabProps) {
       </section>
 
       <section style={cardStyle}>
-        <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+        <h3 className="type-section-title">
           Focus Sound & Alerts
         </h3>
         <p className="mt-1 text-sm text-pretty" style={{ color: 'var(--text-muted)' }}>

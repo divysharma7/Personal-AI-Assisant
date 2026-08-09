@@ -13,10 +13,10 @@ const config: Config = {
     extend: {
       colors: {
         surface: {
-          DEFAULT: "#0d0d14",
-          elevated: "#13131f",
-          card: "#1a1a2e",
-          hover: "#1f1f35",
+          DEFAULT: "var(--bg-canvas)",
+          elevated: "var(--bg-elevated)",
+          card: "var(--bg-card)",
+          hover: "var(--bg-hover)",
         },
         accent: {
           DEFAULT: "var(--accent)",
@@ -28,9 +28,9 @@ const config: Config = {
           glow: "var(--accent-glow)",
         },
         item: {
-          event: "#5b8ded",
-          task: "#34d399",
-          reminder: "#fbbf24",
+          event: "var(--info)",
+          task: "var(--success)",
+          reminder: "var(--warning)",
         },
       },
       fontFamily: {
@@ -60,11 +60,11 @@ const config: Config = {
         "noise": "url('/noise.svg')",
       },
       boxShadow: {
-        "glow-purple": "0 0 30px rgba(139, 92, 246, 0.15)",
-        "glow-blue": "0 0 30px rgba(91, 141, 237, 0.15)",
-        "card": "0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)",
-        "elevated": "0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)",
-        "float": "0 20px 60px rgba(0,0,0,0.6)",
+        "glow-purple": "0 0 30px var(--accent-glow)",
+        "glow-blue": "0 0 30px var(--accent-glow)",
+        "card": "var(--shadow-card)",
+        "elevated": "var(--shadow-elevated)",
+        "float": "var(--shadow-modal)",
       },
     },
   },

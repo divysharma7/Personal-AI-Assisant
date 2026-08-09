@@ -152,12 +152,7 @@ export default function DatePopover({
       {...fadeSlideDown}
       transition={ease.fast}
       ref={popoverRef}
-      className="w-[280px] rounded-xl p-3"
-      style={{
-        backgroundColor: 'var(--bg-pane-2)',
-        border: '1px solid var(--border)',
-        boxShadow: 'var(--shadow-elevated)',
-      }}
+      className="popover-shell w-[280px] p-3"
     >
       {/* Quick options */}
       <div className="mb-3 flex flex-col gap-0.5">
@@ -169,22 +164,13 @@ export default function DatePopover({
           <button
             key={label}
             onClick={() => selectQuickDate(date)}
-            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors duration-100 cursor-pointer"
+            className="menu-item cursor-pointer"
             style={{
               backgroundColor:
                 pendingDate && isSameDay(pendingDate, date)
                   ? 'var(--bg-hover)'
                   : 'transparent',
               color: 'var(--text-primary)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor =
-                pendingDate && isSameDay(pendingDate, date)
-                  ? 'var(--bg-hover)'
-                  : 'transparent'
             }}
           >
             <Calendar size={14} strokeWidth={1.5} style={{ color: 'var(--text-muted)' }} />

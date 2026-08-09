@@ -103,7 +103,7 @@ function TaskActivityHeatmap() {
 
   return (
     <div style={cardStyle}>
-      <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+      <h3 className="type-section-title">
         Task activity
       </h3>
       <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
@@ -201,7 +201,7 @@ export default function ProfileTab({
         <div style={cardStyle}>
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+              <h3 className="type-section-title">
                 Personal info
               </h3>
               <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
@@ -270,7 +270,7 @@ export default function ProfileTab({
 
         {/* Card 3: App Language */}
         <div style={cardStyle}>
-          <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+          <h3 className="type-section-title">
             App language
           </h3>
           <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>

@@ -209,10 +209,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div style={{
-      display: 'flex', height: '100%', overflow: 'hidden',
-      fontFamily: 'Inter, system-ui, sans-serif',
-    }}>
+    <div className="workspace-page overflow-hidden">
       {/* ── Sessions side panel ── */}
       <AnimatePresence>
         {historyOpen && (
@@ -232,32 +229,16 @@ export default function ChatPage() {
         position: 'relative', overflow: 'hidden',
       }}>
         {/* ── History toggle button ── */}
-        <div style={{
-          position: 'absolute', top: 12, left: 12, zIndex: 10,
-        }}>
+        <header className="workspace-header relative z-10 justify-start gap-2.5">
           <button
             onClick={() => setHistoryOpen(!historyOpen)}
             aria-label="Chat history"
-            style={{
-              width: 36, height: 36, borderRadius: 10,
-              backgroundColor: 'var(--overlay-1, rgba(108,108,158,0.06))',
-              border: '1px solid var(--overlay-2, rgba(108,108,158,0.1))',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'var(--text-muted)', cursor: 'pointer',
-              transition: 'background-color 150ms ease, border-color 150ms ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--overlay-2, rgba(108,108,158,0.12))'
-              e.currentTarget.style.borderColor = 'var(--overlay-3, rgba(108,108,158,0.2))'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--overlay-1, rgba(108,108,158,0.06))'
-              e.currentTarget.style.borderColor = 'var(--overlay-2, rgba(108,108,158,0.1))'
-            }}
+            className="control-icon"
           >
             <MessageSquare size={18} strokeWidth={1.5} />
           </button>
-        </div>
+          <h1 className="type-page-title">Chatbot</h1>
+        </header>
 
         {/* ── Animated gradient background — Neural Expressive inspired ── */}
         {!hasMessages && (
@@ -282,10 +263,10 @@ export default function ChatPage() {
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: motionTokens.duration.slow, ease: motionTokens.easing.smooth }}
                 style={{
-                  width: 64, height: 64, borderRadius: 20, marginBottom: 20,
-                  background: 'linear-gradient(135deg, #6b66da 0%, var(--accent) 50%, #f59e0b 100%)',
+                  width: 56, height: 56, borderRadius: 12, marginBottom: 18,
+                  background: 'linear-gradient(135deg, var(--accent-dim) 0%, var(--accent) 65%, var(--warning) 100%)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: '0 8px 32px rgba(107,102,218,0.25)',
+                  boxShadow: '0 8px 32px var(--accent-glow)',
                 }}
               >
                 <Sparkles size={32} strokeWidth={1.5} color="#fff" />
@@ -297,7 +278,7 @@ export default function ChatPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15, duration: motionTokens.duration.normal }}
                 style={{
-                  fontSize: 36, fontWeight: 700, letterSpacing: '-0.03em', margin: '0 0 8px',
+                  fontSize: 32, lineHeight: '38px', fontWeight: 700, letterSpacing: '-0.035em', margin: '0 0 8px',
                   background: 'linear-gradient(135deg, var(--text-primary) 0%, var(--text-muted) 100%)',
                   WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                 }}
@@ -309,7 +290,7 @@ export default function ChatPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3, duration: motionTokens.duration.normal }}
-                style={{ fontSize: 16, color: 'var(--text-faint)', marginBottom: 36, maxWidth: 380 }}
+                style={{ fontSize: 13, lineHeight: '20px', color: 'var(--text-muted)', marginBottom: 28, maxWidth: 380 }}
               >
                 I can help plan your day, track tasks, and keep you focused. What&apos;s on your mind?
               </motion.p>
@@ -325,25 +306,7 @@ export default function ChatPage() {
                   <button
                     key={s.label}
                     onClick={() => handleSend(s.label)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      padding: '10px 18px', borderRadius: 999, cursor: 'pointer',
-                      backgroundColor: 'var(--overlay-1, rgba(108,108,158,0.06))',
-                      border: '1px solid var(--overlay-2, rgba(108,108,158,0.1))',
-                      color: 'var(--text-primary)', fontSize: 14, fontWeight: 500,
-                      fontFamily: 'Inter, system-ui, sans-serif',
-                      transition: 'background-color 150ms ease-out, transform 150ms ease-out',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'var(--overlay-2, rgba(108,108,158,0.12))'
-                      e.currentTarget.style.borderColor = 'var(--overlay-3, rgba(108,108,158,0.2))'
-                      e.currentTarget.style.transform = 'translateY(-1px)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'var(--overlay-1, rgba(108,108,158,0.06))'
-                      e.currentTarget.style.borderColor = 'var(--overlay-2, rgba(108,108,158,0.1))'
-                      e.currentTarget.style.transform = 'translateY(0)'
-                    }}
+                    className="surface-card type-meta flex cursor-pointer items-center gap-2 px-3 py-2 transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--bg-hover)]"
                   >
                     <s.icon size={16} strokeWidth={1.5} style={{ color: s.color }} />
                     {s.label}
@@ -367,10 +330,10 @@ export default function ChatPage() {
                       /* User — right-aligned pill */
                       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                         <div style={{
-                          maxWidth: '70%', padding: '12px 18px', borderRadius: 22,
-                          borderBottomRightRadius: 6,
-                          backgroundColor: 'var(--accent)', color: '#fff',
-                          fontSize: 15, fontWeight: 500, lineHeight: 1.5,
+                          maxWidth: '70%', padding: '9px 12px', borderRadius: 'var(--radius-lg)',
+                          borderBottomRightRadius: 4,
+                          backgroundColor: 'var(--accent-strong)', color: 'var(--text-on-dark)',
+                          fontSize: 13, fontWeight: 500, lineHeight: '20px',
                           whiteSpace: 'pre-wrap',
                         }}>
                           {msg.content}
@@ -380,15 +343,15 @@ export default function ChatPage() {
                       /* Assistant — left-aligned, icon + structured text */
                       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                         <div style={{
-                          width: 32, height: 32, borderRadius: 10, flexShrink: 0,
-                          background: 'linear-gradient(135deg, #6b66da 0%, var(--accent) 100%)',
+                          width: 30, height: 30, borderRadius: 'var(--radius-sm)', flexShrink: 0,
+                          background: 'linear-gradient(135deg, var(--accent-dim) 0%, var(--accent) 100%)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           marginTop: 2,
                         }}>
                           <Sparkles size={16} strokeWidth={1.5} color="#fff" />
                         </div>
                         <div style={{
-                          flex: 1, fontSize: 15, fontWeight: 400, lineHeight: 1.7,
+                          flex: 1, fontSize: 13, fontWeight: 500, lineHeight: '20px',
                           color: 'var(--text-muted)',
                         }}>
                           {renderAssistant(msg.content)}
@@ -407,8 +370,8 @@ export default function ChatPage() {
                   style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 24 }}
                 >
                   <div style={{
-                    width: 32, height: 32, borderRadius: 10, flexShrink: 0,
-                    background: 'linear-gradient(135deg, #6b66da 0%, var(--accent) 100%)',
+                    width: 30, height: 30, borderRadius: 'var(--radius-sm)', flexShrink: 0,
+                    background: 'linear-gradient(135deg, var(--accent-dim) 0%, var(--accent) 100%)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     <Sparkles size={16} strokeWidth={1.5} color="#fff" />
@@ -436,17 +399,11 @@ export default function ChatPage() {
           padding: hasMessages ? '8px 20px 20px' : '0 20px 28px',
           maxWidth: 680, margin: '0 auto', width: '100%',
         }}>
-          <div style={{
+          <div className="surface-card focus-within:border-[var(--accent)] focus-within:shadow-[0_0_0_3px_var(--accent-soft)]" style={{
             display: 'flex', alignItems: 'flex-end', gap: 10,
             padding: '12px 16px 12px 20px',
-            borderRadius: 28,
-            backgroundColor: 'var(--overlay-1, rgba(108,108,158,0.06))',
-            border: '1px solid var(--overlay-2, rgba(108,108,158,0.1))',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
             transition: 'border-color 200ms ease, box-shadow 200ms ease',
           }}
-            onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--overlay-3, rgba(108,108,158,0.25))'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.1)' }}
-            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--overlay-2, rgba(108,108,158,0.1))'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.06)' }}
           >
             <textarea
               ref={inputRef}
@@ -459,8 +416,7 @@ export default function ChatPage() {
               rows={1}
               style={{
                 flex: 1, resize: 'none', background: 'transparent', outline: 'none', border: 'none',
-                fontSize: 15, fontWeight: 500, color: 'var(--text-primary)',
-                fontFamily: 'Inter, system-ui, sans-serif',
+                fontSize: 13, fontWeight: 500, color: 'var(--text-primary)',
                 maxHeight: 140, minHeight: 22, lineHeight: 1.5, padding: 0,
                 textAlign: 'left',
               }}
@@ -512,8 +468,8 @@ export default function ChatPage() {
                 disabled={!input.trim() || isLoading}
                 style={{
                   width: 36, height: 36, borderRadius: '50%',
-                  backgroundColor: input.trim() ? 'var(--accent)' : 'var(--overlay-2, rgba(108,108,158,0.12))',
-                  color: input.trim() ? '#fff' : 'var(--text-faint)',
+                  backgroundColor: input.trim() ? 'var(--accent-strong)' : 'var(--bg-active)',
+                  color: input.trim() ? 'var(--text-on-dark)' : 'var(--text-faint)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   cursor: input.trim() ? 'pointer' : 'default',
                   border: 'none', transition: 'background-color 200ms ease-out, color 200ms ease-out',

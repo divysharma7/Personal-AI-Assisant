@@ -1,272 +1,158 @@
-import { env } from '@/config/env'
-const API_BASE = env.VITE_API_URL
-
-
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Check, Sparkles } from 'lucide-react'
+import { env } from '@/config/env'
+
+const API_BASE = env.VITE_API_URL
 
 const CHECKLIST = [
   { text: 'Check off this task to see how it works', tip: 'Click the checkbox on the left. Done feels good.' },
-  { text: 'Click the "+ New task" row and type something', tip: 'Press Enter to save, Escape to cancel. That\'s it.' },
-  { text: 'Add a due date by clicking the date chip below a task', tip: 'Pick Today, Tomorrow, Next week, or any date from the calendar.' },
-  { text: 'Open task details with the → arrow on the right', tip: 'The detail panel slides in — add subtasks, change priority, leave comments.' },
-  { text: 'Change how tasks are grouped using the pill in the top-right', tip: 'Try "Priority" to see your High/Medium/Low tasks separated.' },
-  { text: 'Create your first list using the 📁 icon next to Favorites', tip: 'Lists are workspaces — one for Home, one for Work, one for a project.' },
+  { text: 'Click the “+ New task” row and type something', tip: 'Press Enter to save, Escape to cancel.' },
+  { text: 'Add a due date from the date action', tip: 'Pick Today, Tomorrow, Next week, or a date from the calendar.' },
+  { text: 'Open a task to see its details', tip: 'Add subtasks, change priority, and leave comments without losing your place.' },
+  { text: 'Change how tasks are grouped', tip: 'Try Priority to see High, Medium, and Low tasks together.' },
+  { text: 'Create your first list', tip: 'Use one for Home, one for Work, or one for a project.' },
 ]
+
+const FEATURES = [
+  ['📋', 'Lists & workspaces', 'Create focused homes for personal work, projects, and responsibilities.', '/lists'],
+  ['🔥', 'Habit tracking', 'Build routines with streaks, check-ins, weekly progress, and analytics.', '/habits'],
+  ['📅', 'Calendar', 'Plan with Day, Week, Month, Year, and Agenda views.', '/calendar'],
+  ['🎯', 'Focus', 'Protect a block of time, connect it to an intention, and track the result.', '/focus'],
+  ['📊', 'Statistics', 'Review completion, consistency, focus time, and workload patterns.', '/statistics'],
+  ['✨', 'AI chat', 'Plan your day, inspect overdue work, and break down a goal.', '/chat'],
+] as const
+
+const SHORTCUTS = [
+  ['⌃N', 'Create a new task'], ['Enter', 'Save the task you are typing'],
+  ['Escape', 'Cancel and close'], ['Space', 'Toggle a task'],
+  ['Double-click', 'Edit a task title'], ['Right-click', 'Open task actions'],
+  ['D / 1', 'Calendar day view'], ['W / 2', 'Calendar week view'],
+  ['M / 3', 'Calendar month view'], ['T', 'Jump to today'],
+] as const
 
 export default function GettingStartedPage() {
   const [checked, setChecked] = useState<Set<number>>(new Set())
   const [userName, setUserName] = useState('')
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' }).then(r => r.ok ? r.json() : null).then(d => {
-      if (d?.name) setUserName(d.name.split(' ')[0])
-    }).catch(() => {})
+    fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' })
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => { if (data?.name) setUserName(data.name.split(' ')[0]) })
+      .catch(() => {})
   }, [])
 
-  const toggle = (i: number) => {
-    setChecked(prev => { const n = new Set(prev); if (n.has(i)) n.delete(i); else n.add(i); return n })
+  const toggle = (index: number) => {
+    setChecked((previous) => {
+      const next = new Set(previous)
+      if (next.has(index)) next.delete(index)
+      else next.add(index)
+      return next
+    })
   }
-
   const progress = Math.round((checked.size / CHECKLIST.length) * 100)
 
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto',
-      fontFamily: 'Inter, system-ui, sans-serif',
-      paddingTop: 48, paddingBottom: 80, paddingLeft: '18%', paddingRight: '10%',
-    }}>
-      {/* Title */}
-      <h1 style={{
-        fontSize: 42, fontWeight: 700, letterSpacing: '-0.02em',
-        color: 'var(--text-primary)', marginBottom: 36,
-      }}>
-        Getting Started
-      </h1>
+    <div className="workspace-page overflow-y-auto">
+      <header className="workspace-header">
+        <h1 className="type-page-title">Getting Started</h1>
+        <span className="type-meta tabular-nums text-[var(--text-muted)]">{progress}% complete</span>
+      </header>
 
-      {/* ── Welcome ── */}
-      <div style={{ marginBottom: 40 }}>
-        <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12 }}>
-          👋 {userName ? `Welcome, ${userName}` : 'Welcome to Life OS'}
-        </h2>
-        <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--text-muted)', maxWidth: 560 }}>
-          Life OS brings your <strong style={{ color: 'var(--text-primary)', fontStyle: 'italic' }}>tasks</strong>, <strong style={{ color: 'var(--text-primary)', fontStyle: 'italic' }}>habits</strong>, <strong style={{ color: 'var(--text-primary)', fontStyle: 'italic' }}>calendar</strong>, and <strong style={{ color: 'var(--text-primary)', fontStyle: 'italic' }}>focus time</strong> into one calm rhythm. It should feel as natural as pen and paper — but smarter.
-        </p>
-      </div>
-
-      {/* ── Your first 2 minutes ── */}
-      <div style={{ marginBottom: 48 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)' }}>
-            Your first 2 minutes:
-          </h3>
-          <span style={{ fontSize: 13, fontWeight: 600, color: progress === 100 ? 'var(--success, #34d399)' : 'var(--text-faint)' }}>
-            {checked.size}/{CHECKLIST.length} done
-          </span>
-        </div>
-
-        {/* Progress bar */}
-        <div style={{
-          height: 4, borderRadius: 999, marginBottom: 20,
-          backgroundColor: 'var(--overlay-2, rgba(108,108,158,0.12))',
-        }}>
-          <div style={{
-            height: '100%', borderRadius: 999,
-            width: `${progress}%`,
-            backgroundColor: progress === 100 ? 'var(--success, #34d399)' : 'var(--accent)',
-            transition: 'width 300ms ease, background-color 300ms ease',
-          }} />
-        </div>
-
-        {/* Checklist */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {CHECKLIST.map((item, i) => {
-            const done = checked.has(i)
-            return (
-              <div
-                key={i}
-                onClick={() => toggle(i)}
-                style={{
-                  display: 'flex', alignItems: 'flex-start', gap: 14, cursor: 'pointer',
-                  padding: '10px 12px', borderRadius: 10,
-                  backgroundColor: done ? 'rgba(52,211,153,0.04)' : 'transparent',
-                  transition: 'background-color 150ms ease',
-                }}
-                onMouseEnter={(e) => { if (!done) e.currentTarget.style.backgroundColor = 'var(--overlay-1, rgba(108,108,158,0.05))' }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = done ? 'rgba(52,211,153,0.04)' : 'transparent' }}
-              >
-                <div style={{
-                  flexShrink: 0, width: 22, height: 22, marginTop: 1,
-                  borderRadius: 6,
-                  border: done ? 'none' : '2px solid var(--overlay-3, #605f6a)',
-                  backgroundColor: done ? 'var(--success, #34d399)' : 'transparent',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'background-color 150ms ease-out, border-color 150ms ease-out, transform 150ms ease-out',
-                }}>
-                  {done && <Check size={14} strokeWidth={2.5} color="#fff" />}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <span style={{
-                    fontSize: 15, fontWeight: 600, lineHeight: 1.5,
-                    color: done ? 'var(--text-faint)' : 'var(--text-primary)',
-                    textDecoration: done ? 'line-through' : 'none',
-                    textDecorationColor: 'var(--success, #34d399)',
-                  }}>
-                    {item.text}
-                  </span>
-                  <p style={{ fontSize: 13, color: 'var(--text-faint)', marginTop: 2, lineHeight: 1.4 }}>
-                    {item.tip}
-                  </p>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* ── How the screen works ── */}
-      <div style={{ marginBottom: 48 }}>
-        <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
-          How the screen works
-        </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <FeatureBlock
-            title="Left sidebar → Navigate"
-            body="Jump between Inbox, Today, Tasks, Updates, and Lists. Click your avatar at the bottom to access Habits, Calendar, Focus, Matrix, Statistics, and Chat. The + button creates tasks or new lists."
-          />
-          <FeatureBlock
-            title="Center → Your tasks"
-            body="This is where you work. Tasks show a checkbox, priority bars, title, due date, and subtask count. Click a date chip to reschedule. Click priority to change it. Double-click a title to rename. Right-click for the full context menu."
-          />
-          <FeatureBlock
-            title="Right panel → Details or cover image"
-            body="Click any task and the right side becomes a detail panel — edit everything, add subtasks with the '+ New task' bar inside, leave comments. When no task is open, it shows a customizable cover image (hover the gear icon to pick a new one)."
-          />
-        </div>
-      </div>
-
-      {/* ── What you can do ── */}
-      <div style={{ marginBottom: 48 }}>
-        <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
-          What you can do
-        </h3>
-        <div style={{
-          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12,
-        }}>
-          <FeatureCard emoji="📋" title="Lists & Workspaces" desc="Create a list for Home, Work, a project — whatever you need. Each list works the same way: add tasks, track them, finish them." link="/lists" />
-          <FeatureCard emoji="🔥" title="Habit Tracking" desc="Build daily routines with streaks, mood journals, weekly grids, and analytics. Morning meditation, reading, gym — all tracked." link="/habits" />
-          <FeatureCard emoji="📅" title="Calendar" desc="Day, Week, Month, Year, and Agenda views. Drag tasks to schedule them. See overdue items. Connect Google Calendar." link="/calendar" />
-          <FeatureCard emoji="🎯" title="Focus Protocol" desc="Flexible focus and reset rhythms tied to a clear intention. Pick what matters, protect the time, and track the result." link="/focus" />
-          <FeatureCard emoji="📊" title="Statistics" desc="See your completion rates, streaks, focus time, and habit consistency across Overview, Task, and Focus tabs." link="/statistics" />
-          <FeatureCard emoji="✨" title="AI Chat" desc="Ask Life OS anything — 'Plan my day', 'What's overdue?', 'Break down this goal'. It knows your tasks and can create them for you." link="/chat" />
-        </div>
-      </div>
-
-      {/* ── Keyboard shortcuts ── */}
-      <div style={{ marginBottom: 48 }}>
-        <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
-          Keyboard shortcuts you&apos;ll love
-        </h3>
-        <div style={{
-          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8,
-        }}>
-          <ShortcutRow keys="⌃N" action="Create a new task" />
-          <ShortcutRow keys="Enter" action="Save the task you're typing" />
-          <ShortcutRow keys="Escape" action="Cancel and close anything" />
-          <ShortcutRow keys="Space" action="Toggle a task's checkbox" />
-          <ShortcutRow keys="Double-click" action="Edit a task title inline" />
-          <ShortcutRow keys="Right-click" action="Open the context menu" />
-          <ShortcutRow keys="D / 1" action="Calendar → Day view" />
-          <ShortcutRow keys="W / 2" action="Calendar → Week view" />
-          <ShortcutRow keys="M / 3" action="Calendar → Month view" />
-          <ShortcutRow keys="T" action="Calendar → Jump to today" />
-        </div>
-      </div>
-
-      {/* ── Philosophy ── */}
-      <div style={{ marginBottom: 48 }}>
-        <div style={{
-          padding: '24px 28px', borderRadius: 16,
-          backgroundColor: 'var(--overlay-1, rgba(108,108,158,0.06))',
-          border: '1px solid var(--overlay-2, rgba(108,108,158,0.1))',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <Sparkles size={20} strokeWidth={1.5} style={{ color: 'var(--accent)' }} />
-            <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-              The idea behind Life OS
-            </h3>
-          </div>
-          <p style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--text-muted)', margin: 0 }}>
-            Most productivity apps make you feel behind. Life OS is designed to make you feel in control. The Today view shows only what matters right now. The AI assistant understands your workload. The focus timer turns intentions into action. And when you check something off, you hear it — because finishing things should feel good.
+      <main className="w-full max-w-[760px] px-5 py-6 sm:px-8">
+        <section className="mb-8">
+          <p className="type-micro mb-1 font-semibold uppercase tracking-[0.12em] text-[var(--accent)]">Welcome</p>
+          <h2 className="type-section-title">{userName ? `Welcome, ${userName}` : 'Welcome to Life OS'}</h2>
+          <p className="type-body mt-2 max-w-[620px] text-[var(--text-muted)]">
+            Tasks, habits, calendar, and focus time live in one calm workspace. Start with these six small actions; every feature remains available from the navigation rail.
           </p>
-        </div>
-      </div>
+        </section>
 
-      {/* ── Divider ── */}
-      <div style={{ marginBottom: 16 }}>
-        <svg width="100%" height="20" viewBox="0 0 600 20" preserveAspectRatio="none">
-          <path d="M0 10 Q50 2, 100 10 T200 10 T300 10 T400 10 T500 10 T600 10" fill="none" stroke="var(--accent-blue, #2281d9)" strokeWidth="2" opacity="0.3" />
-        </svg>
-      </div>
+        <section className="mb-9" aria-labelledby="first-minutes-title">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 id="first-minutes-title" className="type-section-title">Your first two minutes</h2>
+            <span className="type-meta tabular-nums" style={{ color: progress === 100 ? 'var(--success)' : 'var(--text-muted)' }}>
+              {checked.size}/{CHECKLIST.length} done
+            </span>
+          </div>
+          <div className="mb-3 h-1 overflow-hidden rounded-full bg-[var(--bg-active)]" role="progressbar" aria-label="Getting started progress" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+            <div className="h-full rounded-full transition-[width,background-color] duration-300" style={{ width: `${progress}%`, background: progress === 100 ? 'var(--success)' : 'var(--accent)' }} />
+          </div>
+          <div className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)]">
+            {CHECKLIST.map((item, index) => {
+              const done = checked.has(index)
+              return (
+                <button
+                  key={item.text}
+                  type="button"
+                  aria-pressed={done}
+                  onClick={() => toggle(index)}
+                  className="flex w-full items-start gap-3 border-b border-[var(--border)] bg-[var(--bg-card)] px-3 py-3 text-left last:border-b-0 hover:bg-[var(--bg-hover)]"
+                >
+                  <span className="mt-0.5 grid h-[18px] w-[18px] shrink-0 place-items-center rounded-[5px] border" style={{ borderColor: done ? 'var(--success)' : 'var(--border-strong)', background: done ? 'var(--success)' : 'transparent' }}>
+                    {done ? <Check size={12} strokeWidth={2.5} color="var(--text-on-dark)" /> : null}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="type-row-title block" style={{ color: done ? 'var(--text-muted)' : 'var(--text-primary)', textDecoration: done ? 'line-through' : undefined }}>{item.text}</span>
+                    <span className="type-meta mt-0.5 block text-[var(--text-muted)]">{item.tip}</span>
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </section>
 
-      <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--text-faint)', fontStyle: 'italic' }}>
-        You&apos;re all set. Go to <a href="/today" style={{ color: 'var(--accent)', textDecoration: 'underline', textUnderlineOffset: 2 }}>Today</a> and start adding tasks. You&apos;ll figure out the rest as you go — that&apos;s how it&apos;s designed.
-      </p>
+        <section className="mb-9" aria-labelledby="screen-title">
+          <h2 id="screen-title" className="type-section-title mb-3">How the workspace works</h2>
+          <div className="grid gap-px overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--border)] sm:grid-cols-3">
+            <FeatureBlock title="Rail · Navigate" body="Move between Today, tasks, habits, calendar, focus, statistics, chat, plan, and shutdown." />
+            <FeatureBlock title="Center · Work" body="Complete, schedule, prioritize, group, and move tasks without leaving the current view." />
+            <FeatureBlock title="Panel · Inspect" body="Open details, subtasks, comments, and workflow context while your list stays visible." />
+          </div>
+        </section>
+
+        <section className="mb-9" aria-labelledby="features-title">
+          <h2 id="features-title" className="type-section-title mb-3">Explore the system</h2>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {FEATURES.map(([emoji, title, description, href]) => <FeatureCard key={href} emoji={emoji} title={title} description={description} href={href} />)}
+          </div>
+        </section>
+
+        <section className="mb-9" aria-labelledby="shortcuts-title">
+          <h2 id="shortcuts-title" className="type-section-title mb-3">Keyboard shortcuts</h2>
+          <div className="grid gap-x-6 sm:grid-cols-2">
+            {SHORTCUTS.map(([keys, action]) => <ShortcutRow key={`${keys}-${action}`} keys={keys} action={action} />)}
+          </div>
+        </section>
+
+        <section className="surface-card mb-8 flex gap-3 p-4">
+          <Sparkles size={18} className="mt-0.5 shrink-0 text-[var(--accent)]" />
+          <div>
+            <h2 className="type-section-title">The idea behind Life OS</h2>
+            <p className="type-body mt-1 text-[var(--text-muted)]">The interface stays quiet so your work is the loudest thing on screen. Today narrows attention, the assistant reduces planning overhead, and Focus turns an intention into protected time.</p>
+          </div>
+        </section>
+
+        <p className="type-meta pb-8 text-[var(--text-muted)]">
+          You are ready. Go to <a href="/today" className="font-semibold text-[var(--accent)] underline underline-offset-2">Today</a> and add the next thing that matters.
+        </p>
+      </main>
     </div>
   )
 }
-
-/* ── Sub-components ── */
 
 function FeatureBlock({ title, body }: { title: string; body: string }) {
-  return (
-    <div>
-      <h4 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>{title}</h4>
-      <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--text-muted)', margin: 0 }}>{body}</p>
-    </div>
-  )
+  return <div className="bg-[var(--bg-card)] p-4"><h3 className="type-row-title">{title}</h3><p className="type-meta mt-1 text-[var(--text-muted)]">{body}</p></div>
 }
 
-function FeatureCard({ emoji, title, desc, link }: { emoji: string; title: string; desc: string; link: string }) {
+function FeatureCard({ emoji, title, description, href }: { emoji: string; title: string; description: string; href: string }) {
   return (
-    <a
-      href={link}
-      style={{
-        display: 'flex', flexDirection: 'column', gap: 8,
-        padding: '16px 18px', borderRadius: 14, textDecoration: 'none',
-        backgroundColor: 'var(--overlay-1, rgba(108,108,158,0.06))',
-        border: '1px solid var(--overlay-2, rgba(108,108,158,0.1))',
-        transition: 'background-color 150ms ease-out, border-color 150ms ease-out, transform 150ms ease-out',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = 'var(--overlay-2, rgba(108,108,158,0.12))'
-        e.currentTarget.style.borderColor = 'var(--overlay-3, rgba(108,108,158,0.2))'
-        e.currentTarget.style.transform = 'translateY(-1px)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = 'var(--overlay-1, rgba(108,108,158,0.06))'
-        e.currentTarget.style.borderColor = 'var(--overlay-2, rgba(108,108,158,0.1))'
-        e.currentTarget.style.transform = 'translateY(0)'
-      }}
-    >
-      <span style={{ fontSize: 22 }}>{emoji}</span>
-      <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{title}</span>
-      <span style={{ fontSize: 13, lineHeight: 1.5, color: 'var(--text-faint)' }}>{desc}</span>
+    <a href={href} className="surface-card flex gap-3 p-3 no-underline transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--bg-hover)]">
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[var(--radius-sm)] bg-[var(--overlay-2)] text-base" aria-hidden="true">{emoji}</span>
+      <span><span className="type-row-title block text-[var(--text-primary)]">{title}</span><span className="type-meta mt-0.5 block text-[var(--text-muted)]">{description}</span></span>
     </a>
   )
 }
 
 function ShortcutRow({ keys, action }: { keys: string; action: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }}>
-      <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>{action}</span>
-      <span style={{
-        fontSize: 12, fontWeight: 600, color: 'var(--text-faint)',
-        backgroundColor: 'var(--overlay-2, rgba(108,108,158,0.12))',
-        padding: '2px 8px', borderRadius: 6, fontFamily: 'monospace',
-      }}>
-        {keys}
-      </span>
-    </div>
-  )
+  return <div className="flex min-h-9 items-center justify-between border-b border-[var(--border)] py-1"><span className="type-meta text-[var(--text-secondary)]">{action}</span><kbd className="type-micro rounded-[5px] border border-[var(--border)] bg-[var(--bg-pane-2)] px-1.5 py-0.5 font-mono text-[var(--text-muted)]">{keys}</kbd></div>
 }

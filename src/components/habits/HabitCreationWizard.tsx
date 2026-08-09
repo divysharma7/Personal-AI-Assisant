@@ -146,7 +146,7 @@ export default function HabitCreationWizard({
                   <button
                     key={e}
                     onClick={() => setIcon(e)}
-                    className="flex h-10 w-10 items-center justify-center rounded-lg text-xl transition-all duration-150 cursor-pointer"
+                    className="flex h-10 w-10 items-center justify-center rounded-lg text-xl transition-[color,background-color,border-color,transform] duration-150 cursor-pointer"
                     style={{
                       border: icon === e ? '2px solid var(--accent)' : '2px solid var(--border)',
                       backgroundColor: icon === e ? 'var(--accent-soft)' : 'transparent',
@@ -201,7 +201,7 @@ export default function HabitCreationWizard({
                 <button
                   key={gt}
                   onClick={() => setGoalType(gt)}
-                  className="flex flex-col gap-1 rounded-xl px-4 py-3 text-left transition-all duration-150 cursor-pointer"
+                  className="flex flex-col gap-1 rounded-xl px-4 py-3 text-left transition-[color,background-color,border-color,transform] duration-150 cursor-pointer"
                   style={{
                     backgroundColor: 'var(--bg-pane-2)',
                     border: goalType === gt ? '2px solid var(--accent)' : '2px solid var(--border)',
@@ -263,7 +263,7 @@ export default function HabitCreationWizard({
                 <button
                   key={f}
                   onClick={() => setFrequency(f)}
-                  className="rounded-full px-4 py-2 text-xs font-medium transition-all duration-150 cursor-pointer"
+                  className="rounded-full px-4 py-2 text-xs font-medium transition-[color,background-color,border-color] duration-150 cursor-pointer"
                   style={{
                     backgroundColor: frequency === f ? 'var(--accent)' : 'transparent',
                     color: frequency === f ? '#FFFFFF' : 'var(--text-muted)',
@@ -280,7 +280,7 @@ export default function HabitCreationWizard({
                   <button
                     key={d}
                     onClick={() => toggleWeekday(i)}
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-medium transition-all duration-150 cursor-pointer"
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-medium transition-[color,background-color,border-color] duration-150 cursor-pointer"
                     style={{
                       backgroundColor: weekdays.includes(i) ? 'var(--accent)' : 'transparent',
                       color: weekdays.includes(i) ? '#FFFFFF' : 'var(--text-muted)',
@@ -396,13 +396,13 @@ export default function HabitCreationWizard({
           exit={{ opacity: 0 }}
           transition={ease.fast}
           className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+          style={{ backgroundColor: 'var(--scrim)' }}
           onClick={onClose}
         >
           <motion.div
             {...scaleIn}
             transition={ease.normal}
-            className="flex w-[480px] flex-col rounded-2xl"
+            className="modal-shell flex w-[480px] flex-col"
             style={{
               backgroundColor: 'var(--bg-pane)',
               border: '1px solid var(--border)',
@@ -435,7 +435,7 @@ export default function HabitCreationWizard({
               {Array.from({ length: totalSteps }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-2 w-2 rounded-full transition-all duration-200"
+                  className="h-2 w-2 rounded-full transition-[width,background-color] duration-200"
                   style={{
                     backgroundColor: i <= step ? 'var(--accent)' : 'var(--border)',
                     transform: i === step ? 'scale(1.3)' : 'scale(1)',

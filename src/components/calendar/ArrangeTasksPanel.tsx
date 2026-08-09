@@ -22,9 +22,9 @@ const PRIORITY_LABELS: Record<string, string> = {
   low: 'Low',
 }
 const PRIORITY_COLORS: Record<string, string> = {
-  high: '#ef4444',
-  medium: '#f59e0b',
-  low: '#6b66da',
+  high: 'var(--priority-high)',
+  medium: 'var(--priority-medium)',
+  low: 'var(--priority-low)',
 }
 
 interface TaskGroup {

@@ -82,9 +82,9 @@ function formatDuration(minutes: number): string {
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
-  high: '#ef4444',
-  medium: '#f59e0b',
-  low: '#6b66da',
+  high: 'var(--priority-high)',
+  medium: 'var(--priority-medium)',
+  low: 'var(--priority-low)',
 }
 
 const KIND_LABELS: Record<string, string> = {
@@ -329,7 +329,7 @@ function AgendaItemRow({
           )}
 
           {item.completed && (
-            <CheckCircle2 size={12} strokeWidth={2} style={{ color: '#10b981' }} />
+            <CheckCircle2 size={12} strokeWidth={2} style={{ color: 'var(--success)' }} />
           )}
         </div>
 
@@ -340,8 +340,8 @@ function AgendaItemRow({
             role="alert"
             aria-label={`Scheduling conflict: overlaps ${conflict.otherTitle} by ${conflict.overlapMin} minutes`}
           >
-            <AlertTriangle size={12} strokeWidth={2} style={{ color: '#f59e0b', flexShrink: 0 }} />
-            <span style={{ color: '#f59e0b' }}>
+            <AlertTriangle size={12} strokeWidth={2} style={{ color: 'var(--warning)', flexShrink: 0 }} />
+            <span style={{ color: 'var(--warning)' }}>
               Overlaps {conflict.otherTitle} by {conflict.overlapMin} min
             </span>
           </div>
@@ -451,7 +451,7 @@ function AgendaItemRow({
         {item.kind === 'focus_session' && item.completed && (
           <div
             className="flex items-center justify-center w-8 h-8 rounded-lg"
-            style={{ color: '#10b981' }}
+            style={{ color: 'var(--success)' }}
             aria-label={`Focus session ${item.title} completed`}
           >
             <CheckCircle2 size={16} strokeWidth={1.5} />
@@ -496,8 +496,8 @@ function formatDueState(dueDate?: string): { label: string; color: string; urgen
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const due = new Date(dueDate + 'T00:00:00'); due.setHours(0, 0, 0, 0)
   const diffDays = Math.round((due.getTime() - today.getTime()) / 86400000)
-  if (diffDays < 0) return { label: 'Overdue', color: '#ef4444', urgent: true }
-  if (diffDays === 0) return { label: 'Due today', color: '#f59e0b', urgent: true }
+  if (diffDays < 0) return { label: 'Overdue', color: 'var(--danger)', urgent: true }
+  if (diffDays === 0) return { label: 'Due today', color: 'var(--warning)', urgent: true }
   if (diffDays === 1) return { label: 'Due tomorrow', color: 'var(--text-faint)', urgent: false }
   return { label: `Due in ${diffDays}d`, color: 'var(--text-faint)', urgent: false }
 }
@@ -1908,7 +1908,7 @@ export default function AgendaPage() {
       >
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+            <h1 className="type-page-title">
               {formatDateHeader(dateObj)}
             </h1>
             <p className="text-xs" style={{ color: 'var(--text-faint)' }}>

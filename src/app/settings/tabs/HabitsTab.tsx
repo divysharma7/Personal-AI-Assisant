@@ -291,7 +291,7 @@ export default function HabitsTab() {
       {/* Header row */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="type-section-title">
             Habits
           </h2>
           <p className="mt-0.5 text-sm" style={{ color: 'var(--text-muted)' }}>
@@ -338,7 +338,7 @@ export default function HabitsTab() {
       {/* Empty state */}
       {!isLoading && filtered.length === 0 && (
         <div
-          className="flex flex-col items-center justify-center rounded-2xl py-16"
+          className="surface-card flex flex-col items-center justify-center py-12"
           style={{ backgroundColor: 'var(--bg-pane-2)', border: '1px solid var(--border)' }}
         >
           <span className="mb-3 text-4xl opacity-30">{showArchived ? '📦' : '🔥'}</span>

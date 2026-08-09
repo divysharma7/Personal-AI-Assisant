@@ -100,7 +100,7 @@ export default function StreakCelebration({
           exit={{ opacity: 0 }}
           transition={ease.fast}
           className="fixed inset-0 z-[100] flex items-center justify-center"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.7)' }}
+          style={{ backgroundColor: 'var(--scrim)' }}
           onClick={handleDismiss}
         >
           {/* Confetti */}
@@ -113,7 +113,7 @@ export default function StreakCelebration({
           <motion.div
             {...scaleIn}
             transition={ease.normal}
-            className="relative flex flex-col items-center gap-4 rounded-2xl px-10 py-8"
+            className="modal-shell relative flex w-auto flex-col items-center gap-4 px-10 py-8"
             style={{
               backgroundColor: 'var(--bg-pane)',
               border: '1px solid var(--border)',

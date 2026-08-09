@@ -108,21 +108,13 @@ export default function TaskOverflowMenu({
       {...fadeSlideDown}
       transition={ease.fast}
       ref={menuRef}
-      className="absolute right-0 top-full z-50 mt-1 w-[220px] rounded-[var(--radius-lg,16px)] py-1.5"
-      style={{
-        backgroundColor: 'var(--bg-pane-2, var(--bg-pane))',
-        border: '1px solid var(--overlay-2, var(--border))',
-        boxShadow: 'var(--shadow-elevated)',
-      }}
+      className="popover-shell absolute right-0 top-full z-50 mt-1 w-[220px]"
     >
       {items.map((item) => (
         <button
           key={item.label}
           onClick={item.onClick}
-          className="flex w-full items-center gap-3 px-4 py-2 text-[14px] font-medium transition-sl cursor-pointer"
-          style={{ color: 'var(--text-primary)' }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-1, var(--bg-hover))' }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+          className="menu-item cursor-pointer"
         >
           <span style={{ color: 'var(--text-muted)' }}>{item.icon}</span>
           {item.label}
@@ -135,10 +127,7 @@ export default function TaskOverflowMenu({
       {/* Delete — destructive */}
       <button
         onClick={() => { onDelete(); onClose() }}
-        className="flex w-full items-center gap-3 px-4 py-2 text-[14px] font-medium transition-sl cursor-pointer"
-        style={{ color: '#ef4444' }}
-        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.06)' }}
-        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
+        className="menu-item is-destructive cursor-pointer"
       >
         <Trash2 size={15} strokeWidth={1.5} />
         Delete task

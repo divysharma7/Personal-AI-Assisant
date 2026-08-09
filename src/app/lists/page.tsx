@@ -145,7 +145,7 @@ export default function ListsDirectoryPage() {
         onClick={() => navigate(`/lists/${list._id}`)}
         onMouseEnter={() => setHoveredListId(list._id)}
         onMouseLeave={() => setHoveredListId(null)}
-        className="group relative flex items-center gap-3 rounded-xl px-4 py-3 transition-colors duration-150 cursor-pointer"
+        className="group relative flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 transition-colors duration-150 cursor-pointer"
         style={{
           backgroundColor: isHovered ? 'var(--bg-hover)' : 'transparent',
         }}
@@ -223,19 +223,13 @@ export default function ListsDirectoryPage() {
             {...buttonPress}
             onClick={(e) => handleDelete(e, list._id)}
             aria-label="Delete list"
-            className="flex h-7 w-7 items-center justify-center rounded-md transition-all duration-150 cursor-pointer"
+            className="flex h-7 w-7 items-center justify-center rounded-md transition-[color,background-color,opacity] duration-150 cursor-pointer"
             style={{
               opacity: isHovered ? 0.6 : 0,
               color: 'var(--text-faint)',
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-              e.currentTarget.style.color = '#FF4D3D'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-              e.currentTarget.style.color = 'var(--text-faint)'
-            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--danger)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-faint)' }}
           >
             <Trash2 size={14} strokeWidth={1.5} />
           </motion.button>
@@ -245,7 +239,7 @@ export default function ListsDirectoryPage() {
             {...buttonPress}
             onClick={(e) => handleToggleStar(e, list._id, list.pinnedToFavorites)}
             aria-label="Toggle favorite"
-            className="flex h-7 w-7 items-center justify-center rounded-md transition-all duration-150 cursor-pointer"
+            className="flex h-7 w-7 items-center justify-center rounded-md transition-[color,background-color,opacity] duration-150 cursor-pointer"
             style={{
               color: list.pinnedToFavorites ? 'var(--accent)' : isHovered ? 'var(--text-faint)' : 'transparent',
             }}
@@ -328,7 +322,7 @@ export default function ListsDirectoryPage() {
   }
 
   return (
-    <div className="flex flex-col px-6 py-5">
+    <div className="workspace-page px-5 py-4">
       {/* Header row */}
       <div className="mb-1 flex items-start justify-between">
         <div />
@@ -336,20 +330,16 @@ export default function ListsDirectoryPage() {
           <motion.button
             {...buttonPress}
             aria-label="Filter"
-            className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
+            className="control-icon cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--bg-hover)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
           >
             <SlidersHorizontal size={18} strokeWidth={1.5} />
           </motion.button>
           <motion.button
             {...buttonPress}
             aria-label="More options"
-            className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
+            className="control-icon cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--bg-hover)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
           >
             <MoreVertical size={18} strokeWidth={1.5} />
           </motion.button>
@@ -357,7 +347,7 @@ export default function ListsDirectoryPage() {
       </div>
 
       {/* Title */}
-      <h1 className="mb-5 text-[32px]" style={{ color: 'var(--text-primary)' }}>
+      <h1 className="type-page-title mb-5" style={{ color: 'var(--text-primary)' }}>
         {copy.listsDirectory.title}
       </h1>
 
@@ -380,11 +370,11 @@ export default function ListsDirectoryPage() {
                 key={f.key}
                 {...buttonPress}
                 onClick={() => setActiveFilter(f.key)}
-                className="rounded-full px-3.5 py-1.5 text-xs font-medium transition-all duration-150 cursor-pointer"
+                className="cursor-pointer rounded-[var(--radius-sm)] px-3 py-1.5 text-xs font-medium transition-colors duration-150"
                 style={{
-                  backgroundColor: active ? 'var(--text-primary)' : 'transparent',
-                  color: active ? 'var(--bg-pane)' : 'var(--text-muted)',
-                  border: active ? 'none' : '1px solid var(--border)',
+                  backgroundColor: active ? 'var(--bg-selected)' : 'transparent',
+                  color: active ? 'var(--text-primary)' : 'var(--text-muted)',
+                  border: '1px solid var(--border)',
                 }}
               >
                 {f.label}
@@ -396,8 +386,7 @@ export default function ListsDirectoryPage() {
           {...buttonPress}
           onClick={handleCreateList}
           disabled={isCreating}
-          className="flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold text-white transition-colors duration-150 cursor-pointer disabled:opacity-50"
-          style={{ backgroundColor: 'var(--accent)' }}
+          className="btn-primary min-h-8 cursor-pointer px-3 disabled:opacity-50"
         >
           <Plus size={14} strokeWidth={2} />
           {copy.listsDirectory.newListCta}
@@ -406,7 +395,7 @@ export default function ListsDirectoryPage() {
 
       {/* Search */}
       <div
-        className="mb-6 flex items-center gap-2.5 rounded-xl px-4 py-3 transition-all duration-150"
+        className="mb-6 flex min-h-10 items-center gap-2.5 rounded-[var(--radius-md)] px-3 transition-[border-color,box-shadow] duration-150"
         style={{
           backgroundColor: searchFocused ? 'var(--bg-pane-2)' : 'transparent',
           border: searchFocused ? '1px solid var(--accent)' : '1px solid var(--border)',

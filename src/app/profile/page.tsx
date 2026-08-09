@@ -144,9 +144,9 @@ export default function ProfilePage() {
     const low = doneTasks.filter((t) => t.priority === 'low').length
     const total = high + medium + low || 1
     return [
-      { label: 'High', count: high, pct: Math.round((high / total) * 100), color: '#ef4444' },
-      { label: 'Medium', count: medium, pct: Math.round((medium / total) * 100), color: '#f59e0b' },
-      { label: 'Low', count: low, pct: Math.round((low / total) * 100), color: '#3b82f6' },
+      { label: 'High', count: high, pct: Math.round((high / total) * 100), color: 'var(--priority-high)' },
+      { label: 'Medium', count: medium, pct: Math.round((medium / total) * 100), color: 'var(--priority-medium)' },
+      { label: 'Low', count: low, pct: Math.round((low / total) * 100), color: 'var(--priority-low)' },
     ]
   }, [tasks])
 
@@ -166,17 +166,17 @@ export default function ProfilePage() {
   }, [tasks])
 
   return (
-    <div className="flex flex-col px-6 py-5">
+    <div className="workspace-page px-5 py-5">
       {/* Title */}
       <h1
-        className="mb-6 text-[32px]"
+        className="type-page-title mb-6"
         style={{ color: 'var(--text-primary)' }}
       >
         {COPY.title}
       </h1>
 
       {/* Tab pills */}
-      <div className="mb-6 flex items-center gap-1">
+      <div className="segmented-control mb-6">
         {COPY.tabs.map((tab) => {
           const active = activeTab === tab
           return (
@@ -190,12 +190,8 @@ export default function ProfilePage() {
                   return next
                 }, { replace: true })
               }}
-              className="rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors duration-150 cursor-pointer"
-              style={{
-                backgroundColor: active ? 'var(--accent)' : 'transparent',
-                color: active ? '#FFFFFF' : 'var(--text-muted)',
-                border: active ? 'none' : '1px solid var(--border)',
-              }}
+              aria-pressed={active}
+              className="cursor-pointer"
             >
               {tab}
             </motion.button>
@@ -237,7 +233,7 @@ export default function ProfilePage() {
                     key={stat.label}
                     {...fadeSlideUp}
                     transition={ease.normal}
-                    className="rounded-xl p-4"
+                    className="surface-card p-4"
                     style={{
                       backgroundColor: 'var(--bg-pane-2)',
                       border: '1px solid var(--border)',
@@ -265,7 +261,7 @@ export default function ProfilePage() {
                   {COPY.weeklyCompletion}
                 </h3>
                 <div
-                  className="rounded-xl p-4"
+                    className="surface-card p-4"
                   style={{
                     backgroundColor: 'var(--bg-pane-2)',
                     border: '1px solid var(--border)',
@@ -306,7 +302,7 @@ export default function ProfilePage() {
                   {COPY.habitsSummary}
                 </h3>
                 <div
-                  className="rounded-xl p-4"
+                    className="surface-card p-4"
                   style={{
                     backgroundColor: 'var(--bg-pane-2)',
                     border: '1px solid var(--border)',
@@ -393,7 +389,7 @@ export default function ProfilePage() {
                   {COPY.taskTab.dailyCompleted}
                 </h3>
                 <div
-                  className="rounded-xl p-4"
+                    className="surface-card p-4"
                   style={{
                     backgroundColor: 'var(--bg-pane-2)',
                     border: '1px solid var(--border)',
@@ -434,7 +430,7 @@ export default function ProfilePage() {
                   {COPY.taskTab.byPriority}
                 </h3>
                 <div
-                  className="rounded-xl p-4"
+                    className="surface-card p-4"
                   style={{
                     backgroundColor: 'var(--bg-pane-2)',
                     border: '1px solid var(--border)',
@@ -470,7 +466,7 @@ export default function ProfilePage() {
                   {COPY.taskTab.completionTrend}
                 </h3>
                 <div
-                  className="rounded-xl p-4"
+                    className="surface-card p-4"
                   style={{
                     backgroundColor: 'var(--bg-pane-2)',
                     border: '1px solid var(--border)',
@@ -536,7 +532,7 @@ export default function ProfilePage() {
                 ].map((stat) => (
                   <div
                     key={stat.label}
-                    className="rounded-xl p-4"
+                    className="surface-card p-4"
                     style={{
                       backgroundColor: 'var(--bg-pane-2)',
                       border: '1px solid var(--border)',
@@ -561,7 +557,7 @@ export default function ProfilePage() {
                 ].map((stat) => (
                   <div
                     key={stat.label}
-                    className="rounded-xl p-4"
+                    className="surface-card p-4"
                     style={{
                       backgroundColor: 'var(--bg-pane-2)',
                       border: '1px solid var(--border)',
@@ -580,7 +576,7 @@ export default function ProfilePage() {
               {/* Average + Longest + Most focused */}
               <div className="grid grid-cols-3 gap-3">
                 <div
-                  className="rounded-xl p-4"
+                    className="surface-card p-4"
                   style={{
                     backgroundColor: 'var(--bg-pane-2)',
                     border: '1px solid var(--border)',
@@ -594,7 +590,7 @@ export default function ProfilePage() {
                   </p>
                 </div>
                 <div
-                  className="rounded-xl p-4"
+                    className="surface-card p-4"
                   style={{
                     backgroundColor: 'var(--bg-pane-2)',
                     border: '1px solid var(--border)',
@@ -608,7 +604,7 @@ export default function ProfilePage() {
                   </p>
                 </div>
                 <div
-                  className="rounded-xl p-4"
+                    className="surface-card p-4"
                   style={{
                     backgroundColor: 'var(--bg-pane-2)',
                     border: '1px solid var(--border)',
@@ -632,7 +628,7 @@ export default function ProfilePage() {
                   Focus by hour of day
                 </h3>
                 <div
-                  className="rounded-xl p-4"
+                    className="surface-card p-4"
                   style={{
                     backgroundColor: 'var(--bg-pane-2)',
                     border: '1px solid var(--border)',
@@ -670,7 +666,7 @@ export default function ProfilePage() {
                   Weekly trend (sessions per day)
                 </h3>
                 <div
-                  className="rounded-xl p-4"
+                  className="surface-card p-4"
                   style={{
                     backgroundColor: 'var(--bg-pane-2)',
                     border: '1px solid var(--border)',

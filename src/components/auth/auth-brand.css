@@ -1,0 +1,17 @@
+.auth-brand-shell {
+  --brand-paper: #f3efe6;
+  --brand-paper-bright: #f7f3ea;
+  --brand-panel: #dedbcf;
+  --brand-ink: #191915;
+  --brand-coral: #f15b43;
+  --brand-lime: #c8ee72;
+  --brand-violet: #7d78d7;
+  --brand-error: #a72f20;
+  min-height: 100vh;
+  background: var(--brand-paper);
+  color: var(--brand-ink);
+}
+
+.auth-brand-shell :focus-visible {
+  outline-color: var(--brand-coral);
+}

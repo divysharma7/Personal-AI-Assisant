@@ -79,73 +79,47 @@ export default function FocusSettingsPage() {
   }
 
   return (
-    <div
-      className="min-h-screen"
-      style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-primary)' }}
-    >
+    <div className="workspace-page">
       {/* Header */}
       <header
-        className="flex items-center justify-between px-5 py-4 sm:px-8"
+        className="workspace-header"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => navigate('/focus')}
-            className="flex h-9 w-9 items-center justify-center rounded-full cursor-pointer"
-            style={{
-              color: 'var(--text-muted)',
-              transition: 'background-color 150ms ease, color 150ms ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--overlay-1)'
-              e.currentTarget.style.color = 'var(--text-primary)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-              e.currentTarget.style.color = 'var(--text-muted)'
-            }}
+          className="control-icon"
             aria-label="Back to Focus"
           >
             <ArrowLeft size={18} />
           </button>
           <div className="flex items-center gap-2">
             <Settings size={20} style={{ color: 'var(--accent)' }} />
-            <h1 className="text-lg font-semibold">Focus Settings</h1>
+            <h1 className="type-page-title">Focus Settings</h1>
           </div>
         </div>
         <motion.button
           type="button"
           onClick={handleSave}
           disabled={updateMutation.isPending}
-          className="rounded-full px-5 py-2 text-sm font-semibold cursor-pointer disabled:opacity-50"
-          style={{
-            backgroundColor: 'var(--accent)',
-            color: '#fff',
-            transition: 'opacity 150ms ease',
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
-          onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
+          className="btn-primary disabled:opacity-50"
         >
           {updateMutation.isPending ? 'Saving…' : 'Save Settings'}
         </motion.button>
       </header>
 
       {/* Content */}
-      <main className="mx-auto max-w-2xl px-5 py-8 sm:px-8">
-        <p aria-live="polite" className="mb-4 min-h-5 text-sm" style={{ color: updateMutation.isError ? 'var(--priority-high)' : 'var(--success)' }}>
+      <main className="w-full max-w-[720px] px-5 py-6 sm:px-8">
+        <p aria-live="polite" className="type-meta mb-3 min-h-[18px]" style={{ color: updateMutation.isError ? 'var(--danger)' : 'var(--success)' }}>
           {updateMutation.isSuccess ? 'Focus settings saved.' : updateMutation.isError ? 'Focus settings could not be saved. Try again.' : ''}
         </p>
-        <motion.div {...fadeSlideUp} className="space-y-6">
+        <motion.div {...fadeSlideUp} className="space-y-3">
           {/* Timer Durations */}
           <section
-            className="rounded-2xl p-6"
-            style={{
-              backgroundColor: 'var(--bg-pane)',
-              border: '1px solid var(--border)',
-            }}
+            className="surface-card p-4"
           >
-            <h2 className="text-sm font-semibold mb-5">Timer Durations</h2>
+            <h2 className="type-section-title mb-4">Timer Durations</h2>
 
             <div className="space-y-5">
               {/* Pomo Duration */}
@@ -276,13 +250,9 @@ export default function FocusSettingsPage() {
 
           {/* Automation */}
           <section
-            className="rounded-2xl p-6"
-            style={{
-              backgroundColor: 'var(--bg-pane)',
-              border: '1px solid var(--border)',
-            }}
+            className="surface-card p-4"
           >
-            <h2 className="text-sm font-semibold mb-5">Automation</h2>
+            <h2 className="type-section-title mb-4">Automation</h2>
 
             <div className="space-y-4">
               {/* Auto-start Break */}
@@ -302,23 +272,8 @@ export default function FocusSettingsPage() {
                   aria-label="Browser notifications"
                   aria-checked={formState.autoStartBreak || false}
                   onClick={() => handleToggle('autoStartBreak')}
-                  className="relative h-6 w-11 rounded-full cursor-pointer"
-                  style={{
-                    backgroundColor: formState.autoStartBreak
-                      ? 'var(--accent)'
-                      : 'var(--overlay-2)',
-                    transition: 'background-color 150ms ease',
-                  }}
-                >
-                  <span
-                    className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform"
-                    style={{
-                      transform: formState.autoStartBreak
-                        ? 'translateX(20px)'
-                        : 'translateX(0)',
-                    }}
-                  />
-                </button>
+                  className="switch-control"
+                />
               </div>
 
               {/* Auto-start Pomo */}
@@ -337,36 +292,17 @@ export default function FocusSettingsPage() {
                   role="switch"
                   aria-checked={formState.autoStartPomo || false}
                   onClick={() => handleToggle('autoStartPomo')}
-                  className="relative h-6 w-11 rounded-full cursor-pointer"
-                  style={{
-                    backgroundColor: formState.autoStartPomo
-                      ? 'var(--accent)'
-                      : 'var(--overlay-2)',
-                    transition: 'background-color 150ms ease',
-                  }}
-                >
-                  <span
-                    className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform"
-                    style={{
-                      transform: formState.autoStartPomo
-                        ? 'translateX(20px)'
-                        : 'translateX(0)',
-                    }}
-                  />
-                </button>
+                  className="switch-control"
+                />
               </label>
             </div>
           </section>
 
           {/* Notifications */}
           <section
-            className="rounded-2xl p-6"
-            style={{
-              backgroundColor: 'var(--bg-pane)',
-              border: '1px solid var(--border)',
-            }}
+            className="surface-card p-4"
           >
-            <h2 className="text-sm font-semibold mb-5">Notifications</h2>
+            <h2 className="type-section-title mb-4">Notifications</h2>
 
             <div className="space-y-4">
               {/* Notifications */}
@@ -391,23 +327,8 @@ export default function FocusSettingsPage() {
                   role="switch"
                   aria-checked={formState.notificationsEnabled ?? true}
                   onClick={() => handleToggle('notificationsEnabled')}
-                  className="relative h-6 w-11 rounded-full cursor-pointer"
-                  style={{
-                    backgroundColor: formState.notificationsEnabled ?? true
-                      ? 'var(--accent)'
-                      : 'var(--overlay-2)',
-                    transition: 'background-color 150ms ease',
-                  }}
-                >
-                  <span
-                    className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform"
-                    style={{
-                      transform: formState.notificationsEnabled ?? true
-                        ? 'translateX(20px)'
-                        : 'translateX(0)',
-                    }}
-                  />
-                </button>
+                  className="switch-control"
+                />
               </label>
 
               {/* Sound */}
@@ -429,23 +350,8 @@ export default function FocusSettingsPage() {
                   role="switch"
                   aria-checked={formState.soundEnabled ?? true}
                   onClick={() => handleToggle('soundEnabled')}
-                  className="relative h-6 w-11 rounded-full cursor-pointer"
-                  style={{
-                    backgroundColor: formState.soundEnabled ?? true
-                      ? 'var(--accent)'
-                      : 'var(--overlay-2)',
-                    transition: 'background-color 150ms ease',
-                  }}
-                >
-                  <span
-                    className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform"
-                    style={{
-                      transform: formState.soundEnabled ?? true
-                        ? 'translateX(20px)'
-                        : 'translateX(0)',
-                    }}
-                  />
-                </button>
+                  className="switch-control"
+                />
               </label>
             </div>
           </section>

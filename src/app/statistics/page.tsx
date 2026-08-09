@@ -33,7 +33,7 @@ function StatTile({ label, value, sub, color }: { label: string; value: string |
     <div className="flex flex-col items-center gap-1 flex-1">
       <span className="text-[24px] font-bold" style={{ color: color || 'var(--accent)' }}>{value}</span>
       <span className="text-[11px] font-medium" style={{ color: 'var(--text-faint)' }}>{label}</span>
-      {sub && <span className="text-[10px]" style={{ color: '#34d399' }}>{sub}</span>}
+      {sub && <span className="type-micro" style={{ color: 'var(--success)' }}>{sub}</span>}
     </div>
   )
 }
@@ -52,7 +52,7 @@ function MiniBarChart({ data, labels, accent }: { data: number[]; labels: string
               minHeight: 2,
             }}
           />
-          <span className="text-[9px]" style={{ color: 'var(--text-faint)' }}>{labels[i]}</span>
+          <span className="type-micro" style={{ color: 'var(--text-muted)' }}>{labels[i]}</span>
         </div>
       ))}
     </div>
@@ -83,7 +83,7 @@ function MiniAreaChart({ data, labels }: { data: number[]; labels: string[] }) {
       </svg>
       <div className="flex justify-between mt-1">
         {labels.map((l, i) => (
-          <span key={i} className="text-[9px]" style={{ color: 'var(--text-faint)' }}>{l}</span>
+          <span key={i} className="type-micro" style={{ color: 'var(--text-muted)' }}>{l}</span>
         ))}
       </div>
     </div>
@@ -141,9 +141,9 @@ function DonutChart({ segments, centerLabel, centerSub }: {
 
 function Card({ title, children, rightControl }: { title: string; children: React.ReactNode; rightControl?: React.ReactNode }) {
   return (
-    <div className="rounded-[var(--radius-lg,16px)] p-4" style={{ backgroundColor: 'var(--overlay-1, var(--bg-pane-2))', border: '1px solid var(--border)' }}>
+    <div className="surface-card p-4">
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h4>
+        <h4 className="type-section-title">{title}</h4>
         {rightControl}
       </div>
       {children}
@@ -218,13 +218,13 @@ export default function StatisticsPage() {
   const focusSessionsToday = focusStatistics?.dailyStats.find((stat) => stat.period === formatDateKey(new Date()))?.count ?? 0
 
   return (
-    <div className="flex flex-col h-full px-6 py-5 overflow-y-auto">
+    <div className="workspace-page px-5 py-5 overflow-y-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 style={{ color: 'var(--text-primary)' }}>Statistics</h1>
+        <h1 className="type-page-title" style={{ color: 'var(--text-primary)' }}>Statistics</h1>
 
         {/* Tab switcher */}
-        <div className="flex items-center rounded-full p-0.5" style={{ backgroundColor: 'var(--overlay-2, var(--bg-pane-2))' }}>
+        <div className="segmented-control">
           {TABS.map((t) => (
             <motion.button
               key={t.key}
@@ -236,12 +236,8 @@ export default function StatisticsPage() {
                   return next
                 }, { replace: true })
               }}
-              className="rounded-full px-4 py-1.5 text-[13px] font-medium cursor-pointer transition-sl"
-              style={{
-                backgroundColor: tab === t.key ? 'var(--bg-pane)' : 'transparent',
-                color: tab === t.key ? 'var(--text-primary)' : 'var(--text-faint)',
-                boxShadow: tab === t.key ? 'var(--shadow-sm)' : 'none',
-              }}
+              aria-pressed={tab === t.key}
+              className="cursor-pointer"
             >
               {t.label}
             </motion.button>
@@ -250,8 +246,7 @@ export default function StatisticsPage() {
 
         <a
           href="/"
-          className="rounded-lg px-4 py-1.5 text-[13px] font-semibold text-white no-underline cursor-pointer"
-          style={{ backgroundColor: 'var(--accent)' }}
+          className="btn-primary min-h-8 cursor-pointer no-underline"
         >
           Done
         </a>

@@ -154,7 +154,7 @@ export default function MatrixPage() {
   )
 
   return (
-    <div className="flex h-full flex-col gap-4 p-6">
+    <div className="workspace-page gap-4 p-5">
       {/* Header */}
       <motion.div
         {...fadeSlideUp}
@@ -162,7 +162,7 @@ export default function MatrixPage() {
         className="flex items-center justify-between"
       >
         <h1
-          className="text-[32px] leading-tight"
+          className="type-page-title"
           style={{ color: 'var(--text-primary)' }}
         >
           {copy.matrix.title}
@@ -173,28 +173,16 @@ export default function MatrixPage() {
             aria-label="Filter"
             aria-expanded={showRules}
             onClick={() => setShowRules((open) => !open)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
+            className="control-icon cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-            }}
           >
             <SlidersHorizontal size={18} strokeWidth={1.5} />
           </motion.button>
           <Link
             to="/tasks"
             aria-label="Open all tasks"
-            className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
+            className="control-icon cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-            }}
           >
             <MoreVertical size={18} strokeWidth={1.5} />
           </Link>
@@ -204,7 +192,7 @@ export default function MatrixPage() {
       {showRules ? (
         <div
           role="status"
-          className="rounded-xl border px-4 py-3 text-xs"
+          className="surface-card type-meta px-4 py-3"
           style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-pane-2)', color: 'var(--text-muted)' }}
         >
           The matrix includes active tasks with both a priority and an effort estimate. Urgency comes from whether the due date is today or overdue.
@@ -285,10 +273,7 @@ export default function MatrixPage() {
             </p>
             <a
               href="/"
-              className="mt-4 inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-medium no-underline transition-opacity duration-150"
-              style={{ backgroundColor: 'var(--accent)', color: '#FFFFFF' }}
-              onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
-              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
+              className="btn-primary mt-4 no-underline"
             >
               Go to Inbox
             </a>

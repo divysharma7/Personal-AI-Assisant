@@ -96,7 +96,7 @@ export default function SubTaskRow({ sub, subDone, subDateStr, subOverdue, subPr
                   <div style={{
                     position: 'absolute', left: '50%', bottom: '100%', transform: 'translateX(-50%)',
                     marginBottom: 5, padding: '3px 8px', borderRadius: 6,
-                    backgroundColor: 'var(--bg-pane-2, #2a293b)',
+                    backgroundColor: 'var(--bg-pane-2)',
                     border: '1px solid var(--overlay-2, var(--border))', boxShadow: 'var(--shadow-elevated)',
                     fontSize: 11, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap',
                     fontFamily: 'Inter, system-ui, sans-serif', zIndex: 40,
@@ -140,7 +140,7 @@ export default function SubTaskRow({ sub, subDone, subDateStr, subOverdue, subPr
                   <div style={{
                     position: 'absolute', left: '50%', bottom: '100%', transform: 'translateX(-50%)',
                     marginBottom: 5, padding: '3px 8px', borderRadius: 6,
-                    backgroundColor: 'var(--bg-pane-2, #2a293b)',
+                    backgroundColor: 'var(--bg-pane-2)',
                     border: '1px solid var(--overlay-2, var(--border))', boxShadow: 'var(--shadow-elevated)',
                     fontSize: 11, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap',
                     fontFamily: 'Inter, system-ui, sans-serif', zIndex: 40,

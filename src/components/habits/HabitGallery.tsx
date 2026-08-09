@@ -79,13 +79,13 @@ export default function HabitGallery({ open, onClose, onAdd }: HabitGalleryProps
           exit={{ opacity: 0 }}
           transition={ease.fast}
           className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+          style={{ backgroundColor: 'var(--scrim)' }}
           onClick={onClose}
         >
           <motion.div
             {...scaleIn}
             transition={ease.normal}
-            className="flex w-[560px] max-h-[80vh] flex-col rounded-2xl overflow-hidden"
+            className="modal-shell flex w-[560px] max-h-[80vh] flex-col overflow-hidden"
             style={{
               backgroundColor: 'var(--bg-pane)',
               border: '1px solid var(--border)',

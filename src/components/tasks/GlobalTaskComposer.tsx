@@ -116,7 +116,7 @@ export default function GlobalTaskComposer({
 
   return (
     <div
-      className="fixed inset-0 z-[100000] flex items-start justify-center bg-black/55 px-4 pt-[12vh] backdrop-blur-[2px]"
+      className="fixed inset-0 z-[100000] flex items-start justify-center bg-[var(--scrim)] px-4 pt-[12vh] backdrop-blur-[2px]"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) close()
@@ -128,7 +128,7 @@ export default function GlobalTaskComposer({
         aria-modal="true"
         aria-labelledby="global-task-composer-title"
         aria-describedby={error ? 'global-task-composer-error' : undefined}
-        className="w-full max-w-[520px] overflow-hidden rounded-2xl border shadow-2xl"
+        className="modal-shell w-full max-w-[520px] overflow-hidden"
         style={{ backgroundColor: 'var(--bg-pane)', borderColor: 'var(--border)' }}
       >
         <form onSubmit={submit}>

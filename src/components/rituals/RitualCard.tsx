@@ -21,10 +21,8 @@ export default function RitualCard({ children, accent, className = '', ...rest }
     <motion.section
       {...fadeSlideUp}
       transition={ease.normal}
-      className={`rounded-2xl p-5 sm:p-6 ${className}`}
+      className={`surface-card p-4 ${className}`}
       style={{
-        backgroundColor: 'var(--bg-pane)',
-        border: '1px solid var(--border)',
         borderLeft: accent ? `3px solid ${accent}` : undefined,
       }}
       {...rest}

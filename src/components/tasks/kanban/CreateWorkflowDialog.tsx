@@ -100,7 +100,7 @@ export function CreateWorkflowDialog({ open, onClose }: CreateWorkflowDialogProp
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            backgroundColor: 'var(--scrim)',
           }}
           onClick={onClose}
         >
@@ -112,10 +112,10 @@ export function CreateWorkflowDialog({ open, onClose }: CreateWorkflowDialogProp
               maxWidth: '95vw',
               maxHeight: '90vh',
               overflowY: 'auto',
-              borderRadius: 16,
-              backgroundColor: 'var(--bg-pane)',
-              border: '1px solid var(--border)',
-              boxShadow: 'var(--shadow-modal, 0 8px 32px rgba(0,0,0,0.12))',
+              borderRadius: 'var(--radius-xl)',
+              backgroundColor: 'var(--bg-elevated)',
+              border: '1px solid var(--border-strong)',
+              boxShadow: 'var(--shadow-modal)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -129,7 +129,7 @@ export function CreateWorkflowDialog({ open, onClose }: CreateWorkflowDialogProp
                 borderBottom: '1px solid var(--border)',
               }}
             >
-              <h2 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+              <h2 className="type-page-title" style={{ color: 'var(--text-primary)', margin: 0 }}>
                 {wfCopy.createTitle}
               </h2>
               <motion.button

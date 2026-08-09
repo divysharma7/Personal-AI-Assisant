@@ -141,9 +141,9 @@ export default function SettingsPage() {
     <div className="grid min-h-full grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)]">
       <aside
         className="flex max-h-[42vh] flex-col overflow-y-auto border-b px-5 py-5 md:max-h-none md:overflow-visible md:border-b-0 md:border-r md:py-7"
-        style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-pane-2)' }}
+        style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-rail)' }}
       >
-        <h1 className="mb-5 text-[24px] md:mb-8 md:text-[26px]" style={{ color: 'var(--text-primary)' }}>
+        <h1 className="type-page-title mb-5 md:mb-8" style={{ color: 'var(--text-primary)' }}>
           {copy.settings.title}
         </h1>
 
@@ -199,7 +199,7 @@ export default function SettingsPage() {
           >
             {activeTabMeta.group}
           </p>
-          <h2 className="text-[28px]" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="type-page-title" style={{ color: 'var(--text-primary)' }}>
             {activeTabMeta.label}
           </h2>
           <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
@@ -277,15 +277,14 @@ export default function SettingsPage() {
 
           {activeTab === 'focus' && (
             <motion.div key="focus" {...fade} transition={ease.normal}>
-              <div className="rounded-2xl border p-5" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-pane-2)' }}>
-                <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Focus Protocols & Notifications</h3>
-                <p className="mt-1 text-xs text-pretty" style={{ color: 'var(--text-muted)' }}>
+              <div className="surface-card p-4">
+                <h3 className="type-section-title">Focus Protocols & Notifications</h3>
+                <p className="type-meta mt-1 text-pretty text-[var(--text-muted)]">
                   Configure Pomodoro duration, break cycles, auto-start behavior, completion sound, and browser notifications in the dedicated Focus settings.
                 </p>
                 <Link
                   to="/focus/settings"
-                  className="mt-4 inline-flex h-10 items-center rounded-xl px-4 text-sm font-semibold text-white no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
-                  style={{ backgroundColor: 'var(--accent)' }}
+                  className="btn-primary mt-4 no-underline"
                 >
                   Open Focus Settings
                 </Link>

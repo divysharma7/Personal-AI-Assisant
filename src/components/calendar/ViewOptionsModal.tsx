@@ -172,7 +172,7 @@ export default function ViewOptionsModal({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.3)',
+        backgroundColor: 'var(--scrim)',
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
@@ -185,12 +185,13 @@ export default function ViewOptionsModal({
         style={{
           width: 420,
           maxHeight: '80vh',
-          borderRadius: 16,
+          borderRadius: 'var(--radius-xl)',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          backgroundColor: 'var(--bg-pane)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+          backgroundColor: 'var(--bg-elevated)',
+          border: '1px solid var(--border-strong)',
+          boxShadow: 'var(--shadow-modal)',
         }}
       >
         {/* Header */}

@@ -279,7 +279,7 @@ export default memo(forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow({
                   <div style={{
                     position: 'absolute', left: '50%', bottom: '100%', transform: 'translateX(-50%)',
                     marginBottom: 6, padding: '4px 10px', borderRadius: 8,
-                    backgroundColor: 'var(--bg-pane-2, #2a293b)',
+                    backgroundColor: 'var(--bg-pane-2)',
                     border: '1px solid var(--overlay-2, var(--border))',
                     boxShadow: 'var(--shadow-elevated)',
                     fontSize: 12, fontWeight: 500, color: 'var(--text-primary)',
@@ -338,7 +338,7 @@ export default memo(forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow({
                   <div style={{
                     position: 'absolute', left: '50%', bottom: '100%', transform: 'translateX(-50%)',
                     marginBottom: 6, padding: '4px 10px', borderRadius: 8,
-                    backgroundColor: 'var(--bg-pane-2, #2a293b)',
+                    backgroundColor: 'var(--bg-pane-2)',
                     border: '1px solid var(--overlay-2, var(--border))',
                     boxShadow: 'var(--shadow-elevated)',
                     fontSize: 12, fontWeight: 500, color: 'var(--text-primary)',

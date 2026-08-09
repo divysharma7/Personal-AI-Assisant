@@ -11,9 +11,9 @@ interface PriorityPopoverProps {
 }
 
 const PRIORITIES = [
-  { value: 'high', label: 'High', color: '#ef4444', key: '1' },
-  { value: 'medium', label: 'Medium', color: '#f59e0b', key: '2' },
-  { value: 'low', label: 'Low', color: '#6b66da', key: '3' },
+  { value: 'high', label: 'High', color: 'var(--priority-high)', key: '1' },
+  { value: 'medium', label: 'Medium', color: 'var(--priority-medium)', key: '2' },
+  { value: 'low', label: 'Low', color: 'var(--priority-low)', key: '3' },
 ]
 
 export default function PriorityPopover({
@@ -59,12 +59,7 @@ export default function PriorityPopover({
       {...fadeSlideDown}
       transition={ease.fast}
       ref={popoverRef}
-      className="w-[160px] rounded-xl p-1.5"
-      style={{
-        backgroundColor: 'var(--bg-pane-2)',
-        border: '1px solid var(--border)',
-        boxShadow: 'var(--shadow-elevated)',
-      }}
+      className="popover-shell w-[160px]"
     >
       {PRIORITIES.map((p) => (
         <button
@@ -72,17 +67,10 @@ export default function PriorityPopover({
           onClick={() => {
             onSelect(selected === p.value ? null : p.value)
           }}
-          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors duration-100 cursor-pointer"
+          className="menu-item cursor-pointer"
           style={{
             backgroundColor: selected === p.value ? 'var(--bg-hover)' : 'transparent',
             color: p.color,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor =
-              selected === p.value ? 'var(--bg-hover)' : 'transparent'
           }}
         >
           <BarChart3 size={14} strokeWidth={1.5} />
