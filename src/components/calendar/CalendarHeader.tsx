@@ -17,11 +17,6 @@ import {
 import { buttonPress, ease, fadeSlideDown } from '@/lib/motion'
 import type { CalendarHeaderProps, CalendarViewMode } from './types'
 
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-]
-
 const VIEW_OPTIONS: { key: CalendarViewMode; label: string; shortcut?: string }[] = [
   { key: 'year', label: 'Year', shortcut: 'Y' },
   { key: 'month', label: 'Month', shortcut: 'M' },
@@ -41,7 +36,7 @@ type Props = CalendarHeaderProps & {
 }
 
 function headerTitle(date: Date, view: CalendarViewMode) {
-  return view === 'year' ? String(date.getFullYear()) : MONTHS[date.getMonth()]
+  return view === 'year' ? String(date.getFullYear()) : date.toLocaleDateString(undefined, { month: 'long' })
 }
 
 export default function CalendarHeader({
@@ -56,9 +51,27 @@ export default function CalendarHeader({
 }: Props) {
   const [moreOpen, setMoreOpen] = useState(false)
   const [viewOpen, setViewOpen] = useState(false)
+  const [shareStatus, setShareStatus] = useState('')
   const moreRef = useRef<HTMLDivElement>(null)
   const viewRef = useRef<HTMLDivElement>(null)
   const activeLabel = VIEW_OPTIONS.find((option) => option.key === view)?.label ?? 'Week'
+
+  const shareCalendar = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Life OS Calendar', url: window.location.href })
+        setShareStatus('Calendar link shared.')
+      } else {
+        await navigator.clipboard.writeText(window.location.href)
+        setShareStatus('Calendar link copied.')
+      }
+    } catch (cause) {
+      if (cause instanceof DOMException && cause.name === 'AbortError') return
+      setShareStatus('Calendar link could not be shared. Copy the address from your browser.')
+    } finally {
+      setMoreOpen(false)
+    }
+  }
 
   useEffect(() => {
     function closeMenus(event: MouseEvent) {
@@ -72,6 +85,7 @@ export default function CalendarHeader({
 
   return (
     <header className="calendar-header">
+      <span className="sr-only" aria-live="polite">{shareStatus}</span>
       <div className="calendar-header__title">
         <motion.button {...buttonPress} className="calendar-header__app-button" onClick={onBackToApp} aria-label="Back to app">
           <PanelLeft size={16} strokeWidth={1.6} />
@@ -141,7 +155,7 @@ export default function CalendarHeader({
                 <button className={menuButtonClass} onClick={() => { window.print(); setMoreOpen(false) }}>
                   <Printer size={14} /> Print
                 </button>
-                <button className={menuButtonClass} onClick={() => { void navigator.share?.({ title: 'Calendar', url: window.location.href }); setMoreOpen(false) }}>
+                <button className={menuButtonClass} onClick={() => void shareCalendar()}>
                   <Share2 size={14} /> Share
                 </button>
                 <button className={menuButtonClass} onClick={() => { window.dispatchEvent(new CustomEvent('laif:show-keyboard-shortcuts')); setMoreOpen(false) }}>

@@ -2,7 +2,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { ease, motionTokens, getDirectionalVariants } from '@/lib/motion'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTasks } from '@/hooks/useTasks'
 import type { TaskRecord } from '@/hooks/useTasks'
 import CalendarHeader from '@/components/calendar/CalendarHeader'
@@ -26,10 +26,23 @@ import QuickAddPopover from '@/components/calendar/QuickAddPopover'
 import type { QuickAddData } from '@/components/calendar/QuickAddPopover'
 import BatchActionBar from '@/components/calendar/BatchActionBar'
 import type { CalendarViewMode, CalendarEvent } from '@/components/calendar/types'
+import { CalendarDisplayPreferencesContext } from '@/components/calendar/CalendarDisplayPreferences'
+import { useSettings } from '@/hooks/useSettings'
 import './calendar.css'
 
 // ── Priority colors (use CSS vars with fallback) ──
 const EVENT_PALETTE = ['#4e57ad', '#69898f', '#8b6878', '#86894e', '#76648f', '#6d7f86', '#8f786d']
+const CALENDAR_VIEWS: CalendarViewMode[] = ['day', '3day', 'week', 'multiweek', 'month', 'year', 'agenda']
+
+function dateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+function dateFromParam(value: string | null): Date {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return new Date()
+  const parsed = new Date(`${value}T12:00:00`)
+  return Number.isNaN(parsed.getTime()) ? new Date() : parsed
+}
 
 function calendarColorForTask(task: TaskRecord): string {
   const seed = task.listId || task.title || task._id
@@ -53,7 +66,11 @@ function taskToEvent(t: TaskRecord): CalendarEvent | null {
 
 export default function CalendarPage() {
   const navigateTo = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const initialViewProvidedRef = useRef(searchParams.has('view'))
+  const defaultViewAppliedRef = useRef(false)
   const { tasks, createTask, updateTask } = useTasks()
+  const { preferences } = useSettings()
   const prefersReduced = useReducedMotion()
 
   // ── Multi-select state ──
@@ -62,8 +79,11 @@ export default function CalendarPage() {
   const showBatchActions = selectedEventIds.size > 0
 
   // ── Core state ──
-  const [view, setView] = useState<CalendarViewMode>('week')
-  const [currentDate, setCurrentDate] = useState(() => new Date())
+  const [view, setView] = useState<CalendarViewMode>(() => {
+    const param = searchParams.get('view') as CalendarViewMode | null
+    return param && CALENDAR_VIEWS.includes(param) ? param : 'week'
+  })
+  const [currentDate, setCurrentDate] = useState(() => dateFromParam(searchParams.get('date')))
   const [navigationDirection, setNavigationDirection] = useState<-1 | 0 | 1>(0)
   const [arrangeOpen, setArrangeOpen] = useState(false)
   const [viewOptionsOpen, setViewOptionsOpen] = useState(false)
@@ -86,6 +106,31 @@ export default function CalendarPage() {
   const [quickAddText, setQuickAddText] = useState('')
   const qaRef = useRef<HTMLDivElement>(null)
   const qaInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const paramView = searchParams.get('view') as CalendarViewMode | null
+    const nextView = paramView && CALENDAR_VIEWS.includes(paramView) ? paramView : 'week'
+    const nextDate = dateFromParam(searchParams.get('date'))
+    if (nextView !== view) setView(nextView)
+    if (dateKey(nextDate) !== dateKey(currentDate)) setCurrentDate(nextDate)
+  }, [searchParams]) // eslint-disable-line react-hooks/exhaustive-deps -- URL changes, not local navigation, restore history.
+
+  useEffect(() => {
+    if (defaultViewAppliedRef.current || initialViewProvidedRef.current || !preferences?.defaultView) return
+    defaultViewAppliedRef.current = true
+    setView(preferences.defaultView)
+  }, [preferences?.defaultView])
+
+  useEffect(() => {
+    const nextDate = dateKey(currentDate)
+    if (searchParams.get('view') === view && searchParams.get('date') === nextDate) return
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      next.set('view', view)
+      next.set('date', nextDate)
+      return next
+    }, { replace: true })
+  }, [currentDate, searchParams, setSearchParams, view])
 
   // ── Filtering ──
   // ── Event computation ──
@@ -321,6 +366,7 @@ export default function CalendarPage() {
   }, [])
 
   return (
+    <CalendarDisplayPreferencesContext.Provider value={{ timeFormat: preferences?.timeFormat ?? '24h', weekStartsOn: preferences?.weekStartsOn ?? 1 }}>
     <div className="calendar-shell">
       {/* ── Left: Mini Calendar Sidebar ── */}
       {/* ── Center: Calendar Canvas ── */}
@@ -359,7 +405,7 @@ export default function CalendarPage() {
                     backgroundColor: 'color-mix(in srgb, var(--accent) 12%, transparent)',
                     padding: '3px 10px', borderRadius: 999,
                   }}>
-                    {currentDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    {currentDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
                   </span>
                 </div>
                 <input
@@ -505,5 +551,6 @@ export default function CalendarPage() {
         onClose={() => { setEditorOpen(false); setEditorTask(null); setEditorSeed(null) }}
       />
     </div>
+    </CalendarDisplayPreferencesContext.Provider>
   )
 }

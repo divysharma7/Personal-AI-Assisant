@@ -261,7 +261,8 @@ export function useFocusTimer({
     } catch {
       sessionStorage.removeItem('focusTimerState')
     }
-  }, []) // Restore once from the persisted timer snapshot.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- A persisted snapshot is intentionally restored only once on mount.
+  }, [])
 
   return {
     status,

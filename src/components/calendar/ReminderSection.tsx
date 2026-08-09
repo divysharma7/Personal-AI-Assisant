@@ -39,7 +39,7 @@ function formatReminder(r: Reminder): string {
   if (r.type === 'on-day-at') return `On the day at ${r.timeOfDay || '09:00'}`
   if (r.type === 'absolute' && r.absoluteTime) {
     const d = new Date(r.absoluteTime)
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
   }
   return 'Reminder'
 }

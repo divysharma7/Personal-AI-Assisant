@@ -1,6 +1,8 @@
 import { Link as LinkIcon } from 'lucide-react'
 import { hexToRgba } from '@/lib/colorUtils'
 import type { CalendarEvent } from './types'
+import { formatClockTime } from './calendarUtils'
+import { useCalendarDisplayPreferences } from './CalendarDisplayPreferences'
 
 interface CalendarBlockProps {
   event: CalendarEvent
@@ -12,10 +14,6 @@ interface CalendarBlockProps {
   onToggleComplete?: (eventId: string) => void
 }
 
-function formatTime(date: Date): string {
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
-}
-
 export default function CalendarBlock({
   event,
   style,
@@ -25,6 +23,7 @@ export default function CalendarBlock({
   compact = false,
   onToggleComplete,
 }: CalendarBlockProps) {
+  const { timeFormat } = useCalendarDisplayPreferences()
   if (event.isFocusSession) {
     return (
       <div className="cal-block" style={{ ...style, height: 8, background: '#55565d', opacity: 0.6 }}>
@@ -48,7 +47,7 @@ export default function CalendarBlock({
   const start = new Date(event.start)
   const end = new Date(event.end)
   const tallEnough = end.getTime() - start.getTime() >= 30 * 60 * 1000
-  const timeRange = `${formatTime(start)}–${formatTime(end)}`
+  const timeRange = `${formatClockTime(start, timeFormat)}–${formatClockTime(end, timeFormat)}`
   const readOnly = isReadOnly || event.isReadOnly
 
   return (

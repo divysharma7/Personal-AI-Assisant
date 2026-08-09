@@ -5,20 +5,20 @@ import {
   isToday,
   timeToGridRow,
   gridRowSpan,
-  getHourLabels24,
+  getHourLabelsForFormat,
 } from './calendarUtils'
 import CalendarBlock from './CalendarBlock'
 import DraggableBlock from './DraggableBlock'
 import DroppableSlot from './DroppableSlot'
 import type { CalendarEvent } from './types'
+import { useCalendarDisplayPreferences } from './CalendarDisplayPreferences'
 
 interface ThreeDayViewProps {
   date: Date
   events: CalendarEvent[]
 }
 
-const HOUR_LABELS = getHourLabels24()
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const DAY_NAMES = Array.from({ length: 7 }, (_, day) => new Date(2024, 0, 7 + day).toLocaleDateString(undefined, { weekday: 'short' }))
 
 /**
  * Check if a calendar event is an all-day event.
@@ -42,6 +42,8 @@ const LAST_VISIBLE_ROW = 84
 const VISIBLE_ROW_COUNT = LAST_VISIBLE_ROW - FIRST_VISIBLE_ROW + 1
 
 export default function ThreeDayView({ date, events }: ThreeDayViewProps) {
+  const { timeFormat } = useCalendarDisplayPreferences()
+  const HOUR_LABELS = useMemo(() => getHourLabelsForFormat(timeFormat), [timeFormat])
 
   // Center on the given date: yesterday, today, tomorrow
   const threeDays = useMemo(() => {

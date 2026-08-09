@@ -51,6 +51,14 @@ export function startOfWeekSunday(date: Date): Date {
   return d
 }
 
+export function startOfWeekWithPreference(date: Date, weekStartsOn: 0 | 1 | 6): Date {
+  const value = new Date(date)
+  const difference = (value.getDay() - weekStartsOn + 7) % 7
+  value.setDate(value.getDate() - difference)
+  value.setHours(0, 0, 0, 0)
+  return value
+}
+
 /**
  * Check if two dates are the same calendar day.
  */
@@ -109,20 +117,22 @@ export function getMonthGridSunday(date: Date): Date[] {
   })
 }
 
+export function getMonthGridForWeekStart(date: Date, weekStartsOn: 0 | 1 | 6): Date[] {
+  const firstOfMonth = new Date(date.getFullYear(), date.getMonth(), 1)
+  const gridStart = startOfWeekWithPreference(firstOfMonth, weekStartsOn)
+  return Array.from({ length: 42 }, (_, index) => {
+    const cell = new Date(gridStart)
+    cell.setDate(gridStart.getDate() + index)
+    return cell
+  })
+}
+
 /**
  * Format a date for the header label depending on the view.
  */
 export function formatHeaderLabel(date: Date, view: 'day' | '3day' | 'week' | 'multiweek' | 'month' | 'year' | 'agenda'): string {
-  const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
-  ]
-  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-  const shortDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-  const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
   if (view === 'day') {
-    return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()}`
+    return date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
   }
 
   if (view === '3day') {
@@ -131,15 +141,15 @@ export function formatHeaderLabel(date: Date, view: 'day' | '3day' | 'week' | 'm
     startDate.setDate(date.getDate() - 1)
     const endDate = new Date(date)
     endDate.setDate(date.getDate() + 1)
-    return `${shortDays[startDate.getDay()]}, ${shortMonths[startDate.getMonth()]} ${startDate.getDate()} \u2013 ${shortDays[endDate.getDay()]}, ${shortMonths[endDate.getMonth()]} ${endDate.getDate()}`
+    return `${startDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} \u2013 ${endDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}`
   }
 
   if (view === 'multiweek') {
     const weekStart = startOfWeek(date)
     const weekEnd = new Date(weekStart)
     weekEnd.setDate(weekStart.getDate() + 13) // 2 weeks = 14 days, end is day 13 offset
-    const startMonth = shortMonths[weekStart.getMonth()]
-    const endMonth = shortMonths[weekEnd.getMonth()]
+    const startMonth = weekStart.toLocaleDateString(undefined, { month: 'short' })
+    const endMonth = weekEnd.toLocaleDateString(undefined, { month: 'short' })
     if (startMonth === endMonth) {
       return `${startMonth} ${weekStart.getDate()} \u2013 ${weekEnd.getDate()}`
     }
@@ -149,7 +159,7 @@ export function formatHeaderLabel(date: Date, view: 'day' | '3day' | 'week' | 'm
   if (view === 'week') {
     // TickTick-style: "Month Year" (based on the week's start date)
     const weekStart = startOfWeek(date)
-    return `${months[weekStart.getMonth()]} ${weekStart.getFullYear()}`
+    return weekStart.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
   }
 
   if (view === 'year') {
@@ -157,11 +167,11 @@ export function formatHeaderLabel(date: Date, view: 'day' | '3day' | 'week' | 'm
   }
 
   if (view === 'agenda') {
-    return `${months[date.getMonth()]} ${date.getFullYear()}`
+    return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
   }
 
   // month
-  return `${months[date.getMonth()]} ${date.getFullYear()}`
+  return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
 }
 
 /**
@@ -180,6 +190,14 @@ export function getHourLabels(): string[] {
 /** Generate 24-hour labels used by the reference-style time grid. */
 export function getHourLabels24(): string[] {
   return Array.from({ length: 24 }, (_, hour) => `${String(hour).padStart(2, '0')}:00`)
+}
+
+export function getHourLabelsForFormat(timeFormat: '12h' | '24h'): string[] {
+  return timeFormat === '12h' ? getHourLabels() : getHourLabels24()
+}
+
+export function formatClockTime(date: Date, timeFormat: '12h' | '24h'): string {
+  return date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: timeFormat === '12h' })
 }
 
 /**
@@ -254,10 +272,10 @@ export function getRelativeDayLabel(date: Date): string {
  * Grid is 35 or 42 cells to keep layout consistent.
  * Week starts on Sunday (0).
  */
-export function getMiniMonthGrid(year: number, month: number): (Date | null)[] {
+export function getMiniMonthGrid(year: number, month: number, weekStartsOn: 0 | 1 | 6 = 0): (Date | null)[] {
   const firstDay = new Date(year, month, 1)
   const lastDay = new Date(year, month + 1, 0)
-  const startPad = firstDay.getDay() // 0=Sun
+  const startPad = (firstDay.getDay() - weekStartsOn + 7) % 7
 
   const totalDays = lastDay.getDate()
   const cells: (Date | null)[] = []

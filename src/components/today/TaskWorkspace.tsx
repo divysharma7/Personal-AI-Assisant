@@ -31,6 +31,7 @@ import './task-workspace.css'
 
 type WorkspaceRange = 'today' | 'next' | 'all'
 type AllTasksFilter = 'all' | 'upcoming' | 'done'
+type TaskSort = 'date' | 'priority' | 'title'
 
 interface TaskWorkspaceProps {
   range: WorkspaceRange
@@ -122,6 +123,19 @@ function TaskCard({
           </div>
         )}
       </div>
+      <button
+        type="button"
+        className="workspace-card-more"
+        aria-label={`More actions for ${task.title}`}
+        aria-haspopup="menu"
+        onClick={(event) => {
+          event.stopPropagation()
+          const rect = event.currentTarget.getBoundingClientRect()
+          window.dispatchEvent(new CustomEvent('laif:task-command-menu', { detail: { taskId: task._id, x: rect.right, y: rect.bottom + 4 } }))
+        }}
+      >
+        <Ellipsis size={16} />
+      </button>
     </article>
   )
 }
@@ -190,12 +204,14 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
   const { workflows } = useWorkflows()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  const welcomePriority = searchParams.get('welcome') as 'plan' | 'focus' | 'habits' | null
   const [allTasksFilter, setAllTasksFilter] = useState<AllTasksFilter>(() => {
     if (searchParams.get('status') === 'done') return 'done'
     if (searchParams.get('filter') === 'upcoming') return 'upcoming'
     return 'all'
   })
   const [view, setView] = useState<WorkspaceView>(() => range === 'all' ? 'list' : 'columns')
+  const [sortMode, setSortMode] = useState<TaskSort>('date')
   const [showCompleted, setShowCompleted] = useState(true)
   const [showDetails, setShowDetails] = useState(true)
   const [compact, setCompact] = useState(false)
@@ -292,12 +308,18 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
     .sort((a, b) => {
       const pinDifference = Number(pinnedTaskIds.includes(b._id)) - Number(pinnedTaskIds.includes(a._id))
       if (pinDifference !== 0) return pinDifference
+      if (sortMode === 'priority') {
+        const weight: Record<string, number> = { urgent: 4, high: 3, medium: 2, low: 1, none: 0 }
+        const priorityDifference = (weight[b.priority ?? 'none'] ?? 0) - (weight[a.priority ?? 'none'] ?? 0)
+        if (priorityDifference !== 0) return priorityDifference
+      }
+      if (sortMode === 'title') return (a.title || '').localeCompare(b.title || '')
       const aDate = parseTaskDate(a.dueDate)?.getTime() ?? Number.MAX_SAFE_INTEGER
       const bDate = parseTaskDate(b.dueDate)?.getTime() ?? Number.MAX_SAFE_INTEGER
       if (aDate !== bDate) return aDate - bDate
       return (a.title || '').localeCompare(b.title || '')
     }),
-  [allTasksFilter, now, pinnedTaskIds, range, rangeEnd, start, tasks, todayEnd])
+  [allTasksFilter, now, pinnedTaskIds, range, rangeEnd, sortMode, start, tasks, todayEnd])
 
   const activeTasks = useMemo(() => visibleTasks.filter((task) => !isDone(task.status)), [visibleTasks])
   const completedTasks = useMemo(() => visibleTasks.filter((task) => isDone(task.status)), [visibleTasks])
@@ -445,8 +467,15 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
           <h1>{title}</h1>
         </div>
         <div className="task-workspace-actions">
-          <button type="button" title="Daily suggestions" aria-label="Daily suggestions"><Lightbulb size={17} /></button>
-          <button type="button" title="Sort tasks" aria-label="Sort tasks"><SlidersHorizontal size={17} /></button>
+          <button type="button" title="Open morning plan" aria-label="Open morning plan" onClick={() => navigate('/plan')}><Lightbulb size={17} /></button>
+          <button
+            type="button"
+            title={`Sorted by ${sortMode}. Change sort order`}
+            aria-label={`Sorted by ${sortMode}. Change sort order`}
+            onClick={() => setSortMode((current) => current === 'date' ? 'priority' : current === 'priority' ? 'title' : 'date')}
+          >
+            <SlidersHorizontal size={17} />
+          </button>
           <div className="task-view-menu-anchor" ref={menuRef}>
             <button type="button" title="More options" aria-label="More options" onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen}><Ellipsis size={18} /></button>
             {menuOpen && (
@@ -469,6 +498,31 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
       </header>
 
       <main className="task-workspace-content">
+        {range === 'today' && welcomePriority && (
+          <section className="workspace-welcome" aria-labelledby="workspace-welcome-title">
+            <div>
+              <p>YOUR FIRST WIN</p>
+              <h2 id="workspace-welcome-title">
+                {welcomePriority === 'focus' ? 'Protect one focused block.' : welcomePriority === 'habits' ? 'Check in with one steady rhythm.' : 'Shape a calmer day.'}
+              </h2>
+              <span>
+                {welcomePriority === 'focus' ? 'Choose one task and start a short session.' : welcomePriority === 'habits' ? 'Create or complete one habit to establish your rhythm.' : 'Review commitments and protect the work that matters.'}
+              </span>
+            </div>
+            <div className="workspace-welcome-actions">
+              <button type="button" onClick={() => navigate(welcomePriority === 'focus' ? '/focus' : welcomePriority === 'habits' ? '/habits' : '/plan')}>
+                {welcomePriority === 'focus' ? 'Open Focus' : welcomePriority === 'habits' ? 'Open Habits' : 'Start Planning'}
+              </button>
+              <button type="button" className="is-secondary" onClick={() => {
+                setSearchParams((current) => {
+                  const next = new URLSearchParams(current)
+                  next.delete('welcome')
+                  return next
+                }, { replace: true })
+              }}>Dismiss</button>
+            </div>
+          </section>
+        )}
         <section className="task-date-section">
           <div className="task-date-heading">
             <div><h2>{dateLabel}</h2><span>{activeTasks.length + completedTasks.length}</span></div>
@@ -625,7 +679,11 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
             onTagsChange={(tags) => void updateTask(task._id, { tags })}
             onStartFocus={(mode) => startTaskFocus(task, mode)}
             onDuplicate={() => void duplicateTask(task)}
-            onCopyLink={() => void navigator.clipboard?.writeText(`${window.location.origin}${window.location.pathname}?task=${task._id}`)}
+            onCopyLink={() => {
+              const url = new URL(window.location.href)
+              url.searchParams.set('task', task._id)
+              void navigator.clipboard?.writeText(url.toString())
+            }}
             onConvertToNote={() => {
               void updateTask(task._id, {
                 notes: task.notes ?? { type: 'doc', content: [{ type: 'paragraph' }] },

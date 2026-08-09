@@ -608,12 +608,27 @@
 
 @media (max-width: 900px) {
   .calendar-shell {
-    min-width: 760px;
+    min-width: 0;
   }
+  .calendar-view-stage { overflow: auto; overscroll-behavior: contain; }
+  .calendar-week-view,
+  .calendar-month-view,
+  .calendar-multiday-view,
+  .calendar-multiweek-view { min-width: 720px; }
+  .calendar-header__title h1 { max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .calendar-header__controls { gap: 3px; }
+  .calendar-nav-group__today { display: none; }
+  .calendar-view-dock { left: 12px; max-width: calc(100vw - 68px); transform: none; }
+  .calendar-view-dock button { min-height: 40px; padding-inline: 13px; }
+  .calendar-menu { max-width: calc(100vw - 64px); }
+  .calendar-year-grid { min-width: 720px; grid-template-columns: repeat(3, minmax(0, 1fr)); padding-inline: 28px; }
+}
 
-  body:has(.calendar-shell) {
-    overflow-x: auto;
-  }
+@media (max-width: 560px) {
+  .calendar-header__app-button,
+  .calendar-control--square { display: none !important; }
+  .calendar-year-grid { min-width: 620px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .calendar-view-dock { bottom: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

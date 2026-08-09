@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { http } from '@/lib/api/client'
 
@@ -68,11 +68,7 @@ async function fetchRitualState(date: string): Promise<RitualState | null> {
 }
 
 async function saveRitualState(state: RitualState): Promise<void> {
-  try {
-    await http.post('/api/rituals', state)
-  } catch {
-    // Persist locally even if API fails
-  }
+  await http.post('/api/rituals', state)
 }
 
 /* ── Hook ──────────────────────────────────────────────────── */
@@ -100,8 +96,8 @@ export function useRitualState(date: string) {
     mutationFn: async (updates: Partial<RitualState>) => {
       const current = query.data ?? { date }
       const merged: RitualState = { ...current, ...updates, date }
-      setLocalState(merged)
       await saveRitualState(merged)
+      setLocalState(merged)
       return merged
     },
     onSuccess: (merged) => {

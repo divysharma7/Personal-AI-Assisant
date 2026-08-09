@@ -5,6 +5,7 @@ import { Check, Calendar, Flag, List, Trash2, ArrowRight } from 'lucide-react'
 import { motionTokens } from '@/lib/motion'
 import { useTasks } from '@/hooks/useTasks'
 import type { CalendarEvent } from './types'
+import { useCalendarDisplayPreferences } from './CalendarDisplayPreferences'
 
 interface EventPopoverProps {
   event: CalendarEvent
@@ -21,15 +22,15 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 const PRIORITY_CYCLE = ['medium', 'high', 'low'] as const
 
-function formatEventTime(start: string, end: string): string {
+function formatEventTime(start: string, end: string, timeFormat: '12h' | '24h'): string {
   const s = new Date(start)
   const e = new Date(end)
   const today = new Date()
   const isToday = s.getDate() === today.getDate() && s.getMonth() === today.getMonth() && s.getFullYear() === today.getFullYear()
-  const dayLabel = isToday ? 'Today' : s.toLocaleDateString('en-US', { weekday: 'short' })
-  const dateStr = s.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
-  const startTime = s.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
-  const endTime = e.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+  const dayLabel = isToday ? 'Today' : s.toLocaleDateString(undefined, { weekday: 'short' })
+  const dateStr = s.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+  const startTime = s.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: timeFormat === '12h' })
+  const endTime = e.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: timeFormat === '12h' })
   return `${dayLabel}, ${dateStr}, ${startTime} - ${endTime}`
 }
 
@@ -41,6 +42,7 @@ const btnHover = {
 }
 
 export default function EventPopover({ event, anchor, onClose, onOpenDetail }: EventPopoverProps) {
+  const { timeFormat } = useCalendarDisplayPreferences()
   const popoverRef = useRef<HTMLDivElement>(null)
   const { tasks, updateTask, deleteTask } = useTasks()
 
@@ -150,7 +152,7 @@ export default function EventPopover({ event, anchor, onClose, onOpenDetail }: E
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
           <Calendar size={14} strokeWidth={1.5} style={{ color: 'var(--text-faint)', flexShrink: 0 }} />
           <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
-            {formatEventTime(event.start, event.end)}
+            {formatEventTime(event.start, event.end, timeFormat)}
           </span>
         </div>
 

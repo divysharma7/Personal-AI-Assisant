@@ -13,16 +13,20 @@ export function useGlobalShortcuts() {
     }
 
     if (e.altKey) return
-    if ((e.ctrlKey || e.metaKey) && e.key !== 'k') return
+
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault()
+      window.dispatchEvent(new CustomEvent('laif:open-command-palette'))
+      return
+    }
+
+    if (e.ctrlKey || e.metaKey) return
 
     switch (e.key) {
-      case 't':
-      case 'T':
+      case 'n':
+      case 'N':
         e.preventDefault()
-        navigate('/')
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('laif:focus-new-task'))
-        }, 100)
+        window.dispatchEvent(new CustomEvent('laif:open-task-composer'))
         break
 
       case 'e':
@@ -31,11 +35,10 @@ export function useGlobalShortcuts() {
         navigate('/calendar')
         break
 
-      case 'k':
-        if (e.ctrlKey || e.metaKey) {
-          e.preventDefault()
-          navigate('/tasks')
-        }
+      case 't':
+      case 'T':
+        e.preventDefault()
+        navigate('/today')
         break
 
       default:

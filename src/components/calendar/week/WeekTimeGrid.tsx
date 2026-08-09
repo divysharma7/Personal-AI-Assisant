@@ -4,7 +4,7 @@ import {
   isToday,
   timeToGridRow,
   gridRowSpan,
-  getHourLabels24,
+  getHourLabelsForFormat,
 } from '../calendarUtils'
 import CalendarBlock from '../CalendarBlock'
 import DraggableBlock from '../DraggableBlock'
@@ -18,8 +18,8 @@ import {
 } from './useWeekInteractions'
 import HiddenHoursDivider from './HiddenHoursDivider'
 import { useCalendarStore } from '@/stores/calendarStore'
+import { useCalendarDisplayPreferences } from '../CalendarDisplayPreferences'
 
-const HOUR_LABELS = getHourLabels24()
 /** Total grid columns: 1 time-label + 7 day columns */
 const GRID_COLUMNS = 8
 
@@ -54,6 +54,8 @@ function computeDayOverlapLayout(dayEvents: CalendarEvent[]): Map<string, { colu
 }
 
 export default function WeekTimeGrid({ weekDays, eventsByDay }: WeekTimeGridProps) {
+  const { timeFormat } = useCalendarDisplayPreferences()
+  const HOUR_LABELS = useMemo(() => getHourLabelsForFormat(timeFormat), [timeFormat])
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   // Hidden hours state from store

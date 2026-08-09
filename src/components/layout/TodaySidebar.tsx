@@ -11,12 +11,11 @@ import {
   Focus,
   Grid3X3,
   Inbox,
-  Kanban,
-  ListChecks,
   ListTodo,
   MessageCircle,
   Moon,
   Plus,
+  Search,
   Settings,
   Sparkles,
   Sunrise,
@@ -70,6 +69,12 @@ export default function TodaySidebar({ collapsed, onToggleCollapse }: TodaySideb
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const [createWorkflowOpen, setCreateWorkflowOpen] = useState(false)
+  const [onboardingPriorities] = useState<Array<'plan' | 'focus' | 'habits'>>(() => {
+    try {
+      const value = JSON.parse(localStorage.getItem('life-os-onboarding-priorities') ?? '[]') as Array<'plan' | 'focus' | 'habits'>
+      return value.length > 0 ? value : ['plan', 'focus', 'habits']
+    } catch { return ['plan', 'focus', 'habits'] }
+  })
 
   const counts = useMemo(() => {
     const start = startOfToday()
@@ -106,6 +111,21 @@ export default function TodaySidebar({ collapsed, onToggleCollapse }: TodaySideb
     () => workflows.filter((workflow) => !workflow.archived),
     [workflows],
   )
+  const pinnedRailLinks = useMemo(() => {
+    const links: Array<{ to: string; label: string; icon: ReactNode }> = [
+      { to: '/tasks', label: 'Tasks', icon: <ListTodo size={18} /> },
+    ]
+    if (onboardingPriorities.includes('plan')) {
+      links.push(
+        { to: '/calendar', label: 'Calendar', icon: <CalendarDays size={18} /> },
+        { to: '/plan', label: 'Plan', icon: <Sunrise size={18} /> },
+        { to: '/shutdown', label: 'Shutdown', icon: <Moon size={18} /> },
+      )
+    }
+    if (onboardingPriorities.includes('habits')) links.push({ to: '/habits', label: 'Habits', icon: <Sparkles size={18} /> })
+    if (onboardingPriorities.includes('focus')) links.push({ to: '/statistics', label: 'Statistics', icon: <BarChart3 size={18} /> })
+    return links.slice(0, 4)
+  }, [onboardingPriorities])
 
   return (
     <>
@@ -116,34 +136,21 @@ export default function TodaySidebar({ collapsed, onToggleCollapse }: TodaySideb
         </button>
 
         <div className="today-rail-primary">
-          <RailLink to="/" label="Inbox"><Inbox size={18} /></RailLink>
           <RailLink to="/today" label="Today"><CheckCircle2 size={18} /></RailLink>
-          <RailLink to="/next" label="Next 7 Days"><CalendarDays size={18} /></RailLink>
-          <RailLink to="/tasks" label="Tasks"><ListTodo size={18} /></RailLink>
-          <RailLink to="/lists" label="Lists"><ListChecks size={18} /></RailLink>
+          <RailLink to="/" label="Inbox"><Inbox size={18} /></RailLink>
           <RailLink to="/agenda" label="Agenda"><Clock3 size={18} /></RailLink>
-          <RailLink to="/calendar" label="Calendar"><CalendarDays size={18} /></RailLink>
-          <RailLink to="/habits" label="Habits"><Sparkles size={18} /></RailLink>
           <RailLink to="/focus" label="Focus"><Focus size={18} /></RailLink>
-          <RailLink to="/plan" label="Plan"><Sunrise size={18} /></RailLink>
-          <RailLink to="/shutdown" label="Shutdown"><Moon size={18} /></RailLink>
-          <RailLink to="/statistics" label="Statistics"><BarChart3 size={18} /></RailLink>
-          <RailLink to="/chat" label="Chatbot"><MessageCircle size={18} /></RailLink>
-          <RailLink to="/matrix" label="Priority Matrix"><Grid3X3 size={18} /></RailLink>
-          {activeWorkflows.length > 0 ? (
-            <RailLink to={`/workflows/${activeWorkflows[0]._id}`} label="Workflows"><Kanban size={18} /></RailLink>
-          ) : (
-            <button className="today-rail-link" type="button" onClick={() => setCreateWorkflowOpen(true)} aria-label="Create workflow" title="Workflows">
-              <Kanban size={18} />
-            </button>
-          )}
+          {pinnedRailLinks.map((link) => <RailLink key={link.to} to={link.to} label={link.label}>{link.icon}</RailLink>)}
         </div>
 
         <div className="today-rail-bottom">
+          <button className="today-rail-link" type="button" onClick={() => window.dispatchEvent(new CustomEvent('laif:open-command-palette'))} aria-label="Search and commands" title="Search and commands (Ctrl+K)">
+            <Search size={18} />
+          </button>
           <button
             className="today-rail-link"
             type="button"
-            onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', ctrlKey: true }))}
+            onClick={() => window.dispatchEvent(new CustomEvent('laif:open-task-composer'))}
             aria-label="Create new task"
             title="Create new task"
           >

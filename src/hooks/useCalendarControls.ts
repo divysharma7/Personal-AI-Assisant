@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { http } from '@/lib/api/client'
 
 // ── Types ──────────────────────────────────────────────────────
@@ -55,7 +55,7 @@ export function useCalendarControls() {
     },
   })
 
-  const calendars = query.data ?? []
+  const calendars = useMemo(() => query.data ?? [], [query.data])
 
   const mutation = useMutation({
     mutationFn: ({ calendarId, data }: { calendarId: string; data: CalendarUpdatePayload }) =>

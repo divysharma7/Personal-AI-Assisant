@@ -14,6 +14,10 @@ import {
   yToTime,
   getRelativeDayLabel,
   getMiniMonthGrid,
+  startOfWeekWithPreference,
+  getMonthGridForWeekStart,
+  getHourLabelsForFormat,
+  formatClockTime,
 } from './calendarUtils'
 
 // ── timeToGridRow ────────────────────────────────────────────────
@@ -137,6 +141,31 @@ describe('startOfWeek', () => {
   })
 })
 
+describe('calendar display preferences', () => {
+  it('respects Sunday, Monday, and Saturday week starts', () => {
+    const input = new Date(2025, 0, 8, 15, 30)
+    expect(startOfWeekWithPreference(input, 0).getDay()).toBe(0)
+    expect(startOfWeekWithPreference(input, 1).getDay()).toBe(1)
+    expect(startOfWeekWithPreference(input, 6).getDay()).toBe(6)
+  })
+
+  it('starts a month grid on the configured weekday', () => {
+    expect(getMonthGridForWeekStart(new Date(2025, 0, 1), 0)[0].getDay()).toBe(0)
+    expect(getMonthGridForWeekStart(new Date(2025, 0, 1), 1)[0].getDay()).toBe(1)
+  })
+
+  it('provides distinct 12-hour and 24-hour labels', () => {
+    expect(getHourLabelsForFormat('12h')[13]).toBe('1 PM')
+    expect(getHourLabelsForFormat('24h')[13]).toBe('13:00')
+  })
+
+  it('formats clock time using the selected clock preference', () => {
+    const value = new Date(2025, 0, 1, 13, 5)
+    expect(formatClockTime(value, '24h')).toMatch(/13:05/)
+    expect(formatClockTime(value, '12h')).toMatch(/1:05/)
+  })
+})
+
 // ── isSameDay ────────────────────────────────────────────────────
 
 describe('isSameDay', () => {
@@ -241,8 +270,8 @@ describe('formatHeaderLabel', () => {
   // Jan 8, 2025 is a Wednesday
   const date = new Date(2025, 0, 8)
 
-  it('day view: "Wednesday, January 8"', () => {
-    expect(formatHeaderLabel(date, 'day')).toBe('Wednesday, January 8')
+  it('day view follows the active locale', () => {
+    expect(formatHeaderLabel(date, 'day')).toBe(date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }))
   })
 
   it('week view: includes month and date range', () => {

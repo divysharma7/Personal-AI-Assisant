@@ -158,6 +158,19 @@
   color: #9ba2ff;
 }
 
+.focus-retry-button {
+  position: absolute;
+  bottom: 56px;
+  min-height: 40px;
+  border: 1px solid var(--focus-border);
+  border-radius: 999px;
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--focus-text);
+  font-size: 12px;
+  font-weight: 650;
+}
+
 .focus-insights {
   min-width: 0;
   overflow-y: auto;
@@ -474,6 +487,11 @@
     position: static;
     margin-top: 24px;
     text-align: center;
+  }
+
+  .focus-retry-button {
+    position: static;
+    margin-top: 12px;
   }
 
   .focus-overview-section,

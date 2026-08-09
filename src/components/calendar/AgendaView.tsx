@@ -57,7 +57,7 @@ export default function AgendaView({ date, events }: AgendaViewProps) {
           <section className="calendar-agenda-day" key={dayKey(day.date)}>
             <header className="calendar-agenda-day__date">
               <strong>{day.date.getDate()}</strong>
-              <span>{day.date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+              <span>{day.date.toLocaleDateString(undefined, { weekday: 'short' })}</span>
             </header>
 
             <div className="calendar-agenda-day__events">

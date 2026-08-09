@@ -1,5 +1,6 @@
 
-import { useMemo, useCallback } from 'react'
+import { useMemo, useCallback, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { SlidersHorizontal, MoreVertical, LayoutGrid } from 'lucide-react'
 import { copy } from '@/lib/copy'
@@ -41,6 +42,7 @@ function classifyTask(
 
 export default function MatrixPage() {
   const { tasks, toggleComplete, createTask } = useTasks()
+  const [showRules, setShowRules] = useState(false)
 
   // Filter: only tasks with priority AND estimatedEffort, exclude done/dropped
   const eligibleTasks = useMemo(
@@ -98,10 +100,10 @@ export default function MatrixPage() {
   }, [])
 
   const handleAddDoFirst = useCallback(
-    (effort: number) => {
+    (title: string, effort: number) => {
       const today = new Date().toISOString().split('T')[0]
       createTask({
-        title: '',
+        title,
         priority: 'high',
         dueDate: today,
         status: 'todo',
@@ -112,9 +114,9 @@ export default function MatrixPage() {
   )
 
   const handleAddSchedule = useCallback(
-    (effort: number) => {
+    (title: string, effort: number) => {
       createTask({
-        title: '',
+        title,
         priority: 'high',
         dueDate: null,
         status: 'todo',
@@ -125,10 +127,10 @@ export default function MatrixPage() {
   )
 
   const handleAddDelegate = useCallback(
-    (effort: number) => {
+    (title: string, effort: number) => {
       const today = new Date().toISOString().split('T')[0]
       createTask({
-        title: '',
+        title,
         priority: 'medium',
         dueDate: today,
         status: 'todo',
@@ -139,9 +141,9 @@ export default function MatrixPage() {
   )
 
   const handleAddEliminate = useCallback(
-    (effort: number) => {
+    (title: string, effort: number) => {
       createTask({
-        title: '',
+        title,
         priority: 'low',
         dueDate: null,
         status: 'backlog',
@@ -169,6 +171,8 @@ export default function MatrixPage() {
           <motion.button
             {...buttonPress}
             aria-label="Filter"
+            aria-expanded={showRules}
+            onClick={() => setShowRules((open) => !open)}
             className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
             onMouseEnter={(e) => {
@@ -180,9 +184,9 @@ export default function MatrixPage() {
           >
             <SlidersHorizontal size={18} strokeWidth={1.5} />
           </motion.button>
-          <motion.button
-            {...buttonPress}
-            aria-label="More options"
+          <Link
+            to="/tasks"
+            aria-label="Open all tasks"
             className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors duration-150 cursor-pointer"
             style={{ color: 'var(--text-muted)' }}
             onMouseEnter={(e) => {
@@ -193,9 +197,19 @@ export default function MatrixPage() {
             }}
           >
             <MoreVertical size={18} strokeWidth={1.5} />
-          </motion.button>
+          </Link>
         </div>
       </motion.div>
+
+      {showRules ? (
+        <div
+          role="status"
+          className="rounded-xl border px-4 py-3 text-xs"
+          style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-pane-2)', color: 'var(--text-muted)' }}
+        >
+          The matrix includes active tasks with both a priority and an effort estimate. Urgency comes from whether the due date is today or overdue.
+        </div>
+      ) : null}
 
       {/* 2x2 Grid */}
       <div className="relative flex-1" style={{ minHeight: 0 }}>

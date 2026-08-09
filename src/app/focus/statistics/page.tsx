@@ -1,11 +1,9 @@
-import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { fadeSlideUp } from '@/lib/motion'
 import { ArrowLeft, BarChart3, Clock, Target } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   useFocusStatistics,
-  formatDurationForChart,
   getHourLabel,
 } from '@/hooks/useFocusStatistics'
 import { formatDuration } from '@/lib/formatDuration'
@@ -14,8 +12,10 @@ type GroupBy = 'day' | 'week' | 'month'
 
 export default function FocusStatisticsPage() {
   const navigate = useNavigate()
-  const [groupBy, setGroupBy] = useState<GroupBy>('day')
-  const [limit] = useState(groupBy === 'day' ? 14 : 12)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const groupParam = searchParams.get('group')
+  const groupBy: GroupBy = groupParam === 'week' || groupParam === 'month' ? groupParam : 'day'
+  const limit = groupBy === 'day' ? 14 : 12
 
   const { data: stats, isLoading } = useFocusStatistics(groupBy, limit)
 
@@ -86,7 +86,8 @@ export default function FocusStatisticsPage() {
                 <button
                   key={period}
                   type="button"
-                  onClick={() => setGroupBy(period)}
+                  onClick={() => setSearchParams({ group: period }, { replace: true })}
+                  aria-pressed={groupBy === period}
                   className="rounded-full px-4 py-2 text-xs font-semibold capitalize cursor-pointer"
                   style={{
                     backgroundColor: groupBy === period ? 'var(--accent)' : 'var(--overlay-1)',

@@ -4,7 +4,6 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  ChevronUp,
   CalendarDays,
   Plus,
   Clock,
@@ -37,7 +36,7 @@ import './agenda.css'
 // ── Helpers ────────────────────────────────────────────────────
 
 function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+  return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 }
 
 function formatDateHeader(date: Date): string {
@@ -51,11 +50,11 @@ function formatDateHeader(date: Date): string {
   if (days === 0) return 'Today'
   if (days === 1) return 'Tomorrow'
   if (days === -1) return 'Yesterday'
-  return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+  return date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
 }
 
 function formatDateSecondary(date: Date): string {
-  return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+  return date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
 }
 
 /** Minutes between two ISO strings. */
@@ -533,7 +532,7 @@ function findFreeSlots(
       const h = Math.floor(t / 60)
       const m = t % 60
       const d = new Date(2000, 0, 1, h, m)
-      slots.push({ hour: h, minute: m, label: d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) })
+      slots.push({ hour: h, minute: m, label: d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) })
     }
   }
   return slots
@@ -561,11 +560,6 @@ function detectScheduleConflict(
 
 function toIso(dateStr: string, hour: number, minute: number): string {
   return `${dateStr}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`
-}
-
-interface ScheduleResult {
-  success: boolean
-  conflict?: { title: string; start: string; end: string }
 }
 
 // ── Toast Context ───────────────────────────────────────────────
@@ -800,7 +794,7 @@ function SchedulingPopover({
             onMouseLeave={(e) => { if (date === todayStr || date === tomorrowStr) e.currentTarget.style.backgroundColor = 'var(--overlay-1)' }}
           >
             {date !== todayStr && date !== tomorrowStr
-              ? new Date(date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+              ? new Date(date + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
               : 'Custom'
             }
           </button>
@@ -1030,13 +1024,11 @@ function ConflictPopover({
 function DragPreview({
   task,
   targetDate,
-  mouseX,
   mouseY,
   agendaItems,
 }: {
   task: UnscheduledTask
   targetDate: string
-  mouseX: number
   mouseY: number
   agendaItems: AgendaItem[]
 }) {
@@ -1086,14 +1078,12 @@ function DragPreview({
 
 function UnscheduledTray({
   tasks,
-  agendaItems,
   onScheduleRequest,
   onDragStart,
   onDragEnd,
   schedulingTaskId,
 }: {
   tasks: UnscheduledTask[]
-  agendaItems: AgendaItem[]
   onScheduleRequest: (task: UnscheduledTask, anchorRef: RefObject<HTMLDivElement | null>) => void
   onDragStart: (task: UnscheduledTask) => void
   onDragEnd: () => void
@@ -1233,7 +1223,6 @@ function BottomSheetTray({
   const containerRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLElement | null>(null)
   const [schedulingTask, setSchedulingTask] = useState<UnscheduledTask | null>(null)
-  const [scheduleTarget, setScheduleTarget] = useState<ScheduleTarget | null>(null)
   const [showConflict, setShowConflict] = useState<{ task: UnscheduledTask; conflict: { title: string; start: string; end: string }; target: ScheduleTarget } | null>(null)
 
   const todayStr = new Date().toISOString().split('T')[0]
@@ -1752,8 +1741,6 @@ export default function AgendaPage() {
     performSchedule(taskId, target)
   }, [unscheduledTasks, agenda.items, performSchedule])
 
-  const [isSchedulingApi, setIsSchedulingApi] = useState(false)
-
   const handleConflictChooseAnother = useCallback(() => {
     if (showConflict) {
       // Re-open scheduling popover for the same task
@@ -1822,9 +1809,9 @@ export default function AgendaPage() {
   }, [goPrev, goNext, goToday])
 
   // Now marker — refreshed every minute
-  const [nowTick, setNowTick] = useState(0)
+  const [currentTime, setCurrentTime] = useState(() => new Date())
   useEffect(() => {
-    const id = setInterval(() => setNowTick((t) => t + 1), 60_000)
+    const id = setInterval(() => setCurrentTime(new Date()), 60_000)
     return () => clearInterval(id)
   }, [])
 
@@ -1846,14 +1833,13 @@ export default function AgendaPage() {
   // Find "now" item
   const nowItem = useMemo(() => {
     if (!isViewingTodayVal) return null
-    const now = new Date()
     return sortedItems.find((item) => {
       if (!item.start || !item.end) return false
       const start = new Date(item.start)
       const end = new Date(item.end)
-      return now >= start && now <= end
+      return currentTime >= start && currentTime <= end
     })
-  }, [sortedItems, isViewingTodayVal, nowTick])
+  }, [sortedItems, isViewingTodayVal, currentTime])
 
   // Partition timed items into "earlier" (before now) and "upcoming" (at or after now)
   const { earlierItems, upcomingItems } = useMemo(() => {
@@ -1861,7 +1847,6 @@ export default function AgendaPage() {
       return { earlierItems: [] as AgendaItem[], upcomingItems: sortedItems.filter((i) => !i.allDay) }
     }
 
-    const now = new Date()
     const earlier: AgendaItem[] = []
     const upcoming: AgendaItem[] = []
 
@@ -1871,7 +1856,7 @@ export default function AgendaPage() {
         return
       }
       const end = new Date(item.end)
-      if (now > end) {
+      if (currentTime > end) {
         earlier.push(item)
       } else {
         upcoming.push(item)
@@ -1879,7 +1864,7 @@ export default function AgendaPage() {
     })
 
     return { earlierItems: earlier, upcomingItems: upcoming }
-  }, [sortedItems, isViewingTodayVal, nowTick])
+  }, [sortedItems, isViewingTodayVal, currentTime])
 
   // Auto-scroll to now item (respects reduced motion)
   useEffect(() => {
@@ -1889,13 +1874,12 @@ export default function AgendaPage() {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' })
       }
     }
-  }, [nowItem?.id, prefersReduced, isViewingTodayVal])
+  }, [nowItem, prefersReduced, isViewingTodayVal])
 
   // Current time position for the time rule
   const nowTime = useMemo(() => {
-    const d = new Date()
-    return d.getHours() * 60 + d.getMinutes()
-  }, [nowTick])
+    return currentTime.getHours() * 60 + currentTime.getMinutes()
+  }, [currentTime])
 
   /** Find the index where the time rule should be inserted. */
   const timeRuleIndex = useMemo(() => {
@@ -2135,7 +2119,7 @@ export default function AgendaPage() {
                     <button
                       className="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors cursor-pointer"
                       style={{ backgroundColor: 'var(--accent)', color: '#fff' }}
-                      onClick={() => window.dispatchEvent(new CustomEvent('laif:focus-new-task'))}
+                      onClick={() => window.dispatchEvent(new CustomEvent('laif:open-task-composer', { detail: { dueDate: selectedDate } }))}
                       aria-label="Create a new task"
                     >
                       <Plus size={16} strokeWidth={2} />
@@ -2149,7 +2133,7 @@ export default function AgendaPage() {
                   <span className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
                     {agenda.sync.state === 'healthy' ? 'Calendar synced' : 'Sync delayed'}
                     {agenda.sync.lastSuccessfulAt && (
-                      <> · {new Date(agenda.sync.lastSuccessfulAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</>
+                      <> · {new Date(agenda.sync.lastSuccessfulAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</>
                     )}
                   </span>
                 </div>
@@ -2162,7 +2146,6 @@ export default function AgendaPage() {
             <DragPreview
               task={draggedTask}
               targetDate={selectedDate}
-              mouseX={dragPosition.x}
               mouseY={dragPosition.y}
               agendaItems={agenda.items}
             />
@@ -2176,7 +2159,6 @@ export default function AgendaPage() {
         >
           <UnscheduledTray
             tasks={unscheduledTasks}
-            agendaItems={agenda.items}
             onScheduleRequest={handleScheduleRequest}
             onDragStart={(task: UnscheduledTask) => setDraggedTask(task)}
             onDragEnd={() => setDraggedTask(null)}
@@ -2271,7 +2253,11 @@ export default function AgendaPage() {
             onTagsChange={(tags) => void updateTask(task._id, { tags })}
             onStartFocus={(mode) => startTaskFocus(task, mode)}
             onDuplicate={() => void duplicateTask(task)}
-            onCopyLink={() => void navigator.clipboard?.writeText(`${window.location.origin}/agenda?task=${task._id}`)}
+            onCopyLink={() => {
+              const url = new URL(window.location.href)
+              url.searchParams.set('task', task._id)
+              void navigator.clipboard?.writeText(url.toString())
+            }}
             onConvertToNote={() => {
               void updateTask(task._id, {
                 notes: task.notes ?? { type: 'doc', content: [{ type: 'paragraph' }] },

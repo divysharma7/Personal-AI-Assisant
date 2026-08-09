@@ -1,8 +1,9 @@
 
 import { useMemo, useState, useCallback } from 'react'
-import { getMonthGridSunday, isSameDay, isToday } from './calendarUtils'
+import { formatClockTime, getMonthGridForWeekStart, isSameDay, isToday } from './calendarUtils'
 import { hexToRgba } from '@/lib/colorUtils'
 import type { CalendarEvent } from './types'
+import { useCalendarDisplayPreferences } from './CalendarDisplayPreferences'
 
 interface MonthViewProps {
   date: Date
@@ -12,7 +13,7 @@ interface MonthViewProps {
   showHabitDots?: boolean
 }
 
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const DAY_NAMES = Array.from({ length: 7 }, (_, day) => new Date(2024, 0, 7 + day).toLocaleDateString(undefined, { weekday: 'short' }))
 const MAX_VISIBLE_EVENTS = 4
 
 interface TaskBar {
@@ -33,10 +34,8 @@ function stripTime(d: Date): Date {
 /**
  * Format a time as "HH:MM" from a Date.
  */
-function formatTimePrefix(d: Date): string {
-  const h = d.getHours().toString().padStart(2, '0')
-  const m = d.getMinutes().toString().padStart(2, '0')
-  return `${h}:${m}`
+function formatTimePrefix(d: Date, timeFormat: '12h' | '24h'): string {
+  return formatClockTime(d, timeFormat)
 }
 
 /**
@@ -66,7 +65,9 @@ export default function MonthView({
   onDayClick,
   showHabitDots = false,
 }: MonthViewProps) {
-  const cells = getMonthGridSunday(date)
+  const { timeFormat, weekStartsOn } = useCalendarDisplayPreferences()
+  const cells = useMemo(() => getMonthGridForWeekStart(date, weekStartsOn), [date, weekStartsOn])
+  const dayNames = useMemo(() => Array.from({ length: 7 }, (_, index) => DAY_NAMES[(weekStartsOn + index) % 7]), [weekStartsOn])
   const currentMonth = date.getMonth()
 
   // Build rows (each row = 7 cells = 1 week)
@@ -111,7 +112,7 @@ export default function MonthView({
         const isTimed = !allDay
         let timePrefix = ''
         if (isTimed) {
-          timePrefix = formatTimePrefix(evStart)
+          timePrefix = formatTimePrefix(evStart, timeFormat)
         }
 
         bars.push({
@@ -127,7 +128,7 @@ export default function MonthView({
     }
 
     return result
-  }, [cells, events])
+  }, [cells, events, timeFormat])
 
   const handleCellClick = useCallback(
     (cellDate: Date) => {
@@ -155,7 +156,7 @@ export default function MonthView({
           borderBottom: '1px solid var(--border)',
         }}
       >
-        {DAY_NAMES.map((name) => (
+        {dayNames.map((name) => (
           <div
             key={name}
             className="py-2 text-center text-[10px] font-medium"
@@ -460,7 +461,7 @@ function MoreTasksButton({ day, tasks, overflowCount }: MoreTasksButtonProps) {
                 marginBottom: 6,
               }}
             >
-              {day.toLocaleDateString('en-US', {
+              {day.toLocaleDateString(undefined, {
                 weekday: 'short',
                 month: 'short',
                 day: 'numeric',

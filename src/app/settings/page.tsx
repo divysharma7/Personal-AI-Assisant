@@ -1,7 +1,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { copy } from '@/lib/copy'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useGoogleCalendar } from '@/hooks/useGoogleCalendar'
@@ -17,6 +17,7 @@ import FeaturesTab from './tabs/FeaturesTab'
 import IntegrationsTab from './tabs/IntegrationsTab'
 import NotificationsTab from './tabs/NotificationsTab'
 import HabitsTab from './tabs/HabitsTab'
+import DataPrivacyTab from './tabs/DataPrivacyTab'
 
 type SettingsTab = 'profile' | 'datetime' | 'calendar-prefs' | 'shortcuts' | 'features' | 'integrations' | 'notifications' | 'collaborators' | 'habits' | 'focus' | 'data'
 
@@ -47,14 +48,12 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
   const { connected: googleConnected } = useGoogleCalendar()
   const sectionParam = searchParams.get('section') as SettingsTab | null
-  const [activeTab, setActiveTab] = useState<SettingsTab>(
-    sectionParam && TABS.some(t => t.key === sectionParam) ? sectionParam : 'profile'
-  )
+  const activeTab: SettingsTab = sectionParam && TABS.some((tab) => tab.key === sectionParam) ? sectionParam : 'profile'
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
-  const [soundsEnabled, setSoundsEnabled] = useState(true)
-  const [meetingNotesEnabled, setMeetingNotesEnabled] = useState(false)
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileSaveStatus, setProfileSaveStatus] = useState('')
 
   // Calendar preferences from API
   const { preferences: apiPrefs } = useSettings()
@@ -66,11 +65,6 @@ export default function SettingsPage() {
     setDetectedTz(Intl.DateTimeFormat().resolvedOptions().timeZone)
   }, [])
 
-  // Sync active tab to URL
-  useEffect(() => {
-    setSearchParams({ section: activeTab }, { replace: true })
-  }, [activeTab, setSearchParams])
-
   // Calendar settings
   const [calDefaultView, setCalDefaultView] = useState<'day' | 'week' | 'month'>('week')
   const [calWeekStartsOn, setCalWeekStartsOn] = useState<'monday' | 'sunday' | 'saturday'>('monday')
@@ -79,6 +73,7 @@ export default function SettingsPage() {
   const [calShowHabitsOverlay, setCalShowHabitsOverlay] = useState(false)
   const [calShowFocusOverlay, setCalShowFocusOverlay] = useState(false)
   const [calSettingsToast, setCalSettingsToast] = useState(false)
+  const [calSettingsError, setCalSettingsError] = useState('')
   const calToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const showCalToast = useCallback(() => {
@@ -89,8 +84,10 @@ export default function SettingsPage() {
 
   // Persist calendar preferences to API
   const persistCalPref = useCallback((data: Record<string, unknown>) => {
-    showCalToast()
-    updateApiSettings(data as Parameters<typeof updateApiSettings>[0]).catch(() => {})
+    setCalSettingsError('')
+    updateApiSettings(data as Parameters<typeof updateApiSettings>[0])
+      .then(() => showCalToast())
+      .catch(() => setCalSettingsError('This calendar preference could not be saved. Check your connection and try again.'))
   }, [showCalToast, updateApiSettings])
 
   useEffect(() => {
@@ -123,15 +120,30 @@ export default function SettingsPage() {
     navigate('/login')
   }, [navigate])
 
+  const handleSaveProfile = useCallback(async () => {
+    const name = `${firstName} ${lastName}`.trim()
+    if (!name) return
+    setProfileSaving(true)
+    setProfileSaveStatus('')
+    try {
+      await http.patch('/api/users/me/profile', { name })
+      setProfileSaveStatus('Profile saved.')
+    } catch {
+      setProfileSaveStatus('Could not save your profile. Check your connection and try again.')
+    } finally {
+      setProfileSaving(false)
+    }
+  }, [firstName, lastName])
+
   const activeTabMeta = TABS.find((tab) => tab.key === activeTab) ?? TABS[0]
 
   return (
-    <div className="grid min-h-full grid-cols-[220px_minmax(0,1fr)]">
+    <div className="grid min-h-full grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)]">
       <aside
-        className="flex flex-col border-r px-5 py-7"
+        className="flex max-h-[42vh] flex-col overflow-y-auto border-b px-5 py-5 md:max-h-none md:overflow-visible md:border-b-0 md:border-r md:py-7"
         style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-pane-2)' }}
       >
-        <h1 className="mb-8 text-[26px]" style={{ color: 'var(--text-primary)' }}>
+        <h1 className="mb-5 text-[24px] md:mb-8 md:text-[26px]" style={{ color: 'var(--text-primary)' }}>
           {copy.settings.title}
         </h1>
 
@@ -152,7 +164,7 @@ export default function SettingsPage() {
                       key={tab.key}
                       {...buttonPress}
                       type="button"
-                      onClick={() => setActiveTab(tab.key)}
+                      onClick={() => setSearchParams({ section: tab.key }, { replace: true })}
                       aria-current={active ? 'page' : undefined}
                       className="w-full rounded-lg px-3 py-2 text-left text-[13px] font-medium transition-colors duration-150"
                       style={{
@@ -179,7 +191,7 @@ export default function SettingsPage() {
         </button>
       </aside>
 
-      <section className="min-w-0 px-8 py-9 lg:px-12">
+      <section className="min-w-0 px-4 py-6 sm:px-8 md:py-9 lg:px-12">
         <header className="mb-8 max-w-2xl border-b pb-6" style={{ borderColor: 'var(--border)' }}>
           <p
             className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em]"
@@ -204,7 +216,9 @@ export default function SettingsPage() {
               email={email}
               onFirstNameChange={setFirstName}
               onLastNameChange={setLastName}
-              onSignOut={handleSignOut}
+              onSave={handleSaveProfile}
+              saving={profileSaving}
+              saveStatus={profileSaveStatus}
             />
           )}
 
@@ -223,6 +237,7 @@ export default function SettingsPage() {
           {activeTab === 'calendar-prefs' && (
             <CalendarPrefsTab
               calSettingsToast={calSettingsToast}
+              calSettingsError={calSettingsError}
               calShowHabitsOverlay={calShowHabitsOverlay}
               calShowFocusOverlay={calShowFocusOverlay}
               calColorBy={calColorBy}
@@ -241,10 +256,6 @@ export default function SettingsPage() {
             <FeaturesTab
               theme={theme}
               setTheme={setTheme}
-              soundsEnabled={soundsEnabled}
-              setSoundsEnabled={setSoundsEnabled}
-              meetingNotesEnabled={meetingNotesEnabled}
-              setMeetingNotesEnabled={setMeetingNotesEnabled}
             />
           )}
 
@@ -266,53 +277,23 @@ export default function SettingsPage() {
 
           {activeTab === 'focus' && (
             <motion.div key="focus" {...fade} transition={ease.normal}>
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Focus protocols</h3>
-                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                    25/5, 50/10, and 90/15 minute focus/break cycles. Configure your preferred default.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Auto-start</h3>
-                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                    Automatically start Focus when you select a task from Agenda.
-                  </p>
-                </div>
+              <div className="rounded-2xl border p-5" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-pane-2)' }}>
+                <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Focus Protocols & Notifications</h3>
+                <p className="mt-1 text-xs text-pretty" style={{ color: 'var(--text-muted)' }}>
+                  Configure Pomodoro duration, break cycles, auto-start behavior, completion sound, and browser notifications in the dedicated Focus settings.
+                </p>
+                <Link
+                  to="/focus/settings"
+                  className="mt-4 inline-flex h-10 items-center rounded-xl px-4 text-sm font-semibold text-white no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
+                  style={{ backgroundColor: 'var(--accent)' }}
+                >
+                  Open Focus Settings
+                </Link>
               </div>
             </motion.div>
           )}
 
-          {activeTab === 'data' && (
-            <motion.div key="data" {...fade} transition={ease.normal}>
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Export data</h3>
-                  <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
-                    Download all your tasks, habits, and calendar data as JSON.
-                  </p>
-                  <button
-                    className="px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
-                    style={{ backgroundColor: 'var(--overlay-1)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
-                  >
-                    Export all data
-                  </button>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium mb-2" style={{ color: 'var(--priority-high)' }}>Danger zone</h3>
-                  <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
-                    Permanently delete your account and all associated data. This cannot be undone.
-                  </p>
-                  <button
-                    className="px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
-                    style={{ backgroundColor: 'transparent', color: 'var(--priority-high)', border: '1px solid var(--priority-high)' }}
-                  >
-                    Delete account
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
+          {activeTab === 'data' && <DataPrivacyTab />}
         </AnimatePresence>
         </div>
       </section>

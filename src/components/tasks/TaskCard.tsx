@@ -1,7 +1,7 @@
 
 import { memo, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Repeat, MessageCircle } from 'lucide-react'
+import { Check, Repeat, MessageCircle, MoreHorizontal } from 'lucide-react'
 import { checkBounce } from '@/lib/motion'
 import { cardDragLift } from '@/lib/motion'
 import type { TaskRecord } from '@/hooks/useTasks'
@@ -58,7 +58,21 @@ export default memo(function TaskCard({
   return (
     <div
       data-task-id={task._id}
+      role="button"
+      tabIndex={0}
       onClick={() => onOpenDetail(task._id)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') onOpenDetail(task._id)
+        if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+          event.preventDefault()
+          const rect = event.currentTarget.getBoundingClientRect()
+          window.dispatchEvent(new CustomEvent('laif:task-command-menu', { detail: { taskId: task._id, x: rect.right, y: rect.top } }))
+        }
+      }}
+      onContextMenu={(event) => {
+        event.preventDefault()
+        window.dispatchEvent(new CustomEvent('laif:task-command-menu', { detail: { taskId: task._id, x: event.clientX, y: event.clientY } }))
+      }}
       style={{
         backgroundColor: 'var(--bg-pane)',
         borderRadius: 12,
@@ -134,6 +148,19 @@ export default memo(function TaskCard({
         >
           {task.title || 'Untitled'}
         </span>
+        <button
+          type="button"
+          aria-label={`More actions for ${task.title}`}
+          aria-haspopup="menu"
+          onClick={(event) => {
+            event.stopPropagation()
+            const rect = event.currentTarget.getBoundingClientRect()
+            window.dispatchEvent(new CustomEvent('laif:task-command-menu', { detail: { taskId: task._id, x: rect.right, y: rect.bottom + 4 } }))
+          }}
+          style={{ width: 36, height: 36, flexShrink: 0, display: 'grid', placeItems: 'center', margin: '-8px -8px -8px 0', border: 0, borderRadius: 8, background: 'transparent', color: 'var(--text-faint)' }}
+        >
+          <MoreHorizontal size={16} />
+        </button>
       </div>
 
       {/* ── Bottom meta row ── */}

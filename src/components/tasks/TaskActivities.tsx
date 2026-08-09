@@ -61,7 +61,7 @@ function formatRelativeTimestamp(dateStr: string): string {
   if (diffHours < 24) return `${diffHours}h ago`
   if (diffDays === 1) return 'Yesterday'
   if (diffDays < 7) return `${diffDays}d ago`
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
 export default function TaskActivities({ activities, onClose }: TaskActivitiesProps) {

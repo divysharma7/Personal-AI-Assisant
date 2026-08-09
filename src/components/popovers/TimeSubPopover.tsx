@@ -13,7 +13,7 @@ interface TimeSubPopoverProps {
 
 function formatTimeSlot(hour: number, minute: number): string {
   const d = new Date(2000, 0, 1, hour, minute)
-  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 }
 
 export default function TimeSubPopover({

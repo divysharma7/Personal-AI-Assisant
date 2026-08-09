@@ -1,8 +1,9 @@
 
 import { useMemo } from 'react'
-import { isSameDay, isToday, startOfWeekSunday } from './calendarUtils'
+import { formatClockTime, isSameDay, isToday, startOfWeekWithPreference } from './calendarUtils'
 import { hexToRgba } from '@/lib/colorUtils'
 import type { CalendarEvent } from './types'
+import { useCalendarDisplayPreferences } from './CalendarDisplayPreferences'
 
 interface MultiWeekViewProps {
   date: Date
@@ -10,12 +11,12 @@ interface MultiWeekViewProps {
   onDayClick: (date: Date) => void
 }
 
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const DAY_NAMES = Array.from({ length: 7 }, (_, day) => new Date(2024, 0, 7 + day).toLocaleDateString(undefined, { weekday: 'short' }))
 const MAX_VISIBLE_EVENTS = 4
 
-function eventTime(event: CalendarEvent) {
+function eventTime(event: CalendarEvent, timeFormat: '12h' | '24h') {
   const start = new Date(event.start)
-  return `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
+  return formatClockTime(start, timeFormat)
 }
 
 /**
@@ -29,8 +30,9 @@ export default function MultiWeekView({
   events,
   onDayClick,
 }: MultiWeekViewProps) {
+  const { timeFormat, weekStartsOn } = useCalendarDisplayPreferences()
   const cells = useMemo(() => {
-    const weekStart = startOfWeekSunday(date)
+    const weekStart = startOfWeekWithPreference(date, weekStartsOn)
     const days: Date[] = []
     for (let i = 0; i < 14; i++) {
       const d = new Date(weekStart)
@@ -38,7 +40,8 @@ export default function MultiWeekView({
       days.push(d)
     }
     return days
-  }, [date])
+  }, [date, weekStartsOn])
+  const dayNames = useMemo(() => Array.from({ length: 7 }, (_, index) => DAY_NAMES[(weekStartsOn + index) % 7]), [weekStartsOn])
 
   const currentMonth = date.getMonth()
 
@@ -52,7 +55,7 @@ export default function MultiWeekView({
           borderBottom: '1px solid var(--border)',
         }}
       >
-        {DAY_NAMES.map((name) => (
+        {dayNames.map((name) => (
           <div
             key={name}
             className="py-2 text-center text-[10px] font-medium"
@@ -119,7 +122,7 @@ export default function MultiWeekView({
                     className="text-[9px] font-medium"
                     style={{ color: 'var(--text-faint)' }}
                   >
-                    {cellDate.toLocaleString('en-US', { month: 'short' })}
+                    {cellDate.toLocaleString(undefined, { month: 'short' })}
                   </span>
                 )}
               </div>
@@ -146,7 +149,7 @@ export default function MultiWeekView({
                   >
                     <span style={{ width: 8, height: 8, flex: '0 0 8px', border: '1px solid rgba(255,255,255,.48)', borderRadius: 2 }} />
                     <span className="truncate">{ev.title}</span>
-                    <span style={{ marginLeft: 'auto', color: 'rgba(255,255,255,.55)', fontSize: 8 }}>{eventTime(ev)}</span>
+                    <span style={{ marginLeft: 'auto', color: 'rgba(255,255,255,.55)', fontSize: 8 }}>{eventTime(ev, timeFormat)}</span>
                   </button>
                 ))}
 

@@ -71,7 +71,7 @@ export default function DatePopover({
   const popoverRef = useRef<HTMLDivElement>(null)
 
   const days = getCalendarDays(viewYear, viewMonth)
-  const monthLabel = new Date(viewYear, viewMonth).toLocaleDateString('en-US', {
+  const monthLabel = new Date(viewYear, viewMonth).toLocaleDateString(undefined, {
     month: 'long',
     year: 'numeric',
   })
@@ -314,7 +314,7 @@ export default function DatePopover({
         {copy.popovers.date.time}
         {pendingDate && pendingDate.getHours() !== 0 && (
           <span className="ml-auto text-xs" style={{ color: 'var(--text-faint)' }}>
-            {pendingDate.toLocaleTimeString('en-US', {
+            {pendingDate.toLocaleTimeString(undefined, {
               hour: 'numeric',
               minute: '2-digit',
             })}

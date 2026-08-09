@@ -1,9 +1,8 @@
 
-import { useMemo, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { X } from 'lucide-react'
+import { useMemo } from 'react'
+import { motion } from 'framer-motion'
 import { copy } from '@/lib/copy'
-import { fade, fadeSlideUp, ease } from '@/lib/motion'
+import { fade, ease } from '@/lib/motion'
 import { useHeatmap } from '@/hooks/useHeatmap'
 
 interface ProfileTabProps {
@@ -12,7 +11,9 @@ interface ProfileTabProps {
   email: string
   onFirstNameChange: (v: string) => void
   onLastNameChange: (v: string) => void
-  onSignOut: () => void
+  onSave: () => void
+  saving: boolean
+  saveStatus: string
 }
 
 /* ─── Shared card style ─── */
@@ -50,7 +51,7 @@ function intensityColor(count: number): string {
 
 /* ─── TaskActivityHeatmap ─── */
 function TaskActivityHeatmap() {
-  const now = new Date()
+  const now = useMemo(() => new Date(), [])
   const currentYear = now.getFullYear()
   const prevYear = currentYear - 1
 
@@ -186,10 +187,10 @@ export default function ProfileTab({
   email,
   onFirstNameChange,
   onLastNameChange,
+  onSave,
+  saving,
+  saveStatus,
 }: ProfileTabProps) {
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [deleteConfirmed, setDeleteConfirmed] = useState(false)
-
   return (
     <>
       <motion.div key="profile" {...fade} transition={ease.normal} className="flex flex-col" style={{ gap: 16 }}>
@@ -251,6 +252,20 @@ export default function ProfileTab({
               style={{ ...inputStyle, opacity: 0.5, cursor: 'not-allowed' }}
             />
           </div>
+          <div className="mt-5 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={saving || !`${firstName} ${lastName}`.trim()}
+              className="h-10 rounded-xl px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ backgroundColor: 'var(--accent)' }}
+            >
+              {saving ? 'Savingâ€¦' : 'Save Profile'}
+            </button>
+            <p className="text-xs" aria-live="polite" style={{ color: saveStatus.startsWith('Could') ? 'var(--priority-high)' : 'var(--text-muted)' }}>
+              {saveStatus}
+            </p>
+          </div>
         </div>
 
         {/* Card 3: App Language */}
@@ -259,160 +274,16 @@ export default function ProfileTab({
             App language
           </h3>
           <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
-            Change the app UI language.
+            Life OS follows your browser language and regional formatting.
           </p>
-          <div className="mt-4 relative" style={{ maxWidth: 240 }}>
-            <select
-              disabled
-              style={{
-                ...inputStyle,
-                appearance: 'none',
-                paddingRight: 36,
-                cursor: 'not-allowed',
-              }}
-            >
-              <option>System default</option>
-            </select>
-            <span
-              className="pointer-events-none absolute right-3"
-              style={{ top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)' }}
-            >
-              &#x25BE;
-            </span>
-          </div>
+          <p className="mt-4 inline-flex rounded-full px-3 py-2 text-xs font-medium" style={{ backgroundColor: 'var(--bg-hover)', color: 'var(--text-muted)' }}>
+            System default
+          </p>
         </div>
 
-        {/* Card 4: Export Account Data */}
-        <div style={cardStyle} className="flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
-              Export account data
-            </h3>
-            <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
-              Download a .csv file with your account data
-            </p>
-          </div>
-          <button
-            className="rounded-full px-4 py-2 text-sm font-medium cursor-pointer"
-            style={{
-              backgroundColor: 'var(--bg-hover)',
-              color: 'var(--text-primary)',
-              border: 'none',
-            }}
-          >
-            Download
-          </button>
-        </div>
-
-        {/* Card 5: Account Deletion */}
-        <div style={cardStyle} className="flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
-              Account deletion
-            </h3>
-            <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
-              This action is permanent and cannot be undone
-            </p>
-          </div>
-          <button
-            onClick={() => setShowDeleteModal(true)}
-            className="rounded-full px-4 py-2 text-sm font-medium cursor-pointer"
-            style={{
-              backgroundColor: 'transparent',
-              color: 'var(--priority-high)',
-              border: 'none',
-            }}
-          >
-            {copy.settings.profile.deleteAccount}
-          </button>
-        </div>
       </motion.div>
 
       {/* ─── Delete Account Modal ─── */}
-      <AnimatePresence>
-        {showDeleteModal && (
-          <motion.div
-            {...fade}
-            transition={ease.fast}
-            role="presentation"
-            className="fixed inset-0 z-50 flex items-center justify-center"
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
-            onClick={() => setShowDeleteModal(false)}
-            onKeyDown={(e) => { if (e.key === 'Escape') setShowDeleteModal(false) }}
-          >
-            <motion.div
-              {...fadeSlideUp}
-              transition={ease.normal}
-              role="dialog"
-              aria-modal="true"
-              aria-label="Delete account confirmation"
-              className="w-full max-w-md rounded-2xl p-6"
-              style={{
-                backgroundColor: 'var(--bg-pane)',
-                border: '1px solid var(--border)',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
-                  {copy.settings.profile.deleteAccount}
-                </h3>
-                <button
-                  aria-label="Close"
-                  onClick={() => setShowDeleteModal(false)}
-                  className="flex h-7 w-7 items-center justify-center rounded-md transition-colors duration-150 cursor-pointer"
-                  style={{ color: 'var(--text-faint)' }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                  }}
-                >
-                  <X size={16} strokeWidth={1.5} />
-                </button>
-              </div>
-              <p className="mb-4 text-sm" style={{ color: 'var(--text-muted)' }}>
-                {copy.settings.profile.deleteWarning}
-              </p>
-              <label className="mb-5 flex items-start gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={deleteConfirmed}
-                  onChange={(e) => setDeleteConfirmed(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded"
-                  style={{ accentColor: 'var(--accent)' }}
-                />
-                <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                  {copy.settings.profile.deleteConfirmCheckbox}
-                </span>
-              </label>
-              <div className="flex items-center justify-end gap-2">
-                <button
-                  onClick={() => setShowDeleteModal(false)}
-                  className="rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-150 cursor-pointer"
-                  style={{ color: 'var(--text-muted)' }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--bg-hover)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                  }}
-                >
-                  {copy.settings.profile.deleteCancelCta}
-                </button>
-                <button
-                  disabled={!deleteConfirmed}
-                  className="rounded-lg px-4 py-2 text-sm font-semibold text-white transition-opacity duration-150 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                  style={{ backgroundColor: 'var(--priority-high)' }}
-                >
-                  {copy.settings.profile.deleteConfirmCta}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </>
   )
 }

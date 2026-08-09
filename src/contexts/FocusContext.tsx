@@ -23,6 +23,8 @@ export interface FocusState {
 
 interface FocusContextValue {
   focus: FocusState
+  error: string | null
+  clearError: () => void
   startSession: (
     taskId: string,
     taskTitle: string,
@@ -44,8 +46,10 @@ const FocusContext = createContext<FocusContextValue | undefined>(undefined)
 
 export default function FocusProvider({ children }: { children: ReactNode }) {
   const [focus, setFocus] = useState<FocusState>(DEFAULT_STATE)
+  const [error, setError] = useState<string | null>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const clockRef = useRef<{ remainingSeconds: number; capturedAt: number } | null>(null)
 
   // Poll for active session every 30 seconds
   const pollActiveSession = useCallback(async () => {
@@ -60,6 +64,7 @@ export default function FocusProvider({ children }: { children: ReactNode }) {
           const elapsed = Math.floor((endAt - startedAt - (data.totalPausedMs || 0)) / 1000)
           const remaining = Math.max(0, duration - elapsed)
           const isStopwatch = data.mode === 'STOPWATCH'
+          clockRef.current = isStopwatch ? null : { remainingSeconds: remaining, capturedAt: Date.now() }
 
           setFocus({
             isActive: !data.pausedAt && (isStopwatch || remaining > 0),
@@ -74,9 +79,11 @@ export default function FocusProvider({ children }: { children: ReactNode }) {
         }
       }
       // No active session
+      clockRef.current = null
       setFocus(DEFAULT_STATE)
     } catch {
       // Network error — keep current state
+      setError('Focus status could not be refreshed. Your active session is still preserved.')
     }
   }, [])
 
@@ -89,15 +96,17 @@ export default function FocusProvider({ children }: { children: ReactNode }) {
     }
   }, [pollActiveSession])
 
-  // Tick the remaining seconds every second when active
+  // Derive the visible clock from timestamps so background-tab throttling
+  // cannot make the global timer drift from the server session.
   useEffect(() => {
-    if (focus.isActive && focus.remainingSeconds > 0) {
+    if (focus.isActive && focus.mode === 'POMO' && clockRef.current) {
       tickRef.current = setInterval(() => {
         setFocus((prev) => {
-          if (prev.remainingSeconds <= 1) {
-            return { ...prev, isActive: false, remainingSeconds: 0 }
-          }
-          return { ...prev, remainingSeconds: prev.remainingSeconds - 1 }
+          const anchor = clockRef.current
+          if (!anchor) return prev
+          const elapsed = Math.floor((Date.now() - anchor.capturedAt) / 1000)
+          const remainingSeconds = Math.max(0, anchor.remainingSeconds - elapsed)
+          return { ...prev, isActive: remainingSeconds > 0, remainingSeconds }
         })
       }, 1000)
       return () => {
@@ -107,7 +116,7 @@ export default function FocusProvider({ children }: { children: ReactNode }) {
     return () => {
       if (tickRef.current) clearInterval(tickRef.current)
     }
-  }, [focus.isActive, focus.remainingSeconds > 0]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [focus.isActive, focus.mode])
 
   // Listen for 'laif:start-focus' custom events
   useEffect(() => {
@@ -132,6 +141,7 @@ export default function FocusProvider({ children }: { children: ReactNode }) {
       options?: { mode?: 'POMO' | 'STOPWATCH'; targetType?: 'TASK' | 'HABIT' }
     ) => {
       try {
+        setError(null)
         const mode = options?.mode || 'POMO'
         const targetType = options?.targetType || 'TASK'
 
@@ -146,29 +156,29 @@ export default function FocusProvider({ children }: { children: ReactNode }) {
           }),
           credentials: 'include',
         })
-        if (res.ok) {
-          const session = await res.json()
-          const duration = mode === 'POMO' ? (session.plannedDurationMin || 25) * 60 : 0
-          setFocus({
-            isActive: true,
-            mode,
-            targetType,
-            targetId: taskId,
-            targetTitle: taskTitle,
-            remainingSeconds: duration,
-            totalSeconds: duration,
-          })
-          window.location.href = '/focus'
-        }
+        if (!res.ok) throw new Error('Focus could not be started')
+        const session = await res.json()
+        const duration = mode === 'POMO' ? (session.plannedDurationMin || 25) * 60 : 0
+        clockRef.current = mode === 'POMO' ? { remainingSeconds: duration, capturedAt: Date.now() } : null
+        setFocus({
+          isActive: true,
+          mode,
+          targetType,
+          targetId: taskId,
+          targetTitle: taskTitle,
+          remainingSeconds: duration,
+          totalSeconds: duration,
+        })
+        window.location.assign('/focus')
       } catch {
-        // Failed silently
+        setError('Focus could not be started. Check your connection and try again.')
       }
     },
     []
   )
 
   return (
-    <FocusContext.Provider value={{ focus, startSession }}>
+    <FocusContext.Provider value={{ focus, error, clearError: () => setError(null), startSession }}>
       {children}
     </FocusContext.Provider>
   )

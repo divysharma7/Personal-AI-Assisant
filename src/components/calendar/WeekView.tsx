@@ -1,13 +1,14 @@
 
 import { useMemo } from 'react'
 import {
-  startOfWeekSunday,
+  startOfWeekWithPreference,
   isSameDay,
 } from './calendarUtils'
 import type { CalendarEvent } from './types'
 import WeekDayHeader from './week/WeekDayHeader'
 import WeekAllDayBar from './week/WeekAllDayBar'
 import WeekTimeGrid from './week/WeekTimeGrid'
+import { useCalendarDisplayPreferences } from './CalendarDisplayPreferences'
 
 interface WeekViewProps {
   date: Date
@@ -31,7 +32,8 @@ function isAllDayEvent(ev: CalendarEvent): boolean {
 }
 
 export default function WeekView({ date, events }: WeekViewProps) {
-  const weekStart = startOfWeekSunday(date)
+  const { weekStartsOn } = useCalendarDisplayPreferences()
+  const weekStart = startOfWeekWithPreference(date, weekStartsOn)
   const weekDays = useMemo(() =>
     Array.from({ length: 7 }, (_, i) => {
       const d = new Date(weekStart)

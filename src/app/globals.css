@@ -5,6 +5,7 @@
 /* ─── Theme: Dark (default / :root) — Superlist design system ─── */
 :root,
 [data-theme="dark"] {
+  color-scheme: dark;
   /* Brand accents — IBM Blue */
   --accent-default:  #0f62fe;
   --accent-purple:   #8f89fa;
@@ -82,6 +83,7 @@
 
 /* ─── Theme: Light — Warm cream/off-white (Todoist-inspired) ─── */
 [data-theme="light"] {
+  color-scheme: light;
   --accent-default:  #0f62fe;
   --accent-purple:   #6b66da;
   --accent-blue:     #0f62fe;
@@ -136,6 +138,15 @@ body {
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ─── All headings use Inter ─── */
@@ -485,7 +496,7 @@ h1, h2, h3 { text-wrap: balance; }
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 150ms !important;
+    transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
 }

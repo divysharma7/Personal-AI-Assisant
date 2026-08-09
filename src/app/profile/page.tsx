@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { fade, fadeSlideUp, ease } from '@/lib/motion'
 import { CheckCircle2, BarChart3 as BarChart3Icon, Target } from 'lucide-react'
@@ -8,48 +8,22 @@ import { useTasks } from '@/hooks/useTasks'
 import { format, subDays, eachDayOfInterval, startOfWeek } from 'date-fns'
 import HabitAnalytics from '@/components/habits/HabitAnalytics'
 import { copy } from '@/lib/copy'
+import { useFocusDashboard } from '@/hooks/useFocusDashboard'
+import { useFocusStatistics } from '@/hooks/useFocusStatistics'
+import { useSearchParams } from 'react-router-dom'
 
 const COPY = copy.profileStats
 
 type Tab = (typeof COPY.tabs)[number]
 
-// Placeholder data for focus -- will be wired to real data layer
-const PLACEHOLDER_FOCUS = {
-  weekSessions: [2, 3, 1, 4, 2, 0, 3],
-  weekHours: 7.5,
-  monthHours: 28,
-  avgMinutes: 45,
-  streak: 4,
-}
-
-const PLACEHOLDER_FOCUS_EXTENDED = {
-  sessionsToday: 3,
-  sessionsThisWeek: 15,
-  totalSessions: 142,
-  minutesToday: 75,
-  minutesThisWeek: 375,
-  totalMinutes: 3550,
-  avgSessionMinutes: 25,
-  longestSessionMinutes: 52,
-  mostFocusedTask: { title: 'Write LinkedIn post', hours: 3.2 },
-  // 24 cells representing focus minutes per hour of day
-  hourlyHeatmap: [
-    0, 0, 0, 0, 0, 0, 5, 15, 45, 60, 50, 30,
-    10, 25, 40, 55, 45, 35, 20, 10, 5, 0, 0, 0,
-  ],
-  // 4 weeks x 7 days of session counts
-  weeklyTrend: [
-    [1, 2, 0, 3, 1, 0, 1],
-    [2, 1, 3, 2, 2, 1, 0],
-    [0, 3, 2, 4, 1, 1, 2],
-    [2, 3, 1, 4, 2, 0, 3],
-  ],
-}
-
 export default function ProfilePage() {
-  const [activeTab, setActiveTab] = useState<Tab>('Overview')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const requestedTab = searchParams.get('tab')
+  const activeTab: Tab = COPY.tabs.find((tab) => tab.toLocaleLowerCase() === requestedTab?.toLocaleLowerCase()) ?? 'Overview'
   const { habits, weekCompletions, todayCompletionRate } = useHabits()
   const { tasks } = useTasks()
+  const { data: focusDashboard, isLoading: focusDashboardLoading } = useFocusDashboard()
+  const { data: focusStatistics, isLoading: focusStatisticsLoading } = useFocusStatistics('day', 30)
   const activeHabits = useMemo(() => habits.filter((h) => !h.archived), [habits])
 
   // Check if all data is empty (all stats zero)
@@ -79,6 +53,55 @@ export default function ProfilePage() {
     () => activeHabits.reduce((sum, h) => sum + h.currentStreak, 0),
     [activeHabits]
   )
+
+  const focusSummary = useMemo(() => {
+    const stats = focusStatistics?.dailyStats ?? []
+    const weekStart = subDays(new Date(), 6)
+    const week = stats.filter((stat) => new Date(`${stat.period}T12:00:00`) >= weekStart)
+    const weekSeconds = week.reduce((sum, stat) => sum + stat.durationSeconds, 0)
+    const weekSessions = week.reduce((sum, stat) => sum + stat.count, 0)
+    const monthSeconds = stats.reduce((sum, stat) => sum + stat.durationSeconds, 0)
+    const monthSessions = stats.reduce((sum, stat) => sum + stat.count, 0)
+    return {
+      weekSeconds,
+      weekSessions,
+      monthSeconds,
+      monthSessions,
+      averageSeconds: monthSessions > 0 ? Math.round(monthSeconds / monthSessions) : 0,
+    }
+  }, [focusStatistics])
+
+  const focusDetails = useMemo(() => {
+    const todayKey = format(new Date(), 'yyyy-MM-dd')
+    const todayStat = focusStatistics?.dailyStats.find((stat) => stat.period === todayKey)
+    const records = focusDashboard?.records ?? []
+    const longestSeconds = records.reduce((max, record) => Math.max(max, record.durationSeconds), 0)
+    const hourlyHeatmap = Array.from({ length: 24 }, (_, hour) =>
+      Math.round((focusStatistics?.hourDistribution.find((entry) => entry.hour === hour)?.totalSeconds ?? 0) / 60),
+    )
+    const orderedCounts = [...(focusStatistics?.dailyStats ?? [])]
+      .sort((a, b) => a.period.localeCompare(b.period))
+      .slice(-28)
+      .map((stat) => stat.count)
+    const paddedCounts = [...Array(Math.max(0, 28 - orderedCounts.length)).fill(0), ...orderedCounts]
+    const topTask = focusStatistics?.topTasks[0]
+    return {
+      sessionsToday: todayStat?.count ?? 0,
+      sessionsThisWeek: focusSummary.weekSessions,
+      totalSessions: focusSummary.monthSessions,
+      minutesToday: Math.round((focusDashboard?.overview.todayFocusSeconds ?? 0) / 60),
+      minutesThisWeek: Math.round(focusSummary.weekSeconds / 60),
+      totalMinutes: Math.round((focusDashboard?.overview.totalFocusSeconds ?? 0) / 60),
+      avgSessionMinutes: Math.round(focusSummary.averageSeconds / 60),
+      longestSessionMinutes: Math.round(longestSeconds / 60),
+      mostFocusedTask: {
+        title: topTask?.title ?? 'No task target yet',
+        hours: Math.round(((topTask?.durationSeconds ?? 0) / 3600) * 10) / 10,
+      },
+      hourlyHeatmap,
+      weeklyTrend: [0, 1, 2, 3].map((week) => paddedCounts.slice(week * 7, week * 7 + 7)),
+    }
+  }, [focusDashboard, focusStatistics, focusSummary])
 
   // Weekly completion chart data (tasks)
   const weeklyTaskCompletion = useMemo(() => {
@@ -160,7 +183,13 @@ export default function ProfilePage() {
             <motion.button
               key={tab}
               whileTap={{ scale: 0.96 }}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => {
+                setSearchParams((current) => {
+                  const next = new URLSearchParams(current)
+                  next.set('tab', tab.toLocaleLowerCase())
+                  return next
+                }, { replace: true })
+              }}
               className="rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors duration-150 cursor-pointer"
               style={{
                 backgroundColor: active ? 'var(--accent)' : 'transparent',
@@ -201,7 +230,7 @@ export default function ProfilePage() {
                 {[
                   { label: COPY.stats.tasksCompleted, value: tasksCompletedThisWeek, sub: COPY.stats.thisWeek },
                   { label: COPY.stats.activeHabits, value: activeHabits.length, sub: '' },
-                  { label: COPY.stats.focusHours, value: PLACEHOLDER_FOCUS.weekHours, sub: COPY.stats.thisWeek },
+                  { label: COPY.stats.focusHours, value: Math.round((focusSummary.weekSeconds / 3600) * 10) / 10, sub: COPY.stats.thisWeek },
                   { label: COPY.stats.currentStreaks, value: totalStreaks, sub: '' },
                 ].map((stat) => (
                   <motion.div
@@ -483,7 +512,7 @@ export default function ProfilePage() {
           {activeTab === 'Focus' && (
             <motion.div key="focus" {...fade} transition={ease.normal} className="flex flex-col gap-6">
               {/* Empty state hint for focus tab */}
-              {PLACEHOLDER_FOCUS_EXTENDED.totalSessions === 0 && (
+              {!focusDashboardLoading && !focusStatisticsLoading && focusDetails.totalSessions === 0 && (
                 <motion.div
                   {...fadeSlideUp}
                   transition={ease.normal}
@@ -501,9 +530,9 @@ export default function ProfilePage() {
               {/* Session count cards */}
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { label: 'Sessions today', value: PLACEHOLDER_FOCUS_EXTENDED.sessionsToday },
-                  { label: 'Sessions this week', value: PLACEHOLDER_FOCUS_EXTENDED.sessionsThisWeek },
-                  { label: 'Total sessions', value: PLACEHOLDER_FOCUS_EXTENDED.totalSessions },
+                  { label: 'Sessions today', value: focusDetails.sessionsToday },
+                  { label: 'Sessions this week', value: focusDetails.sessionsThisWeek },
+                  { label: 'Sessions in 30 days', value: focusDetails.totalSessions },
                 ].map((stat) => (
                   <div
                     key={stat.label}
@@ -526,9 +555,9 @@ export default function ProfilePage() {
               {/* Focus minutes cards */}
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { label: 'Minutes today', value: PLACEHOLDER_FOCUS_EXTENDED.minutesToday },
-                  { label: 'Minutes this week', value: PLACEHOLDER_FOCUS_EXTENDED.minutesThisWeek },
-                  { label: 'Total minutes', value: PLACEHOLDER_FOCUS_EXTENDED.totalMinutes },
+                  { label: 'Minutes today', value: focusDetails.minutesToday },
+                  { label: 'Minutes this week', value: focusDetails.minutesThisWeek },
+                  { label: 'Total minutes', value: focusDetails.totalMinutes },
                 ].map((stat) => (
                   <div
                     key={stat.label}
@@ -558,7 +587,7 @@ export default function ProfilePage() {
                   }}
                 >
                   <p className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>
-                    {PLACEHOLDER_FOCUS_EXTENDED.avgSessionMinutes}m
+                    {focusDetails.avgSessionMinutes}m
                   </p>
                   <p className="mt-1 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
                     Average session
@@ -572,7 +601,7 @@ export default function ProfilePage() {
                   }}
                 >
                   <p className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>
-                    {PLACEHOLDER_FOCUS_EXTENDED.longestSessionMinutes}m
+                    {focusDetails.longestSessionMinutes}m
                   </p>
                   <p className="mt-1 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
                     Longest session
@@ -586,13 +615,13 @@ export default function ProfilePage() {
                   }}
                 >
                   <p className="text-lg font-bold" style={{ color: 'var(--accent)' }}>
-                    {PLACEHOLDER_FOCUS_EXTENDED.mostFocusedTask.title}
+                    {focusDetails.mostFocusedTask.title}
                   </p>
                   <p className="mt-1 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
                     Most focused this week
                   </p>
                   <p className="text-[10px]" style={{ color: 'var(--text-faint)' }}>
-                    {PLACEHOLDER_FOCUS_EXTENDED.mostFocusedTask.hours}h
+                    {focusDetails.mostFocusedTask.hours}h
                   </p>
                 </div>
               </div>
@@ -610,8 +639,8 @@ export default function ProfilePage() {
                   }}
                 >
                   <div className="grid grid-cols-12 gap-1">
-                    {PLACEHOLDER_FOCUS_EXTENDED.hourlyHeatmap.map((minutes, hour) => {
-                      const maxH = Math.max(...PLACEHOLDER_FOCUS_EXTENDED.hourlyHeatmap, 1)
+                    {focusDetails.hourlyHeatmap.map((minutes, hour) => {
+                      const maxH = Math.max(...focusDetails.hourlyHeatmap, 1)
                       const intensity = minutes / maxH
                       return (
                         <div key={hour} className="flex flex-col items-center gap-1">
@@ -648,7 +677,7 @@ export default function ProfilePage() {
                   }}
                 >
                   <div className="flex flex-col gap-2">
-                    {PLACEHOLDER_FOCUS_EXTENDED.weeklyTrend.map((week, weekIdx) => {
+                    {focusDetails.weeklyTrend.map((week, weekIdx) => {
                       const maxW = Math.max(...week, 1)
                       return (
                         <div key={weekIdx} className="flex items-center gap-2">

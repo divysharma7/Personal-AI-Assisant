@@ -1,51 +1,82 @@
+import { useState } from 'react'
+import { Bell, BellOff, ExternalLink } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
-import { motion } from 'framer-motion'
-import { fade, ease } from '@/lib/motion'
+type PermissionState = NotificationPermission | 'unsupported'
+
+function readPermission(): PermissionState {
+  return typeof Notification === 'undefined' ? 'unsupported' : Notification.permission
+}
 
 export default function NotificationsTab() {
-  return (
-    <motion.div key="notifications" {...fade} transition={ease.normal} className="flex flex-col gap-5">
-      {/* Coming soon banner */}
-      <div
-        className="rounded-xl px-4 py-3"
-        style={{
-          backgroundColor: 'var(--accent-soft)',
-          border: '1px solid var(--border)',
-        }}
-      >
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-          Notifications are coming soon with the Life OS mobile app.
-        </p>
-      </div>
+  const [permission, setPermission] = useState<PermissionState>(readPermission)
+  const [requesting, setRequesting] = useState(false)
 
-      {/* Disabled toggles */}
-      {[
-        { label: 'Habit reminders', desc: 'Get reminded when habits are due' },
-        { label: 'Check-in nudges', desc: 'Daily nudge to complete check-in' },
-        { label: 'Streak milestones', desc: 'Celebrate streak achievements' },
-        { label: 'Quiet hours', desc: 'Pause all notifications' },
-      ].map((toggle) => (
-        <div key={toggle.label} className="flex items-center justify-between opacity-50">
-          <div>
-            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-              {toggle.label}
-            </p>
-            <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
-              {toggle.desc}
-            </p>
-          </div>
-          <button
-            disabled
-            className="relative h-5 w-9 rounded-full cursor-not-allowed"
-            style={{ backgroundColor: 'var(--border)' }}
+  const requestPermission = async () => {
+    if (typeof Notification === 'undefined') return
+    setRequesting(true)
+    try {
+      setPermission(await Notification.requestPermission())
+    } finally {
+      setRequesting(false)
+    }
+  }
+
+  const labels: Record<PermissionState, { title: string; body: string }> = {
+    granted: { title: 'Browser Alerts Allowed', body: 'Life OS can notify you when a Focus session ends.' },
+    denied: { title: 'Browser Alerts Blocked', body: 'Allow notifications in your browser site settings, then reload Life OS.' },
+    default: { title: 'Browser Alerts Not Set', body: 'Choose whether Life OS may notify you after a Focus session.' },
+    unsupported: { title: 'Browser Alerts Unsupported', body: 'This browser does not support desktop notifications.' },
+  }
+  const status = labels[permission]
+
+  return (
+    <div className="space-y-5">
+      <section className="rounded-2xl border p-5" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-pane-2)' }}>
+        <div className="flex items-start gap-3">
+          <span
+            className="grid h-10 w-10 place-items-center rounded-xl"
+            style={{ backgroundColor: 'var(--accent-soft)', color: permission === 'denied' ? 'var(--priority-high)' : 'var(--accent)' }}
           >
-            <span
-              className="absolute top-0.5 h-4 w-4 rounded-full bg-white"
-              style={{ transform: 'translateX(2px)' }}
-            />
-          </button>
+            {permission === 'denied' || permission === 'unsupported'
+              ? <BellOff size={18} aria-hidden="true" />
+              : <Bell size={18} aria-hidden="true" />}
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{status.title}</h3>
+            <p className="mt-1 text-xs text-pretty" style={{ color: 'var(--text-muted)' }}>{status.body}</p>
+            {permission === 'default' ? (
+              <button
+                type="button"
+                onClick={requestPermission}
+                disabled={requesting}
+                className="mt-4 h-10 rounded-xl px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] disabled:cursor-wait disabled:opacity-60"
+                style={{ backgroundColor: 'var(--accent)' }}
+              >
+                {requesting ? 'Requesting Permission…' : 'Allow Browser Alerts'}
+              </button>
+            ) : null}
+          </div>
         </div>
-      ))}
-    </motion.div>
+      </section>
+
+      <section className="rounded-2xl border p-5" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-pane-2)' }}>
+        <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Focus Notifications</h3>
+        <p className="mt-1 text-xs text-pretty" style={{ color: 'var(--text-muted)' }}>
+          Browser permission controls whether alerts can be delivered. Focus settings control whether Life OS should send them.
+        </p>
+        <Link
+          to="/focus/settings"
+          className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl border px-4 text-sm font-semibold no-underline hover:bg-[var(--bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+          style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+        >
+          Configure Focus Notifications <ExternalLink size={14} aria-hidden="true" />
+        </Link>
+      </section>
+
+      <p className="text-xs text-pretty" style={{ color: 'var(--text-faint)' }}>
+        Task and habit reminder delivery is not enabled yet. Existing reminder fields are saved, but Life OS will not claim an alert was scheduled until delivery is available.
+      </p>
+    </div>
   )
 }

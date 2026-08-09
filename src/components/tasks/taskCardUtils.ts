@@ -79,5 +79,5 @@ export function formatRelativeDate(dateStr: string | null | undefined, stableNow
   if (days === -1) return 'Yesterday'
   if (days > 1 && days <= 7) return `in ${days} days`
   if (days < -1) return `${Math.abs(days)} days ago`
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }

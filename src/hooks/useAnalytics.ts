@@ -85,6 +85,12 @@ export function useAnalytics() {
     [],
   )
 
+  const checkDailyLoop = useCallback((m: DailyMilestones) => {
+    if (m.has_planned && m.has_focused && m.has_completed_task) {
+      trackEvent('daily_loop_completed')
+    }
+  }, [])
+
   /**
    * Mark the "morning plan" milestone and fire the event.
    * If the user has also focused and completed a task today,
@@ -97,7 +103,7 @@ export function useAnalytics() {
       checkDailyLoop(next)
       return next
     })
-  }, [])
+  }, [checkDailyLoop])
 
   /**
    * Mark the "focus session" milestone and fire the event.
@@ -109,7 +115,7 @@ export function useAnalytics() {
       checkDailyLoop(next)
       return next
     })
-  }, [])
+  }, [checkDailyLoop])
 
   /**
    * Mark the "task completed" milestone and fire the event.
@@ -120,23 +126,13 @@ export function useAnalytics() {
       checkDailyLoop(next)
       return next
     })
-  }, [])
+  }, [checkDailyLoop])
 
   /**
    * Mark the "evening shutdown" milestone and fire the event.
    */
   const markShutdownCompleted = useCallback(() => {
     trackEvent('evening_shutdown_completed')
-  }, [])
-
-  /**
-   * Check if all three daily loop steps are done and fire
-   * `daily_loop_completed` if so.
-   */
-  const checkDailyLoop = useCallback((m: DailyMilestones) => {
-    if (m.has_planned && m.has_focused && m.has_completed_task) {
-      trackEvent('daily_loop_completed')
-    }
   }, [])
 
   return {

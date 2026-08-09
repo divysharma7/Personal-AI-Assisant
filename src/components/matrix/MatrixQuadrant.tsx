@@ -20,7 +20,7 @@ interface MatrixQuadrantProps {
   tasks: TaskRecord[]
   onToggleTask: (id: string) => void
   onOpenDetail: (id: string) => void
-  onAddTask: (effort: number) => void
+  onAddTask: (title: string, effort: number) => void
 }
 
 function isOverdue(dateStr: string | null | undefined): boolean {
@@ -43,7 +43,7 @@ function formatDate(dateStr: string | null | undefined): string | null {
   if (days === -1) return 'Yesterday'
   if (days < -1) return `${Math.abs(days)} days ago`
   if (days > 1 && days <= 7) return `in ${days} days`
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
 export default function MatrixQuadrant({
@@ -56,6 +56,7 @@ export default function MatrixQuadrant({
   onAddTask,
 }: MatrixQuadrantProps) {
   const [showAddInput, setShowAddInput] = useState(false)
+  const [titleValue, setTitleValue] = useState('')
   const [effortValue, setEffortValue] = useState('')
   const [completingIds, setCompletingIds] = useState<Set<string>>(new Set())
 
@@ -66,11 +67,13 @@ export default function MatrixQuadrant({
 
   const handleAddSubmit = () => {
     const hours = parseFloat(effortValue)
-    if (!isNaN(hours) && hours > 0) {
-      onAddTask(hours)
+    const title = titleValue.trim()
+    if (title && !isNaN(hours) && hours > 0) {
+      onAddTask(title, hours)
+      setTitleValue('')
+      setEffortValue('')
+      setShowAddInput(false)
     }
-    setEffortValue('')
-    setShowAddInput(false)
   }
 
   return (
@@ -153,10 +156,25 @@ export default function MatrixQuadrant({
                   e.currentTarget.style.backgroundColor = 'transparent'
                 }}
                 onClick={() => onOpenDetail(task._id)}
+                onContextMenu={(event) => {
+                  event.preventDefault()
+                  window.dispatchEvent(new CustomEvent('laif:task-command-menu', { detail: { taskId: task._id, x: event.clientX, y: event.clientY } }))
+                }}
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') onOpenDetail(task._id)
+                  if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+                    event.preventDefault()
+                    const rect = event.currentTarget.getBoundingClientRect()
+                    window.dispatchEvent(new CustomEvent('laif:task-command-menu', { detail: { taskId: task._id, x: rect.right, y: rect.top } }))
+                  }
+                }}
               >
                 {/* Checkbox */}
                 <motion.button
                   {...buttonPress}
+                  type="button"
+                  aria-label={task.status === 'done' ? `Mark ${task.title} incomplete` : `Mark ${task.title} complete`}
                   onClick={(e) => {
                     e.stopPropagation()
                     handleToggle(task._id)
@@ -242,14 +260,29 @@ export default function MatrixQuadrant({
               className="flex items-center gap-2 rounded-lg px-2 py-1.5 mb-1"
               style={{ backgroundColor: 'var(--bg-hover)' }}
             >
-              <span
-                className="text-[12px] flex-shrink-0"
-                style={{ color: 'var(--text-faint)' }}
-              >
-                {copy.matrix.estHoursPlaceholder}:
-              </span>
+              <label htmlFor={`matrix-title-${title}`} className="sr-only">Task title</label>
               <input
+                id={`matrix-title-${title}`}
                 autoFocus
+                type="text"
+                value={titleValue}
+                onChange={(e) => setTitleValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddSubmit()
+                  if (e.key === 'Escape') {
+                    setShowAddInput(false)
+                    setTitleValue('')
+                    setEffortValue('')
+                  }
+                }}
+                className="min-w-0 flex-1 bg-transparent text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+                style={{ color: 'var(--text-primary)' }}
+                placeholder="Task title…"
+                autoComplete="off"
+              />
+              <label htmlFor={`matrix-effort-${title}`} className="sr-only">Estimated hours</label>
+              <input
+                id={`matrix-effort-${title}`}
                 type="number"
                 min="0.25"
                 step="0.25"
@@ -263,19 +296,20 @@ export default function MatrixQuadrant({
                   }
                 }}
                 onBlur={() => {
-                  if (!effortValue) {
+                  if (!effortValue && !titleValue) {
                     setShowAddInput(false)
                   }
                 }}
-                className="w-16 bg-transparent text-[13px] outline-none"
+                className="w-16 rounded bg-transparent text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
                 style={{ color: 'var(--text-primary)' }}
-                placeholder="2"
+                placeholder="2h"
               />
               <motion.button
                 {...buttonPress}
                 onClick={handleAddSubmit}
+                disabled={!titleValue.trim() || !effortValue || Number(effortValue) <= 0}
                 className="rounded-md px-2 py-0.5 text-[12px] font-medium cursor-pointer"
-                style={{ backgroundColor: color, color: '#fff' }}
+                style={{ backgroundColor: color, color: '#fff', opacity: !titleValue.trim() || !effortValue ? 0.5 : 1 }}
               >
                 Add
               </motion.button>

@@ -99,7 +99,7 @@ export default function OnboardingPage() {
         return
       }
 
-      navigate('/')
+      navigate(`/today?welcome=${selectedPriorities[0] ?? 'plan'}`)
     } catch {
       setError('We could not save your setup. Please try again.')
       setLoading(false)

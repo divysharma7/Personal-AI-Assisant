@@ -3,7 +3,7 @@ import { useState, useCallback, useMemo } from 'react'
 import {
   timeToGridRow,
   gridRowSpan,
-  getHourLabels24,
+  getHourLabelsForFormat,
   isSameDay,
   isToday,
 } from './calendarUtils'
@@ -14,13 +14,13 @@ import DroppableSlot from './DroppableSlot'
 import HiddenHoursDivider from './week/HiddenHoursDivider'
 import type { CalendarEvent } from './types'
 import { useCalendarStore } from '@/stores/calendarStore'
+import { useCalendarDisplayPreferences } from './CalendarDisplayPreferences'
 
 interface DayViewProps {
   date: Date
   events: CalendarEvent[]
 }
 
-const HOUR_LABELS = getHourLabels24()
 /** Total grid columns in day view: 1 time-label + 1 content column */
 const DAY_GRID_COLUMNS = 2
 
@@ -43,6 +43,8 @@ function isAllDay(ev: CalendarEvent): boolean {
 }
 
 export default function DayView({ date, events }: DayViewProps) {
+  const { timeFormat } = useCalendarDisplayPreferences()
+  const HOUR_LABELS = useMemo(() => getHourLabelsForFormat(timeFormat), [timeFormat])
   const hiddenHoursStart = useCalendarStore((s) => s.hiddenHoursStart)
   const hiddenHoursEnd = useCalendarStore((s) => s.hiddenHoursEnd)
   const setHiddenHoursStart = useCalendarStore((s) => s.setHiddenHoursStart)
@@ -144,7 +146,7 @@ export default function DayView({ date, events }: DayViewProps) {
   return (
     <div className="calendar-day-view flex flex-col flex-1 overflow-hidden">
       <div className="calendar-day-heading">
-        <span className="calendar-day-heading__weekday">{date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+        <span className="calendar-day-heading__weekday">{date.toLocaleDateString(undefined, { weekday: 'short' })}</span>
         <span className="calendar-day-heading__date" data-today={isToday(date)}>{date.getDate()}</span>
       </div>
 

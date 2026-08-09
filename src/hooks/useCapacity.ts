@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { AgendaItem, AgendaResponse } from '@/hooks/useAgenda'
+import type { AgendaResponse } from '@/hooks/useAgenda'
 import type { CalendarPreferences } from '@/hooks/useSettings'
 
 /* ── Types ─────────────────────────────────────────────────── */
@@ -88,7 +88,6 @@ export function useCapacity(
   selectedTaskEstimateMinutes?: number,
 ): CapacityInfo {
   return useMemo(() => {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
     const now = new Date()
 
     // Working hours from preferences (default: 9-17)
@@ -189,7 +188,7 @@ export function useCapacity(
 /* ── Time formatting ───────────────────────────────────────── */
 
 export function formatWindowTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('en-US', {
+  return new Date(iso).toLocaleTimeString(undefined, {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,

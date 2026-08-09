@@ -1,8 +1,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { getHourLabels24 } from '../calendarUtils'
-
-const HOUR_LABELS = getHourLabels24()
+import { getHourLabelsForFormat } from '../calendarUtils'
+import { useCalendarDisplayPreferences } from '../CalendarDisplayPreferences'
 
 interface HiddenHoursDividerProps {
   position: 'top' | 'bottom'
@@ -17,17 +16,17 @@ interface HiddenHoursDividerProps {
 }
 
 /** Format an hour using the calendar's 24-hour display. */
-function formatHour(h: number): string {
-  if (h === 24) return '00:00'
-  return HOUR_LABELS[h % 24]
+function formatHour(h: number, labels: string[]): string {
+  if (h === 24) return labels[0]
+  return labels[h % 24]
 }
 
 /** Build the label describing the hidden range. */
-function getHiddenLabel(position: 'top' | 'bottom', hour: number): string {
+function getHiddenLabel(position: 'top' | 'bottom', hour: number, labels: string[]): string {
   if (position === 'top') {
-    return `${formatHour(0)} \u2013 ${formatHour(hour)} hidden`
+    return `${formatHour(0, labels)} \u2013 ${formatHour(hour, labels)} hidden`
   }
-  return `${formatHour(hour)} \u2013 ${formatHour(24)} hidden`
+  return `${formatHour(hour, labels)} \u2013 ${formatHour(24, labels)} hidden`
 }
 
 export default function HiddenHoursDivider({
@@ -38,6 +37,8 @@ export default function HiddenHoursDivider({
   isExpanded,
   gridColumns,
 }: HiddenHoursDividerProps) {
+  const { timeFormat } = useCalendarDisplayPreferences()
+  const hourLabels = getHourLabelsForFormat(timeFormat)
   const [isDragging, setIsDragging] = useState(false)
   const [previewHour, setPreviewHour] = useState<number | null>(null)
   const [showTooltip, setShowTooltip] = useState(false)
@@ -118,7 +119,7 @@ export default function HiddenHoursDivider({
 
   if (!hasHiddenHours && !isExpanded) return null
 
-  const label = getHiddenLabel(position, displayHour)
+  const label = getHiddenLabel(position, displayHour, hourLabels)
 
   return (
     <div

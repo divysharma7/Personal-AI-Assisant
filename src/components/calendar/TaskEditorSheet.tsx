@@ -175,7 +175,7 @@ export default function TaskEditorSheet({ task, seed, open, onClose }: TaskEdito
       })
     }
     onClose()
-  }, [task, title, description, listId, priority, startAt, endAt, rrule, updateTask, createTask, onClose])
+  }, [task, title, description, listId, priority, startAt, endAt, rrule, reminders, updateTask, createTask, onClose])
 
   const handleDelete = useCallback(async () => {
     if (!task) return

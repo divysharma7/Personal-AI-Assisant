@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import {
   BarChart3,
@@ -9,6 +9,10 @@ import {
 import { buttonPress, fadeSlideUp, ease } from '@/lib/motion'
 import { useTasks } from '@/hooks/useTasks'
 import { useHabits } from '@/hooks/useHabits'
+import { useFocusDashboard } from '@/hooks/useFocusDashboard'
+import { useFocusStatistics } from '@/hooks/useFocusStatistics'
+import { formatDuration } from '@/lib/formatDuration'
+import { useSearchParams } from 'react-router-dom'
 
 type StatsTab = 'overview' | 'task' | 'focus'
 
@@ -148,9 +152,13 @@ function Card({ title, children, rightControl }: { title: string; children: Reac
 }
 
 export default function StatisticsPage() {
-  const [tab, setTab] = useState<StatsTab>('overview')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const requestedTab = searchParams.get('tab')
+  const tab: StatsTab = TABS.some((item) => item.key === requestedTab) ? requestedTab as StatsTab : 'overview'
   const { tasks } = useTasks()
   const { habits } = useHabits()
+  const { data: focusDashboard, isLoading: focusDashboardLoading } = useFocusDashboard()
+  const { data: focusStatistics, isLoading: focusStatisticsLoading } = useFocusStatistics('day', 7)
 
 
   // Compute stats from real data
@@ -205,6 +213,9 @@ export default function StatisticsPage() {
   const undatedTasks = completedTasks.filter((t) => !t.dueDate).length
   const uncompletedTasks = allTasks.filter((t) => t.status !== 'done' && t.status !== 'dropped').length
   const completionRate = allTasks.length > 0 ? Math.round((completedTasks.length / allTasks.length) * 100) : 0
+  const focusByDay = focusStatistics?.dailyStats.map((stat) => Math.round(stat.durationSeconds / 60)) ?? []
+  const focusLabels = focusStatistics?.dailyStats.map((stat) => stat.period.slice(5)) ?? []
+  const focusSessionsToday = focusStatistics?.dailyStats.find((stat) => stat.period === formatDateKey(new Date()))?.count ?? 0
 
   return (
     <div className="flex flex-col h-full px-6 py-5 overflow-y-auto">
@@ -218,7 +229,13 @@ export default function StatisticsPage() {
             <motion.button
               key={t.key}
               {...buttonPress}
-              onClick={() => setTab(t.key)}
+              onClick={() => {
+                setSearchParams((current) => {
+                  const next = new URLSearchParams(current)
+                  next.set('tab', t.key)
+                  return next
+                }, { replace: true })
+              }}
               className="rounded-full px-4 py-1.5 text-[13px] font-medium cursor-pointer transition-sl"
               style={{
                 backgroundColor: tab === t.key ? 'var(--bg-pane)' : 'transparent',
@@ -358,22 +375,27 @@ export default function StatisticsPage() {
 
       {tab === 'focus' && (
         <motion.div {...fadeSlideUp} transition={ease.normal} className="flex flex-col gap-4">
+          {focusDashboardLoading || focusStatisticsLoading ? (
+            <p aria-live="polite" className="py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+              Loading focus statistics…
+            </p>
+          ) : null}
           {/* Overview */}
           <Card title="Focus Overview">
             <div className="flex items-center gap-0">
-              <StatTile label="Today's Focus" value="0h 0m" />
+              <StatTile label="Today's Focus" value={formatDuration(focusDashboard?.overview.todayFocusSeconds ?? 0)} />
               <div className="h-10 w-px" style={{ backgroundColor: 'var(--border)' }} />
-              <StatTile label="Total Focus" value="0h 0m" />
+              <StatTile label="Total Focus" value={formatDuration(focusDashboard?.overview.totalFocusSeconds ?? 0)} />
               <div className="h-10 w-px" style={{ backgroundColor: 'var(--border)' }} />
-              <StatTile label="Sessions Today" value={0} />
+              <StatTile label="Sessions Today" value={focusSessionsToday} />
             </div>
           </Card>
 
           {/* Focus trend */}
           <Card title="Focus Trend">
             <MiniBarChart
-              data={[0, 0, 0, 0, 0, 0, 0]}
-              labels={last7Days.map((d) => d.label)}
+              data={focusByDay.length > 0 ? focusByDay : [0]}
+              labels={focusLabels.length > 0 ? focusLabels : ['—']}
             />
           </Card>
 
@@ -382,7 +404,7 @@ export default function StatisticsPage() {
             <div className="flex flex-col items-center justify-center py-8">
               <Timer size={32} strokeWidth={1} style={{ color: 'var(--text-faint)', opacity: 0.3 }} />
               <p className="mt-2 text-[13px]" style={{ color: 'var(--text-faint)' }}>
-                Start a focus session to see your year grid
+                The yearly focus grid is available in Focus Statistics.
               </p>
             </div>
           </Card>
@@ -390,7 +412,11 @@ export default function StatisticsPage() {
           {/* Focus records */}
           <Card title="Focus Records">
             <div className="flex flex-col items-center justify-center py-8">
-              <p className="text-[13px]" style={{ color: 'var(--text-faint)' }}>No focus records yet</p>
+              <p className="text-[13px]" style={{ color: 'var(--text-faint)' }}>
+                {focusDashboard?.records.length
+                  ? `${focusDashboard.records.length} recent focus record${focusDashboard.records.length === 1 ? '' : 's'}`
+                  : 'No focus records yet'}
+              </p>
             </div>
           </Card>
         </motion.div>

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { getMiniMonthGrid, isToday } from './calendarUtils'
+import { useCalendarDisplayPreferences } from './CalendarDisplayPreferences'
 import type { CalendarEvent } from './types'
 
 interface YearViewProps {
@@ -10,11 +11,6 @@ interface YearViewProps {
   onWeekClick?: (date: Date) => void
 }
 
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-]
-const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 const HEAT = ['transparent', 'rgba(76,88,175,.30)', 'rgba(79,91,184,.48)', 'rgba(82,94,193,.68)', '#555fc0']
 
 function keyForDate(date: Date) {
@@ -31,6 +27,12 @@ function densityTier(count: number) {
 
 export default function YearView({ date, events, onDayClick, onMonthClick, onWeekClick }: YearViewProps) {
   const year = date.getFullYear()
+  const { weekStartsOn } = useCalendarDisplayPreferences()
+  const monthNames = useMemo(() => Array.from({ length: 12 }, (_, index) => new Date(year, index, 1).toLocaleDateString(undefined, { month: 'long' })), [year])
+  const dayLabels = useMemo(() => Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(2024, 0, 7 + ((weekStartsOn + index) % 7))
+    return day.toLocaleDateString(undefined, { weekday: 'narrow' })
+  }), [weekStartsOn])
   const counts = useMemo(() => {
     const next = new Map<string, number>()
     for (const event of events) {
@@ -45,15 +47,15 @@ export default function YearView({ date, events, onDayClick, onMonthClick, onWee
   return (
     <div className="calendar-year-view flex flex-1 overflow-y-auto">
       <div className="calendar-year-grid">
-        {MONTH_NAMES.map((monthName, monthIndex) => {
-          const cells = getMiniMonthGrid(year, monthIndex)
+        {monthNames.map((monthName, monthIndex) => {
+          const cells = getMiniMonthGrid(year, monthIndex, weekStartsOn)
           return (
             <section className="calendar-year-month" key={monthName}>
               <button className="calendar-year-month__title" onClick={() => onMonthClick?.(new Date(year, monthIndex, 1))}>
                 {monthName}
               </button>
               <div className="calendar-year-month__weekdays">
-                {DAY_LABELS.map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}
+                {dayLabels.map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}
               </div>
               <div className="calendar-year-month__days">
                 {cells.map((cell, index) => {

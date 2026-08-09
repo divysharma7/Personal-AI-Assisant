@@ -1,7 +1,7 @@
 
 import { useState, useRef, useCallback, useMemo, memo, forwardRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, ArrowRight, AlignJustify, Calendar } from 'lucide-react'
+import { Check, ArrowRight, AlignJustify, Calendar, MoreHorizontal } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import { checkBounce } from '@/lib/motion'
 import type { TaskRecord } from '@/hooks/useTasks'
@@ -61,7 +61,7 @@ function formatRelativeDate(dateStr: string | null | undefined, stableNow: Date)
   if (days === -1) return 'Yesterday'
   if (days > 1 && days <= 7) return `in ${days} days`
   if (days < -1) return `${Math.abs(days)} days ago`
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -112,6 +112,12 @@ export default memo(forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow({
   const workflow = task.workflowId ? workflows.find(w => w._id === task.workflowId) : null
   const workflowColumn = workflow?.columns?.find(c => c.id === task.sectionId)
 
+  const openCommandMenu = useCallback((clientX: number, clientY: number) => {
+    window.dispatchEvent(new CustomEvent('laif:task-command-menu', {
+      detail: { taskId: task._id, x: clientX, y: clientY },
+    }))
+  }, [task._id])
+
   const submitTitle = useCallback(() => {
     setEditing(false)
     const t = editVal.trim()
@@ -127,6 +133,10 @@ export default memo(forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow({
       tabIndex={0}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onContextMenu={(event) => {
+        event.preventDefault()
+        openCommandMenu(event.clientX, event.clientY)
+      }}
       onClick={() => { if (!editing && !datePopoverOpen && !priorityPopoverOpen) onOpenDetail(task._id) }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' && !editing) onOpenDetail(task._id)
@@ -153,6 +163,8 @@ export default memo(forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow({
 
       {/* ── Checkbox — rounded rectangle, thick border ── */}
       <button
+        type="button"
+        aria-label={done ? `Mark ${task.title} as incomplete` : `Mark ${task.title} as complete`}
         onClick={(e) => { e.stopPropagation(); onToggle(task._id) }}
         style={{
           flexShrink: 0, width: 26, height: 26, marginRight: 12,
@@ -355,14 +367,34 @@ export default memo(forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow({
 
       {/* ── Right cluster — fixed positions, no layout shift ── */}
       <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, marginLeft: 16, marginTop: 2 }}>
+        <button
+          type="button"
+          aria-label={`More actions for ${task.title}`}
+          aria-haspopup="menu"
+          onClick={(event) => {
+            event.stopPropagation()
+            const rect = event.currentTarget.getBoundingClientRect()
+            openCommandMenu(rect.right, rect.bottom + 4)
+          }}
+          style={{
+            width: 40, height: 40, borderRadius: '50%', border: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backgroundColor: hovered ? 'var(--overlay-2, rgba(108,108,158,0.12))' : 'transparent',
+            color: 'var(--text-muted)', cursor: 'pointer', opacity: hovered ? 1 : 0.7,
+          }}
+        >
+          <MoreHorizontal size={17} />
+        </button>
         {/* Arrow / notes icon — fixed 28px slot, content swaps on hover */}
-        <div
+        <button
+          type="button"
+          aria-label={`Open details for ${task.title}`}
           onClick={(e) => { e.stopPropagation(); onOpenDetail(task._id) }}
           style={{
             width: 40, height: 40, borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             backgroundColor: hovered ? 'var(--overlay-2, rgba(108,108,158,0.12))' : 'transparent',
-            cursor: 'pointer',
+            cursor: 'pointer', border: 0,
             transition: 'background-color 180ms ease-out',
           }}
           onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-3, rgba(108,108,158,0.25))' }}
@@ -373,7 +405,7 @@ export default memo(forwardRef<HTMLDivElement, TaskRowProps>(function TaskRow({
           ) : (hasNotes || hasSubs) ? (
             <AlignJustify size={16} strokeWidth={1.5} style={{ color: 'var(--text-faint)', opacity: 0.4 }} />
           ) : null}
-        </div>
+        </button>
       </div>
     </div>
   )

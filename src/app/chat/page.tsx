@@ -184,7 +184,7 @@ export default function ChatPage() {
     } catch {
       setMessages(prev => [...prev, {
         id: `a-${Date.now()}`, role: 'assistant',
-        content: "Couldn't connect. Check your OpenRouter API key in .env.local.",
+        content: "I couldn't connect to the assistant service. Try again in a moment. If it continues, check the service status in Settings.",
         timestamp: new Date(),
       }])
     }
@@ -470,11 +470,15 @@ export default function ChatPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
               {/* Image/attach — placeholder */}
               <button
+                type="button"
+                disabled
+                aria-label="Image attachments are not available yet"
+                title="Image attachments are not available yet"
                 style={{
                   width: 36, height: 36, borderRadius: '50%',
                   backgroundColor: 'transparent', border: 'none',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'var(--text-faint)', cursor: 'pointer',
+                  color: 'var(--text-faint)', cursor: 'not-allowed', opacity: 0.45,
                   transition: 'background-color 150ms ease',
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-2)' }}
@@ -485,11 +489,15 @@ export default function ChatPage() {
 
               {/* Mic — placeholder */}
               <button
+                type="button"
+                disabled
+                aria-label="Voice input is not available yet"
+                title="Voice input is not available yet"
                 style={{
                   width: 36, height: 36, borderRadius: '50%',
                   backgroundColor: 'transparent', border: 'none',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'var(--text-faint)', cursor: 'pointer',
+                  color: 'var(--text-faint)', cursor: 'not-allowed', opacity: 0.45,
                   transition: 'background-color 150ms ease',
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-2)' }}

@@ -4,9 +4,8 @@ import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { buttonPress } from '@/lib/motion'
 import { isSameDay, isToday } from '../calendarUtils'
+import { useCalendarDisplayPreferences } from '../CalendarDisplayPreferences'
 import type { CalendarEvent } from '../types'
-
-const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 
 function getWeekNumber(date: Date): number {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
@@ -16,9 +15,9 @@ function getWeekNumber(date: Date): number {
   return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
 }
 
-function getMiniMonthGrid(year: number, month: number): (Date | null)[] {
+function getMiniMonthGrid(year: number, month: number, weekStartsOn: 0 | 1 | 6): (Date | null)[] {
   const firstOfMonth = new Date(year, month, 1)
-  const startDow = firstOfMonth.getDay()
+  const startDow = (firstOfMonth.getDay() - weekStartsOn + 7) % 7
   const daysInMonth = new Date(year, month + 1, 0).getDate()
 
   const cells: (Date | null)[] = []
@@ -28,12 +27,12 @@ function getMiniMonthGrid(year: number, month: number): (Date | null)[] {
   return cells
 }
 
-function isSameWeek(a: Date, b: Date): boolean {
+function isSameWeek(a: Date, b: Date, weekStartsOn: 0 | 1 | 6): boolean {
   const startA = new Date(a)
-  startA.setDate(startA.getDate() - startA.getDay())
+  startA.setDate(startA.getDate() - ((startA.getDay() - weekStartsOn + 7) % 7))
   startA.setHours(0, 0, 0, 0)
   const startB = new Date(b)
-  startB.setDate(startB.getDate() - startB.getDay())
+  startB.setDate(startB.getDate() - ((startB.getDay() - weekStartsOn + 7) % 7))
   startB.setHours(0, 0, 0, 0)
   return startA.getTime() === startB.getTime()
 }
@@ -59,15 +58,20 @@ export default function MiniMonthCalendar({
   onGoToday,
   selectedView,
 }: MiniMonthCalendarProps) {
+  const { weekStartsOn } = useCalendarDisplayPreferences()
+  const weekdays = useMemo(() => Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(2024, 0, 7 + ((weekStartsOn + index) % 7))
+    return day.toLocaleDateString(undefined, { weekday: 'narrow' })
+  }), [weekStartsOn])
   const cells = useMemo(
-    () => getMiniMonthGrid(displayMonth.getFullYear(), displayMonth.getMonth()),
-    [displayMonth]
+    () => getMiniMonthGrid(displayMonth.getFullYear(), displayMonth.getMonth(), weekStartsOn),
+    [displayMonth, weekStartsOn]
   )
 
   const nextDisplayMonth = useMemo(() => new Date(displayMonth.getFullYear(), displayMonth.getMonth() + 1, 1), [displayMonth])
   const cellsNext = useMemo(
-    () => getMiniMonthGrid(nextDisplayMonth.getFullYear(), nextDisplayMonth.getMonth()),
-    [nextDisplayMonth]
+    () => getMiniMonthGrid(nextDisplayMonth.getFullYear(), nextDisplayMonth.getMonth(), weekStartsOn),
+    [nextDisplayMonth, weekStartsOn]
   )
 
   // Event dot lookup
@@ -82,8 +86,8 @@ export default function MiniMonthCalendar({
     return map
   }, [events])
 
-  const monthLabel = displayMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-  const nextMonthLabel = nextDisplayMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const monthLabel = displayMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+  const nextMonthLabel = nextDisplayMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
 
   const getWeekRows = useCallback((gridCells: (Date | null)[]) => {
     const rows: (Date | null)[][] = []
@@ -159,7 +163,7 @@ export default function MiniMonthCalendar({
         {/* Weekday header with week number column */}
         <div style={{ display: 'grid', gridTemplateColumns: '20px repeat(7, 1fr)', marginBottom: 2 }}>
           <span style={{ fontSize: 9, color: 'var(--text-faint)', textAlign: 'center', lineHeight: '18px' }}>W</span>
-          {WEEKDAYS.map((day, i) => (
+          {weekdays.map((day, i) => (
             <span
               key={i}
               style={{
@@ -179,7 +183,7 @@ export default function MiniMonthCalendar({
         {nonEmptyRows.map((row, rowIndex) => {
           const firstDate = row.find((c) => c !== null)
           const weekNum = firstDate ? getWeekNumber(firstDate) : null
-          const isCurrentWeekRow = firstDate ? isSameWeek(firstDate, currentDate) : false
+          const isCurrentWeekRow = firstDate ? isSameWeek(firstDate, currentDate, weekStartsOn) : false
 
           return (
             <div
@@ -220,7 +224,7 @@ export default function MiniMonthCalendar({
                 const key = `${cell.getFullYear()}-${cell.getMonth()}-${cell.getDate()}`
                 const dotColors = eventDates.get(key)
 
-                const inSelectedWeek = isWeekView && isSameWeek(cell, currentDate) && !isSelected && !isTodayDate
+                const inSelectedWeek = isWeekView && isSameWeek(cell, currentDate, weekStartsOn) && !isSelected && !isTodayDate
 
                 return (
                   <button

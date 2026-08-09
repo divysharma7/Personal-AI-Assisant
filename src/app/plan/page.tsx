@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Sunrise,
   CalendarDays,
@@ -10,7 +10,7 @@ import {
   ArrowRight,
   AlertTriangle,
 } from 'lucide-react'
-import { ease, buttonPress } from '@/lib/motion'
+import { buttonPress } from '@/lib/motion'
 import { useAgenda } from '@/hooks/useAgenda'
 import { useTasks } from '@/hooks/useTasks'
 import { useSettings } from '@/hooks/useSettings'
@@ -23,28 +23,38 @@ import RitualCard from '@/components/rituals/RitualCard'
 /* ── Helpers ───────────────────────────────────────────────── */
 
 function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('en-US', {
+  return new Date(iso).toLocaleTimeString(undefined, {
     hour: 'numeric',
     minute: '2-digit',
-    hour12: true,
   })
 }
 
-function formatDateFriendly(): string {
-  return new Date().toLocaleDateString('en-US', {
+function formatTimeInput(iso: string): string {
+  const date = new Date(iso)
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
+function formatDateFriendly(date: string): string {
+  return new Date(`${date}T12:00:00`).toLocaleDateString(undefined, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
   })
 }
 
+function isDateKey(value: string | null): value is string {
+  return !!value && /^\d{4}-\d{2}-\d{2}$/.test(value)
+}
+
 /* ── Plan Page ─────────────────────────────────────────────── */
 
 export default function PlanPage() {
   const navigate = useNavigate()
-  const today = useTodayDate()
+  const [searchParams] = useSearchParams()
+  const actualToday = useTodayDate()
+  const today = isDateKey(searchParams.get('date')) ? searchParams.get('date')! : actualToday
   const { agenda, isLoading: agendaLoading } = useAgenda(today)
-  const { tasks, updateTask, createTask } = useTasks()
+  const { tasks, createTask } = useTasks()
   const { preferences } = useSettings()
   const { state, updateRitual, isPending } = useRitualState(today)
 
@@ -59,23 +69,25 @@ export default function PlanPage() {
   const [editEnd, setEditEnd] = useState('')
   const [confirmed, setConfirmed] = useState(state.planCompleted ?? false)
   const [confirming, setConfirming] = useState(false)
+  const [planError, setPlanError] = useState('')
 
   // Sync outcome draft from state when it loads
   useEffect(() => {
     if (state.outcome && !outcomeDraft) setOutcomeDraft(state.outcome)
-  }, [state.outcome])
+  }, [outcomeDraft, state.outcome])
 
   // Scheduled tasks for today
   const scheduledTasks = useMemo(
     () =>
-      tasks.filter(
-        (t) =>
-          t.scheduledStart &&
-          t.scheduledEnd &&
-          t.status !== 'done' &&
-          t.status !== 'dropped',
-      ),
-    [tasks],
+      tasks.filter((t) => {
+        if (!t.scheduledStart || !t.scheduledEnd || t.status === 'done' || t.status === 'dropped') return false
+        const start = new Date(t.scheduledStart)
+        const selected = new Date(`${today}T00:00:00`)
+        return start.getFullYear() === selected.getFullYear()
+          && start.getMonth() === selected.getMonth()
+          && start.getDate() === selected.getDate()
+      }),
+    [tasks, today],
   )
 
   // Calendar events from agenda (external events only)
@@ -105,7 +117,12 @@ export default function PlanPage() {
 
   const handleSaveOutcome = useCallback(async () => {
     if (outcomeDraft.trim()) {
-      await updateRitual({ outcome: outcomeDraft.trim() })
+      setPlanError('')
+      try {
+        await updateRitual({ outcome: outcomeDraft.trim() })
+      } catch {
+        setPlanError('Your outcome could not be saved. Check your connection before continuing.')
+      }
     }
   }, [outcomeDraft, updateRitual])
 
@@ -115,21 +132,30 @@ export default function PlanPage() {
     async (windowId: string) => {
       const window = capacity.suggestedWindows.find((w) => w.id === windowId)
       if (!window) return
+      const title = outcomeDraft.trim()
+      if (!title) {
+        setCurrentStep(2)
+        setPlanError('Choose today’s outcome before protecting time for it.')
+        return
+      }
 
-      // Schedule a focus block as a task
-      await createTask({
-        title: outcomeDraft.trim() || 'Focus time',
-        status: 'todo',
-        priority: 'high',
-        scheduledStart: window.start,
-        scheduledEnd: window.end,
-        estimatedEffort: window.durationMinutes / 60,
-      })
-
-      const next = new Set(acceptedWindows)
-      next.add(windowId)
-      setAcceptedWindows(next)
-      await updateRitual({ acceptedWindows: Array.from(next) })
+      setPlanError('')
+      try {
+        await createTask({
+          title,
+          status: 'todo',
+          priority: 'high',
+          scheduledStart: window.start,
+          scheduledEnd: window.end,
+          estimatedEffort: window.durationMinutes / 60,
+        })
+        const next = new Set(acceptedWindows)
+        next.add(windowId)
+        setAcceptedWindows(next)
+        await updateRitual({ acceptedWindows: Array.from(next) })
+      } catch {
+        setPlanError('That focus block could not be scheduled. Check your connection and try again.')
+      }
     },
     [capacity.suggestedWindows, outcomeDraft, acceptedWindows, createTask, updateRitual],
   )
@@ -139,8 +165,8 @@ export default function PlanPage() {
       const window = capacity.suggestedWindows.find((w) => w.id === windowId)
       if (!window) return
       setEditingWindow(windowId)
-      setEditStart(formatTime(window.start))
-      setEditEnd(formatTime(window.end))
+      setEditStart(formatTimeInput(window.start))
+      setEditEnd(formatTimeInput(window.end))
     },
     [capacity.suggestedWindows],
   )
@@ -149,34 +175,31 @@ export default function PlanPage() {
     async (windowId: string) => {
       const original = capacity.suggestedWindows.find((w) => w.id === windowId)
       if (!original || !editStart || !editEnd) return
-
-      // Parse the edited times back to ISO (keeping the same date)
-      const dateStr = today
-      const parseEditedTime = (timeStr: string): string => {
-        const [time, period] = timeStr.split(' ')
-        const [hours, minutes] = time.split(':').map(Number)
-        let h = hours
-        if (period?.toLowerCase() === 'pm' && h !== 12) h += 12
-        if (period?.toLowerCase() === 'am' && h === 12) h = 0
-        return `${dateStr}T${String(h).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`
+      const title = outcomeDraft.trim()
+      if (!title) {
+        setCurrentStep(2)
+        setPlanError('Choose today’s outcome before protecting time for it.')
+        return
       }
 
-      const newStart = parseEditedTime(editStart)
-      const newEnd = parseEditedTime(editEnd)
+      const newStart = `${today}T${editStart}:00`
+      const newEnd = `${today}T${editEnd}:00`
+      if (new Date(newEnd) <= new Date(newStart)) {
+        setPlanError('The focus block must end after it starts.')
+        return
+      }
 
-      await createTask({
-        title: outcomeDraft.trim() || 'Focus time',
-        status: 'todo',
-        priority: 'high',
-        scheduledStart: newStart,
-        scheduledEnd: newEnd,
-      })
-
-      const next = new Set(acceptedWindows)
-      next.add(windowId)
-      setAcceptedWindows(next)
-      await updateRitual({ acceptedWindows: Array.from(next) })
-      setEditingWindow(null)
+      setPlanError('')
+      try {
+        await createTask({ title, status: 'todo', priority: 'high', scheduledStart: newStart, scheduledEnd: newEnd })
+        const next = new Set(acceptedWindows)
+        next.add(windowId)
+        setAcceptedWindows(next)
+        await updateRitual({ acceptedWindows: Array.from(next) })
+        setEditingWindow(null)
+      } catch {
+        setPlanError('That edited focus block could not be scheduled. Please try again.')
+      }
     },
     [today, editStart, editEnd, capacity.suggestedWindows, outcomeDraft, acceptedWindows, createTask, updateRitual],
   )
@@ -192,13 +215,26 @@ export default function PlanPage() {
 
   const handleConfirmDay = useCallback(async () => {
     setConfirming(true)
+    setPlanError('')
     try {
       await updateRitual({ planCompleted: true, outcome: outcomeDraft.trim() || undefined })
       setConfirmed(true)
+    } catch {
+      setPlanError('Your plan could not be confirmed. Nothing was marked complete; please try again.')
     } finally {
       setConfirming(false)
     }
   }, [updateRitual, outcomeDraft])
+
+  const handleReplan = useCallback(async () => {
+    setPlanError('')
+    try {
+      await updateRitual({ planCompleted: false })
+      setConfirmed(false)
+    } catch {
+      setPlanError('Your completed plan could not be reopened. Check your connection and try again.')
+    }
+  }, [updateRitual])
 
   /* ── Keyboard: allow leaving freely ──────────────────────── */
 
@@ -250,7 +286,7 @@ export default function PlanPage() {
       <RitualPage
         icon={<Sunrise size={22} strokeWidth={1.5} />}
         title="Morning Plan"
-        subtitle={formatDateFriendly()}
+        subtitle={formatDateFriendly(today)}
       >
         <RitualCard accent="var(--success)">
           <div className="flex items-center gap-3 mb-4">
@@ -289,10 +325,8 @@ export default function PlanPage() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              setConfirmed(false)
-              updateRitual({ planCompleted: false })
-            }}
+            onClick={handleReplan}
+            disabled={isPending}
             className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-[14px] font-medium cursor-pointer"
             style={{
               backgroundColor: 'transparent',
@@ -305,6 +339,7 @@ export default function PlanPage() {
             Re-plan
           </button>
         </div>
+        {planError ? <p role="alert" className="mt-3 text-[12px]" style={{ color: 'var(--priority-high)' }}>{planError}</p> : null}
       </RitualPage>
     )
   }
@@ -313,7 +348,7 @@ export default function PlanPage() {
     <RitualPage
       icon={<Sunrise size={22} strokeWidth={1.5} />}
       title="Morning Plan"
-      subtitle={`${formatDateFriendly()} — choose one outcome, protect time, start intentional.`}
+      subtitle={`${formatDateFriendly(today)} — choose one outcome, protect time, start intentional.`}
       footer={
         <div className="flex items-center justify-between">
           <button
@@ -342,6 +377,11 @@ export default function PlanPage() {
         </div>
       }
     >
+      {planError && (
+        <div role="alert" className="mb-4 rounded-xl border px-4 py-3 text-sm" style={{ borderColor: 'color-mix(in srgb, var(--priority-high) 35%, transparent)', color: 'var(--priority-high)' }}>
+          {planError}
+        </div>
+      )}
       {/* ── Step 1: See commitments ──────────────────────────── */}
       <RitualStep
         step={1}
@@ -621,7 +661,7 @@ export default function PlanPage() {
                           <label className="text-[12px]" style={{ color: 'var(--text-faint)' }}>
                             Start
                             <input
-                              type="text"
+                              type="time"
                               value={editStart}
                               onChange={(e) => setEditStart(e.target.value)}
                               className="ml-1 rounded-lg px-2 py-1 text-[12px] w-20 outline-none"
@@ -632,7 +672,7 @@ export default function PlanPage() {
                           <label className="text-[12px]" style={{ color: 'var(--text-faint)' }}>
                             End
                             <input
-                              type="text"
+                              type="time"
                               value={editEnd}
                               onChange={(e) => setEditEnd(e.target.value)}
                               className="ml-1 rounded-lg px-2 py-1 text-[12px] w-20 outline-none"

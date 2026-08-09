@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Moon,
   CheckCircle2,
@@ -17,7 +17,7 @@ import { env } from '@/config/env'
 import { trackEvent } from '@/lib/analytics'
 import { buttonPress } from '@/lib/motion'
 import { useAgenda } from '@/hooks/useAgenda'
-import { useTasks } from '@/hooks/useTasks'
+import { useTasks, type TaskRecord } from '@/hooks/useTasks'
 import { useRitualState, useTodayDate } from '@/hooks/useRitualState'
 import { formatMinutes } from '@/hooks/useCapacity'
 import RitualPage from '@/components/rituals/RitualPage'
@@ -35,15 +35,14 @@ interface FocusStats {
 /* ── Helpers ───────────────────────────────────────────────── */
 
 function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('en-US', {
+  return new Date(iso).toLocaleTimeString(undefined, {
     hour: 'numeric',
     minute: '2-digit',
-    hour12: true,
   })
 }
 
-function formatDateFriendly(): string {
-  return new Date().toLocaleDateString('en-US', {
+function formatDateFriendly(date: string): string {
+  return new Date(`${date}T12:00:00`).toLocaleDateString(undefined, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -56,14 +55,48 @@ function addDays(dateStr: string, days: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+function isDateKey(value: string | null): value is string {
+  return !!value && /^\d{4}-\d{2}-\d{2}$/.test(value)
+}
+
+function isOnDate(iso: string, dateKey: string): boolean {
+  const value = new Date(iso)
+  const date = new Date(`${dateKey}T00:00:00`)
+  return value.getFullYear() === date.getFullYear()
+    && value.getMonth() === date.getMonth()
+    && value.getDate() === date.getDate()
+}
+
+function moveScheduleToDate(startIso: string, endIso: string, dateKey: string) {
+  const originalStart = new Date(startIso)
+  const duration = Math.max(0, new Date(endIso).getTime() - originalStart.getTime())
+  const destination = new Date(`${dateKey}T00:00:00`)
+  destination.setHours(
+    originalStart.getHours(),
+    originalStart.getMinutes(),
+    originalStart.getSeconds(),
+    originalStart.getMilliseconds(),
+  )
+  return {
+    scheduledStart: destination.toISOString(),
+    scheduledEnd: new Date(destination.getTime() + duration).toISOString(),
+  }
+}
+
+interface TaskSnapshot {
+  status: TaskRecord['status']
+  scheduledStart: string | null
+  scheduledEnd: string | null
+}
+
 /* ── Decision Badge ────────────────────────────────────────── */
 
 function DecisionBadge({ decision }: { decision: TaskDecision }) {
   const labels: Record<TaskDecision, { label: string; color: string; icon: typeof CheckCircle2 }> = {
-    move: { label: 'Moved', color: 'var(--accent)', icon: Move },
-    unschedule: { label: 'Unscheduled', color: 'var(--text-muted)', icon: Inbox },
-    complete: { label: 'Completed', color: 'var(--success)', icon: Check },
-    drop: { label: 'Dropped', color: 'var(--priority-high)', icon: Trash2 },
+    move: { label: 'Move queued', color: 'var(--accent)', icon: Move },
+    unschedule: { label: 'Unschedule queued', color: 'var(--text-muted)', icon: Inbox },
+    complete: { label: 'Complete queued', color: 'var(--success)', icon: Check },
+    drop: { label: 'Drop queued', color: 'var(--priority-high)', icon: Trash2 },
   }
   const { label, color, icon: Icon } = labels[decision]
   return (
@@ -81,10 +114,12 @@ function DecisionBadge({ decision }: { decision: TaskDecision }) {
 
 export default function ShutdownPage() {
   const navigate = useNavigate()
-  const today = useTodayDate()
+  const [searchParams] = useSearchParams()
+  const actualToday = useTodayDate()
+  const today = isDateKey(searchParams.get('date')) ? searchParams.get('date')! : actualToday
   const tomorrow = useMemo(() => addDays(today, 1), [today])
 
-  const { agenda, isLoading: agendaLoading } = useAgenda(today)
+  const { isLoading: agendaLoading } = useAgenda(today)
   const { agenda: tomorrowAgenda, isLoading: tomorrowLoading } = useAgenda(tomorrow)
   const { tasks, updateTask } = useTasks()
   const { state, updateRitual, isPending } = useRitualState(today)
@@ -103,9 +138,10 @@ export default function ShutdownPage() {
   const [decisions, setDecisions] = useState<Record<string, TaskDecision>>(
     state.taskDecisions as Record<string, TaskDecision> ?? {},
   )
-  const [undoStack, setUndoStack] = useState<{ taskId: string; previous: TaskDecision | null }[]>([])
+  const [undoStack, setUndoStack] = useState<{ taskId: string; previous: TaskDecision | null; snapshot: TaskSnapshot }[]>([])
   const [dayClosed, setDayClosed] = useState(state.shutdownCompleted ?? false)
   const [closing, setClosing] = useState(false)
+  const [decisionError, setDecisionError] = useState('')
 
   // Unfinished scheduled tasks for today
   const unfinishedTasks = useMemo(() => {
@@ -113,29 +149,18 @@ export default function ShutdownPage() {
       if (t.status === 'done' || t.status === 'dropped') return false
       if (!t.scheduledStart || !t.scheduledEnd) return false
       // Only tasks scheduled for today
-      const start = new Date(t.scheduledStart)
-      return (
-        start.getFullYear() === new Date().getFullYear() &&
-        start.getMonth() === new Date().getMonth() &&
-        start.getDate() === new Date().getDate()
-      )
+      return isOnDate(t.scheduledStart, today)
     })
-  }, [tasks])
+  }, [tasks, today])
 
   // Completed tasks today
   const completedTasks = useMemo(() => {
     return tasks.filter((t) => {
       if (t.status !== 'done') return false
       if (!t.completedAt) return false
-      const completed = new Date(t.completedAt)
-      const now = new Date()
-      return (
-        completed.getFullYear() === now.getFullYear() &&
-        completed.getMonth() === now.getMonth() &&
-        completed.getDate() === now.getDate()
-      )
+      return isOnDate(t.completedAt, today)
     })
-  }, [tasks])
+  }, [tasks, today])
 
   // Tomorrow's calendar events
   const tomorrowEvents = useMemo(
@@ -146,13 +171,14 @@ export default function ShutdownPage() {
   const tomorrowTasks = useMemo(() => {
     return tasks.filter((t) => {
       if (t.status === 'done' || t.status === 'dropped') return false
+      if (decisions[t._id] === 'move') return true
       if (!t.scheduledStart) return false
       const start = new Date(t.scheduledStart)
       const tDate = new Date(tomorrow + 'T00:00:00')
       const tDateEnd = new Date(tomorrow + 'T23:59:59')
       return start >= tDate && start <= tDateEnd
     })
-  }, [tasks, tomorrow])
+  }, [decisions, tasks, tomorrow])
 
   // Decisions still needed
   const undecidedTasks = unfinishedTasks.filter((t) => !decisions[t._id])
@@ -161,25 +187,23 @@ export default function ShutdownPage() {
   /* ── Decision handlers ───────────────────────────────────── */
 
   const handleDecision = useCallback(
-    async (taskId: string, decision: TaskDecision) => {
+    (taskId: string, decision: TaskDecision) => {
+      const task = tasks.find((item) => item._id === taskId)
+      if (!task) return
       const previous = decisions[taskId] ?? null
-      setUndoStack((prev) => [...prev, { taskId, previous }])
-      setDecisions((prev) => ({ ...prev, [taskId]: decision }))
-
-      // Persist immediately
-      if (decision === 'complete') {
-        await updateTask(taskId, { status: 'done' })
-      } else if (decision === 'drop') {
-        await updateTask(taskId, { status: 'dropped' })
-      } else if (decision === 'unschedule') {
-        await updateTask(taskId, { scheduledStart: null, scheduledEnd: null })
+      const snapshot: TaskSnapshot = {
+        status: task.status,
+        scheduledStart: task.scheduledStart ?? null,
+        scheduledEnd: task.scheduledEnd ?? null,
       }
-      // 'move' doesn't happen immediately — user must specify a date later
+      setDecisionError('')
+      setUndoStack((prev) => [...prev, { taskId, previous, snapshot }])
+      setDecisions((prev) => ({ ...prev, [taskId]: decision }))
     },
-    [decisions, updateTask],
+    [decisions, tasks],
   )
 
-  const handleUndo = useCallback(async () => {
+  const handleUndo = useCallback(() => {
     const last = undoStack[undoStack.length - 1]
     if (!last) return
 
@@ -194,26 +218,33 @@ export default function ShutdownPage() {
       return next
     })
 
-    // Revert the task change
-    const task = tasks.find((t) => t._id === last.taskId)
-    if (task && last.previous === null) {
-      // Undoing a decision — restore the task to its previous state
-      if (decisions[last.taskId] === 'complete') {
-        await updateTask(last.taskId, { status: 'todo' })
-      } else if (decisions[last.taskId] === 'drop') {
-        await updateTask(last.taskId, { status: 'todo' })
-      } else if (decisions[last.taskId] === 'unschedule') {
-        // We can't fully restore the old schedule, but at least mark it
-        // The user will need to re-schedule manually
-      }
-    }
-  }, [undoStack, decisions, tasks, updateTask])
+    setDecisionError('')
+  }, [undoStack])
 
   /* ── Close the day ───────────────────────────────────────── */
 
   const handleCloseDay = useCallback(async () => {
     setClosing(true)
+    setDecisionError('')
+    const applied: Array<{ taskId: string; snapshot: TaskSnapshot }> = []
     try {
+      for (const [taskId, decision] of Object.entries(decisions)) {
+        const task = tasks.find((item) => item._id === taskId)
+        if (!task) continue
+        const snapshot: TaskSnapshot = {
+          status: task.status,
+          scheduledStart: task.scheduledStart ?? null,
+          scheduledEnd: task.scheduledEnd ?? null,
+        }
+        let change: Partial<TaskRecord>
+        if (decision === 'complete') change = { status: 'done' }
+        else if (decision === 'drop') change = { status: 'dropped' }
+        else if (decision === 'unschedule') change = { scheduledStart: null, scheduledEnd: null }
+        else if (task.scheduledStart && task.scheduledEnd) change = moveScheduleToDate(task.scheduledStart, task.scheduledEnd, tomorrow)
+        else continue
+        await updateTask(taskId, change)
+        applied.push({ taskId, snapshot })
+      }
       await updateRitual({
         taskDecisions: decisions,
         shutdownCompleted: true,
@@ -221,10 +252,23 @@ export default function ShutdownPage() {
       setDayClosed(true)
       // Privacy-safe milestone: user completed their evening shutdown.
       trackEvent('evening_shutdown_completed')
+    } catch {
+      await Promise.allSettled(applied.map(({ taskId, snapshot }) => updateTask(taskId, snapshot)))
+      setDecisionError('The day could not be closed, so completed task changes were restored. Check your connection and try again.')
     } finally {
       setClosing(false)
     }
-  }, [decisions, updateRitual])
+  }, [decisions, tasks, tomorrow, updateRitual, updateTask])
+
+  const handleReopenDay = useCallback(async () => {
+    setDecisionError('')
+    try {
+      await updateRitual({ shutdownCompleted: false })
+      setDayClosed(false)
+    } catch {
+      setDecisionError('The closed day could not be reopened. Check your connection and try again.')
+    }
+  }, [updateRitual])
 
   /* ── Keyboard ────────────────────────────────────────────── */
 
@@ -266,7 +310,7 @@ export default function ShutdownPage() {
       <RitualPage
         icon={<Moon size={22} strokeWidth={1.5} />}
         title="Evening Shutdown"
-        subtitle={formatDateFriendly()}
+        subtitle={formatDateFriendly(today)}
       >
         <RitualCard accent="var(--success)">
           <div className="flex flex-col items-center text-center py-4">
@@ -284,7 +328,7 @@ export default function ShutdownPage() {
         <div className="flex gap-3 mt-4 justify-center">
           <button
             type="button"
-            onClick={() => navigate('/plan')}
+            onClick={() => navigate(`/plan?date=${tomorrow}`)}
             className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-[14px] font-semibold cursor-pointer"
             style={{ backgroundColor: 'var(--accent)', color: 'white', border: 'none' }}
             {...buttonPress}
@@ -294,16 +338,15 @@ export default function ShutdownPage() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              setDayClosed(false)
-              updateRitual({ shutdownCompleted: false })
-            }}
+            onClick={handleReopenDay}
+            disabled={isPending}
             className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-[14px] font-medium cursor-pointer"
             style={{ backgroundColor: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
           >
             Reopen
           </button>
         </div>
+        {decisionError ? <p role="alert" className="mt-3 text-center text-[12px]" style={{ color: 'var(--priority-high)' }}>{decisionError}</p> : null}
       </RitualPage>
     )
   }
@@ -361,6 +404,18 @@ export default function ShutdownPage() {
         </div>
       }
     >
+      <p aria-live="polite" className="sr-only">
+        {decisionError}
+      </p>
+      {decisionError ? (
+        <div
+          role="alert"
+          className="mb-4 rounded-xl border px-4 py-3 text-sm"
+          style={{ borderColor: 'color-mix(in srgb, var(--priority-high) 35%, transparent)', color: 'var(--priority-high)' }}
+        >
+          {decisionError}
+        </div>
+      ) : null}
       {/* ── Today Summary ───────────────────────────────────── */}
       <RitualStep
         step={1}
@@ -503,12 +558,12 @@ export default function ShutdownPage() {
                         onClick={() => handleDecision(task._id, 'move')}
                         className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-medium cursor-pointer"
                         style={{ backgroundColor: 'var(--overlay-2)', color: 'var(--text-primary)', border: 'none' }}
-                        aria-label={`Move ${task.title} to another day`}
+                        aria-label={`Move ${task.title} to tomorrow`}
                         onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-3)' }}
                         onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--overlay-2)' }}
                       >
                         <Move size={13} strokeWidth={1.5} />
-                        Move
+                        Move to Tomorrow
                       </button>
                       <button
                         type="button"
@@ -571,7 +626,7 @@ export default function ShutdownPage() {
             </p>
             <button
               type="button"
-              onClick={() => navigate('/plan')}
+              onClick={() => navigate(`/plan?date=${tomorrow}`)}
               className="flex items-center gap-2 mt-3 text-[13px] font-medium cursor-pointer"
               style={{ color: 'var(--accent)', background: 'none', border: 'none' }}
               aria-label="Plan tomorrow morning"

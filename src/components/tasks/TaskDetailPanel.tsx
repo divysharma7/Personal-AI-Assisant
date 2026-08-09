@@ -338,7 +338,7 @@ export default function TaskDetailPanel({
               >
                 <Calendar size={12} strokeWidth={1.5} />
                 {task.dueDate
-                  ? new Date(task.dueDate).toLocaleDateString('en-US', {
+                  ? new Date(task.dueDate).toLocaleDateString(undefined, {
                       month: 'short',
                       day: 'numeric',
                     })
@@ -479,7 +479,7 @@ export default function TaskDetailPanel({
                     if (days === 1) return 'Tomorrow'
                     if (days === -1) return 'Yesterday'
                     if (days < -1) return `${Math.abs(days)} days ago`
-                    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
                   })()
                 : null
               const subOverdue = sub.dueDate ? new Date(sub.dueDate) < new Date(new Date().toDateString()) : false

@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { fadeSlideUp } from '@/lib/motion'
-import { X, Clock, Target } from 'lucide-react'
+import { X, Clock } from 'lucide-react'
 import TargetSelector from './TargetSelector'
 import type { SelectedTarget } from '@/hooks/useFocusTargets'
 

@@ -36,6 +36,8 @@ export default function FocusPage() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
+  const [saveRetryAvailable, setSaveRetryAvailable] = useState(false)
+  const [sessionUpdating, setSessionUpdating] = useState(false)
   const sessionIdRef = useRef<string | null>(null)
 
   const pomoDuration = activeDurationSeconds ?? settings?.pomoDurationSeconds ?? 1500
@@ -57,6 +59,7 @@ export default function FocusPage() {
       sessionIdRef.current = null
       setActiveDurationSeconds(null)
       setIntention('')
+      setSaveRetryAvailable(false)
       setStatusMessage(mode === 'POMO' ? 'Session complete. Take a real reset.' : 'Session recorded.')
       refreshDashboard()
       if (mode === 'POMO') trackEvent('first_focus_session')
@@ -66,6 +69,7 @@ export default function FocusPage() {
     } catch (error) {
       console.error('Failed to complete session:', error)
       setStatusMessage('Could not save this session. Please try again.')
+      setSaveRetryAvailable(true)
     }
   }, [mode, intention, settings, refreshDashboard])
 
@@ -114,6 +118,7 @@ export default function FocusPage() {
       sessionIdRef.current = session._id
       if (mode === 'POMO') setActiveDurationSeconds(pomoDuration)
       timer.start()
+      setSaveRetryAvailable(false)
       setStatusMessage('')
     } catch (error) {
       console.error('Failed to start session:', error)
@@ -123,21 +128,48 @@ export default function FocusPage() {
 
   const handleFinish = useCallback(() => timer.finish(), [timer])
 
-  const handlePause = useCallback(() => {
-    timer.pause()
-    void updateSession('pause').catch((error) => console.error(error))
-  }, [timer, updateSession])
+  const handlePause = useCallback(async () => {
+    if (sessionUpdating) return
+    setSessionUpdating(true)
+    try {
+      await updateSession('pause')
+      timer.pause()
+      setStatusMessage('Session paused.')
+    } catch {
+      setStatusMessage('Could not pause the session. It is still running.')
+    } finally {
+      setSessionUpdating(false)
+    }
+  }, [sessionUpdating, timer, updateSession])
 
-  const handleResume = useCallback(() => {
-    timer.resume()
-    void updateSession('resume').catch((error) => console.error(error))
-  }, [timer, updateSession])
+  const handleResume = useCallback(async () => {
+    if (sessionUpdating) return
+    setSessionUpdating(true)
+    try {
+      await updateSession('resume')
+      timer.resume()
+      setStatusMessage('Session resumed.')
+    } catch {
+      setStatusMessage('Could not resume the session. It remains paused.')
+    } finally {
+      setSessionUpdating(false)
+    }
+  }, [sessionUpdating, timer, updateSession])
 
-  const handleReset = useCallback(() => {
-    timer.reset()
-    setActiveDurationSeconds(null)
-    void updateSession('cancel').catch((error) => console.error(error))
-  }, [timer, updateSession])
+  const handleReset = useCallback(async () => {
+    if (sessionUpdating) return
+    setSessionUpdating(true)
+    try {
+      await updateSession('cancel')
+      timer.reset()
+      setActiveDurationSeconds(null)
+      setStatusMessage('Session cancelled.')
+    } catch {
+      setStatusMessage('Could not cancel the session. No timer state was discarded.')
+    } finally {
+      setSessionUpdating(false)
+    }
+  }, [sessionUpdating, timer, updateSession])
 
   const handleModeChange = useCallback((nextMode: TimerMode) => {
     setActiveDurationSeconds(null)
@@ -151,6 +183,7 @@ export default function FocusPage() {
         setStatusMessage('Record added.')
         setTimeout(() => setStatusMessage(''), 3000)
       },
+      onError: () => setStatusMessage('Could not add that focus record. Please try again.'),
     })
   }, [addRecordMutation])
 
@@ -302,6 +335,11 @@ export default function FocusPage() {
             >
               {statusMessage}
             </motion.p>
+          )}
+          {saveRetryAvailable && (
+            <button type="button" className="focus-retry-button" onClick={() => void handleComplete()}>
+              Retry saving session
+            </button>
           )}
         </main>
       </section>

@@ -18,6 +18,9 @@ export default function FocusSettingsPage() {
 
   // Local state for form
   const [formState, setFormState] = useState<Partial<FocusSettings>>({})
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>(() =>
+    typeof Notification === 'undefined' ? 'unsupported' : Notification.permission,
+  )
 
   // Initialize form with settings
   useEffect(() => {
@@ -39,7 +42,18 @@ export default function FocusSettingsPage() {
     setFormState((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleToggle = (field: keyof FocusSettings) => {
+  const handleToggle = async (field: keyof FocusSettings) => {
+    if (field === 'notificationsEnabled' && !formState.notificationsEnabled) {
+      if (typeof Notification === 'undefined') {
+        setNotificationPermission('unsupported')
+        return
+      }
+      const permission = Notification.permission === 'default'
+        ? await Notification.requestPermission()
+        : Notification.permission
+      setNotificationPermission(permission)
+      if (permission !== 'granted') return
+    }
     setFormState((prev) => ({ ...prev, [field]: !prev[field] }))
   }
 
@@ -113,12 +127,15 @@ export default function FocusSettingsPage() {
           onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
           onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
         >
-          {updateMutation.isPending ? 'Saving...' : 'Save'}
+          {updateMutation.isPending ? 'Saving…' : 'Save Settings'}
         </motion.button>
       </header>
 
       {/* Content */}
       <main className="mx-auto max-w-2xl px-5 py-8 sm:px-8">
+        <p aria-live="polite" className="mb-4 min-h-5 text-sm" style={{ color: updateMutation.isError ? 'var(--priority-high)' : 'var(--success)' }}>
+          {updateMutation.isSuccess ? 'Focus settings saved.' : updateMutation.isError ? 'Focus settings could not be saved. Try again.' : ''}
+        </p>
         <motion.div {...fadeSlideUp} className="space-y-6">
           {/* Timer Durations */}
           <section
@@ -269,7 +286,7 @@ export default function FocusSettingsPage() {
 
             <div className="space-y-4">
               {/* Auto-start Break */}
-              <label className="flex items-center justify-between gap-4 cursor-pointer">
+              <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-sm font-medium">Auto-start break</p>
                   <p
@@ -282,6 +299,7 @@ export default function FocusSettingsPage() {
                 <button
                   type="button"
                   role="switch"
+                  aria-label="Browser notifications"
                   aria-checked={formState.autoStartBreak || false}
                   onClick={() => handleToggle('autoStartBreak')}
                   className="relative h-6 w-11 rounded-full cursor-pointer"
@@ -301,7 +319,7 @@ export default function FocusSettingsPage() {
                     }}
                   />
                 </button>
-              </label>
+              </div>
 
               {/* Auto-start Pomo */}
               <label className="flex items-center justify-between gap-4 cursor-pointer">
@@ -362,6 +380,9 @@ export default function FocusSettingsPage() {
                       style={{ color: 'var(--text-faint)' }}
                     >
                       Get notified when focus session ends
+                      <span className="mt-1 block text-xs" style={{ color: 'var(--text-faint)' }}>
+                        Browser permission: {notificationPermission}
+                      </span>
                     </p>
                   </div>
                 </div>

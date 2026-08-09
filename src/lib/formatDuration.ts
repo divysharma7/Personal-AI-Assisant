@@ -73,11 +73,11 @@ export function formatRelativeDate(date: Date | string): string {
   const weekStart = new Date(today)
   weekStart.setDate(weekStart.getDate() - weekStart.getDay())
   if (targetDate >= weekStart) {
-    return d.toLocaleDateString('en-US', { weekday: 'long' })
+    return d.toLocaleDateString(undefined, { weekday: 'long' })
   }
 
   // Format as date
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
 /**
@@ -88,7 +88,7 @@ export function formatTimeRange(start: Date | string, end: Date | string): strin
   const endDate = typeof end === 'string' ? new Date(end) : end
 
   const formatTime = (d: Date) =>
-    d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+    d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
 
   return `${formatTime(startDate)} - ${formatTime(endDate)}`
 }

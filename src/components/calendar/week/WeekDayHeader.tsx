@@ -47,7 +47,7 @@ export default function WeekDayHeader({ weekDays, selectedDate }: WeekDayHeaderP
                 letterSpacing: '0.04em',
               }}
             >
-              {day.toLocaleDateString('en-US', { weekday: 'short' })}
+              {day.toLocaleDateString(undefined, { weekday: 'short' })}
             </span>
 
             {/* Date number */}

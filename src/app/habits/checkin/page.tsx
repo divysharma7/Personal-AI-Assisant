@@ -6,6 +6,7 @@ import { fadeSlideUp, stagger, buttonPress, ease, checkBounce } from '@/lib/moti
 import { useHabits } from '@/hooks/useHabits'
 import type { Habit } from '@/hooks/useHabits'
 import { format, subDays, addDays, isToday, isBefore, startOfDay } from 'date-fns'
+import { useSearchParams } from 'react-router-dom'
 import StreakCelebration from '@/components/habits/StreakCelebration'
 import { copy } from '@/lib/copy'
 
@@ -36,10 +37,24 @@ function WeekMiniGrid({ habit, targetDate: _targetDate, weekCompletions }: {
 }
 
 export default function CheckinPage() {
-  const { habits, toggleToday, weekCompletions, todayStr } = useHabits()
-  const [selectedDate, setSelectedDate] = useState(new Date())
+  const { habits, setStatusForDate, weekCompletions } = useHabits()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [contextHabitId, setContextHabitId] = useState<string | null>(null)
   const [celebrationHabit, setCelebrationHabit] = useState<{ streak: number; name: string } | null>(null)
+
+  const selectedDate = useMemo(() => {
+    const value = searchParams.get('date')
+    if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return new Date()
+    const parsed = new Date(`${value}T12:00:00`)
+    return Number.isNaN(parsed.getTime()) ? new Date() : parsed
+  }, [searchParams])
+
+  const setSelectedDate = useCallback((date: Date) => {
+    const next = new URLSearchParams(searchParams)
+    if (isToday(date)) next.delete('date')
+    else next.set('date', format(date, 'yyyy-MM-dd'))
+    setSearchParams(next)
+  }, [searchParams, setSearchParams])
 
   const dateStr = useMemo(() => format(selectedDate, 'yyyy-MM-dd'), [selectedDate])
   const displayDate = useMemo(() => {
@@ -68,10 +83,10 @@ export default function CheckinPage() {
 
   const handleToggle = useCallback(
     async (habit: Habit) => {
-      const wasCompleted = habit.completions.includes(todayStr())
-      await toggleToday(habit)
+      const wasCompleted = habit.completions.includes(dateStr)
+      await setStatusForDate(habit, dateStr, wasCompleted ? 'unachieved' : 'achieved')
       // Check for streak milestone after toggle
-      if (!wasCompleted) {
+      if (!wasCompleted && isToday(selectedDate)) {
         const newStreak = habit.currentStreak + 1
         const milestones = [7, 14, 30, 60, 100, 365]
         if (milestones.includes(newStreak)) {
@@ -79,20 +94,20 @@ export default function CheckinPage() {
         }
       }
     },
-    [toggleToday, todayStr]
+    [dateStr, selectedDate, setStatusForDate]
   )
 
   const handleNavigateBack = useCallback(() => {
-    if (canGoBack) setSelectedDate((d) => subDays(d, 1))
-  }, [canGoBack])
+    if (canGoBack) setSelectedDate(subDays(selectedDate, 1))
+  }, [canGoBack, selectedDate, setSelectedDate])
 
   const handleNavigateForward = useCallback(() => {
-    if (canGoForward) setSelectedDate((d) => addDays(d, 1))
-  }, [canGoForward])
+    if (canGoForward) setSelectedDate(addDays(selectedDate, 1))
+  }, [canGoForward, selectedDate, setSelectedDate])
 
   const handleGoToToday = useCallback(() => {
     setSelectedDate(new Date())
-  }, [])
+  }, [setSelectedDate])
 
   // Progress fill animation width
   const progressPct = activeHabits.length > 0

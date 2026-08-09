@@ -12,22 +12,22 @@ import HabitGallery from '@/components/habits/HabitGallery'
 import HabitCreationWizard from '@/components/habits/HabitCreationWizard'
 import type { HabitFormData } from '@/components/habits/HabitCreationWizard'
 import './habits.css'
+import { useSearchParams } from 'react-router-dom'
 
 export default function HabitsPage() {
   const { habits, isLoading, createHabit, updateHabit, deleteHabit, toggleToday, setStatusForDate } = useHabits()
   const prefersReduced = useReducedMotion()
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const [filter, setFilter] = useState<'active' | 'archived'>('active')
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [filter, setFilter] = useState<'active' | 'archived'>(() => searchParams.get('filter') === 'archived' ? 'archived' : 'active')
+  const [selectedId, setSelectedId] = useState<string | null>(() => searchParams.get('selected'))
 
-  // Sync when navigating from sidebar with ?selected=id
   useEffect(() => {
-    try {
-      const params = new URLSearchParams(window.location.search)
-      const preselected = params.get('selected')
-      if (preselected) setSelectedId(preselected)
-    } catch { /* ignore */ }
-  }, [])
+    const selected = searchParams.get('selected')
+    const nextFilter = searchParams.get('filter') === 'archived' ? 'archived' : 'active'
+    if (selected !== selectedId) setSelectedId(selected)
+    if (nextFilter !== filter) setFilter(nextFilter)
+  }, [searchParams]) // eslint-disable-line react-hooks/exhaustive-deps -- URL changes restore selection and filters.
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [wizardOpen, setWizardOpen] = useState(false)
@@ -40,11 +40,27 @@ export default function HabitsPage() {
     ? habits.find((h) => h._id === selectedId) ?? null
     : null
 
-  // Auto-select first habit if none selected
-  if (!selectedId && activeHabits.length > 0 && !isLoading) {
-    // Use effect-free initialization: this is fine in render since setSelectedId
-    // will only cause one re-render
-  }
+  const selectHabit = useCallback((id: string | null) => {
+    setSelectedId(id)
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      if (id) next.set('selected', id)
+      else next.delete('selected')
+      return next
+    })
+  }, [setSearchParams])
+
+  const changeFilter = useCallback((nextFilter: 'active' | 'archived') => {
+    setFilter(nextFilter)
+    setSelectedId(null)
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      if (nextFilter === 'archived') next.set('filter', 'archived')
+      else next.delete('filter')
+      next.delete('selected')
+      return next
+    })
+  }, [setSearchParams])
 
   const handleToggleToday = useCallback(
     async (habit: Habit) => {
@@ -131,10 +147,10 @@ export default function HabitsPage() {
     async (habit: Habit) => {
       await deleteHabit(habit._id)
       if (selectedId === habit._id) {
-        setSelectedId(null)
+        selectHabit(null)
       }
     },
-    [deleteHabit, selectedId]
+    [deleteHabit, selectHabit, selectedId]
   )
 
   const handleStartFocus = useCallback((habit: Habit, mode: 'POMO' | 'STOPWATCH') => {
@@ -149,9 +165,9 @@ export default function HabitsPage() {
         <HabitList
           habits={activeHabits}
           selectedId={selectedId}
-          onSelect={setSelectedId}
+          onSelect={(id) => selectHabit(id)}
           filter={filter}
-          onFilterChange={setFilter}
+          onFilterChange={changeFilter}
           onCreateClick={() => setCreateDialogOpen(true)}
           onMoreClick={() => setGalleryOpen(true)}
           isLoading={isLoading}
@@ -163,7 +179,12 @@ export default function HabitsPage() {
         />
       </div>
 
-      <div className="habits-workspace-detail">
+      <div className={`habits-workspace-detail${selectedHabit ? ' is-open' : ''}`}>
+        {selectedHabit ? (
+          <button type="button" className="habits-mobile-back" onClick={() => selectHabit(null)} aria-label="Back to habits">
+            Back to Habits
+          </button>
+        ) : null}
         <AnimatePresence mode="wait">
           {selectedHabit ? (
             <motion.div
