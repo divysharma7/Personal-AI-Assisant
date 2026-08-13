@@ -1,5 +1,35 @@
 # LAIF Security Audit
 
+## 2026-08-14 — Tracked production credentials incident
+
+**Status:** Repository containment in progress; credential rotation requires the
+platform owner and remains a stop-ship action.
+
+The backend repository tracked `.env.production` beginning in commit `9a05601`.
+The file contains production-looking database and authentication credentials
+and has since also been used for Google integration configuration. Secret values
+must never be copied into audit evidence, tickets, logs, or chat.
+
+Repository-side containment:
+
+- Ignore all `.env*` files except redacted `*.example` templates.
+- Remove `.env.production` from Git tracking while preserving the developer's
+  local file.
+- Run `npm run security:secrets` before committing or deploying backend changes.
+
+Platform-owner actions still required:
+
+- Rotate the database credential, JWT secret, Google client secret, and Google
+  token-encryption key.
+- Store replacements only in the deployment platform's secret store.
+- Confirm old values no longer authenticate.
+- Assess repository distribution and purge secret-bearing Git history where
+  required. History rewriting must be coordinated; do not do it casually on a
+  shared repository.
+
+See `docs/SECURITY_INCIDENT_RUNBOOK_2026-08-14.md` for the non-secret-bearing
+execution and evidence checklist.
+
 > Date: 2026-05-24
 > Scope: OWASP-aligned checklist against auth, Alexa, sensitive routes, CORS, rate limiting
 > Status: Findings #1-#4 and #6 FIXED on 2026-05-24. Remaining items open.
