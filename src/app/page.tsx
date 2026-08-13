@@ -22,7 +22,6 @@ import { useGoogleCalendar } from '@/hooks/useGoogleCalendar'
 import { useFocusState } from '@/contexts/FocusContext'
 import { Link } from 'react-router-dom'
 import ClockWeatherWidget from '@/components/dashboard/ClockWeatherWidget'
-import AIBriefWidget from '@/components/dashboard/AIBriefWidget'
 
 function getGreeting(): string {
   const h = new Date().getHours()
@@ -214,11 +213,6 @@ export default function InboxPage() {
         <p className="type-meta" style={{ color: 'var(--text-faint)' }}>
           {glanceLine}
         </p>
-      </div>
-
-      {/* ── AI Brief ── */}
-      <div className="mb-6">
-        <AIBriefWidget />
       </div>
 
           {/* ── Habits Strip ── */}

@@ -85,8 +85,6 @@ export default function OnboardingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: name.trim(),
-          onboarded: true,
-          emailsOptIn,
         }),
         credentials: 'include',
       })
@@ -109,7 +107,7 @@ export default function OnboardingPage() {
       setError('We could not save your setup. Please try again.')
       setLoading(false)
     }
-  }, [connectCalendar, emailsOptIn, name, navigate, selectedPriorities])
+  }, [connectCalendar, name, navigate, selectedPriorities])
 
   return (
     <div className="auth-brand-shell lg:grid lg:grid-cols-[320px_1fr]">
