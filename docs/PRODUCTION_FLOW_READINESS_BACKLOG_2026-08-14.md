@@ -135,7 +135,8 @@ not place secret values in test output, tickets, or chat.
 **Priority:** P0  
 **Owner:** Backend/DB  
 **Estimate:** 5 points  
-**Status:** In progress; corrective migration exists but is incomplete  
+**Status:** Implemented and verified locally on isolated PostgreSQL; production
+snapshot/deploy remains.
 **Depends on:** SEC-001 for safe production access
 
 **Requirement:** Applying migrations to both an empty database and the known
@@ -154,8 +155,9 @@ drifted schema must produce the exact Prisma Focus schema.
 **Acceptance criteria:**
 
 - [ ] Live-schema-to-`schema.prisma` diff is empty.
-- [ ] Clean, drifted, and intentionally partial schema fixtures all converge.
-- [ ] A 2,000-character post-session note persists.
+- [x] Clean, drifted, intentionally partial, and recorded-as-applied drift
+  fixtures all converge locally.
+- [x] A 2,000-character post-session note persists locally.
 - [ ] Focus dashboard/settings/records/active-session reads return 200.
 - [ ] Session start and completion persist exactly one session/record.
 
