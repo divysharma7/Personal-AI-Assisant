@@ -46,7 +46,6 @@ import {
 } from 'react'
 import { format, isSameDay, addDays, startOfDay } from 'date-fns'
 import { useTasks, type TaskRecord } from '@/hooks/useTasks'
-import { useLists } from '@/hooks/useLists'
 import './task-management.css'
 
 /* ═══════════════════════════════════════
@@ -382,7 +381,6 @@ function ViewMenu({ view, showCompleted, showDetails, onPrint, onView, onComp, o
 
 export default function TaskManagementScreen() {
   const { tasks, isLoading, createTask, updateTask, deleteTask, toggleComplete } = useTasks()
-  const { lists } = useLists()
 
   // State
   const [view, setView] = useState<ViewMode>('timeline')
