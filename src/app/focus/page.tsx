@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import { buttonPress } from '@/lib/motion'
-import { ArrowLeft, Plus, Settings, BarChart3, MoreHorizontal } from 'lucide-react'
+import { ArrowLeft, Plus, Settings, BarChart3, MoreHorizontal, Timer, Zap } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import TimerDisplay from '@/components/focus/TimerDisplay'
 import TimerControls from '@/components/focus/TimerControls'
@@ -10,10 +10,12 @@ import TargetSelector from '@/components/focus/TargetSelector'
 import OverviewPanel from '@/components/focus/OverviewPanel'
 import RecordTimeline from '@/components/focus/RecordTimeline'
 import AddRecordModal, { type AddRecordFormData } from '@/components/focus/AddRecordModal'
+import AddTimerModal from '@/components/focus/AddTimerModal'
 import { useFocusTimer, type TimerMode } from '@/hooks/useFocusTimer'
 import { useFocusDashboard, useRefreshDashboard, useInfiniteFocusRecords } from '@/hooks/useFocusDashboard'
 import { useAddFocusRecord } from '@/hooks/useAddFocusRecord'
 import { useFocusSettings, secondsToMinutes } from '@/hooks/useFocusSettings'
+import { useFocusPresets, type CustomPreset } from '@/hooks/useFocusPresets'
 import type { SelectedTarget } from '@/hooks/useFocusTargets'
 import { env } from '@/config/env'
 import { trackEvent } from '@/lib/analytics'
@@ -26,6 +28,7 @@ export default function FocusPage() {
   const { data: dashboard, isLoading: isLoadingDashboard } = useFocusDashboard()
   const { data: settings } = useFocusSettings()
   const { data: recordsData, loadMore, isLoading: isLoadingRecords } = useInfiniteFocusRecords()
+  const { data: presets = [] } = useFocusPresets()
   const addRecordMutation = useAddFocusRecord()
   const refreshDashboard = useRefreshDashboard()
 
@@ -34,6 +37,8 @@ export default function FocusPage() {
   const [selectedTarget, setSelectedTarget] = useState<SelectedTarget | null>(null)
   const [intention, setIntention] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showAddTimerModal, setShowAddTimerModal] = useState(false)
+  const [activePresetId, setActivePresetId] = useState<string | null>(null)
   const [showMenu, setShowMenu] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
   const [saveRetryAvailable, setSaveRetryAvailable] = useState(false)
@@ -188,8 +193,21 @@ export default function FocusPage() {
 
   const handleModeChange = useCallback((nextMode: TimerMode) => {
     setActiveDurationSeconds(null)
+    setActivePresetId(null)
     setMode(nextMode)
   }, [])
+
+  const handleSelectPreset = useCallback((preset: CustomPreset) => {
+    if (timer.status !== 'IDLE') return
+    setActivePresetId(preset.id)
+    if (preset.mode === 'pomo') {
+      setMode('POMO')
+      setActiveDurationSeconds((preset.durationMinutes ?? 25) * 60)
+    } else {
+      setMode('STOPWATCH')
+      setActiveDurationSeconds(null)
+    }
+  }, [timer.status])
 
   const handleAddRecord = useCallback((data: AddRecordFormData) => {
     addRecordMutation.mutate(data, {
@@ -260,8 +278,8 @@ export default function FocusPage() {
             <motion.button
               {...buttonPress}
               type="button"
-              onClick={() => setShowAddModal(true)}
-              aria-label="Add focus record"
+              onClick={() => setShowAddTimerModal(true)}
+              aria-label="Add custom timer"
               className="focus-icon-button"
             >
               <Plus size={17} />
@@ -319,6 +337,32 @@ export default function FocusPage() {
               variant="minimal"
             />
           </div>
+
+          {/* Preset selector */}
+          {presets.length > 0 && (
+            <div className="focus-presets-bar">
+              {presets.map((preset) => (
+                <motion.button
+                  key={preset.id}
+                  {...buttonPress}
+                  type="button"
+                  onClick={() => handleSelectPreset(preset)}
+                  disabled={timer.status !== 'IDLE'}
+                  className={`focus-preset-chip${activePresetId === preset.id ? ' is-active' : ''}`}
+                  title={preset.mode === 'pomo' ? `${preset.name} — ${preset.durationMinutes}m` : `${preset.name} — Stopwatch`}
+                >
+                  <span className="focus-preset-icon">{preset.icon}</span>
+                  <span className="focus-preset-name">{preset.name}</span>
+                  {preset.mode === 'pomo' && (
+                    <span className="focus-preset-duration">{preset.durationMinutes}m</span>
+                  )}
+                  {preset.mode === 'stopwatch' && (
+                    <Zap size={11} style={{ opacity: 0.6 }} />
+                  )}
+                </motion.button>
+              ))}
+            </div>
+          )}
 
           <TimerDisplay
             mode={mode}
@@ -401,6 +445,11 @@ export default function FocusPage() {
         onClose={() => setShowAddModal(false)}
         onSubmit={handleAddRecord}
         isSubmitting={addRecordMutation.isPending}
+      />
+
+      <AddTimerModal
+        isOpen={showAddTimerModal}
+        onClose={() => setShowAddTimerModal(false)}
       />
 
       {showMenu && <button className="focus-menu-backdrop" onClick={() => setShowMenu(false)} aria-label="Close menu" />}
