@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
 import { motion } from 'framer-motion'
 import { buttonPress } from '@/lib/motion'
-import { ArrowLeft, Plus, Settings, BarChart3, MoreHorizontal, Timer, Zap } from 'lucide-react'
+import { ArrowLeft, Plus, Settings, BarChart3, MoreHorizontal, Zap } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import TimerDisplay from '@/components/focus/TimerDisplay'
 import TimerControls from '@/components/focus/TimerControls'
