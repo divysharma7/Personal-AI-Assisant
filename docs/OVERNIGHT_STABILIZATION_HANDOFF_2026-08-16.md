@@ -19,13 +19,13 @@ The production release must not proceed until all of the following are true:
 
 | Surface | Branch / commit | State |
 | --- | --- | --- |
-| Frontend production branch | `main` / `6c10873` | Pushed by a concurrent worker; contains frontend contracts that require the unreleased backend |
-| Frontend reviewed continuation | `codex/full-mobile-frontend-integration` / `42fbbab` | Local only; includes the task-route regression fix and lint/test hardening |
-| Backend integration | `codex/full-mobile-api-integration` / local `5032043` | Remote branch stops at `ff80544`; the final preset migration hardening is local only |
-| Backend production branch | `origin/main` / `49f2309` | Does not contain onboarding, rituals, statistics, durable Chat, or preset APIs |
+| Frontend production branch | `main` / `6c10873` | Pushed by a concurrent worker; omits the reviewed task-route, test, lint, handoff, and preset-control follow-ups |
+| Frontend reviewed continuation | `codex/full-mobile-frontend-integration` / `afc6cbf` | Local only; includes the task-route regression fix, lint/test hardening, and accessible preset controls |
+| Backend integration branch | `codex/full-mobile-api-integration` / local `5032043` | Remote integration branch stops at `ff80544`, but the same local commit was pushed to `main` by a concurrent worker |
+| Backend production branch | `origin/main` / `5032043` | Advanced at 03:17 IST by a concurrent process; API health is green, but platform deployment and migration state are not proven |
 | Visible production frontend | `https://laif-iota.vercel.app` | At the last read-only check, still served the older `/assets/index-CLtgN50F.js` build |
 
-The frontend and backend production branches are therefore not release-compatible. If the backend release cannot happen safely first, revert the runtime frontend commits after `69bfbbc` with a normal `git revert` commit. Do not rewrite history.
+The production deployment state is therefore not controlled or fully verified. The branch contracts are now nominally compatible, but frontend `main` omits reviewed follow-ups and the backend release crossed the safety gate before secret rotation and migration proof. Pause automatic frontend promotion until backend commit/migration identity is confirmed. If that cannot be done safely, revert the runtime frontend commits after `69bfbbc` with a normal `git revert` commit. Do not rewrite history.
 
 ## Completed implementation
 
@@ -49,6 +49,7 @@ The frontend and backend production branches are therefore not release-compatibl
 - Task updates include cached `expectedVersion`, store the server winner, and roll back on conflict/failure.
 - Task and habit deletes no longer report optimistic success after an HTTP failure.
 - Focus completion is exactly-once in the UI and persists a durable session/record.
+- Custom timer mode selection now uses real accessible radio controls and enforces the API duration boundary in component tests.
 - Recurrence handles month-end/leap-day clamping; reminders roll forward and use the user's timezone.
 - Morning Plan and Shutdown are persisted.
 - Close Day is one serializable backend transaction with an idempotent command ID; changed retry payloads receive a new command ID.
@@ -68,7 +69,7 @@ The frontend and backend production branches are therefore not release-compatibl
 
 - `npm run lint`: pass, zero warnings.
 - `npm run typecheck`: pass.
-- `npm test`: 163/163 pass.
+- `npm test`: 165/165 pass across 14 test files.
 - `npm run build`: pass, production Vite build.
 
 ### Backend integration branch
@@ -81,6 +82,8 @@ The frontend and backend production branches are therefore not release-compatibl
 
 ### Database and browser
 
+- At the final read-only production check, `/health` and `/ready` were green and the database reported connected, but those endpoints do not identify the deployed commit or migration level.
+- The visible production frontend still served `/assets/index-CLtgN50F.js`, not the newer `main` or reviewed continuation build.
 - The first 14 migrations applied successfully from zero to an isolated PostgreSQL schema before the Focus preset migration was added.
 - The final preset migration is simple and reviewed, but still requires a full fresh-database run on stable PostgreSQL.
 - Playwright environment and authentication-boundary tests passed.
@@ -99,8 +102,9 @@ The frontend and backend production branches are therefore not release-compatibl
 
 ### P0 — Release coordination
 
-- Decide whether to revert frontend `main` to the backend-compatible runtime or approve the two integration branches for backend-first release.
-- Push local backend commit `5032043` to the existing integration branch after destination approval.
+- Confirm which automation or operator pushed backend `5032043` to `main`, whether the platform deployed that exact commit, and whether all 15 migrations ran.
+- Pause automatic promotion of frontend `main` while the backend deployment identity and database state are unverified.
+- Decide whether to revert frontend `main` to the previously deployed runtime or promote the reviewed frontend continuation only after every backend gate passes.
 - Push the local frontend continuation branch after destination approval.
 - Apply all migrations to stable ephemeral PostgreSQL, then to staging, before production.
 - Run the critical Playwright suite against the built frontend, real API, and stable disposable PostgreSQL.
@@ -128,13 +132,12 @@ The frontend and backend production branches are therefore not release-compatibl
 
 ## Recommended release order
 
-1. Rotate secrets and complete the incident checklist.
-2. Back up production data.
-3. Run all migrations from zero on stable ephemeral PostgreSQL.
-4. Deploy the backend integration branch to staging.
-5. Run API, migration, and critical browser gates.
-6. Deploy the frontend integration branch to staging.
+1. Freeze further automatic promotion and identify the backend `main` push/deployment.
+2. Rotate secrets and complete the incident checklist.
+3. Back up production data.
+4. Run all migrations from zero on stable ephemeral PostgreSQL and confirm production migration state.
+5. Deploy or reconcile backend `5032043` in staging, then run API, migration, and critical browser gates.
+6. Deploy frontend `afc6cbf` to staging.
 7. Prove HTTPS auth/CORS/OAuth behavior.
-8. Deploy backend production first, verify readiness and logs, then deploy frontend production.
+8. Promote only the already-verified backend/frontend artifacts in order.
 9. Run a canary smoke and keep the rollback commit ready.
-
