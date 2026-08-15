@@ -39,10 +39,20 @@ export default function FocusPage() {
   const [saveRetryAvailable, setSaveRetryAvailable] = useState(false)
   const [sessionUpdating, setSessionUpdating] = useState(false)
   const sessionIdRef = useRef<string | null>(null)
+  const completionInFlightSessionRef = useRef<string | null>(null)
+  const completedSessionRef = useRef<string | null>(null)
 
   const pomoDuration = activeDurationSeconds ?? settings?.pomoDurationSeconds ?? 1500
 
   const handleComplete = useCallback(async () => {
+    const sessionId = sessionIdRef.current
+    if (
+      !sessionId
+      || completionInFlightSessionRef.current === sessionId
+      || completedSessionRef.current === sessionId
+    ) return
+
+    completionInFlightSessionRef.current = sessionId
     try {
       const response = await fetch(`${API_BASE}/api/focus/sessions/active/complete`, {
         method: 'POST',
@@ -56,7 +66,8 @@ export default function FocusPage() {
 
       if (!response.ok) throw new Error('Failed to complete focus session')
 
-      sessionIdRef.current = null
+      completedSessionRef.current = sessionId
+      if (sessionIdRef.current === sessionId) sessionIdRef.current = null
       setActiveDurationSeconds(null)
       setIntention('')
       setSaveRetryAvailable(false)
@@ -70,6 +81,10 @@ export default function FocusPage() {
       console.error('Failed to complete session:', error)
       setStatusMessage('Could not save this session. Please try again.')
       setSaveRetryAvailable(true)
+    } finally {
+      if (completionInFlightSessionRef.current === sessionId) {
+        completionInFlightSessionRef.current = null
+      }
     }
   }, [mode, intention, settings, refreshDashboard])
 

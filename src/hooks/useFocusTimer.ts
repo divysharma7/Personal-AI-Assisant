@@ -38,6 +38,13 @@ export function useFocusTimer({
   const animationFrameRef = useRef<number>(0)
   const completedRef = useRef(false)
   const hasRestoredRef = useRef(false)
+  const onCompleteRef = useRef(onComplete)
+  const onTickRef = useRef(onTick)
+
+  useEffect(() => {
+    onCompleteRef.current = onComplete
+    onTickRef.current = onTick
+  }, [onComplete, onTick])
 
   // Calculate remaining seconds based on mode
   const remainingSeconds = mode === 'POMO'
@@ -60,11 +67,11 @@ export function useFocusTimer({
     setElapsedSeconds(roundedElapsed)
 
     // Call onTick callback
-    if (onTick) {
+    if (onTickRef.current) {
       const remaining = mode === 'POMO'
         ? Math.max(0, durationSeconds - roundedElapsed)
         : roundedElapsed
-      onTick(roundedElapsed, remaining)
+      onTickRef.current(roundedElapsed, remaining)
     }
 
     // Check completion for POMO mode
@@ -72,7 +79,7 @@ export function useFocusTimer({
       completedRef.current = true
       setElapsedSeconds(durationSeconds)
       setStatus('IDLE')
-      onComplete?.()
+      onCompleteRef.current?.()
       return
     }
 
@@ -80,7 +87,7 @@ export function useFocusTimer({
     if (status === 'RUNNING') {
       animationFrameRef.current = requestAnimationFrame(tick)
     }
-  }, [mode, durationSeconds, onComplete, onTick, status])
+  }, [mode, durationSeconds, status])
 
   // Start the timer
   const start = useCallback(() => {
@@ -149,10 +156,17 @@ export function useFocusTimer({
     startTimestampRef.current = restoredStatus === 'RUNNING' ? performance.now() : null
     setElapsedSeconds(Math.floor(safeElapsed))
     setStatus(restoredStatus)
-  }, [])
+    if (restoredStatus === 'RUNNING') {
+      // A server refresh can restore a timer that is already RUNNING. In that
+      // case React will not re-run the status effect, so restart the frame loop
+      // explicitly after cancelling the previous frame.
+      animationFrameRef.current = requestAnimationFrame(tick)
+    }
+  }, [tick])
 
   // Start animation loop when running
   useEffect(() => {
+    cancelAnimationFrame(animationFrameRef.current)
     if (status === 'RUNNING') {
       animationFrameRef.current = requestAnimationFrame(tick)
     }
@@ -177,14 +191,14 @@ export function useFocusTimer({
           completedRef.current = true
           setElapsedSeconds(durationSeconds)
           setStatus('IDLE')
-          onComplete?.()
+          onCompleteRef.current?.()
         }
       }
     }
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [status, mode, durationSeconds, onComplete])
+  }, [status, mode, durationSeconds])
 
   // Save state to sessionStorage for refresh recovery
   useEffect(() => {
