@@ -202,4 +202,44 @@ describe('useTasks - createTask', () => {
 
     expect(capturedBody).toMatchObject(fullTask)
   })
+
+  it('restores an optimistically removed task when delete fails', async () => {
+    const task = { _id: 'task-1', title: 'Keep me', priority: 'none', status: 'todo' }
+    server.use(
+      http.get('/api/tasks', () => HttpResponse.json([task])),
+      http.delete('/api/tasks/:id', () => HttpResponse.json({ error: 'Server error' }, { status: 500 })),
+    )
+
+    const { result } = renderHook(() => useTasks(), { wrapper: createWrapper() })
+    await waitFor(() => expect(result.current.tasks).toHaveLength(1))
+
+    await act(async () => {
+      await expect(result.current.deleteTask('task-1')).rejects.toThrow('Failed to delete task')
+    })
+
+    await waitFor(() => expect(result.current.tasks.map(item => item._id)).toContain('task-1'))
+  })
+
+  it('sends the cached version when updating and stores the server winner', async () => {
+    let body: Record<string, unknown> | null = null
+    let task = { _id: 'task-1', title: 'Before', priority: 'none', status: 'todo', version: 7 }
+    server.use(
+      http.get('/api/tasks', () => HttpResponse.json([task])),
+      http.put('/api/tasks/:id', async ({ request }) => {
+        body = await request.json() as Record<string, unknown>
+        task = { ...task, title: 'After', version: 8 }
+        return HttpResponse.json(task)
+      }),
+    )
+
+    const { result } = renderHook(() => useTasks(), { wrapper: createWrapper() })
+    await waitFor(() => expect(result.current.tasks[0]?.version).toBe(7))
+
+    await act(async () => {
+      await result.current.updateTask('task-1', { title: 'After' })
+    })
+
+    expect(body).toEqual({ title: 'After', expectedVersion: 7 })
+    await waitFor(() => expect(result.current.tasks[0]).toMatchObject({ title: 'After', version: 8 }))
+  })
 })

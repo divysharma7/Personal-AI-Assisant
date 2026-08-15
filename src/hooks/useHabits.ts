@@ -154,7 +154,8 @@ export function useHabits() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await fetch(`${API_BASE}/api/habits/${id}`, { method: 'DELETE', credentials: 'include' })
+      const res = await fetch(`${API_BASE}/api/habits/${id}`, { method: 'DELETE', credentials: 'include' })
+      if (!res.ok) throw new Error('Failed to delete habit')
     },
     onMutate: async (id) => {
       await qc.cancelQueries({ queryKey: HABITS_KEY })

@@ -30,7 +30,10 @@ export interface TaskRecord {
   notes?: object | null
   dueDate?: string | null
   priority: string
+  isUrgent?: boolean | null
+  isImportant?: boolean | null
   status: string
+  version?: number
   color?: string
   tags?: string[]
   parentId?: string | null
@@ -117,10 +120,14 @@ export function useTasks() {
   // Update
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<TaskRecord> }) => {
+      const current = queryClient.getQueryData<TaskRecord[]>(TASKS_KEY)?.find(task => task._id === id)
       const res = await fetch(`${API_BASE}/api/tasks/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          ...(current?.version ? { expectedVersion: current.version } : {}),
+        }),
         credentials: 'include',
       })
       if (!res.ok) throw new Error('Failed to update task')
@@ -137,6 +144,11 @@ export function useTasks() {
     onError: (_err, _vars, context) => {
       if (context?.prev) queryClient.setQueryData(TASKS_KEY, context.prev)
     },
+    onSuccess: (updated) => {
+      queryClient.setQueryData<TaskRecord[]>(TASKS_KEY, old => (
+        (old ?? []).map(task => task._id === updated._id ? updated : task)
+      ))
+    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: TASKS_KEY })
     },
@@ -145,7 +157,8 @@ export function useTasks() {
   // Delete
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await fetch(`${API_BASE}/api/tasks/${id}`, { method: 'DELETE', credentials: 'include' })
+      const res = await fetch(`${API_BASE}/api/tasks/${id}`, { method: 'DELETE', credentials: 'include' })
+      if (!res.ok) throw new Error('Failed to delete task')
     },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: TASKS_KEY })
