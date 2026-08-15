@@ -17,8 +17,8 @@ import { env } from '@/config/env'
 import { trackEvent } from '@/lib/analytics'
 import { buttonPress } from '@/lib/motion'
 import { useAgenda } from '@/hooks/useAgenda'
-import { useTasks, type TaskRecord } from '@/hooks/useTasks'
-import { useRitualState, useTodayDate } from '@/hooks/useRitualState'
+import { useTasks } from '@/hooks/useTasks'
+import { useRitualState, useTodayDate, type CloseDayDecision } from '@/hooks/useRitualState'
 import { formatMinutes } from '@/hooks/useCapacity'
 import RitualPage from '@/components/rituals/RitualPage'
 import RitualStep from '@/components/rituals/RitualStep'
@@ -83,12 +83,6 @@ function moveScheduleToDate(startIso: string, endIso: string, dateKey: string) {
   }
 }
 
-interface TaskSnapshot {
-  status: TaskRecord['status']
-  scheduledStart: string | null
-  scheduledEnd: string | null
-}
-
 /* ── Decision Badge ────────────────────────────────────────── */
 
 function DecisionBadge({ decision }: { decision: TaskDecision }) {
@@ -121,8 +115,8 @@ export default function ShutdownPage() {
 
   const { isLoading: agendaLoading } = useAgenda(today)
   const { agenda: tomorrowAgenda, isLoading: tomorrowLoading } = useAgenda(tomorrow)
-  const { tasks, updateTask } = useTasks()
-  const { state, updateRitual, isPending } = useRitualState(today)
+  const { tasks } = useTasks()
+  const { state, updateRitual, closeDay, isPending } = useRitualState(today)
 
   // Focus stats
   const [focusStats, setFocusStats] = useState<FocusStats | null>(null)
@@ -138,10 +132,15 @@ export default function ShutdownPage() {
   const [decisions, setDecisions] = useState<Record<string, TaskDecision>>(
     state.taskDecisions as Record<string, TaskDecision> ?? {},
   )
-  const [undoStack, setUndoStack] = useState<{ taskId: string; previous: TaskDecision | null; snapshot: TaskSnapshot }[]>([])
+  const [undoStack, setUndoStack] = useState<{ taskId: string; previous: TaskDecision | null }[]>([])
   const [dayClosed, setDayClosed] = useState(state.shutdownCompleted ?? false)
   const [closing, setClosing] = useState(false)
   const [decisionError, setDecisionError] = useState('')
+
+  useEffect(() => {
+    setDecisions(state.taskDecisions as Record<string, TaskDecision> ?? {})
+    setDayClosed(state.shutdownCompleted ?? false)
+  }, [state.shutdownCompleted, state.taskDecisions])
 
   // Unfinished scheduled tasks for today
   const unfinishedTasks = useMemo(() => {
@@ -191,13 +190,8 @@ export default function ShutdownPage() {
       const task = tasks.find((item) => item._id === taskId)
       if (!task) return
       const previous = decisions[taskId] ?? null
-      const snapshot: TaskSnapshot = {
-        status: task.status,
-        scheduledStart: task.scheduledStart ?? null,
-        scheduledEnd: task.scheduledEnd ?? null,
-      }
       setDecisionError('')
-      setUndoStack((prev) => [...prev, { taskId, previous, snapshot }])
+      setUndoStack((prev) => [...prev, { taskId, previous }])
       setDecisions((prev) => ({ ...prev, [taskId]: decision }))
     },
     [decisions, tasks],
@@ -226,39 +220,32 @@ export default function ShutdownPage() {
   const handleCloseDay = useCallback(async () => {
     setClosing(true)
     setDecisionError('')
-    const applied: Array<{ taskId: string; snapshot: TaskSnapshot }> = []
     try {
-      for (const [taskId, decision] of Object.entries(decisions)) {
+      const closeDecisions: CloseDayDecision[] = []
+      for (const [taskId, action] of Object.entries(decisions)) {
         const task = tasks.find((item) => item._id === taskId)
         if (!task) continue
-        const snapshot: TaskSnapshot = {
-          status: task.status,
-          scheduledStart: task.scheduledStart ?? null,
-          scheduledEnd: task.scheduledEnd ?? null,
+        if (action === 'move') {
+          if (!task.scheduledStart || !task.scheduledEnd) continue
+          closeDecisions.push({
+            taskId,
+            action,
+            ...moveScheduleToDate(task.scheduledStart, task.scheduledEnd, tomorrow),
+          })
+        } else {
+          closeDecisions.push({ taskId, action })
         }
-        let change: Partial<TaskRecord>
-        if (decision === 'complete') change = { status: 'done' }
-        else if (decision === 'drop') change = { status: 'dropped' }
-        else if (decision === 'unschedule') change = { scheduledStart: null, scheduledEnd: null }
-        else if (task.scheduledStart && task.scheduledEnd) change = moveScheduleToDate(task.scheduledStart, task.scheduledEnd, tomorrow)
-        else continue
-        await updateTask(taskId, change)
-        applied.push({ taskId, snapshot })
       }
-      await updateRitual({
-        taskDecisions: decisions,
-        shutdownCompleted: true,
-      })
+      await closeDay(closeDecisions)
       setDayClosed(true)
       // Privacy-safe milestone: user completed their evening shutdown.
       trackEvent('evening_shutdown_completed')
     } catch {
-      await Promise.allSettled(applied.map(({ taskId, snapshot }) => updateTask(taskId, snapshot)))
-      setDecisionError('The day could not be closed, so completed task changes were restored. Check your connection and try again.')
+      setDecisionError('The day could not be closed. No task changes were applied; check your connection and try again.')
     } finally {
       setClosing(false)
     }
-  }, [decisions, tasks, tomorrow, updateRitual, updateTask])
+  }, [closeDay, decisions, tasks, tomorrow])
 
   const handleReopenDay = useCallback(async () => {
     setDecisionError('')

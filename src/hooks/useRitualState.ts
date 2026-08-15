@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { http } from '@/lib/api/client'
 
@@ -16,6 +16,13 @@ export interface RitualState {
   taskDecisions?: Record<string, 'move' | 'unschedule' | 'complete' | 'drop'>
   /** Shutdown: whether the day has been closed */
   shutdownCompleted?: boolean
+}
+
+export interface CloseDayDecision {
+  taskId: string
+  action: 'move' | 'unschedule' | 'complete' | 'drop'
+  scheduledStart?: string | null
+  scheduledEnd?: string | null
 }
 
 const STORAGE_KEY = 'lifeos-ritual-state'
@@ -67,8 +74,8 @@ async function fetchRitualState(date: string): Promise<RitualState | null> {
   }
 }
 
-async function saveRitualState(state: RitualState): Promise<void> {
-  await http.post('/api/rituals', state)
+async function saveRitualState(state: RitualState): Promise<RitualState> {
+  return http.post<RitualState>('/api/rituals', state)
 }
 
 /* ── Hook ──────────────────────────────────────────────────── */
@@ -77,6 +84,7 @@ const RITUAL_KEY = (date: string) => ['ritual', date] as const
 
 export function useRitualState(date: string) {
   const queryClient = useQueryClient()
+  const closeCommandRef = useRef<{ id: string; payload: string } | null>(null)
 
   const query = useQuery({
     queryKey: RITUAL_KEY(date),
@@ -89,19 +97,39 @@ export function useRitualState(date: string) {
       return getLocalState(date)
     },
     staleTime: 60_000,
-    initialData: () => getLocalState(date),
+    placeholderData: () => getLocalState(date),
   })
 
   const mutation = useMutation({
     mutationFn: async (updates: Partial<RitualState>) => {
       const current = query.data ?? { date }
-      const merged: RitualState = { ...current, ...updates, date }
-      await saveRitualState(merged)
+      const remote = await saveRitualState({ ...updates, date })
+      const merged: RitualState = { ...current, ...remote, date }
       setLocalState(merged)
       return merged
     },
     onSuccess: (merged) => {
       queryClient.setQueryData(RITUAL_KEY(date), merged)
+    },
+  })
+
+  const closeMutation = useMutation({
+    mutationFn: async (decisions: CloseDayDecision[]) => {
+      const payload = JSON.stringify(decisions)
+      if (!closeCommandRef.current || closeCommandRef.current.payload !== payload) {
+        closeCommandRef.current = { id: crypto.randomUUID(), payload }
+      }
+      return http.post<RitualState>('/api/rituals/close-day', {
+        date,
+        commandId: closeCommandRef.current.id,
+        decisions,
+      })
+    },
+    onSuccess: (remote) => {
+      closeCommandRef.current = null
+      setLocalState(remote)
+      queryClient.setQueryData(RITUAL_KEY(date), remote)
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
     },
   })
 
@@ -112,11 +140,17 @@ export function useRitualState(date: string) {
     [mutation],
   )
 
+  const closeDay = useCallback(
+    (decisions: CloseDayDecision[]) => closeMutation.mutateAsync(decisions),
+    [closeMutation],
+  )
+
   return {
     state: query.data ?? { date },
     isLoading: query.isLoading,
     updateRitual,
-    isPending: mutation.isPending,
+    closeDay,
+    isPending: mutation.isPending || closeMutation.isPending,
   }
 }
 
