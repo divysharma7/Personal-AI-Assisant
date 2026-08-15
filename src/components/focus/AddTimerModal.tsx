@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useId, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { scaleIn, ease, buttonPress } from '@/lib/motion'
 import { X } from 'lucide-react'
@@ -26,6 +26,7 @@ const RADIO_ACTIVE_BORDER = '#5965e8'
 
 export default function AddTimerModal({ isOpen, onClose, onCreated }: AddTimerModalProps) {
   const createPreset = useCreatePreset()
+  const titleId = useId()
 
   const [name, setName] = useState('')
   const [icon] = useState('🙂')
@@ -130,6 +131,9 @@ export default function AddTimerModal({ isOpen, onClose, onCreated }: AddTimerMo
             <motion.div
               {...scaleIn}
               transition={ease.normal}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={titleId}
               className="pointer-events-auto w-full max-w-[660px] overflow-hidden flex flex-col"
               style={{
                 background: MODAL_BG,
@@ -143,6 +147,7 @@ export default function AddTimerModal({ isOpen, onClose, onCreated }: AddTimerMo
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
                 <h2
+                  id={titleId}
                   className="text-[22px] font-semibold"
                   style={{ color: '#fff', fontWeight: 600 }}
                 >
@@ -184,6 +189,7 @@ export default function AddTimerModal({ isOpen, onClose, onCreated }: AddTimerMo
                   <input
                     ref={nameRef}
                     type="text"
+                    aria-label="Timer name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Name"
@@ -208,19 +214,27 @@ export default function AddTimerModal({ isOpen, onClose, onCreated }: AddTimerMo
               </div>
 
               {/* Timer Mode */}
-              <div className="mb-4">
-                <label
+              <fieldset className="mb-4">
+                <legend
                   className="block text-[13px] font-medium mb-3"
                   style={{ color: '#bbb' }}
                 >
                   Timer Mode
-                </label>
+                </legend>
                 <div className="flex flex-col gap-2.5">
                   {/* Pomo option */}
                   <label
                     className="flex items-center gap-3 cursor-pointer"
                     style={{ minHeight: 42 }}
                   >
+                    <input
+                      type="radio"
+                      name="timer-mode"
+                      value="pomo"
+                      checked={mode === 'pomo'}
+                      onChange={() => setMode('pomo')}
+                      className="sr-only"
+                    />
                     <div
                       className="flex items-center justify-center flex-shrink-0"
                       style={{
@@ -256,6 +270,7 @@ export default function AddTimerModal({ isOpen, onClose, onCreated }: AddTimerMo
                         <input
                           type="text"
                           inputMode="numeric"
+                          aria-label="Duration in minutes"
                           value={durationMinutes}
                           onChange={(e) => handleDurationChange(e.target.value)}
                           className="text-[14px] font-medium text-center outline-none"
@@ -284,6 +299,14 @@ export default function AddTimerModal({ isOpen, onClose, onCreated }: AddTimerMo
                     className="flex items-center gap-3 cursor-pointer"
                     style={{ minHeight: 42 }}
                   >
+                    <input
+                      type="radio"
+                      name="timer-mode"
+                      value="stopwatch"
+                      checked={mode === 'stopwatch'}
+                      onChange={() => setMode('stopwatch')}
+                      className="sr-only"
+                    />
                     <div
                       className="flex items-center justify-center flex-shrink-0"
                       style={{
@@ -314,7 +337,7 @@ export default function AddTimerModal({ isOpen, onClose, onCreated }: AddTimerMo
                     </span>
                   </label>
                 </div>
-              </div>
+              </fieldset>
 
               {/* Submit error */}
               {errors.submit && (
