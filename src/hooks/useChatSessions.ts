@@ -38,8 +38,7 @@ const SESSIONS_KEY = ['chat-sessions'] as const
 async function fetchSessions(): Promise<ChatSessionSummary[]> {
   const res = await fetch(`${API_BASE}/api/chat/sessions`, { credentials: 'include' })
   if (!res.ok) throw new Error('Failed to fetch chat sessions')
-  const data = await res.json()
-  return data.sessions
+  return res.json()
 }
 
 async function fetchSession(id: string): Promise<ChatSessionFull> {

@@ -3,6 +3,7 @@ const API_BASE = env.VITE_API_URL
 
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Sparkles,
@@ -17,8 +18,6 @@ import {
 } from 'lucide-react'
 import {
   useChatSession,
-  useCreateChatSession,
-  useAppendMessages,
 } from '@/hooks/useChatSessions'
 import { motionTokens } from '@/lib/motion'
 import ChatSessionsPanel from '@/components/chat/ChatSessionsPanel'
@@ -46,16 +45,14 @@ export default function ChatPage() {
   const [historyOpen, setHistoryOpen] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  const messagesRef = useRef<Message[]>([])
   const activeSessionIdRef = useRef<string | null>(null)
+  const queryClient = useQueryClient()
 
   // Keep session id ref in sync
   useEffect(() => { activeSessionIdRef.current = activeSessionId }, [activeSessionId])
 
   // Session hooks
-  const { session: activeSession } = useChatSession(activeSessionId)
-  const { createSession } = useCreateChatSession()
-  const { appendMessages } = useAppendMessages()
+  const { session: activeSession, isLoading: sessionLoading } = useChatSession(activeSessionId)
 
   // Hydrate cached name from localStorage on client only
   useEffect(() => {
@@ -65,8 +62,6 @@ export default function ChatPage() {
     } catch { /* ignore */ }
   }, [])
 
-  // Keep ref in sync to avoid stale closure on rapid sends
-  useEffect(() => { messagesRef.current = messages }, [messages])
   const hasMessages = messages.length > 0
 
   useEffect(() => {
@@ -109,78 +104,37 @@ export default function ChatPage() {
 
   const handleSend = useCallback(async (text?: string) => {
     const msg = (text || input).trim()
-    if (!msg || isLoading) return
+    if (!msg || isLoading || sessionLoading) return
 
     const userMsg: Message = { id: `u-${Date.now()}`, role: 'user', content: msg, timestamp: new Date() }
     setMessages(prev => [...prev, userMsg])
     setInput('')
     setIsLoading(true)
 
-    const history = [...messagesRef.current, userMsg].map(m => ({ role: m.role, content: m.content }))
-
     try {
       const res = await fetch(`${API_BASE}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: history,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          localDate: new Date().toISOString(),
+          message: msg,
+          sessionId: activeSessionIdRef.current,
         }),
         credentials: 'include',
       })
 
       if (!res.ok) throw new Error('Failed')
-
-      const reader = res.body?.getReader()
-      const decoder = new TextDecoder()
-      let fullReply = ''
-
-      if (reader) {
-        let buffer = ''
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          buffer += decoder.decode(value, { stream: true })
-          const lines = buffer.split('\n')
-          buffer = lines.pop() || ''
-          for (const line of lines) {
-            if (!line.trim()) continue
-            try {
-              const chunk = JSON.parse(line)
-              if (chunk.t === 'd') fullReply += chunk.text
-            } catch { /* skip */ }
-          }
-        }
-      }
+      const data = await res.json() as { reply?: string; sessionId?: string }
+      if (!data.reply || !data.sessionId) throw new Error('Invalid chat response')
 
       const assistantMsg: Message = {
         id: `a-${Date.now()}`, role: 'assistant',
-        content: fullReply || "Done! Let me know if you need anything else.",
+        content: data.reply,
         timestamp: new Date(),
       }
       setMessages(prev => [...prev, assistantMsg])
-
-      // Persist to session
-      const currentSessionId = activeSessionIdRef.current
-      const newMessages: { role: 'user' | 'assistant'; content: string }[] = [
-        { role: userMsg.role, content: userMsg.content },
-        { role: assistantMsg.role, content: assistantMsg.content },
-      ]
-
-      if (!currentSessionId) {
-        // Create a new session with the first user message as title
-        const title = msg.length > 50 ? msg.slice(0, 50) + '...' : msg
-        try {
-          const created = await createSession(title)
-          setActiveSessionId(created._id)
-          await appendMessages(created._id, newMessages)
-        } catch { /* session save failed silently */ }
-      } else {
-        try {
-          await appendMessages(currentSessionId, newMessages)
-        } catch { /* session save failed silently */ }
-      }
+      activeSessionIdRef.current = data.sessionId
+      setActiveSessionId(data.sessionId)
+      queryClient.invalidateQueries({ queryKey: ['chat-sessions'] })
     } catch {
       setMessages(prev => [...prev, {
         id: `a-${Date.now()}`, role: 'assistant',
@@ -189,7 +143,7 @@ export default function ChatPage() {
       }])
     }
     setIsLoading(false)
-  }, [input, isLoading, createSession, appendMessages])
+  }, [input, isLoading, queryClient, sessionLoading])
 
   /** Format assistant text — bold **text**, inline `code`, line breaks */
   function renderAssistant(text: string) {
@@ -410,7 +364,7 @@ export default function ChatPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
-              disabled={isLoading}
+              disabled={isLoading || sessionLoading}
               placeholder="Ask anything about your tasks..."
               data-center={!hasMessages ? 'true' : undefined}
               rows={1}
@@ -465,7 +419,7 @@ export default function ChatPage() {
               {/* Send */}
               <button
                 onClick={() => handleSend()}
-                disabled={!input.trim() || isLoading}
+                disabled={!input.trim() || isLoading || sessionLoading}
                 style={{
                   width: 36, height: 36, borderRadius: '50%',
                   backgroundColor: input.trim() ? 'var(--accent-strong)' : 'var(--bg-active)',
