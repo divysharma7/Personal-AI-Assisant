@@ -1,5 +1,5 @@
 import { env } from '@/config/env'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { trackEvent } from '@/lib/analytics'
 import {
@@ -12,12 +12,13 @@ import {
   Sparkles,
   Target,
 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import '@/components/auth/auth-brand.css'
 import LifeOSMark from '@/components/brand/LifeOSMark'
 import { beginGoogleOAuth } from '@/lib/googleOAuth'
 
 const API_BASE = env.VITE_API_URL
+const TERMS_VERSION = '2026-08-16'
 
 type Step = 1 | 2 | 3
 type Priority = 'plan' | 'focus' | 'habits'
@@ -59,6 +60,7 @@ const stepMotion = {
 
 export default function OnboardingPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [step, setStep] = useState<Step>(1)
   const [name, setName] = useState('')
   const [selectedPriorities, setSelectedPriorities] = useState<Priority[]>(['plan', 'focus'])
@@ -67,6 +69,17 @@ export default function OnboardingPage() {
   const [emailsOptIn, setEmailsOptIn] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' })
+      .then((response) => response.ok ? response.json() : null)
+      .then((user) => {
+        if (typeof user?.name === 'string' && user.name.trim()) {
+          setName((current) => current.trim() ? current : user.name)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const togglePriority = useCallback((priority: Priority) => {
     setSelectedPriorities((current) => (
@@ -81,18 +94,24 @@ export default function OnboardingPage() {
     setError('')
 
     try {
-      const response = await fetch(`${API_BASE}/api/auth/me`, {
-        method: 'PUT',
+      const response = await fetch(`${API_BASE}/api/users/me/onboarding`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: name.trim(),
+          priorities: selectedPriorities,
+          connectCalendar,
+          termsAccepted,
+          termsVersion: TERMS_VERSION,
+          emailsOptIn,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          completed: true,
         }),
         credentials: 'include',
       })
 
       if (!response.ok) throw new Error('Profile setup failed')
 
-      localStorage.setItem('life-os-onboarding-priorities', JSON.stringify(selectedPriorities))
       trackEvent('onboarding_completed', {
         has_selected_priorities: selectedPriorities.length > 0,
         chose_calendar: connectCalendar,
@@ -103,12 +122,13 @@ export default function OnboardingPage() {
         return
       }
 
-      navigate(`/today?welcome=${selectedPriorities[0] ?? 'plan'}`)
+      const from = (location.state as { from?: string } | null)?.from
+      navigate(from || `/today?welcome=${selectedPriorities[0] ?? 'plan'}`, { replace: true })
     } catch {
       setError('We could not save your setup. Please try again.')
       setLoading(false)
     }
-  }, [connectCalendar, name, navigate, selectedPriorities])
+  }, [connectCalendar, emailsOptIn, location.state, name, navigate, selectedPriorities, termsAccepted])
 
   return (
     <div className="auth-brand-shell lg:grid lg:grid-cols-[320px_1fr]">

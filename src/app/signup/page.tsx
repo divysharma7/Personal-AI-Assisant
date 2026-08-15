@@ -41,8 +41,8 @@ export default function SignupPage() {
         return
       }
 
-      const from = (location.state as { from?: string })?.from || '/onboarding'
-      navigate(from)
+      const from = (location.state as { from?: string })?.from
+      navigate('/onboarding', { state: from ? { from } : undefined })
     } catch {
       setError('Life OS could not reach the server. Please try again.')
       setLoading(false)

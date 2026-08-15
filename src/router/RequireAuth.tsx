@@ -4,7 +4,7 @@ import { http, ApiError } from '@/lib/api/client'
 
 type AuthState =
   | { status: 'loading'; user: null }
-  | { status: 'authenticated'; user: { username: string; name?: string } }
+  | { status: 'authenticated'; user: { username: string; name?: string; onboardingRequired?: boolean } }
   | { status: 'anonymous'; user: null }
   | { status: 'error'; user: null; error: Error }
 
@@ -12,7 +12,7 @@ function useSessionAuth() {
   const [auth, setAuth] = useState<AuthState>({ status: 'loading', user: null })
 
   useEffect(() => {
-    http.get<{ username: string; name?: string }>('/api/auth/me')
+    http.get<{ username: string; name?: string; onboardingRequired?: boolean }>('/api/auth/me')
       .then(user => setAuth({ status: 'authenticated', user }))
       .catch(err => {
         if (err instanceof ApiError && err.status === 401) {
@@ -98,6 +98,11 @@ export default function RequireAuth() {
         state={{ from }}
       />
     )
+  }
+
+  if (auth.user.onboardingRequired && location.pathname !== '/onboarding') {
+    const from = location.pathname + location.search + location.hash
+    return <Navigate to="/onboarding" replace state={{ from }} />
   }
 
   return <Outlet />

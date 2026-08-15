@@ -14,6 +14,16 @@ test('@critical Google OAuth starts from the UI contract', async ({ page }) => {
     headers: { Origin: frontendUrl },
   })
   expect(signup.status()).toBe(200)
+  const onboarding = await page.context().request.patch(`${apiUrl}/api/users/me/onboarding`, {
+    data: {
+      name: 'OAuth Journey',
+      termsAccepted: true,
+      termsVersion: '2026-08-16',
+      completed: true,
+    },
+    headers: { Origin: frontendUrl },
+  })
+  expect(onboarding.status()).toBe(200)
 
   const providerUrl = `https://accounts.google.com/o/oauth2/v2/auth?state=e2e-${suffix}`
   await page.route(`${apiUrl}/api/integrations/google/auth`, route => route.fulfill({
@@ -27,7 +37,13 @@ test('@critical Google OAuth starts from the UI contract', async ({ page }) => {
     body: '<main><h1>Google authorization reached</h1></main>',
   }))
 
+  const sessionResponsePromise = page.waitForResponse(response => (
+    response.url() === `${apiUrl}/api/auth/me`
+    && response.request().method() === 'GET'
+  ))
   await page.goto('/settings?section=integrations')
+  expect((await sessionResponsePromise).status()).toBe(200)
+  await expect(page).toHaveURL(/\/settings\?section=integrations$/)
   await page.getByRole('button', { name: /Google Calendar/ }).click()
 
   const authResponsePromise = page.waitForResponse(response => (

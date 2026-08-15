@@ -48,7 +48,7 @@ test('@critical new user can complete the durable core loop', async ({ page }) =
   expect((await signupResponse.allHeaders())['set-cookie']).toContain('pim_token=')
   await expect(page).toHaveURL(/\/onboarding$/)
 
-  await page.getByLabel('What should we call you?').fill('Core Journey')
+  await expect(page.getByLabel('What should we call you?')).toHaveValue('Core Journey')
   await page.getByRole('button', { name: 'Continue' }).click()
   await expect(page.getByRole('heading', { name: 'What should feel lighter first?' })).toBeVisible()
   await page.getByRole('button', { name: 'Continue' }).click()
@@ -56,8 +56,8 @@ test('@critical new user can complete the durable core loop', async ({ page }) =
   await page.getByText('I agree to the Life OS Terms of Use and Privacy Policy.').click()
 
   const onboardingResponsePromise = page.waitForResponse(response => (
-    response.url() === `${apiUrl}/api/auth/me`
-    && response.request().method() === 'PUT'
+    response.url() === `${apiUrl}/api/users/me/onboarding`
+    && response.request().method() === 'PATCH'
   ))
   await page.getByRole('button', { name: 'Open Life OS' }).click()
   const onboardingResponse = await onboardingResponsePromise
@@ -142,7 +142,12 @@ test('@critical new user can complete the durable core loop', async ({ page }) =
   expect(records.items).toHaveLength(1)
   expect(records.items[0]).toMatchObject({ mode: 'POMO', pomoCount: 1 })
 
+  const settingsSessionPromise = page.waitForResponse(response => (
+    response.url() === `${apiUrl}/api/auth/me`
+    && response.request().method() === 'GET'
+  ))
   await page.goto('/settings')
+  expect((await settingsSessionPromise).status()).toBe(200)
   const logoutResponsePromise = page.waitForResponse(response => (
     response.url() === `${apiUrl}/api/auth/logout`
     && response.request().method() === 'POST'

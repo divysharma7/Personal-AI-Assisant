@@ -33,21 +33,51 @@ const SHORTCUTS = [
 export default function GettingStartedPage() {
   const [checked, setChecked] = useState<Set<number>>(new Set())
   const [userName, setUserName] = useState('')
+  const [saveError, setSaveError] = useState('')
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     fetch(`${API_BASE}/api/auth/me`, { credentials: 'include' })
       .then((response) => response.ok ? response.json() : null)
-      .then((data) => { if (data?.name) setUserName(data.name.split(' ')[0]) })
+      .then((data) => {
+        if (data?.name) setUserName(data.name.split(' ')[0])
+        const ids = data?.gettingStartedState?.checkedStepIds
+        if (Array.isArray(ids)) {
+          setChecked(new Set(ids
+            .map((id: unknown) => Number(id))
+            .filter((id: number) => Number.isInteger(id) && id >= 0 && id < CHECKLIST.length)))
+        }
+      })
       .catch(() => {})
   }, [])
 
-  const toggle = (index: number) => {
-    setChecked((previous) => {
-      const next = new Set(previous)
-      if (next.has(index)) next.delete(index)
-      else next.add(index)
-      return next
-    })
+  const toggle = async (index: number) => {
+    if (saving) return
+    const previous = checked
+    const next = new Set(previous)
+    if (next.has(index)) next.delete(index)
+    else next.add(index)
+    setChecked(next)
+    setSaveError('')
+    setSaving(true)
+
+    try {
+      const response = await fetch(`${API_BASE}/api/users/me/getting-started`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          checkedStepIds: Array.from(next).sort((a, b) => a - b).map(String),
+          completed: next.size === CHECKLIST.length,
+        }),
+      })
+      if (!response.ok) throw new Error('save failed')
+    } catch {
+      setChecked(previous)
+      setSaveError('Progress could not be saved. Check your connection and try again.')
+    } finally {
+      setSaving(false)
+    }
   }
   const progress = Math.round((checked.size / CHECKLIST.length) * 100)
 
@@ -77,6 +107,7 @@ export default function GettingStartedPage() {
           <div className="mb-3 h-1 overflow-hidden rounded-full bg-[var(--bg-active)]" role="progressbar" aria-label="Getting started progress" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
             <div className="h-full rounded-full transition-[width,background-color] duration-300" style={{ width: `${progress}%`, background: progress === 100 ? 'var(--success)' : 'var(--accent)' }} />
           </div>
+          {saveError ? <p role="alert" className="type-meta mb-3 text-[var(--priority-high)]">{saveError}</p> : null}
           <div className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)]">
             {CHECKLIST.map((item, index) => {
               const done = checked.has(index)
@@ -85,8 +116,9 @@ export default function GettingStartedPage() {
                   key={item.text}
                   type="button"
                   aria-pressed={done}
+                  disabled={saving}
                   onClick={() => toggle(index)}
-                  className="flex w-full items-start gap-3 border-b border-[var(--border)] bg-[var(--bg-card)] px-3 py-3 text-left last:border-b-0 hover:bg-[var(--bg-hover)]"
+                  className="flex w-full items-start gap-3 border-b border-[var(--border)] bg-[var(--bg-card)] px-3 py-3 text-left last:border-b-0 hover:bg-[var(--bg-hover)] disabled:cursor-wait disabled:opacity-70"
                 >
                   <span className="mt-0.5 grid h-[18px] w-[18px] shrink-0 place-items-center rounded-[5px] border" style={{ borderColor: done ? 'var(--success)' : 'var(--border-strong)', background: done ? 'var(--success)' : 'transparent' }}>
                     {done ? <Check size={12} strokeWidth={2.5} color="var(--text-on-dark)" /> : null}
