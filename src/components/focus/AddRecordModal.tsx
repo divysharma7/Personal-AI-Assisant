@@ -86,10 +86,9 @@ function formatDuration(seconds: number): string {
 
 /* ── Task Dropdown ── */
 
-function TaskDropdown({ selected, onSelect, onClear }: {
+function TaskDropdown({ selected, onSelect }: {
   selected: SelectedTarget | null
   onSelect: (target: SelectedTarget) => void
-  onClear: () => void
 }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -267,8 +266,8 @@ function TimeInput({ value, onChange, error, placeholder = 'Set Time', id }: {
 
 /* ── Type Selector ── */
 
-function TypeSelector({ mode, pomoCount, durationSeconds, onChange }: {
-  mode: 'POMO' | 'STOPWATCH'; pomoCount: number; durationSeconds: number
+function TypeSelector({ mode, pomoCount, onChange }: {
+  mode: 'POMO' | 'STOPWATCH'; pomoCount: number
   onChange: (mode: 'POMO' | 'STOPWATCH') => void
 }) {
   const displayLabel = mode === 'POMO'
@@ -474,7 +473,6 @@ export default function AddRecordModal({
                       <TaskDropdown
                         selected={selectedTarget}
                         onSelect={setSelectedTarget}
-                        onClear={() => setSelectedTarget(null)}
                       />
                       {errors.target && <p className="mt-1 text-[11px]" style={{ color: '#ef4444' }}>{errors.target}</p>}
                     </div>
@@ -528,7 +526,6 @@ export default function AddRecordModal({
                       <TypeSelector
                         mode={mode}
                         pomoCount={pomoCount}
-                        durationSeconds={durationSeconds}
                         onChange={setMode}
                       />
                     </div>

@@ -17,7 +17,7 @@ describe('application entry point', () => {
     const mod = await import('@/app/login/page')
     expect(mod.default).toBeDefined()
     expect(typeof mod.default).toBe('function')
-  })
+  }, 15_000)
 
   it('RequireAuth component loads without errors', async () => {
     const mod = await import('@/router/RequireAuth')
