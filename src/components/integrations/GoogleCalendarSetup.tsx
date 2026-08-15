@@ -5,9 +5,7 @@ import { Calendar, Check, X } from 'lucide-react'
 import { copy } from '@/lib/copy'
 import { slideFromRight, buttonPress, ease, springs } from '@/lib/motion'
 import { useGoogleCalendar } from '@/hooks/useGoogleCalendar'
-import { env } from '@/config/env'
-
-const API_BASE = env.VITE_API_URL
+import { beginGoogleOAuth } from '@/lib/googleOAuth'
 
 interface GoogleCalendarSetupProps {
   open: boolean
@@ -17,10 +15,19 @@ interface GoogleCalendarSetupProps {
 export default function GoogleCalendarSetup({ open, onClose }: GoogleCalendarSetupProps) {
   const { connected, disconnect } = useGoogleCalendar()
   const [autoSync, setAutoSync] = useState(false)
+  const [connecting, setConnecting] = useState(false)
+  const [connectionError, setConnectionError] = useState('')
   const [disconnecting, setDisconnecting] = useState(false)
 
-  const handleConnect = () => {
-    window.location.href = `${API_BASE}/api/integrations/google/auth`
+  const handleConnect = async () => {
+    setConnecting(true)
+    setConnectionError('')
+    try {
+      await beginGoogleOAuth()
+    } catch (error) {
+      setConnectionError(error instanceof Error ? error.message : 'Google Calendar connection could not be started')
+      setConnecting(false)
+    }
   }
 
   const handleDisconnect = async () => {
@@ -105,8 +112,9 @@ export default function GoogleCalendarSetup({ open, onClose }: GoogleCalendarSet
                   {/* Connect button */}
                   <motion.button
                     {...buttonPress}
-                    onClick={handleConnect}
-                    className="w-full rounded-full px-5 py-3 text-sm font-semibold text-white transition-opacity duration-150 cursor-pointer"
+                    onClick={() => void handleConnect()}
+                    disabled={connecting}
+                    className="w-full rounded-full px-5 py-3 text-sm font-semibold text-white transition-opacity duration-150 cursor-pointer disabled:cursor-wait disabled:opacity-60"
                     style={{ backgroundColor: 'var(--accent)' }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.opacity = '0.9'
@@ -115,8 +123,13 @@ export default function GoogleCalendarSetup({ open, onClose }: GoogleCalendarSet
                       e.currentTarget.style.opacity = '1'
                     }}
                   >
-                    {copy.calendar.connectCta}
+                    {connecting ? 'Opening Google…' : copy.calendar.connectCta}
                   </motion.button>
+                  {connectionError && (
+                    <p role="alert" className="mt-3 text-sm" style={{ color: 'var(--priority-high)' }}>
+                      {connectionError}
+                    </p>
+                  )}
                 </>
               ) : (
                 <>

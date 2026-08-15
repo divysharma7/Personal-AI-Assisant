@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { http } from '@/lib/api/client'
+import { beginGoogleOAuth } from '@/lib/googleOAuth'
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -102,8 +103,7 @@ export function useGoogleCalendarAccounts() {
   }, [syncMutation])
 
   const reconnect = useCallback(async (_accountId: string) => {
-    // Redirect to Google OAuth flow
-    window.location.href = '/api/integrations/google/auth'
+    await beginGoogleOAuth()
   }, [])
 
   const disconnect = useCallback(async (accountId: string) => {

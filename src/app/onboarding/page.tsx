@@ -15,6 +15,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import '@/components/auth/auth-brand.css'
 import LifeOSMark from '@/components/brand/LifeOSMark'
+import { beginGoogleOAuth } from '@/lib/googleOAuth'
 
 const API_BASE = env.VITE_API_URL
 
@@ -98,7 +99,7 @@ export default function OnboardingPage() {
       })
 
       if (connectCalendar) {
-        window.location.assign(`${API_BASE}/api/integrations/google/auth`)
+        await beginGoogleOAuth()
         return
       }
 

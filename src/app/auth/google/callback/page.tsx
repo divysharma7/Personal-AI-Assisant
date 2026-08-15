@@ -11,47 +11,19 @@ export default function GoogleCallbackPage() {
   const [message, setMessage] = useState('Connecting your Google account...')
 
   useEffect(() => {
-    const code = searchParams.get('code')
     const state = searchParams.get('state')
-    const error = searchParams.get('error')
 
-    if (error) {
+    if (!state) {
       setStatus('error')
-      setMessage(error === 'access_denied'
-        ? 'Google Calendar was not connected. Nothing changed.'
-        : 'Something went wrong connecting Google Calendar.')
+      setMessage('Missing OAuth state. Please start the connection again.')
       setTimeout(() => navigate('/settings?section=integrations'), 3000)
       return
     }
 
-    if (!code || !state) {
-      setStatus('error')
-      setMessage('Missing authorization code.')
-      setTimeout(() => navigate('/settings?section=integrations'), 3000)
-      return
-    }
-
-    // Forward the OAuth callback to the backend
-    fetch(`${API_BASE}/api/integrations/google/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`, {
-      credentials: 'include',
-      redirect: 'manual', // Don't follow the backend's redirect
-    })
-      .then((res) => {
-        if (res.ok || res.status === 302 || res.type === 'opaqueredirect') {
-          setStatus('success')
-          setMessage('Google Calendar connected!')
-          setTimeout(() => navigate('/settings?section=integrations'), 1500)
-        } else {
-          return res.json().catch(() => ({ error: 'Connection failed' })).then((data) => {
-            throw new Error(data.error || 'Connection failed')
-          })
-        }
-      })
-      .catch((err) => {
-        setStatus('error')
-        setMessage(err.message || 'Something went wrong.')
-        setTimeout(() => navigate('/settings?section=integrations'), 3000)
-      })
+    // The documented redirect URI points directly to the API. This fallback
+    // keeps older frontend callback registrations working while ensuring the
+    // backend consumes the single-use OAuth state for success and denial.
+    window.location.replace(`${API_BASE}/api/integrations/google/callback?${searchParams.toString()}`)
   }, [searchParams, navigate])
 
   return (
