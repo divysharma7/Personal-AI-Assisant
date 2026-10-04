@@ -58,105 +58,71 @@
 
 <br/>
 
-<h2 align="center" id="features">Features</h2>
+## Features
 
-<table width="100%" border="0" cellspacing="0">
-  <tr>
-    <td width="50%" valign="top">
-      <h3>Task Management</h3>
-      <ul>
-        <li>Inbox for capturing new and incoming tasks</li>
-        <li>Quick Add from any screen with global composer</li>
-        <li>Command Palette for keyboard-driven search and actions</li>
-        <li>Subtasks with hierarchical nesting and drag-and-drop</li>
-        <li>Priorities, tags, due dates, and color coding</li>
-      </ul>
-    </td>
+### Task Management
 
-    <td width="50%" valign="top">
-      <h3>Organization</h3>
-      <ul>
-        <li>Lists and folders with nested grouping</li>
-        <li>Kanban boards with custom workflow columns</li>
-        <li>Eisenhower Matrix for urgency/importance sorting</li>
-        <li>Workflows with templates (Kanban, Sprint, Sales, Content)</li>
-        <li>Drag-and-drop reordering across lists and boards</li>
-      </ul>
-    </td>
-  </tr>
+- 📥 Inbox for capturing new and incoming tasks
+- ⚡ Quick Add from any screen with global composer
+- ⌨️ Command Palette for keyboard-driven search and actions
+- 🌳 Subtasks with hierarchical nesting and drag-and-drop
+- 🏷️ Priorities, tags, due dates, and color coding
 
-  <tr>
-    <td width="50%" valign="top">
-      <h3>Planning & Calendar</h3>
-      <ul>
-        <li>Today view for daily focus</li>
-        <li>Next 7 Days view for weekly planning</li>
-        <li>Full calendar with time-grid visualization</li>
-        <li>Google Calendar two-way sync</li>
-        <li>Time blocking and capacity warnings</li>
-      </ul>
-    </td>
+### Organization
 
-    <td width="50%" valign="top">
-      <h3>Habits & Routines</h3>
-      <ul>
-        <li>Habit tracking with daily check-ins</li>
-        <li>Streak counters and monthly heatmaps</li>
-        <li>Habit gallery with curated templates</li>
-        <li>Binary and count-based goal types</li>
-        <li>Morning Plan and Evening Shutdown rituals</li>
-      </ul>
-    </td>
-  </tr>
+- 📁 Lists and folders with nested grouping
+- 📋 Kanban boards with custom workflow columns
+- 🎯 Eisenhower Matrix for urgency/importance sorting
+- 🔄 Workflow templates for Kanban, Sprint, Sales, and Content
+- ↕️ Drag-and-drop reordering across lists and boards
 
-  <tr>
-    <td width="50%" valign="top">
-      <h3>Focus & Pomodoro</h3>
-      <ul>
-        <li>Pomodoro timer with customizable durations</li>
-        <li>Stopwatch mode for open-ended focus</li>
-        <li>Link sessions to tasks or habits</li>
-        <li>Breathing ring animation during focus</li>
-        <li>Session history and focus records</li>
-      </ul>
-    </td>
+### Planning & Calendar
 
-    <td width="50%" valign="top">
-      <h3>AI & Intelligence</h3>
-      <ul>
-        <li>AI Chat assistant with conversation history</li>
-        <li>AI Brief dashboard widget with daily summaries</li>
-        <li>Memories system for books, movies, ideas, and more</li>
-        <li>Smart task suggestions and context awareness</li>
-        <li>MCP (Model Context Protocol) integration support</li>
-      </ul>
-    </td>
-  </tr>
+- ☀️ Today view for daily focus
+- 📅 Next 7 Days view for weekly planning
+- 🗓️ Full calendar with time-grid visualization
+- 🔄 Google Calendar two-way sync
+- ⏱️ Time blocking and capacity warnings
 
-  <tr>
-    <td width="50%" valign="top">
-      <h3>Design & Experience</h3>
-      <ul>
-        <li>Deep ocean midnight dark theme with indigo accents</li>
-        <li>Light theme with lavender-white base</li>
-        <li>Smooth page transitions and micro-animations</li>
-        <li>Responsive layout with collapsible sidebar</li>
-        <li>Rich text editor with slash commands (TipTap)</li>
-      </ul>
-    </td>
+### Habits & Routines
 
-    <td width="50%" valign="top">
-      <h3>Platform & Security</h3>
-      <ul>
-        <li>Cookie-based JWT authentication</li>
-        <li>Per-user data isolation with ownership filtering</li>
-        <li>Cross-platform sync via REST API</li>
-        <li>Rate limiting and CORS protection</li>
-        <li>Keyboard shortcuts for power users</li>
-      </ul>
-    </td>
-  </tr>
-</table>
+- ✅ Habit tracking with daily check-ins
+- 🔥 Streak counters and monthly heatmaps
+- 🧩 Habit gallery with curated templates
+- 🎯 Binary and count-based goal types
+- 🌅 Morning Plan and Evening Shutdown rituals
+
+### Focus & Pomodoro
+
+- 🍅 Pomodoro timer with customizable durations
+- ⏱️ Stopwatch mode for open-ended focus
+- 🔗 Link sessions to tasks or habits
+- 🫁 Breathing ring animation during focus
+- 📊 Session history and focus records
+
+### AI & Intelligence
+
+- ✨ AI Chat assistant with conversation history
+- 🧠 AI Brief dashboard widget with daily summaries
+- 💭 Memories system for books, movies, ideas, and more
+- ⚡ Smart task suggestions and context awareness
+- 🔌 MCP (Model Context Protocol) integration support
+
+### Design & Experience
+
+- 🌙 Deep ocean midnight dark theme with indigo accents
+- ☀️ Light theme with lavender-white base
+- ✨ Smooth page transitions and micro-animations
+- 📱 Responsive layout with collapsible sidebar
+- ✍️ Rich text editor with slash commands powered by TipTap
+
+### Platform & Security
+
+- 🔐 Cookie-based JWT authentication
+- 👤 Per-user data isolation with ownership filtering
+- 🔄 Cross-platform sync via REST API
+- 🛡️ Rate limiting and CORS protection
+- ⌨️ Keyboard shortcuts for power users
 
 <br/>
 
@@ -206,7 +172,7 @@ Personal-AI-Assisant/
  │   ├── prisma/               # PostgreSQL schema and migrations
  │   ├── src/routes/           # REST API route handlers
  │   ├── src/services/         # Business logic layer
- │   ├── src/middleware/        # Auth, error handling, rate limiting
+ │   ├── src/middleware/       # Auth, error handling, rate limiting
  │   └── src/lib/              # Prisma client and utilities
  ├── docs/                     # Architecture and delivery documentation
  ├── tests/                    # End-to-end Playwright tests
@@ -260,13 +226,13 @@ Express REST API → Prisma ORM → PostgreSQL
 
 <h2 align="center" id="getting-started">Getting Started</h2>
 
-<h3>Prerequisites</h3>
+### Prerequisites
 
 - Node.js 20+
 - PostgreSQL 16+ (local or remote)
 - npm or your preferred package manager
 
-<h3>Installation</h3>
+### Installation
 
 ```bash
 # Clone the repository
@@ -283,7 +249,7 @@ cd laif-api
 npm install
 ```
 
-<h3>Environment Setup</h3>
+### Environment Setup
 
 Create `.env.local` in the project root:
 
@@ -305,7 +271,7 @@ LOG_LEVEL=info
 
 > Never commit secrets, API keys, private credentials, or production configuration files to the repository.
 
-<h3>Database Setup</h3>
+### Database Setup
 
 ```bash
 cd laif-api
@@ -317,20 +283,36 @@ npm run prisma:generate
 npx prisma migrate deploy
 ```
 
-<h3>Run the Project</h3>
+### Run the Project
 
-Open two terminals:
+Open two terminals.
+
+**Terminal 1 — Backend API**
 
 ```bash
-# Terminal 1 — Backend API (http://localhost:4000)
 cd laif-api
-npm run dev
-
-# Terminal 2 — Frontend (http://localhost:5173)
 npm run dev
 ```
 
-<h3>Build for Production</h3>
+Backend runs at:
+
+```text
+http://localhost:4000
+```
+
+**Terminal 2 — Frontend**
+
+```bash
+npm run dev
+```
+
+Frontend runs at:
+
+```text
+http://localhost:5173
+```
+
+### Build for Production
 
 ```bash
 # Frontend
@@ -341,27 +323,31 @@ cd laif-api
 npm run build
 ```
 
-<h3>Useful Commands</h3>
+### Useful Commands
 
 ```bash
 # Frontend
-npm run dev              # Start dev server
-npm run build            # Production build (typecheck + vite build)
-npm run typecheck        # TypeScript type checking
-npm run lint             # ESLint
-npm run test             # Vitest (watch mode)
-npm run test:run         # Vitest (single run)
-npm run test:coverage    # Vitest with coverage
-npm run test:e2e:fullstack  # Full-stack E2E tests (Playwright)
+
+npm run dev                 # Start dev server
+npm run build               # Production build
+npm run typecheck           # TypeScript type checking
+npm run lint                # ESLint
+npm run test                # Vitest watch mode
+npm run test:run            # Vitest single run
+npm run test:coverage       # Vitest with coverage
+npm run test:e2e:fullstack  # Full-stack Playwright E2E tests
+
 
 # Backend
+
 cd laif-api
-npm run dev              # Start dev server with hot reload
-npm run build            # Production build (prisma generate + tsc)
-npm run typecheck        # TypeScript type checking
-npm run test:run         # Vitest (single run)
-npm run prisma:validate  # Validate Prisma schema
-npm run prisma:generate  # Generate Prisma client
+
+npm run dev                 # Start dev server with hot reload
+npm run build               # Prisma generate + TypeScript build
+npm run typecheck           # TypeScript type checking
+npm run test:run            # Vitest single run
+npm run prisma:validate     # Validate Prisma schema
+npm run prisma:generate     # Generate Prisma client
 ```
 
 <br/>
@@ -374,28 +360,28 @@ npm run prisma:generate  # Generate Prisma client
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│  USER INPUT                                                  │
+│  USER INPUT                                                 │
 │  Task creation, habit check-in, focus session, chat message │
 └─────────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  REACT APPLICATION                                           │
+│  REACT APPLICATION                                          │
 │  Zustand stores · TanStack Query hooks · React Router       │
 └─────────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  EXPRESS REST API                                            │
+│  EXPRESS REST API                                           │
 │  Route handlers · Zod validation · JWT auth middleware      │
 └─────────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  PRISMA ORM → POSTGRESQL                                     │
+│  PRISMA ORM → POSTGRESQL                                    │
 │  20+ models · Migrations · Ownership-filtered queries       │
 └─────────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  EXTERNAL SERVICES                                           │
-│  Google Calendar sync · AI assistant · Push notifications    │
+│  EXTERNAL SERVICES                                          │
+│  Google Calendar sync · AI assistant · Push notifications   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -407,13 +393,13 @@ npm run prisma:generate  # Generate Prisma client
 
 <h2 align="center">Configuration</h2>
 
-<h3>Frontend (.env.local)</h3>
+### Frontend (`.env.local`)
 
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `VITE_API_URL` | Backend API base URL | Yes |
 
-<h3>Backend (laif-api/.env)</h3>
+### Backend (`laif-api/.env`)
 
 | Variable | Description | Required |
 |----------|-------------|----------|
@@ -421,15 +407,15 @@ npm run prisma:generate  # Generate Prisma client
 | `PORT` | API server port | Yes |
 | `DATABASE_URL` | PostgreSQL connection string | Yes |
 | `JWT_SECRET` | Secret for signing JWT tokens (32+ chars) | Yes |
-| `CORS_ORIGINS` | Allowed frontend origins (comma-separated) | Yes |
+| `CORS_ORIGINS` | Allowed frontend origins | Yes |
 | `FRONTEND_URL` | Frontend URL for redirects | Yes |
-| `LOG_LEVEL` | Pino log level (`info`, `debug`, `warn`, `error`) | No |
-| `DEV_USER_ID` | Dev-only user bypass (local development only) | No |
+| `LOG_LEVEL` | Pino log level | No |
+| `DEV_USER_ID` | Dev-only user bypass | No |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID | No |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | No |
 | `GOOGLE_REDIRECT_URI` | Google OAuth callback URL | No |
-| `GOOGLE_TOKEN_ENCRYPTION_KEY` | 32-byte base64 key for token encryption | No |
-| `GOOGLE_SYNC_INTERVAL_MINUTES` | Background sync cadence (default: 5) | No |
+| `GOOGLE_TOKEN_ENCRYPTION_KEY` | 32-byte base64 token encryption key | No |
+| `GOOGLE_SYNC_INTERVAL_MINUTES` | Background sync cadence, default 5 minutes | No |
 
 <br/>
 
@@ -471,19 +457,24 @@ npm run prisma:generate  # Generate Prisma client
 2. Create a feature branch.
 3. Make your changes.
 4. Run validation before submitting:
-   ```bash
-   npm run typecheck
-   npm run test:run
-   npm run lint
-   npm run build
-   ```
+
+```bash
+npm run typecheck
+npm run test:run
+npm run lint
+npm run build
+```
+
 5. Commit your changes.
 6. Open a pull request.
 
 ```bash
 git checkout -b feature/your-feature-name
+
 git add .
+
 git commit -m "Add your feature"
+
 git push origin feature/your-feature-name
 ```
 
@@ -496,7 +487,7 @@ git push origin feature/your-feature-name
 <h2 align="center">License</h2>
 
 <p align="center">
-  This project is licensed under the <a href="LICENSE">MIT</a> License.
+  This project is licensed under the <a href="LICENSE">MIT License</a>.
 </p>
 
 <br/>
