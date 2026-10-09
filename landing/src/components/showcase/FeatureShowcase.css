@@ -1,0 +1,291 @@
+/* ── Feature Showcase: Mistral-style editorial product sections ── */
+/* Three-layer hierarchy: dark page → dark content section → colored media canvas */
+
+.fs {
+  position: relative;
+  width: 100%;
+  padding: 80px 0;
+  margin-bottom: 80px;
+  background: var(--bg-surface);
+  color: #f0f2f5;
+}
+
+/* ── Header ── */
+
+.fs__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.fs__title {
+  font-size: clamp(34px, 4vw, 58px);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin: 0;
+  max-width: 900px;
+}
+
+.fs__cta {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: transparent;
+  color: #f0f2f5;
+  cursor: pointer;
+  transition: border-color 200ms ease, background 200ms ease;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.fs__cta:hover {
+  border-color: var(--border-hover);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.fs__cta-arrow {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* ── Divider ── */
+
+.fs__divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 0 0 40px;
+}
+
+/* ── Description ── */
+
+.fs__description {
+  margin: 0 0 40px;
+  font-size: clamp(16px, 1.4vw, 21px);
+  line-height: 1.4;
+  max-width: 1000px;
+  color: #8b95a9;
+}
+
+/* ── Visual area (the colored canvas) ── */
+
+.fs__visual {
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  aspect-ratio: 1.9 / 1;
+}
+
+.fs__visual--blue {
+  background-color: var(--accent);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 72px 72px;
+}
+
+.fs__visual--light {
+  background-color: var(--text-primary);
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+  background-size: 72px 72px;
+}
+
+.fs__visual--gold {
+  background-color: var(--gold);
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+  background-size: 72px 72px;
+}
+
+.fs__visual--dark {
+  background-color: var(--bg-elevated);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 72px 72px;
+}
+
+/* ── Tags ── */
+
+.fs__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 40px;
+}
+
+.fs__tag {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  color: #f0f2f5;
+}
+
+/* ── Visual internals: content fills the canvas ── */
+
+.fs__canvas-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+
+/* ── Visual internals: generic card ── */
+
+.fs__card {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.fs__card--light {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.fs__card--gold {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.fs__card__icon {
+  font-size: 16px;
+  margin-bottom: 8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+}
+
+.fs__card__title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 3px;
+}
+
+.fs__card__desc {
+  font-size: 12px;
+  opacity: 0.6;
+  margin: 0;
+}
+
+/* ── Visual internals: browser window ── */
+
+.fs__browser {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.25);
+  width: min(85%, 800px);
+}
+
+.fs__browser--light {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: var(--text-primary);
+}
+
+.fs__browser--gold {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.fs__browser-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fs__browser--light .fs__browser-bar {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+.fs__browser-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.fs__browser-content {
+  padding: 16px;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 767px) {
+  .fs {
+    margin-bottom: 48px;
+    padding: 48px 0;
+  }
+
+  .fs__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .fs__title {
+    font-size: clamp(28px, 7vw, 40px);
+  }
+
+  .fs__description {
+    font-size: 16px;
+  }
+
+  .fs__visual {
+    aspect-ratio: 4 / 3;
+  }
+
+  .fs__canvas-content {
+    padding: 16px;
+  }
+
+  .fs__tags {
+    margin-top: 28px;
+    gap: 6px;
+  }
+
+  .fs__tag {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+
+  .fs__browser-content {
+    padding: 12px;
+  }
+
+  .fs__card {
+    padding: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fs,
+  .fs__card,
+  .fs__cta,
+  .fs__tag {
+    transition: none !important;
+  }
+}

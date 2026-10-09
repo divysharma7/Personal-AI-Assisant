@@ -1,0 +1,766 @@
+/* ── Bottom world: calm hero copy + living pixel system at the edges ── */
+/* 14.5s ambient loop. Transform/opacity only. See useHeroAnimationState. */
+
+.pixelScene {
+  --hero-loop: 14.5s;
+  --hero-fg: var(--text-primary);
+  --hero-muted: var(--text-secondary);
+  --hero-a: var(--accent);
+  --hero-b: var(--gold);
+  --hero-c: var(--accent-light);
+  --hero-line: var(--line-color);
+
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ── Background: oversized arc + one vertical rule ── */
+
+.pixelScene__grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.pixelScene__grid::before {
+  content: "";
+  position: absolute;
+  width: min(74vw, 1080px);
+  aspect-ratio: 1;
+  left: -38vw;
+  top: -54vw;
+  border: 1px solid var(--hero-line);
+  border-radius: 50%;
+}
+
+.pixelScene__grid::after {
+  content: "";
+  position: absolute;
+  left: clamp(30px, 7vw, 110px);
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--hero-line);
+}
+
+/* ── Top mark (static) ── */
+
+.pixelScene__topMark {
+  position: absolute;
+  z-index: 5;
+  top: clamp(18px, 2.4vh, 34px);
+  left: 50%;
+  width: 20px;
+  height: 24px;
+  transform: translateX(-50%);
+  display: grid;
+  place-items: center;
+}
+
+.pixelScene__topMarkCore {
+  width: 8px;
+  height: 8px;
+  background: var(--hero-c);
+  box-shadow:
+    -5px 5px 0 var(--hero-a),
+    5px 5px 0 var(--hero-b),
+    0 10px 0 var(--hero-fg);
+  transform: rotate(45deg);
+}
+
+/* ── Decorative world layer ── */
+
+.pixelScene__world {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.pixelScene__edge {
+  position: absolute;
+  bottom: 0;
+  width: min(29vw, 450px);
+  height: 280px;
+}
+
+.pixelScene__edge--left {
+  left: 0;
+}
+
+.pixelScene__edge--right {
+  right: 0;
+}
+
+.pixelScene__block,
+.pixelScene__diamond,
+.pixelScene__sprite,
+.pixelScene__cat,
+.pixelScene__jumperShadow {
+  animation-play-state: var(--play-state, running);
+}
+
+.pixelScene[data-animation="paused"] {
+  --play-state: paused;
+}
+
+/* ── Platform stacks (bottom-anchored, cropped by the edge) ── */
+
+.pixelScene__block {
+  position: absolute;
+  bottom: 0;
+  transform-origin: 50% 100%;
+  will-change: transform, opacity;
+}
+
+.pixelScene__block--leftMain {
+  left: -2px;
+  width: clamp(48px, 4.6vw, 76px);
+  height: clamp(110px, 14vw, 190px);
+  background: linear-gradient(
+    to bottom,
+    var(--hero-b) 0 48%,
+    var(--hero-a) 48% 100%
+  );
+  animation: leftMain var(--hero-loop) linear infinite;
+}
+
+.pixelScene__block--leftSecond {
+  left: clamp(56px, 5.8vw, 98px);
+  width: clamp(42px, 4.4vw, 70px);
+  height: clamp(50px, 7vw, 100px);
+  background: var(--hero-a);
+  animation: leftSecond var(--hero-loop) linear infinite;
+}
+
+.pixelScene__block--leftTiny {
+  left: clamp(122px, 11vw, 172px);
+  width: clamp(24px, 2.7vw, 44px);
+  height: clamp(30px, 4.1vw, 58px);
+  background: var(--hero-b);
+  animation: leftTiny var(--hero-loop) linear infinite;
+}
+
+.pixelScene__block--rightMain {
+  right: -2px;
+  width: clamp(54px, 4.9vw, 78px);
+  height: clamp(130px, 15.5vw, 210px);
+  background: linear-gradient(
+    to bottom,
+    var(--hero-c) 0 34%,
+    var(--hero-b) 34% 100%
+  );
+  animation: rightMain var(--hero-loop) linear infinite;
+}
+
+.pixelScene__block--rightSecond {
+  right: clamp(56px, 5.4vw, 86px);
+  width: clamp(52px, 5vw, 82px);
+  height: clamp(55px, 7.5vw, 105px);
+  background: var(--hero-a);
+  animation: rightSecond var(--hero-loop) linear infinite;
+}
+
+/* ── Diamonds: rotated squares, visual punctuation ── */
+
+.pixelScene__diamond {
+  position: absolute;
+  width: clamp(34px, 3.4vw, 54px);
+  aspect-ratio: 1;
+  background: var(--hero-a);
+  transform: rotate(45deg);
+  will-change: transform, opacity;
+}
+
+.pixelScene__diamond--left {
+  left: clamp(82px, 7.8vw, 124px);
+  bottom: clamp(22px, 3vw, 46px);
+  animation: leftDiamond var(--hero-loop) linear infinite;
+}
+
+.pixelScene__diamond--right {
+  right: clamp(32px, 3vw, 48px);
+  bottom: clamp(130px, 13vw, 185px);
+  animation: rightDiamond var(--hero-loop) linear infinite;
+}
+
+/* ── Pixel sprites: ambient life at the edges ── */
+
+.pixelScene__sprite {
+  position: absolute;
+  width: clamp(16px, 1.65vw, 26px);
+  height: auto;
+  color: var(--hero-fg);
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.35));
+  image-rendering: pixelated;
+  will-change: transform, opacity;
+}
+
+.pixelScene__sprite--leftFloor {
+  left: clamp(136px, 12vw, 192px);
+  bottom: 2px;
+  color: var(--hero-b);
+  animation: leftFloorSprite var(--hero-loop) linear infinite;
+}
+
+.pixelScene__sprite--rightFloor {
+  right: clamp(142px, 12.2vw, 196px);
+  bottom: 2px;
+  color: var(--hero-c);
+  animation: rightFloorSprite var(--hero-loop) linear infinite;
+}
+
+.pixelScene__sprite--rightTop {
+  right: clamp(70px, 6.7vw, 108px);
+  bottom: clamp(57px, 7.3vw, 105px);
+  color: var(--hero-c);
+  animation: rightTopSprite var(--hero-loop) linear infinite;
+}
+
+.pixelScene__cat {
+  position: absolute;
+  left: clamp(186px, 16.5vw, 258px);
+  bottom: 2px;
+  width: clamp(34px, 3.4vw, 54px);
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.35));
+}
+
+.pixelScene__cat svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.pixelScene__catEyes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: auto !important;
+  animation: pixelBlink 3.6s steps(1, end) infinite;
+}
+
+@keyframes pixelBlink {
+  0%,
+  92% {
+    opacity: 1;
+  }
+  93%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ── Center jump event: the memorable moment ── */
+
+.pixelScene__centerEvent {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(8px, 1.5vh, 16px);
+  width: 90px;
+  height: 160px;
+  transform: translateX(-50%);
+}
+
+.pixelScene__sprite--jumper {
+  left: 50%;
+  bottom: 0;
+  width: clamp(24px, 2vw, 34px);
+  color: var(--hero-b);
+  opacity: 0;
+  transform: translate(-50%, 26px) scale(0.94);
+  animation: centerJumper var(--hero-loop) linear infinite;
+}
+
+.pixelScene__jumperShadow {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 24px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.42);
+  opacity: 0;
+  transform: translateX(-50%) scaleX(0.3);
+  animation: centerShadow var(--hero-loop) linear infinite;
+}
+
+/* ── Loop keyframes: transforms/opacity only. ~14.5s timeline. ── */
+
+@keyframes leftMain {
+  0%,
+  9% {
+    transform: scaleY(0.78);
+  }
+  12%,
+  24% {
+    transform: scaleY(1);
+  }
+  28%,
+  45% {
+    transform: scaleY(0.88);
+  }
+  50%,
+  67% {
+    transform: scaleY(0.73);
+  }
+  71%,
+  84% {
+    transform: scaleY(0.56);
+  }
+  88%,
+  100% {
+    transform: scaleY(0.78);
+  }
+}
+
+@keyframes leftSecond {
+  0%,
+  7% {
+    transform: translateX(0) scaleY(0.45);
+    background: var(--hero-b);
+  }
+  10%,
+  23% {
+    transform: translateX(-6px) scaleY(1.05);
+    background: var(--hero-a);
+  }
+  27%,
+  49% {
+    transform: translateX(2px) scaleY(0.72);
+    background: var(--hero-a);
+  }
+  52%,
+  72% {
+    transform: translateX(-2px) scaleY(0.52);
+    background: var(--hero-c);
+  }
+  76%,
+  88% {
+    transform: translateX(4px) scaleY(0.34);
+    background: var(--hero-b);
+  }
+  92%,
+  100% {
+    transform: translateX(0) scaleY(0.45);
+    background: var(--hero-b);
+  }
+}
+
+@keyframes leftTiny {
+  0%,
+  14% {
+    transform: translateY(0) scaleY(0.82);
+    opacity: 1;
+  }
+  18%,
+  39% {
+    transform: translateY(0) scaleY(0.56);
+    opacity: 1;
+  }
+  43%,
+  62% {
+    transform: translateY(0) scaleY(0.18);
+    opacity: 0.9;
+  }
+  66%,
+  84% {
+    transform: translateY(12px) scaleY(0.01);
+    opacity: 0;
+  }
+  90%,
+  100% {
+    transform: translateY(0) scaleY(0.82);
+    opacity: 1;
+  }
+}
+
+@keyframes rightMain {
+  0%,
+  18% {
+    transform: scaleY(0.98);
+  }
+  22%,
+  43% {
+    transform: scaleY(0.82);
+  }
+  48%,
+  66% {
+    transform: scaleY(0.95);
+  }
+  70%,
+  82% {
+    transform: scaleY(0.58);
+  }
+  87%,
+  100% {
+    transform: scaleY(0.98);
+  }
+}
+
+@keyframes rightSecond {
+  0%,
+  10% {
+    transform: translateX(0) scaleY(0.15);
+    opacity: 0.9;
+  }
+  14%,
+  28% {
+    transform: translateX(-5px) scaleY(1);
+    opacity: 1;
+  }
+  33%,
+  49% {
+    transform: translateX(4px) scaleY(0.62);
+    opacity: 1;
+  }
+  53%,
+  63% {
+    transform: translateX(2px) scaleY(0.14);
+    opacity: 0.8;
+  }
+  68%,
+  79% {
+    transform: translateX(-8px) scaleY(1.35);
+    opacity: 1;
+  }
+  84%,
+  92% {
+    transform: translateX(-3px) scaleY(0.76);
+    opacity: 1;
+  }
+  96%,
+  100% {
+    transform: translateX(0) scaleY(0.15);
+    opacity: 0.9;
+  }
+}
+
+@keyframes leftDiamond {
+  0%,
+  10% {
+    transform: translate(0, 18px) rotate(45deg) scale(0.86);
+    opacity: 0;
+  }
+  14%,
+  24% {
+    transform: translate(0, 0) rotate(45deg) scale(1);
+    opacity: 1;
+  }
+  28%,
+  58% {
+    transform: translate(-8px, 9px) rotate(48deg) scale(0.9);
+    opacity: 0.82;
+  }
+  62%,
+  86% {
+    transform: translate(-18px, 26px) rotate(52deg) scale(0.74);
+    opacity: 0;
+  }
+  91%,
+  100% {
+    transform: translate(0, 18px) rotate(45deg) scale(0.86);
+    opacity: 0;
+  }
+}
+
+@keyframes rightDiamond {
+  0%,
+  12% {
+    transform: translate(0, 0) rotate(45deg) scale(1);
+    opacity: 1;
+  }
+  17%,
+  33% {
+    transform: translate(-4px, 24px) rotate(50deg) scale(0.88);
+    opacity: 1;
+  }
+  38%,
+  53% {
+    transform: translate(-34px, 82px) rotate(56deg) scale(0.85);
+    opacity: 0.95;
+  }
+  58%,
+  68% {
+    transform: translate(-52px, 96px) rotate(58deg) scale(0.7);
+    opacity: 0;
+  }
+  72%,
+  87% {
+    transform: translate(-2px, 8px) rotate(47deg) scale(0.94);
+    opacity: 1;
+  }
+  92%,
+  100% {
+    transform: translate(0, 0) rotate(45deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes leftFloorSprite {
+  0%,
+  14% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  18%,
+  31% {
+    transform: translateX(8px);
+    opacity: 1;
+  }
+  34%,
+  51% {
+    transform: translateX(16px);
+    opacity: 0.8;
+  }
+  56%,
+  80% {
+    transform: translateX(6px);
+    opacity: 1;
+  }
+  86%,
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes rightFloorSprite {
+  0%,
+  36% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  40%,
+  63% {
+    transform: translateX(-8px);
+    opacity: 0.95;
+  }
+  69%,
+  85% {
+    transform: translateX(-2px);
+    opacity: 1;
+  }
+  91%,
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes rightTopSprite {
+  0%,
+  12% {
+    transform: translateY(18px) scale(0.88);
+    opacity: 0;
+  }
+  15%,
+  29% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  32% {
+    transform: translateY(-9px) scale(1);
+    opacity: 1;
+  }
+  35%,
+  48% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  52%,
+  70% {
+    transform: translateY(20px) scale(0.88);
+    opacity: 0;
+  }
+  74%,
+  85% {
+    transform: translateY(4px) scale(0.96);
+    opacity: 1;
+  }
+  90%,
+  100% {
+    transform: translateY(18px) scale(0.88);
+    opacity: 0;
+  }
+}
+
+@keyframes centerJumper {
+  0%,
+  15% {
+    opacity: 0;
+    transform: translate(-50%, 28px) scale(0.92);
+  }
+  17% {
+    opacity: 1;
+    transform: translate(-50%, 18px) scale(0.96);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -62px) scale(1);
+  }
+  23% {
+    opacity: 1;
+    transform: translate(-50%, -88px) scale(1.03);
+  }
+  27% {
+    opacity: 1;
+    transform: translate(-50%, -72px) scale(1);
+  }
+  31% {
+    opacity: 1;
+    transform: translate(-50%, -78px) scale(1);
+  }
+  34% {
+    opacity: 1;
+    transform: translate(-50%, -72px) scale(1);
+  }
+  37% {
+    opacity: 1;
+    transform: translate(-50%, -76px) scale(1);
+  }
+  40% {
+    opacity: 1;
+    transform: translate(-50%, -42px) scale(0.98);
+  }
+  43% {
+    opacity: 0;
+    transform: translate(-50%, 30px) scale(0.9);
+  }
+  44%,
+  84% {
+    opacity: 0;
+    transform: translate(-50%, 30px) scale(0.9);
+  }
+  87% {
+    opacity: 1;
+    transform: translate(-50%, 8px) scale(0.96);
+  }
+  89% {
+    opacity: 1;
+    transform: translate(-50%, -62px) scale(1);
+  }
+  91% {
+    opacity: 1;
+    transform: translate(-50%, -75px) scale(1.02);
+  }
+  93% {
+    opacity: 0;
+    transform: translate(-50%, 26px) scale(0.92);
+  }
+  94%,
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 28px) scale(0.92);
+  }
+}
+
+@keyframes centerShadow {
+  0%,
+  15%,
+  44%,
+  84%,
+  94%,
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) scaleX(0.25);
+  }
+  17% {
+    opacity: 0.45;
+    transform: translateX(-50%) scaleX(0.9);
+  }
+  23% {
+    opacity: 0.14;
+    transform: translateX(-50%) scaleX(0.45);
+  }
+  37% {
+    opacity: 0.18;
+    transform: translateX(-50%) scaleX(0.5);
+  }
+  42% {
+    opacity: 0.45;
+    transform: translateX(-50%) scaleX(1);
+  }
+  87% {
+    opacity: 0.45;
+    transform: translateX(-50%) scaleX(0.9);
+  }
+  91% {
+    opacity: 0.15;
+    transform: translateX(-50%) scaleX(0.46);
+  }
+  93% {
+    opacity: 0.4;
+    transform: translateX(-50%) scaleX(0.96);
+  }
+}
+
+/* ── Responsive: reduce scenery density, never squeeze the world ── */
+
+@media (max-width: 900px) {
+  .pixelScene__edge {
+    width: 34vw;
+    height: 220px;
+  }
+}
+
+@media (max-width: 640px) {
+  .pixelScene__edge {
+    width: 38vw;
+    height: 170px;
+  }
+
+  .pixelScene__block--leftSecond,
+  .pixelScene__block--leftTiny,
+  .pixelScene__block--rightSecond,
+  .pixelScene__sprite--leftFloor,
+  .pixelScene__sprite--rightTop {
+    display: none;
+  }
+
+  .pixelScene__diamond {
+    width: 30px;
+  }
+
+  .pixelScene__centerEvent {
+    bottom: 8px;
+  }
+
+  .pixelScene__cat {
+    left: clamp(70px, 18vw, 120px);
+  }
+}
+
+/* ── Reduced motion: frozen, pleasing static composition ── */
+
+@media (prefers-reduced-motion: reduce) {
+  .pixelScene__block,
+  .pixelScene__diamond,
+  .pixelScene__sprite,
+  .pixelScene__cat,
+  .pixelScene__catEyes,
+  .pixelScene__jumperShadow {
+    animation: none !important;
+  }
+
+  .pixelScene__sprite--jumper,
+  .pixelScene__jumperShadow,
+  .pixelScene__diamond--left,
+  .pixelScene__sprite--rightTop {
+    display: none;
+  }
+
+  .pixelScene__block--leftMain,
+  .pixelScene__block--rightMain,
+  .pixelScene__block--leftSecond,
+  .pixelScene__block--rightSecond {
+    transform: none;
+    opacity: 1;
+  }
+}

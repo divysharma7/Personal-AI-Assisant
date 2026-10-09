@@ -1,0 +1,254 @@
+/* ── Master layout grid: regions derive all geometry from shared tracks ── */
+
+.mistralHero {
+  position: relative;
+  height: calc(100vh - 86px);
+  background: var(--bg-canvas);
+  overflow: hidden;
+}
+
+.heroGrid {
+  display: grid;
+  grid-template-columns: 67% 33%;
+  grid-template-rows: 30% 18% 52%;
+  gap: 1px;
+  width: 100%;
+  height: 100%;
+  background: var(--border-color);
+  contain: layout paint;
+}
+
+.heroGrid:not(.heroGrid--static) > .heroHeadline,
+.heroGrid:not(.heroGrid--static) > .productPanel,
+.heroGrid:not(.heroGrid--static) > .heroStatement {
+  container-type: size;
+}
+
+.heroHeadline,
+.productMatrix,
+.heroStatement {
+  background: var(--bg-canvas);
+}
+
+/* ── Headline region (rows 1-2, col 1) ── */
+
+.heroHeadline {
+  grid-area: 1 / 1 / 3 / 2;
+  padding: clamp(24px, 4cqi, 48px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.heroEyebrow {
+  font-size: clamp(9px, 1.25cqi, 12px);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #8b95a9;
+  margin: 0 0 clamp(8px, 2.5cqi, 28px);
+}
+
+.heroTitle {
+  font-size: clamp(22px, 7.9cqi, 76px);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+  margin: 0;
+  color: #f0f2f5;
+  white-space: pre-line;
+}
+
+.heroSubtitle {
+  margin-top: clamp(8px, 2cqi, 20px);
+  font-size: clamp(13px, 2.2cqi, 21px);
+  line-height: 1.4;
+  color: #8b95a9;
+  max-width: 600px;
+}
+
+/* ── Secondary panel (row 1, col 2): column → supporting band → sliver ── */
+
+.productPanel {
+  grid-area: 1 / 2 / 2 / 3;
+  background: var(--accent);
+  padding: clamp(12px, 2cqi, 36px) clamp(24px, 4cqi, 48px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px 40px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.panelLead {
+  min-width: 220px;
+}
+
+.panelEyebrow {
+  font-size: clamp(9px, 1.25cqi, 12px);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 clamp(6px, 3cqh, 16px);
+}
+
+.panelMission {
+  font-size: clamp(14px, 12cqh, 24px);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: #fff;
+  margin: 0;
+  max-width: 280px;
+}
+
+.panelFeatures {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px 32px;
+  margin: 0;
+  padding: 0;
+}
+
+.panelFeature {
+  display: flex;
+  gap: 10px;
+}
+
+.featureSymbol {
+  font-size: 16px;
+  opacity: 0.6;
+  width: 20px;
+  text-align: center;
+  color: #fff;
+}
+
+.featureTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 2px;
+}
+
+.featureDetail {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0;
+}
+
+/* ── Mosaic region (row 3, col 1): the architecture block ── */
+
+.productMatrix {
+  grid-area: 3 / 1 / 4 / 2;
+  position: relative;
+  overflow: hidden;
+  padding: 1px;
+}
+
+.matrixCell {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid #050810;
+  border-radius: 2px;
+}
+
+.matrixCell--blue {
+  background: var(--accent);
+}
+
+.matrixCell--blue-dark {
+  background: var(--accent-dark);
+}
+
+.matrixCell--gold {
+  background: var(--gold);
+}
+
+.matrixCell--white {
+  background: var(--text-primary);
+}
+
+/* ── Statement region (rows 2-3, col 2) ── */
+
+.heroStatement {
+  grid-area: 2 / 2 / 4 / 3;
+  padding: clamp(24px, 4cqi, 48px);
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.statementText {
+  font-size: clamp(28px, 7.5cqi, 84px);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 0.98;
+  margin: 0;
+  color: #f0f2f5;
+  white-space: pre-line;
+}
+
+/* ── Static fallback (mobile / reduced motion): stacked normal flow ── */
+
+.heroGrid--static {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  height: auto;
+  padding: 64px 24px;
+  background: none;
+  contain: none;
+}
+
+.mistralHero:has(.heroGrid--static) {
+  height: auto;
+  overflow: visible;
+}
+
+.heroGrid--static .heroHeadline,
+.heroGrid--static .productPanel,
+.heroGrid--static .productMatrix,
+.heroGrid--static .heroStatement {
+  grid-area: auto;
+  padding: 0;
+}
+
+.heroGrid--static .heroHeadline {
+  order: 1;
+}
+
+.heroGrid--static .heroStatement {
+  order: 2;
+}
+
+.heroGrid--static .productMatrix {
+  order: 3;
+  min-height: 240px;
+}
+
+.heroGrid--static .productPanel {
+  order: 4;
+  padding: 32px;
+}
+
+@media (max-width: 767px) {
+  .heroTitle {
+    font-size: clamp(32px, 7vw, 44px);
+  }
+
+  .heroEyebrow {
+    font-size: 11px;
+    margin-bottom: 16px;
+  }
+
+  .heroHeadline,
+  .heroStatement {
+    padding: 32px 24px;
+  }
+}

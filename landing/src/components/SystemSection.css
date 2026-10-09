@@ -1,0 +1,181 @@
+/* ── System section: exact reference-style threaded network ── */
+
+.sysBand {
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+.sysTitle {
+  max-width: 820px;
+  margin: 0 auto;
+  text-align: center;
+  font-size: clamp(34px, 4.4vw, 60px);
+  font-weight: 500;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+}
+
+.sysNetwork {
+  position: relative;
+  margin: 64px 0 52px;
+}
+
+.sysNetwork__web {
+  position: absolute;
+  inset: -80px 0;
+  width: 100%;
+  height: calc(100% + 160px);
+  pointer-events: none;
+}
+
+.sysNetwork__cluster {
+  position: relative;
+  max-width: 880px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sysNetwork__row {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  gap: 36px;
+  flex-wrap: wrap;
+}
+
+.sysNetwork__row--offset {
+  padding-left: 56px;
+}
+
+/* ── The string threaded through a row, extending past the frame ── */
+
+.sysRowString {
+  position: absolute;
+  left: -50vw;
+  right: -50vw;
+  top: 50%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.16);
+  pointer-events: none;
+}
+
+/* ── Concept chips ── */
+
+.sysChip {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  background: var(--bg-surface);
+  font-size: 18px;
+  line-height: 1.2;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.sysChip::before,
+.sysChip::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translateY(-50%);
+}
+
+.sysChip::before {
+  left: -9px;
+}
+
+.sysChip::after {
+  right: -9px;
+}
+
+.sysChip--active {
+  padding: 13px 24px;
+  background: var(--bg-canvas);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.sysChip--center {
+  background: var(--bg-canvas);
+  border-color: rgba(99, 102, 241, 0.55);
+  color: var(--text-primary);
+}
+
+.sysChip__icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.sysChip__icon--accent {
+  color: #6366f1;
+  font-size: 16px;
+}
+
+.sysCopy {
+  max-width: 540px;
+  margin: 0 auto;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 767px) {
+  .sysNetwork {
+    margin: 40px 0 36px;
+  }
+
+  .sysNetwork__web,
+  .sysRowString {
+    display: none;
+  }
+
+  .sysNetwork__cluster {
+    gap: 16px;
+  }
+
+  .sysNetwork__row {
+    gap: 12px;
+  }
+
+  .sysNetwork__row--offset {
+    padding-left: 0;
+  }
+
+  .sysChip {
+    padding: 8px 14px;
+    font-size: 14px;
+  }
+
+  .sysChip--active {
+    padding: 9px 16px;
+    font-size: 15px;
+  }
+
+  .sysChip::before,
+  .sysChip::after {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sysChip {
+    transition: none !important;
+  }
+}

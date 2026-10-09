@@ -1,0 +1,236 @@
+/* ── Product Showcase: Mistral-style asymmetric grid ── */
+
+.ps {
+  position: relative;
+  min-height: min(1000px, 100vh);
+  padding: 100px 0 80px;
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+.ps__heading {
+  text-align: center;
+  margin: 0 auto 80px;
+  font-size: clamp(48px, 5vw, 76px);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  color: #f0f2f5;
+  max-width: 800px;
+}
+
+.ps__heading span {
+  color: #6366f1;
+}
+
+.ps__composition {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: auto;
+  gap: 0;
+  /* Named areas for asymmetric placement */
+  grid-template-areas:
+    "hero   hero   hero   hero   hero   hero   hero   hero  hero   hero   hero   hero"
+    "deco1  deco1  tasks  tasks  tasks  tasks  focus  focus focus  focus  deco2   deco2"
+    "habits habits habits calendar calendar calendar calendar calendar calendar ai    ai     ai"
+    "deco3  deco3  deco3  calendar calendar calendar calendar calendar calendar ai    ai     ai"
+    "wf     wf     wf     wf      stats  stats  stats  stats  deco4  deco4  deco4  deco4"
+    "deco5  deco5  deco5  deco5   stats  stats  stats  stats  deco4  deco4  deco4  deco4";
+}
+
+.ps__card {
+  border: 1px solid var(--border-color);
+  background: var(--bg-canvas);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 24px;
+  min-height: 140px;
+  transition: border-color 250ms ease, background 250ms ease;
+  cursor: default;
+  overflow: hidden;
+}
+
+.ps__card:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-elevated);
+}
+
+.ps__card--hero {
+  grid-area: hero;
+  min-height: 200px;
+  padding: 36px;
+}
+
+.ps__card--tasks { grid-area: tasks; }
+.ps__card--focus { grid-area: focus; }
+.ps__card--habits { grid-area: habits; min-height: 120px; }
+.ps__card--workflows { grid-area: wf; min-height: 120px; }
+.ps__card--stats { grid-area: stats; }
+
+.ps__card--wide {
+  grid-area: calendar;
+  min-height: 160px;
+}
+
+.ps__card--tall {
+  grid-area: ai;
+  min-height: 240px;
+}
+
+.ps__card__icon {
+  font-size: 20px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  transition: transform 250ms ease;
+}
+
+.ps__card:hover .ps__card__icon {
+  transform: translateY(-2px);
+}
+
+.ps__card__title {
+  font-size: clamp(20px, 2vw, 28px);
+  font-weight: 600;
+  color: #f0f2f5;
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+}
+
+.ps__card__desc {
+  font-size: clamp(13px, 1.2vw, 16px);
+  color: #8b95a9;
+  margin: 0;
+  line-height: 1.4;
+  max-width: 280px;
+}
+
+/* ── Decorative blocks ── */
+
+.ps__deco {
+  background: var(--bg-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.ps__deco--1 { grid-area: deco1; min-height: 40px; }
+.ps__deco--2 { grid-area: deco2; min-height: 40px; }
+.ps__deco--3 { grid-area: deco3; min-height: 60px; }
+.ps__deco--4 { grid-area: deco4; min-height: 80px; }
+.ps__deco--5 { grid-area: deco5; min-height: 40px; }
+
+/* ── Floating diamonds ── */
+
+.ps__diamond {
+  position: absolute;
+  width: 56px;
+  aspect-ratio: 1;
+  background: var(--bg-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transform: rotate(45deg);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.ps__diamond--1 {
+  top: 6%;
+  right: 4%;
+  width: 64px;
+}
+
+.ps__diamond--2 {
+  bottom: 12%;
+  left: 2%;
+  width: 48px;
+}
+
+.ps__diamond--3 {
+  top: 45%;
+  right: -1%;
+  width: 40px;
+}
+
+/* ── Responsive ── */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .ps__composition {
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-areas:
+      "hero   hero   hero   hero   hero   hero   hero   hero"
+      "tasks  tasks  tasks  tasks  focus  focus  focus  focus"
+      "habits habits calendar calendar calendar calendar ai   ai"
+      "wf     wf     wf     stats  stats  deco4  deco4  deco4";
+    gap: 0;
+  }
+
+  .ps__deco--1,
+  .ps__deco--2,
+  .ps__deco--3,
+  .ps__deco--5 {
+    display: none;
+  }
+
+  .ps__card--hero { min-height: 160px; }
+  .ps__card--tall { min-height: 180px; }
+}
+
+@media (max-width: 767px) {
+  .ps {
+    min-height: auto;
+    padding: 60px 0;
+  }
+
+  .ps__heading {
+    margin-bottom: 48px;
+    font-size: clamp(32px, 8vw, 48px);
+  }
+
+  .ps__composition {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0 16px;
+  }
+
+  .ps__card {
+    min-height: 100px;
+    padding: 20px;
+  }
+
+  .ps__card--hero {
+    min-height: 140px;
+    padding: 24px;
+  }
+
+  .ps__card--tall {
+    min-height: 140px;
+  }
+
+  .ps__deco {
+    display: none;
+  }
+
+  .ps__diamond {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ps__card,
+  .ps__deco,
+  .ps__diamond {
+    transition: none !important;
+    animation: none !important;
+  }
+}
