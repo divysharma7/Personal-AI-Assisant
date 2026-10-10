@@ -1,5 +1,4 @@
 import { MistralHero } from "../components/landing/MistralHero";
-import { TrustStrip } from "../components/TrustStrip";
 import { ProblemSection } from "../components/ProblemSection";
 import { SystemSection } from "../components/SystemSection";
 import { WorkflowSection } from "../components/WorkflowSection";
@@ -28,7 +27,6 @@ export default function HomePage() {
   return (
     <>
       <MistralHero />
-      <TrustStrip />
       <ProblemSection />
       <SystemSection />
       <WorkflowSection />
