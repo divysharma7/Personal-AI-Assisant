@@ -428,14 +428,18 @@ export default function TaskWorkspace({ range }: TaskWorkspaceProps) {
     event.preventDefault()
     const title = newTaskTitle.trim()
     if (!title) return
-    await createTask({
-      title,
-      status: 'todo',
-      priority: 'none',
-      dueDate: range === 'all' ? null : now.toISOString(),
-    })
-    setNewTaskTitle('')
-    setComposerOpen(false)
+    try {
+      await createTask({
+        title,
+        status: 'todo',
+        priority: 'none',
+        dueDate: range === 'all' ? null : now.toISOString(),
+      })
+      setNewTaskTitle('')
+      setComposerOpen(false)
+    } catch (err) {
+      console.error('Failed to create task:', err)
+    }
   }
 
   const renderTasks = (taskList: TaskRecord[]) => taskList.map((task) => (
