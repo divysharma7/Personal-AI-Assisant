@@ -1,32 +1,36 @@
 import { motion } from "framer-motion";
 import { useInView } from "../hooks/useInView";
-import { Target, Compass, Zap, TrendingUp } from "lucide-react";
 import { PageContainer } from "./layout/PageContainer";
+import { IconTile } from "./ui";
 
 const steps = [
   {
-    icon: <Target size={20} />,
+    icon: "🎯",
+    color: "#ef4444",
     number: "01",
     title: "Intention",
     description:
       "Start each day with a morning ritual. Pick your top outcome. Life OS builds your task list around it.",
   },
   {
-    icon: <Compass size={20} />,
+    icon: "🧭",
+    color: "#3b82f6",
     number: "02",
     title: "Guidance",
     description:
       "Today view shows exactly what's due. The Eisenhower Matrix sorts urgency from importance. No noise.",
   },
   {
-    icon: <Zap size={20} />,
+    icon: "⚡",
+    color: "#f59e0b",
     number: "03",
     title: "Execution",
     description:
       "Start a Pomodoro, check in a habit, drag a task into a time block. Every action is one click away.",
   },
   {
-    icon: <TrendingUp size={20} />,
+    icon: "📈",
+    color: "#22c55e",
     number: "04",
     title: "Reflection",
     description:
@@ -73,9 +77,12 @@ export function WorkflowSection() {
               transition={{ duration: 0.5, delay: 0.15 + i * 0.12 }}
               className="relative flex flex-col items-center text-center"
             >
-              <div className="relative z-10 w-12 h-12 rounded-2xl bg-bg-primary border border-border flex items-center justify-center text-accent mb-5">
-                {step.icon}
-              </div>
+              <IconTile
+                icon={step.icon}
+                color={step.color}
+                size="lg"
+                className="relative z-10 mb-5"
+              />
               <span className="text-[10px] font-bold text-accent/60 uppercase tracking-widest mb-2">
                 {step.number}
               </span>

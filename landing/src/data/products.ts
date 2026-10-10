@@ -19,7 +19,7 @@ export const products: Product[] = [
   {
     title: "Today",
     description: "See what matters right now.",
-    icon: "☀",
+    icon: "☀️",
     variant: "hero",
     gridArea: "hero",
     entryFrom: "top",
@@ -28,7 +28,7 @@ export const products: Product[] = [
   {
     title: "Tasks",
     description: "Organize everything in one place.",
-    icon: "☑",
+    icon: "✅",
     variant: "medium",
     gridArea: "tasks",
     entryFrom: "left",
@@ -37,7 +37,7 @@ export const products: Product[] = [
   {
     title: "Focus",
     description: "Deep work that counts.",
-    icon: "⏱",
+    icon: "🎯",
     variant: "medium",
     gridArea: "focus",
     entryFrom: "right",
@@ -46,7 +46,7 @@ export const products: Product[] = [
   {
     title: "Calendar",
     description: "Your schedule, unified.",
-    icon: "📅",
+    icon: "🗓️",
     variant: "wide",
     gridArea: "calendar",
     entryFrom: "bottom",
@@ -64,7 +64,7 @@ export const products: Product[] = [
   {
     title: "AI Chat",
     description: "Knows your whole day.",
-    icon: "✦",
+    icon: "✨",
     variant: "tall",
     gridArea: "ai",
     entryFrom: "right",
@@ -73,7 +73,7 @@ export const products: Product[] = [
   {
     title: "Workflows",
     description: "Visual boards for every project.",
-    icon: "◫",
+    icon: "🗂️",
     variant: "small",
     gridArea: "workflows",
     entryFrom: "bottom",
@@ -82,7 +82,7 @@ export const products: Product[] = [
   {
     title: "Statistics",
     description: "Measure what matters.",
-    icon: "▧",
+    icon: "📊",
     variant: "medium",
     gridArea: "stats",
     entryFrom: "bottom",

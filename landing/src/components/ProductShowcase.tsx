@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { products, type Product } from "../data/products";
+import { IconTile } from "./ui";
 import "./ProductShowcase.css";
 
 /**
@@ -115,12 +116,7 @@ function ProductCard({
         ease: [0.22, 1, 0.36, 1],
       }}
     >
-      <div
-        className="ps__card__icon"
-        style={{ background: `${product.color}18`, color: product.color }}
-      >
-        {product.icon}
-      </div>
+      <IconTile icon={product.icon} color={product.color} className="mb-3" />
       <h3 className="ps__card__title">{product.title}</h3>
       <p className="ps__card__desc">{product.description}</p>
     </motion.div>

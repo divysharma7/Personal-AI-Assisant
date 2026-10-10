@@ -1,23 +1,26 @@
 import { motion } from "framer-motion";
-import { Layers, BrainCircuit, Timer } from "lucide-react";
 import { useInView } from "../hooks/useInView";
 import { PageContainer } from "./layout/PageContainer";
+import { IconTile } from "./ui";
 
 const problems = [
   {
-    icon: <Layers size={20} />,
+    icon: "🧩",
+    color: "#ef4444",
     title: "Fragmented tools",
     description:
       "Your tasks live in one app, calendar in another, habits in a third, and focus sessions in a fourth. Every switch costs context and momentum.",
   },
   {
-    icon: <BrainCircuit size={20} />,
+    icon: "🗺️",
+    color: "#3b82f6",
     title: "No unified picture",
     description:
       "You can't see how your time, habits, and tasks connect. There's no single view of what matters today, what's at risk, or where your focus actually went.",
   },
   {
-    icon: <Timer size={20} />,
+    icon: "🔄",
+    color: "#f59e0b",
     title: "Planning without feedback",
     description:
       "You plan your day in the morning and forget the plan by noon. There's no feedback loop — no way to see if you're actually building the routines you intended.",
@@ -59,9 +62,7 @@ export function ProblemSection() {
               transition={{ duration: 0.5, delay: 0.15 + i * 0.1 }}
               className="group bg-bg-secondary rounded-2xl p-6 md:p-8 border border-border hover:border-border-hover transition-colors"
             >
-              <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent mb-5">
-                {problem.icon}
-              </div>
+              <IconTile icon={problem.icon} color={problem.color} className="mb-5" />
               <h3 className="text-base font-semibold text-text-primary mb-3">
                 {problem.title}
               </h3>
