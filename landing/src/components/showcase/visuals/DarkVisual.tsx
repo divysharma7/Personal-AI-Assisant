@@ -40,7 +40,7 @@ export function DarkVisual() {
           <ChatBubble role="user" text="What should I focus on today?" />
           <ChatBubble
             role="ai"
-            text="You have 3 tasks due. Your top priority is Ship auth bugfix — it's blocking the team. You've focused 2h 15m so far."
+            text="You have 3 tasks due. Your top priority is Ship auth bugfix. It's blocking the team. You've focused 2h 15m so far."
           />
           <div className="flex flex-wrap gap-1.5 mt-3">
             {["Start focus session", "Show my habits", "Plan tomorrow"].map((action) => (

@@ -13,7 +13,7 @@ export function IconTile({ icon, color, size = "md", className = "", style }: Ic
   return (
     <span
       className={`iconTile iconTile--${size} ${className}`.trim()}
-      style={{ background: `${color}18`, ...style }}
+      style={{ background: `${color}18`, color, ...style }}
     >
       {icon}
     </span>

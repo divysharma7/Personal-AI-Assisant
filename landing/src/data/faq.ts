@@ -7,7 +7,7 @@ export const faqs: FAQ[] = [
   {
     question: "Who is Life OS for?",
     answer:
-      "Life OS is built for professionals, founders, and makers who juggle tasks, habits, meetings, and focus time — and want one calm interface instead of five disconnected apps.",
+      "Life OS is built for professionals, founders, and makers who juggle tasks, habits, meetings, and focus time, and want one calm interface instead of five disconnected apps.",
   },
   {
     question: "What problem does it solve?",
@@ -27,7 +27,7 @@ export const faqs: FAQ[] = [
   {
     question: "Is my data secure?",
     answer:
-      "Every user's data is fully isolated. The API enforces ownership filtering on every query — you can only see your own data. Authentication uses signed JWTs stored in HTTP-only cookies.",
+      "Every user's data is fully isolated. The API enforces ownership filtering on every query: you can only see your own data. Authentication uses signed JWTs stored in HTTP-only cookies.",
   },
   {
     question: "Can teams use it collaboratively?",

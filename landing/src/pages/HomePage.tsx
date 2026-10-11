@@ -15,6 +15,7 @@ import { ComparisonSection } from "../components/ComparisonSection";
 import { TestimonialSection } from "../components/TestimonialSection";
 import { FAQAccordion } from "../components/FAQAccordion";
 import { FinalCTA } from "../components/FinalCTA";
+import { CaseStudyPreview } from "../components/CaseStudyPreview";
 
 const visuals = [
   <BlueVisual key="blue" />,
@@ -37,6 +38,7 @@ export default function HomePage() {
         </FeatureShowcase>
       ))}
       <ProductDemo />
+      <CaseStudyPreview />
       <UseCaseSection />
       <ComparisonSection />
       <TestimonialSection />

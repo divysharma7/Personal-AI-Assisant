@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { navigation } from "../data/navigation";
@@ -35,7 +36,13 @@ export function Navbar() {
 
         <div className="hidden md:flex items-center gap-8">
           {navigation.links.map((link) => (
-            <a
+            link.href.startsWith("/") ? <Link
+              key={link.href}
+              to={link.href}
+              className="text-sm text-text-secondary transition-colors hover:text-text-primary"
+            >
+              {link.label}
+            </Link> : <a
               key={link.href}
               href={link.href}
               className="text-sm text-text-secondary transition-colors hover:text-text-primary"
@@ -52,10 +59,7 @@ export function Navbar() {
           >
             {navigation.login.label}
           </a>
-          <a
-            href={navigation.cta.href}
-            className="text-sm font-medium bg-accent hover:bg-accent-hover text-white px-5 py-2.5 rounded-lg transition-colors"
-          >
+          <a href={navigation.cta.href} className="btn3d btn3d--sm">
             {navigation.cta.label}
           </a>
         </div>
@@ -80,14 +84,19 @@ export function Navbar() {
           >
             <PageContainer className="flex flex-col gap-1 py-4">
               {navigation.links.map((link) => (
-                <a
+                link.href.startsWith("/") ? <Link
                   key={link.href}
-                  href={link.href}
+                  to={link.href}
                   className="text-text-secondary hover:text-text-primary py-2.5 px-2 text-sm transition-colors"
                   onClick={() => setMobileOpen(false)}
                 >
                   {link.label}
-                </a>
+                </Link> : <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-text-secondary hover:text-text-primary py-2.5 px-2 text-sm transition-colors"
+                  onClick={() => setMobileOpen(false)}
+                >{link.label}</a>
               ))}
               <div className="flex flex-col gap-2 pt-4 mt-2 border-t border-border">
                 <a
@@ -99,7 +108,7 @@ export function Navbar() {
                 </a>
                 <a
                   href={navigation.cta.href}
-                  className="text-sm font-medium bg-accent text-white py-2.5 px-5 rounded-lg text-center"
+                  className="btn3d btn3d--sm"
                   onClick={() => setMobileOpen(false)}
                 >
                   {navigation.cta.label}

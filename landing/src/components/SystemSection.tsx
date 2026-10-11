@@ -151,8 +151,8 @@ export function SystemSection() {
           transition={{ duration: 0.6, delay: 0.55, ease: [0.22, 1, 0.36, 1] }}
           className="sysCopy"
         >
-          Life OS connects your tasks, calendar, habits, focus and daily context
-          — then helps you decide what deserves your attention now.
+          Life OS connects your tasks, calendar, habits, focus and daily context,
+          then helps you decide what deserves your attention now.
         </motion.p>
       </PageContainer>
     </section>

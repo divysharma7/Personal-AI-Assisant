@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useInView } from "../hooks/useInView";
-import { X, Check } from "lucide-react";
 import { PageContainer } from "./layout/PageContainer";
+import { IconTile } from "./ui";
 
 const rows = [
   {
@@ -58,17 +58,17 @@ export function ComparisonSection() {
           transition={{ duration: 0.6, delay: 0.15 }}
           className="max-w-[920px] mx-auto"
         >
-          {/* Header */}
-          <div className="hidden md:grid md:grid-cols-2 gap-4 mb-4 px-4">
-            <span className="text-xs font-medium text-text-muted uppercase tracking-wide">
+          {/* Column headers: flat vs raised */}
+          <div className="hidden md:grid md:grid-cols-2 gap-4 mb-4 px-1">
+            <span className="tile3d tile3d--sunken inline-flex w-fit px-4 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wide">
               Traditional approach
             </span>
-            <span className="text-xs font-medium text-accent uppercase tracking-wide">
+            <span className="tile3d tile3d--accent inline-flex w-fit px-4 py-2.5 text-xs font-medium text-accent uppercase tracking-wide">
               Life OS
             </span>
           </div>
 
-          {/* Rows */}
+          {/* Rows: sunken old way vs raised Life OS */}
           <div className="space-y-2">
             {rows.map((row, i) => (
               <motion.div
@@ -78,14 +78,14 @@ export function ComparisonSection() {
                 transition={{ duration: 0.4, delay: 0.2 + i * 0.06 }}
                 className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4"
               >
-                <div className="flex items-start gap-3 bg-bg-secondary rounded-xl px-4 py-3.5 border border-border">
-                  <X size={14} className="text-red-400/60 flex-shrink-0 mt-0.5" />
+                <div className="tile3d tile3d--sunken flex items-start gap-3 px-4 py-3.5">
+                  <IconTile icon="❌" color="#ef4444" size="sm" className="mt-0.5" />
                   <span className="text-xs text-text-secondary leading-relaxed">
                     {row.traditional}
                   </span>
                 </div>
-                <div className="flex items-start gap-3 bg-bg-secondary rounded-xl px-4 py-3.5 border border-accent/10">
-                  <Check size={14} className="text-accent flex-shrink-0 mt-0.5" />
+                <div className="tile3d tile3d--accent flex items-start gap-3 px-4 py-3.5">
+                  <IconTile icon="✅" color="#22c55e" size="sm" className="mt-0.5" />
                   <span className="text-xs text-text-primary leading-relaxed">
                     {row.lifeos}
                   </span>

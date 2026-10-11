@@ -36,7 +36,7 @@ export const useCases: UseCase[] = [
   {
     audience: "Knowledge Workers",
     challenge:
-      "You read articles, attend meetings, and have ideas — but nothing gets captured or revisited.",
+      "You read articles, attend meetings, and have ideas, but nothing gets captured or revisited.",
     solution:
       "The Memories system stores books, ideas, quotes, and links. The AI assistant recalls context from past chat sessions.",
     outcome:

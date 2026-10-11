@@ -9,7 +9,7 @@ export function AnnouncementBar() {
         <span className="font-medium text-text-primary">
           AI-powered daily brief now available
         </span>
-        <span className="text-text-muted">—</span>
+        <span className="text-text-muted">·</span>
         <a
           href="#product"
           className="inline-flex items-center gap-1 text-accent transition-colors hover:text-accent-hover"

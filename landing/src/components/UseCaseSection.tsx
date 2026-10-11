@@ -37,17 +37,24 @@ export function UseCaseSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.15 + i * 0.1 }}
-              className="group bg-bg-primary rounded-2xl p-6 md:p-8 border border-border hover:border-border-hover transition-colors flex flex-col"
+              className="tile3d p-6 md:p-8 flex flex-col"
             >
-              <span className="text-xs font-medium text-accent mb-3">{uc.audience}</span>
-              <h3 className="text-sm font-semibold text-text-primary mb-3">{uc.challenge}</h3>
-              <p className="text-xs text-text-secondary leading-relaxed mb-4 flex-1">{uc.solution}</p>
-              <div className="pt-4 border-t border-border">
-                <p className="text-xs text-text-muted italic mb-3">"{uc.outcome}"</p>
-                <span className="inline-flex items-center gap-1.5 text-xs text-accent font-medium group-hover:gap-2.5 transition-all">
-                  Learn more <ArrowRight size={12} />
-                </span>
+              <span className="tile3d tile3d--accent inline-flex w-fit px-2.5 py-1 mb-4 text-[10px] font-semibold uppercase tracking-widest text-accent">
+                {uc.audience}
+              </span>
+              <h3 className="text-sm font-semibold text-text-primary mb-3">
+                {uc.challenge}
+              </h3>
+              <p className="text-xs text-text-secondary leading-relaxed mb-4 flex-1">
+                {uc.solution}
+              </p>
+              <div className="tile3d tile3d--sunken px-4 py-3 mb-4">
+                <p className="text-xs text-text-muted italic">"{uc.outcome}"</p>
               </div>
+              <a href="#" className="btn3d btn3d--ghost btn3d--sm w-fit">
+                Learn more
+                <ArrowRight size={12} />
+              </a>
             </motion.div>
           ))}
         </div>

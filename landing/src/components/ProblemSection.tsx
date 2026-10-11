@@ -23,7 +23,7 @@ const problems = [
     color: "#f59e0b",
     title: "Planning without feedback",
     description:
-      "You plan your day in the morning and forget the plan by noon. There's no feedback loop — no way to see if you're actually building the routines you intended.",
+      "You plan your day in the morning and forget the plan by noon. There's no feedback loop, no way to see if you're actually building the routines you intended.",
   },
 ];
 

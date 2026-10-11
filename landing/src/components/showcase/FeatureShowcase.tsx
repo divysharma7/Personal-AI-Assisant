@@ -24,7 +24,7 @@ export function FeatureShowcase({ data, children }: Props) {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
           <h2 className="fs__title">{data.title}</h2>
-          <a href="#" className="fs__cta">
+          <a href="#" className="btn3d btn3d--ghost btn3d--sm">
             {data.cta}
             <span className="fs__cta-arrow">→</span>
           </a>

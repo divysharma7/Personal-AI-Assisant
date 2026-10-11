@@ -200,7 +200,7 @@ function OverviewTab() {
           <span className="text-[10px] font-medium text-accent">AI Brief</span>
         </div>
         <p className="text-[10px] text-text-secondary leading-relaxed">
-          You have 4 tasks today. Top priority: <span className="text-text-primary font-medium">Ship auth bugfix</span>. Your run habit streak is at 12 days — keep it going.
+          You have 4 tasks today. Top priority: <span className="text-text-primary font-medium">Ship auth bugfix</span>. Your run habit streak is at 12 days. Keep it going.
         </p>
       </div>
     </div>

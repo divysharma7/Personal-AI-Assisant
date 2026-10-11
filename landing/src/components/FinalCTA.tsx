@@ -45,17 +45,11 @@ export function FinalCTA() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href="https://laif-iota.vercel.app/signup"
-              className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white font-medium px-8 py-4 rounded-xl transition-all hover:shadow-lg hover:shadow-accent/20 text-sm"
-            >
+            <a href="https://laif-iota.vercel.app/signup" className="btn3d">
               Get Started Free
               <ArrowRight size={16} />
             </a>
-            <a
-              href="https://laif-iota.vercel.app/login"
-              className="inline-flex items-center gap-2 text-text-secondary hover:text-text-primary font-medium px-6 py-4 rounded-xl border border-border hover:border-border-hover transition-all text-sm"
-            >
+            <a href="https://laif-iota.vercel.app/login" className="btn3d btn3d--ghost">
               Log in
             </a>
           </div>

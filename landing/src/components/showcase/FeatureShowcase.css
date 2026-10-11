@@ -29,34 +29,6 @@
   max-width: 900px;
 }
 
-.fs__cta {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 8px 16px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background: transparent;
-  color: #f0f2f5;
-  cursor: pointer;
-  transition: border-color 200ms ease, background 200ms ease;
-  white-space: nowrap;
-  text-decoration: none;
-}
-
-.fs__cta:hover {
-  border-color: var(--border-hover);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.fs__cta-arrow {
-  font-size: 16px;
-  line-height: 1;
-}
-
 /* ── Divider ── */
 
 .fs__divider {
