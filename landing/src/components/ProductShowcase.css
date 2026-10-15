@@ -10,12 +10,12 @@
 
 .ps__heading {
   text-align: center;
-  margin: 0 auto 80px;
-  font-size: clamp(48px, 5vw, 76px);
+  margin: 0 auto 64px;
+  font-size: clamp(36px, 4vw, 52px);
   font-weight: 500;
-  letter-spacing: -0.04em;
-  line-height: 1.1;
-  color: #f0f2f5;
+  letter-spacing: -0.025em;
+  line-height: 1.08;
+  color: var(--text-primary);
   max-width: 800px;
 }
 
@@ -66,11 +66,27 @@
   padding: 36px;
 }
 
-.ps__card--tasks { grid-area: tasks; }
-.ps__card--focus { grid-area: focus; }
-.ps__card--habits { grid-area: habits; min-height: 120px; }
-.ps__card--workflows { grid-area: wf; min-height: 120px; }
-.ps__card--stats { grid-area: stats; }
+.ps__card--tasks {
+  grid-area: tasks;
+}
+
+.ps__card--focus {
+  grid-area: focus;
+}
+
+.ps__card--habits {
+  grid-area: habits;
+  min-height: 120px;
+}
+
+.ps__card--workflows {
+  grid-area: wf;
+  min-height: 120px;
+}
+
+.ps__card--stats {
+  grid-area: stats;
+}
 
 .ps__card--wide {
   grid-area: calendar;
@@ -87,19 +103,21 @@
 }
 
 .ps__card__title {
-  font-size: clamp(20px, 2vw, 28px);
-  font-weight: 600;
-  color: #f0f2f5;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary);
   margin: 0 0 6px;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 .ps__card__desc {
-  font-size: clamp(13px, 1.2vw, 16px);
-  color: #8b95a9;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-secondary);
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.5;
   max-width: 280px;
+  letter-spacing: 0;
 }
 
 /* ── Decorative blocks ── */
@@ -111,11 +129,30 @@
   overflow: hidden;
 }
 
-.ps__deco--1 { grid-area: deco1; min-height: 40px; }
-.ps__deco--2 { grid-area: deco2; min-height: 40px; }
-.ps__deco--3 { grid-area: deco3; min-height: 60px; }
-.ps__deco--4 { grid-area: deco4; min-height: 80px; }
-.ps__deco--5 { grid-area: deco5; min-height: 40px; }
+.ps__deco--1 {
+  grid-area: deco1;
+  min-height: 40px;
+}
+
+.ps__deco--2 {
+  grid-area: deco2;
+  min-height: 40px;
+}
+
+.ps__deco--3 {
+  grid-area: deco3;
+  min-height: 60px;
+}
+
+.ps__deco--4 {
+  grid-area: deco4;
+  min-height: 80px;
+}
+
+.ps__deco--5 {
+  grid-area: deco5;
+  min-height: 40px;
+}
 
 /* ── Floating diamonds ── */
 
@@ -168,8 +205,13 @@
     display: none;
   }
 
-  .ps__card--hero { min-height: 160px; }
-  .ps__card--tall { min-height: 180px; }
+  .ps__card--hero {
+    min-height: 160px;
+  }
+
+  .ps__card--tall {
+    min-height: 180px;
+  }
 }
 
 @media (max-width: 767px) {
@@ -214,6 +256,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .ps__card,
   .ps__deco,
   .ps__diamond {

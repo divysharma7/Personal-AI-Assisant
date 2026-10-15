@@ -17,6 +17,341 @@
 
 # Page 1
 
+## Secondary Research: So we tried to understand why getting things done feels so hard...
+
+We explored research on procrastination, attention, planning, and human behavior to understand why people struggle to follow through on their intentions.
+
+### What makes taking action difficult?
+
+- **Procrastination and task avoidance**
+- Overwhelming to-do lists
+- Unclear priorities
+- Difficulty getting started
+- Constant distractions
+- Frequent context switching
+- Forgetting commitments
+- Struggling to maintain focus
+
+### What makes these struggles worse?
+
+- **Unrealistic daily planning**
+- Overestimating available time
+- Perfectionism and fear of failure
+- Vague or overwhelming goals
+- Decision fatigue
+- Competing responsibilities
+- Lack of visible progress
+- Relying on motivation alone
+
+### *Consequences of ignoring these challenges*
+
+**Wasted Time** · **Unfinished Goals** · **Mental Overload** · **Stalled Personal Growth**
+
+---
+
+## Primary Research: We listened to how people navigate their everyday chaos...
+
+### Who did we talk to?
+
+We conducted **8 semi-structured interviews** with people balancing different goals, responsibilities, and routines to understand how they organize their lives, prioritize tasks, and turn intentions into action.
+
+**Participant Profiles**
+
+- **Students:** Managing academics, coursework, and personal growth goals
+- **Working professionals:** Balancing deadlines, meetings, and daily responsibilities
+- **Freelancers:** Juggling multiple clients, non-linear schedules, and variable energy
+- **Tool power users:** Actively using Notion, calendars, and to-do apps seeking lower upkeep
+
+### How do people manage their tasks today?
+### What happens when their plans fall apart?
+
+We explored:
+
+- **Task capture:** Where do they record ideas, tasks, and commitments?
+- **Prioritization:** How do they decide what deserves attention?
+- **Planning:** How do they organize their day and estimate time?
+- **Task initiation:** What makes starting difficult?
+- **Follow-through:** What causes tasks to get postponed or abandoned?
+- **Existing tools:** How do they use notes, calendars, reminders, and to-do apps?
+- **Recovery:** How do they respond when they fall behind?
+
+---
+
+## Understanding: studied, a lot...
+
+### Why do we struggle to get things done?
+
+Managing everyday responsibilities involves more than remembering tasks. People must decide **what matters, when to act, and how to follow through** while navigating distractions and competing priorities.
+
+Research into **cognitive offloading** suggests that external tools, such as reminders and task lists, can reduce the need to hold intentions in memory.
+
+But **remembering a task doesn't necessarily mean completing it.**
+
+The challenge often lies in turning an intention into a concrete action.
+
+### Bridging the intention–action gap
+
+Research on **implementation intentions** shows that specifying when, where, and how an action will happen can improve goal attainment.
+
+For Life OS, this suggests that a task manager should support more than task collection. It should help people:
+
+- **Capture** commitments before they are forgotten
+- **Clarify** vague intentions into actionable next steps
+- **Prioritize** what deserves attention
+- **Plan** when and how to begin
+- **Focus** on one manageable action at a time
+- **Review** progress and adapt when plans change
+
+**The design opportunity:** Move beyond storing tasks to helping people translate intentions into action.
+
+---
+
+## From Intention to Action
+
+### 01. Capture
+**Get it out of your head.**
+
+Ideas, tasks, and commitments appear throughout the day. Capture them quickly without interrupting what you're already doing.
+
+### 02. Clarify
+**Make it actionable.**
+
+A task like "work on portfolio" feels overwhelming. Break it down until the next step is clear enough to begin.
+
+### 03. Prioritize
+**Decide what matters.**
+
+Not everything deserves your attention today. Identify the work that matters most instead of reacting to whatever feels urgent.
+
+### 04. Plan
+**Make room for it.**
+
+Turn priorities into realistic plans based on your available time, deadlines, and existing commitments.
+
+### 05. Execute
+**Focus on the next step.**
+
+Stop repeatedly deciding what to do. Start one meaningful action, stay with it, and build momentum through progress.
+
+### 06. Reflect
+**Learn and adjust.**
+
+See what got done, understand what got in the way, and adjust your next plan without carrying yesterday's guilt.
+
+---
+
+## Affinity Mapping: Connecting the dots...
+
+We grouped recurring challenges from productivity and behavioral research to understand where people struggle between **planning what they want to do and actually doing it**.
+
+### 01. Task Overload
+- Too many tasks competing for attention.
+- Commitments scattered across different apps.
+- Difficulty remembering everything.
+- Feeling overwhelmed by growing to-do lists.
+
+### 02. Prioritization
+- Everything feels equally important.
+- Urgent tasks overshadow meaningful goals.
+- Spending too much time deciding what to do.
+- Choosing easy tasks over important ones.
+
+### 03. Planning & Time
+- Underestimating how long tasks take.
+- Scheduling more work than the day allows.
+- Plans disrupted by unexpected meetings.
+- Repeatedly moving unfinished tasks to tomorrow.
+
+### 04. Procrastination
+- Delaying tasks that feel difficult or unclear.
+- Waiting to feel motivated before starting.
+- Avoiding work with uncertain outcomes.
+- Getting stuck thinking instead of acting.
+
+### 05. Focus & Distractions
+- Constant notifications interrupting work.
+- Switching between multiple unfinished tasks.
+- Difficulty returning to work after interruptions.
+- Losing productive time to digital distractions.
+
+### 06. Goals & Consistency
+- Long-term goals forgotten in daily routines.
+- Difficulty maintaining habits.
+- Starting projects with enthusiasm but losing momentum.
+- Struggling to connect daily tasks to bigger goals.
+
+### 07. Progress & Reflection
+- Feeling busy without meaningful progress.
+- No clear picture of where time goes.
+- Difficulty recognizing recurring procrastination.
+- Feeling guilty about unfinished work.
+
+### 08. Tools & Workflows
+- Tasks spread across notes, calendars, and apps.
+- Spending too much time organizing productivity tools.
+- Complicated systems that are hard to maintain.
+- Reminders becoming easy to ignore.
+
+---
+
+## As we connected the dots, a pattern began to emerge.
+
+The underlying problem wasn't simply **poor time management or a lack of motivation**. People often know what they need to do, but struggle to turn those intentions into action. Tasks pile up, priorities become unclear, and even important goals get pushed aside by everyday distractions.
+
+We began to understand that **organizing tasks isn't the same as completing them**. Traditional productivity tools help people remember what needs to be done, but remembering is only one part of the challenge. The real difficulty lies in **deciding what matters, knowing where to start, and consistently following through**.
+
+This led us to rethink the role of a productivity system. Instead of creating another place to manage endless to-do lists, **Life OS should reduce the effort required to take action**. The goal isn't to make people dependent on a tool, but to help them build **clarity, consistency, and a greater sense of control over their time**.
+
+---
+
+## Personas: Who are my primary users?
+
+### Ambitious but Overwhelmed
+**Aarav Mehta, 28 years**  
+Software Engineer · 5 Years of Experience  
+Full-time Professional · Building Side Projects
+
+#### In his own words
+- *"I know exactly what I want to achieve. But by the end of the day, I've been busy with everything except the things that actually matter to me."*
+- *"I don't need another app to remind me how much I haven't done. I need something that helps me get started."*
+
+#### Behavioral Traits
+- **Ambition & Growth Mindset:** High (92%)
+- **Awareness of Productivity Challenges:** High (88%)
+- **Consistency in Execution:** Inconsistent (42%)
+- **Ability to Prioritize:** Needs Support (36%)
+- **Willingness to Improve:** High (96%)
+
+#### Pain Points
+- **Struggles to prioritize** when multiple tasks feel equally important.
+- **Overplans his day**, often underestimating how long work takes.
+- **Procrastinates on important goals** when tasks feel too large or unclear.
+- Gets distracted by meetings, notifications, and unexpected work.
+- Keeps switching between productivity tools without finding a sustainable routine.
+- Feels frustrated when a busy day doesn't translate into meaningful progress.
+
+#### Goals
+- **Make consistent progress** on personal and professional goals.
+- Spend less time organizing tasks and more time completing them.
+- **Know what to work on next** without constantly rethinking priorities.
+- Build a realistic daily routine that accommodates unexpected work.
+- Improve focus and reduce procrastination.
+- **Feel in control of his time** without sacrificing rest or personal life.
+
+#### Feels
+- **Overwhelmed** when his to-do list keeps growing.
+- **Guilty** about repeatedly postponing important tasks.
+- Frustrated when distractions interrupt his plans.
+- **Motivated** by visible progress and small wins.
+- Anxious about falling behind on personal ambitions.
+- Fulfilled when he completes meaningful work.
+
+#### Does
+- Uses task managers, calendars, and notes to organize responsibilities.
+- Creates ambitious daily plans but frequently carries tasks forward.
+- **Completes quick, urgent tasks** before difficult, high-impact work.
+- Saves ideas and learning resources to revisit later.
+- Tries different productivity techniques when his routine breaks down.
+- **Works on personal goals whenever he finds spare time**, rather than consistently making room for them.
+
+### Ambitious but Unaware
+**Rohan Sharma, 26 years**  
+Associate Product Manager · 2 Years of Experience  
+Full-time Professional · Aspiring Entrepreneur
+
+#### In his own words
+- *"I make a to-do list every morning, but somehow the important things keep getting pushed to tomorrow."*
+- *"I think I just need to be more disciplined. I've tried productivity apps before, but I always stop using them."*
+
+#### Behavioral Traits
+- **Ambition & Career Growth:** High (90%)
+- **Awareness of Productivity Challenges:** Low (25%)
+- **Consistency in Execution:** Low (28%)
+- **Ability to Prioritize:** Inconsistent (40%)
+- **Willingness to Improve:** High (92%)
+
+#### Pain Points
+- **Confuses being busy with being productive**, spending most of his day reacting to messages, meetings, and requests.
+- **Struggles to identify priorities** when multiple responsibilities compete for attention.
+- Makes unrealistic daily plans and feels disappointed when he cannot finish them.
+- **Postpones difficult tasks** because they feel overwhelming or require too much thinking.
+- Relies on memory, scattered notes, and reminders to manage commitments.
+- **Abandons productivity apps** when maintaining them starts feeling like additional work.
+
+#### Goals
+- **Feel more in control** of his daily responsibilities.
+- Make consistent progress toward career and personal goals.
+- **Spend less time planning and more time executing.**
+- Build better habits without following a complicated routine.
+- Manage work commitments without sacrificing personal time.
+- **Become more reliable** in following through on what he promises.
+
+#### Feels
+- **Overwhelmed** when unexpected work disrupts his plans.
+- **Frustrated** when another day passes without meaningful progress.
+- Guilty about delaying personal projects.
+- **Motivated** when he completes something important.
+- Uncertain about why his productivity systems never last.
+- Hopeful that better routines could help him achieve more.
+
+#### Does
+- Creates daily to-do lists but rarely reviews unfinished tasks.
+- **Responds to urgent requests first**, even when other work is more important.
+- Uses WhatsApp messages, notes, and memory to remember commitments.
+- **Starts multiple personal projects** but struggles to finish them.
+- Watches productivity videos and tries new techniques occasionally.
+- **Waits for free time or motivation** before working on long-term goals.
+
+### Aware but Resistant
+**Neha Kapoor, 34 years**  
+Senior Product Manager · 9 Years of Experience  
+Full-time Professional · Managing Multiple Priorities
+
+#### In her own words
+- *"I already have a calendar, notes, and three different task lists. Why would I need another app to manage my work?"*
+- *"I know I take on too much, but spending more time planning isn't going to help me finish things faster."*
+
+#### Behavioral Traits
+- **Ambition & Career Growth:** High (94%)
+- **Awareness of Productivity Challenges:** High (88%)
+- **Openness to New Productivity Tools:** Low (22%)
+- **Consistency in Execution:** Moderate (60%)
+- **Willingness to Change Existing Habits:** Low (30%)
+
+#### Pain Points
+- **Constantly switches between responsibilities**, leaving little time for focused work.
+- **Feels overwhelmed by competing priorities** from meetings, stakeholders, and personal commitments.
+- Struggles to make realistic plans because unexpected work frequently disrupts her schedule.
+- **Finds maintaining task managers exhausting**, especially when tasks need constant updating.
+- Relies on memory and existing tools, causing occasional commitments to slip through.
+- **Feels frustrated by productivity advice** that doesn't account for the unpredictability of her workday.
+
+#### Goals
+- **Stay on top of responsibilities** without spending additional time managing them.
+- Protect time for meaningful, high-impact work.
+- **Reduce unnecessary decisions** throughout the day.
+- Maintain a reliable overview of commitments across different areas of life.
+- **Adapt quickly when priorities change** without rebuilding her entire schedule.
+- Feel more in control of work while maintaining a healthy personal life.
+
+#### Feels
+- **Skeptical** about productivity apps that promise to change everything.
+- **Frustrated** by complicated workflows and excessive notifications.
+- Mentally drained after days filled with constant decisions.
+- **Confident** in her professional abilities but dissatisfied with how her time is spent.
+- Protective of her existing routines and working style.
+- **Relieved** when she can make progress without additional planning.
+
+#### Does
+- Uses her calendar, Slack, and notes to manage daily responsibilities.
+- **Prioritizes urgent stakeholder requests** over planned deep work.
+- Keeps important commitments in her head rather than maintaining a separate task system.
+- **Abandons new productivity tools** when setup and maintenance become time-consuming.
+- Frequently adjusts her plans to accommodate unexpected work.
+- **Relies on experience and intuition** to decide what needs attention next.
+
+---
+
 ## The day has no edges (the scenario, revisited)
 
 Phase 1 showed a strained, fragmented day. This phase asks where the day starts and stops.

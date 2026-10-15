@@ -1,0 +1,86 @@
+/* ============================================================
+   Life OS Case Study: Editorial Light Design System
+   Visual Inspiration: Light, calm, human, editorial portfolio.
+   Strict palette:
+   - Main page: #FFFFFF
+   - Soft backgrounds: #FAFAFA, #F3F0FF (soft purple), #EFF8F1 (pale green), #F2F6FF (pale blue), #FFF4EF (pale peach)
+   - Primary text: #111111 / #151515
+   - Secondary text: #666666
+   - Light border: #E8E8E8
+   - Accent purple: #6157E8
+   ============================================================ */
+
+.case-study-light {
+  --cs-bg: #FFFFFF;
+  --cs-bg-alt: #FAFAFA;
+  --cs-bg-purple: #F3F0FF;
+  --cs-bg-green: #EFF8F1;
+  --cs-bg-blue: #F2F6FF;
+  --cs-bg-peach: #FFF4EF;
+  --cs-text-primary: #151515;
+  --cs-text-secondary: #666666;
+  --cs-text-muted: #8E8E8A;
+  --cs-border: #E8E8E8;
+  --cs-accent: #6157E8;
+  --cs-accent-soft: #F3F0FF;
+
+  background-color: var(--cs-bg);
+  color: var(--cs-text-primary);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Base Editorial Typography - wrapped in :where() so Tailwind utility classes override cleanly */
+:where(.case-study-light) h1,
+:where(.case-study-light) h2,
+:where(.case-study-light) h3,
+:where(.case-study-light) h4 {
+  color: var(--cs-text-primary);
+  letter-spacing: -0.02em;
+  font-weight: 500;
+}
+
+:where(.case-study-light) p {
+  color: var(--cs-text-secondary);
+}
+
+/* Hairline border utilities */
+.cs-border {
+  border: 1px solid var(--cs-border);
+}
+
+.cs-border-t {
+  border-top: 1px solid var(--cs-border);
+}
+
+.cs-border-b {
+  border-bottom: 1px solid var(--cs-border);
+}
+
+.cs-border-r {
+  border-right: 1px solid var(--cs-border);
+}
+
+/* Editorial Content Container */
+.cs-container {
+  max-width: 1240px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .cs-container {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cs-container {
+    padding-left: 4rem;
+    padding-right: 4rem;
+  }
+}

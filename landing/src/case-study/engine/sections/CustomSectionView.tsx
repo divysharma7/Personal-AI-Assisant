@@ -14,5 +14,9 @@ export function CustomSectionView({ section, registry }: CustomSectionViewProps)
       `Custom section component "${section.component}" not found in registry.`
     );
   }
-  return <Component data={section.data} section={section} />;
+  return (
+    <div id={section.id} className="scroll-mt-24">
+      <Component data={section.data} section={section} />
+    </div>
+  );
 }

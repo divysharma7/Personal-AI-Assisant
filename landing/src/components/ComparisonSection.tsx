@@ -38,7 +38,7 @@ export function ComparisonSection() {
             initial={{ opacity: 0, y: 12 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5 }}
-            className="inline-block text-xs font-medium uppercase tracking-widest text-accent mb-4"
+            className="inline-block type-eyebrow text-accent mb-3"
           >
             Why Life OS
           </motion.span>
@@ -46,7 +46,7 @@ export function ComparisonSection() {
             initial={{ opacity: 0, y: 16 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-section-mobile md:text-section font-medium text-text-primary"
+            className="type-section text-text-primary"
           >
             A different approach
           </motion.h2>
@@ -58,18 +58,18 @@ export function ComparisonSection() {
           transition={{ duration: 0.6, delay: 0.15 }}
           className="max-w-[920px] mx-auto"
         >
-          {/* Column headers: flat vs raised */}
-          <div className="hidden md:grid md:grid-cols-2 gap-4 mb-4 px-1">
-            <span className="tile3d tile3d--sunken inline-flex w-fit px-4 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wide">
+          {/* Column headers */}
+          <div className="hidden md:grid md:grid-cols-2 gap-4 mb-3 px-1">
+            <span className="border border-border bg-bg-surface/30 rounded-lg inline-flex w-fit px-3.5 py-1.5 text-sm font-medium text-text-muted">
               Traditional approach
             </span>
-            <span className="tile3d tile3d--accent inline-flex w-fit px-4 py-2.5 text-xs font-medium text-accent uppercase tracking-wide">
+            <span className="border border-accent/25 bg-accent/5 rounded-lg inline-flex w-fit px-3.5 py-1.5 text-sm font-medium text-accent">
               Life OS
             </span>
           </div>
 
-          {/* Rows: sunken old way vs raised Life OS */}
-          <div className="space-y-2">
+          {/* Rows */}
+          <div className="space-y-2.5">
             {rows.map((row, i) => (
               <motion.div
                 key={i}
@@ -78,15 +78,15 @@ export function ComparisonSection() {
                 transition={{ duration: 0.4, delay: 0.2 + i * 0.06 }}
                 className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4"
               >
-                <div className="tile3d tile3d--sunken flex items-start gap-3 px-4 py-3.5">
+                <div className="card bg-bg-surface/40 flex items-start gap-3 px-4 py-3.5">
                   <IconTile icon="❌" color="#ef4444" size="sm" className="mt-0.5" />
-                  <span className="text-xs text-text-secondary leading-relaxed">
+                  <span className="text-sm text-text-secondary leading-relaxed">
                     {row.traditional}
                   </span>
                 </div>
-                <div className="tile3d tile3d--accent flex items-start gap-3 px-4 py-3.5">
+                <div className="card bg-bg-surface/70 border-accent/20 flex items-start gap-3 px-4 py-3.5">
                   <IconTile icon="✅" color="#22c55e" size="sm" className="mt-0.5" />
-                  <span className="text-xs text-text-primary leading-relaxed">
+                  <span className="text-sm text-text-primary leading-relaxed">
                     {row.lifeos}
                   </span>
                 </div>

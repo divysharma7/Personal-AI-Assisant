@@ -133,6 +133,7 @@ export function SystemSection() {
                         className={`sysChip__icon${
                           node.center ? " sysChip__icon--accent" : ""
                         }`}
+                        aria-hidden="true"
                       >
                         {node.icon}
                       </span>

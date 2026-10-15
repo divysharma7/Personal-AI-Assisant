@@ -28,7 +28,7 @@ export function ProductShowcase() {
   const isInView = useInView(ref, { once: true, amount: 0.2 });
 
   return (
-    <section className="ps" ref={ref} aria-label="Product capabilities">
+    <section className="ps" id="product" ref={ref} aria-label="Product capabilities">
       <motion.h2
         className="ps__heading"
         initial={{ opacity: 0, y: 24 }}

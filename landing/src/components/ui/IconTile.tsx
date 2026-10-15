@@ -14,6 +14,7 @@ export function IconTile({ icon, color, size = "md", className = "", style }: Ic
     <span
       className={`iconTile iconTile--${size} ${className}`.trim()}
       style={{ background: `${color}18`, color, ...style }}
+      aria-hidden="true"
     >
       {icon}
     </span>

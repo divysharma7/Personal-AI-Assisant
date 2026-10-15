@@ -1,93 +1,352 @@
-import { LayoutGrid, Calendar, Flame, CheckCircle2, Zap } from "lucide-react";
+import {
+  Check,
+  CheckCircle2,
+  Sparkles,
+  Flame,
+  Bell,
+  Clock,
+} from "lucide-react";
+import "./blue-visual.css";
 
 /**
- * Blue section visual: a browser window filling the blue canvas.
- * Inside: 3 product module cards (Workspace, Capture, Insights).
+ * 3D Physical Product Tokens
+ * Material system: soft ivory, graphite bevels, Life OS purple/green/amber state accents
+ */
+
+function TaskToken() {
+  return (
+    <div className="blue-token blue-token--task" aria-label="Task item">
+      <div className="blue-token__check-box">
+        <Check size={13} strokeWidth={2.8} />
+      </div>
+    </div>
+  );
+}
+
+function CalendarCube() {
+  return (
+    <div className="blue-token blue-token--calendar" aria-label="Calendar event 10:00 AM">
+      <div className="blue-token__cal-top">
+        <span className="blue-token__cal-top-dot" />
+        <span className="blue-token__cal-top-dot" />
+      </div>
+      <div className="blue-token__cal-date">10</div>
+    </div>
+  );
+}
+
+function HabitRing() {
+  return (
+    <div className="blue-token blue-token--habit" aria-label="Habit 5km run completed">
+      <svg className="blue-token__ring-svg" viewBox="0 0 36 36">
+        <path
+          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+          fill="none"
+          stroke="#e2e8f0"
+          strokeWidth="3.5"
+        />
+        <path
+          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+          fill="none"
+          stroke="#22c55e"
+          strokeWidth="3.5"
+          strokeDasharray="80, 100"
+          strokeLinecap="round"
+        />
+      </svg>
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Flame size={12} style={{ color: "#22c55e" }} />
+      </div>
+    </div>
+  );
+}
+
+function NoteTile() {
+  return (
+    <div className="blue-token blue-token--note" aria-label="Quick note">
+      <div className="blue-token__note-fold" />
+      <div className="blue-token__note-lines">
+        <div className="blue-token__note-line" />
+        <div className="blue-token__note-line" />
+        <div className="blue-token__note-line" />
+      </div>
+    </div>
+  );
+}
+
+function BellToken() {
+  return (
+    <div
+      className="blue-token"
+      style={{ width: 36, height: 36, borderRadius: "50%", background: "#ffffff" }}
+      aria-label="Notification reminder"
+    >
+      <Bell size={13} style={{ color: "#f59e0b" }} />
+    </div>
+  );
+}
+
+function ClockToken() {
+  return (
+    <div
+      className="blue-token"
+      style={{ width: 34, height: 34, borderRadius: "50%", background: "#ffffff" }}
+      aria-label="Dentist appointment at 4:00"
+    >
+      <Clock size={13} style={{ color: "#787cf8" }} />
+    </div>
+  );
+}
+
+/**
+ * BlueVisual: "Scattered Life → Life OS Pulls It Together → Calm Order"
+ *
+ * Visual Concept:
+ *   - The central product acts as a magnetic anchor (gravity center).
+ *   - Small 3D tactile tokens orbit from the left and connect via subtle curved gravity lines.
+ *   - Overlapping tokens on the edges break rigid card boundaries.
+ *   - The right side delivers visual proof: large numbers ("Less to hold in your head").
  */
 export function BlueVisual() {
   return (
-    <div className="fs__browser">
-      <div className="fs__browser-bar">
-        <div className="fs__browser-dot" style={{ background: "#ff5f57" }} />
-        <div className="fs__browser-dot" style={{ background: "#febc2e" }} />
-        <div className="fs__browser-dot" style={{ background: "#28c840" }} />
-      </div>
-      <div className="fs__browser-content">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {/* Workspace card */}
-          <div className="fs__card">
-            <div className="fs__card__icon" style={{ background: "rgba(255,255,255,0.12)" }}>
-              <LayoutGrid size={14} />
-            </div>
-            <h3 className="fs__card__title">Workspace</h3>
-            <p className="fs__card__desc">Dashboard · Today · Tasks</p>
-            <div className="mt-2 space-y-1.5">
-              <MiniRow label="Ship auth bugfix" />
-              <MiniRow label="Review PR #142" />
-              <MiniRow label="Write Q4 doc" />
-            </div>
+    <div
+      className="blue-gravity-stage"
+      role="region"
+      aria-label="How Life OS brings scattered daily tasks, calendar, habits, and focus into one calm center"
+    >
+      {/* ── BACKGROUND GRAVITY CONNECTOR LINES (SVG) ── */}
+      <svg
+        className="blue-gravity-svg"
+        viewBox="0 0 1000 500"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+        preserveAspectRatio="none"
+      >
+        {/* Subtle curved paths connecting orbital tokens into Life OS gravity hub */}
+        <path
+          d="M 120 90 C 180 90, 200 160, 260 170"
+          stroke="rgba(255, 255, 255, 0.28)"
+          strokeWidth="1.25"
+          fill="none"
+        />
+        <path
+          d="M 160 190 C 200 190, 220 220, 260 220"
+          stroke="rgba(255, 255, 255, 0.32)"
+          strokeWidth="1.25"
+          fill="none"
+        />
+        <path
+          d="M 130 300 C 180 300, 210 260, 260 260"
+          stroke="rgba(255, 255, 255, 0.28)"
+          strokeWidth="1.25"
+          fill="none"
+        />
+        <path
+          d="M 110 410 C 170 410, 200 320, 260 300"
+          stroke="rgba(255, 255, 255, 0.25)"
+          strokeWidth="1.25"
+          fill="none"
+        />
+
+        {/* Top-to-center gravity line */}
+        <path
+          d="M 280 40 C 330 40, 360 80, 380 110"
+          stroke="rgba(255, 255, 255, 0.24)"
+          strokeWidth="1.25"
+          fill="none"
+        />
+
+        {/* Rightward flow into clarity */}
+        <path
+          d="M 720 250 C 760 250, 780 230, 810 230"
+          stroke="rgba(255, 255, 255, 0.35)"
+          strokeWidth="1.25"
+          fill="none"
+        />
+      </svg>
+
+      {/* ── MAIN ASYMMETRIC WRAPPER ── */}
+      <div className="blue-gravity-content">
+        {/* ── LEFT: SCATTERED ORBITAL TOKENS ── */}
+        <div className="blue-orbit-field">
+          {/* Token 1: Task */}
+          <div className="blue-token-wrap">
+            <TaskToken />
+            <span className="blue-token-label">Ship auth bugfix</span>
           </div>
 
-          {/* Capture card */}
-          <div className="fs__card">
-            <div className="fs__card__icon" style={{ background: "rgba(255,255,255,0.12)" }}>
-              <Calendar size={14} />
-            </div>
-            <h3 className="fs__card__title">Capture</h3>
-            <p className="fs__card__desc">Calendar · Habits · Reminders</p>
-            <div className="mt-2 space-y-1.5">
-              <MiniHabit icon="🏃" label="Run 5km" streak={12} />
-              <MiniHabit icon="📚" label="Read 30m" streak={7} />
-              <MiniHabit icon="🧘" label="Meditate" streak={4} />
-            </div>
+          {/* Token 2: Calendar */}
+          <div className="blue-token-wrap">
+            <CalendarCube />
+            <span className="blue-token-label">Team sync · 10:00</span>
           </div>
 
-          {/* Insights card */}
-          <div className="fs__card">
-            <div className="fs__card__icon" style={{ background: "rgba(255,255,255,0.12)" }}>
-              <Zap size={14} />
+          {/* Token 3: Habit */}
+          <div className="blue-token-wrap">
+            <HabitRing />
+            <span className="blue-token-label">Run 5km</span>
+          </div>
+
+          {/* Token 4: Quick Note */}
+          <div className="blue-token-wrap">
+            <NoteTile />
+            <span className="blue-token-label">Idea: onboarding</span>
+          </div>
+        </div>
+
+        {/* ── CENTER: DOMINANT HERO PRODUCT INTERFACE (56%) ── */}
+        <div className="blue-hero-wrap">
+          {/* Overlapping 3D Token at upper-left corner */}
+          <div className="blue-overlap-token blue-overlap-token--top-left" aria-hidden="true">
+            <BellToken />
+          </div>
+
+          {/* Overlapping 3D Token at bottom-right corner */}
+          <div className="blue-overlap-token blue-overlap-token--bottom-right" aria-hidden="true">
+            <ClockToken />
+          </div>
+
+          <div className="blue-hero-product">
+            {/* Topbar */}
+            <div className="blue-os__topbar">
+              <div className="blue-os__brand-zone">
+                <div className="blue-os__logo-icon" aria-hidden="true">
+                  <CheckCircle2 size={10} strokeWidth={2.8} />
+                </div>
+                <span className="blue-os__title">Life OS</span>
+              </div>
+
+              <div className="blue-os__meta-zone">
+                <span className="blue-os__date">Today · Thu 16</span>
+                <div className="blue-os__status-badge">
+                  <span className="blue-os__live-pulse" aria-hidden="true" />
+                  <span>Aligned</span>
+                </div>
+              </div>
             </div>
-            <h3 className="fs__card__title">Insights</h3>
-            <p className="fs__card__desc">AI Brief · Stats · Focus</p>
-            <div className="mt-2 grid grid-cols-2 gap-1.5">
-              <StatPill label="Focus" value="12h 30m" />
-              <StatPill label="Tasks" value="34" />
-              <StatPill label="Habits" value="89%" />
-              <StatPill label="Streak" value="12d" />
+
+            {/* Interior Content */}
+            <div className="blue-os__content">
+              {/* Greeting row */}
+              <div className="blue-os__headline-row">
+                <h4 className="blue-os__welcome">Good morning</h4>
+                <span className="blue-os__capacity-callout">
+                  3 priorities · <strong>2h 10m left</strong>
+                </span>
+              </div>
+
+              {/* Split Dashboard: Priorities + Focus Engine */}
+              <div className="blue-os__split">
+                {/* Left: Ranked Priorities */}
+                <div className="blue-os__column">
+                  <span className="blue-os__col-label">Top Priorities</span>
+                  <div className="blue-os__tasks">
+                    <div className="blue-os__task-row blue-os__task-row--hero">
+                      <div className="blue-os__task-left">
+                        <span className="blue-os__task-idx">01</span>
+                        <p className="blue-os__task-name">Ship auth bugfix</p>
+                      </div>
+                      <span className="blue-os__priority-badge">Top priority</span>
+                    </div>
+
+                    <div className="blue-os__task-row">
+                      <div className="blue-os__task-left">
+                        <span className="blue-os__task-idx">02</span>
+                        <p className="blue-os__task-name">Review PR #142</p>
+                      </div>
+                    </div>
+
+                    <div className="blue-os__task-row">
+                      <div className="blue-os__task-left">
+                        <span className="blue-os__task-idx">03</span>
+                        <p className="blue-os__task-name">Write Q4 doc</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: Active Focus Hero & Habits */}
+                <div className="blue-os__column blue-os__column--right">
+                  <div className="blue-os__focus-panel">
+                    <div className="blue-os__focus-top">
+                      <span className="blue-os__focus-title">
+                        <span className="blue-os__live-pulse" aria-hidden="true" />
+                        Focus Active
+                      </span>
+                      <span style={{ fontSize: 9.5, color: "#4ade80", fontWeight: 500 }}>Deep work</span>
+                    </div>
+
+                    {/* Dominant 26px tabular timer */}
+                    <div className="blue-os__focus-timer" aria-label="Timer 42 minutes 18 seconds">
+                      42:18
+                    </div>
+                    <p className="blue-os__focus-subject">Writing launch brief</p>
+                  </div>
+
+                  {/* Habit Progress Row */}
+                  <div className="blue-os__habit-group">
+                    <div className="blue-os__habit-chip blue-os__habit-chip--done">
+                      <span>Run 5km</span>
+                      <Check size={9} strokeWidth={2.5} />
+                    </div>
+                    <div className="blue-os__habit-chip blue-os__habit-chip--done">
+                      <span>Read 30m</span>
+                      <Check size={9} strokeWidth={2.5} />
+                    </div>
+                    <div className="blue-os__habit-chip">
+                      <span>Meditate</span>
+                      <span style={{ opacity: 0.5 }}>○</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom AI Context Ribbon */}
+              <div className="blue-os__ai-strip">
+                <span className="blue-os__ai-badge">AI Context</span>
+                <p className="blue-os__ai-msg">You're on track. 2h 10m capacity available today.</p>
+                <span className="blue-os__ai-meta">
+                  <Sparkles size={11} style={{ display: "inline", verticalAlign: "middle", color: "#a5b4fc" }} />
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── RIGHT: HUMAN OUTCOMES & VISUAL PROOF (26%) ── */}
+        <div className="blue-outcome-column">
+          <p className="blue-outcome__eyebrow">From scattered to aligned</p>
+          <h3 className="blue-outcome__hero-text">
+            Less to hold
+            <br />
+            in your head.
+          </h3>
+
+          {/* Asymmetric Visual Proof Numbers */}
+          <div className="blue-outcome__metrics">
+            <div className="blue-metric-item">
+              <span className="blue-metric-item__num blue-metric-item__num--accent">03</span>
+              <p className="blue-metric-item__label">priorities clear</p>
+            </div>
+
+            <div className="blue-metric-item">
+              <span className="blue-metric-item__num blue-metric-item__num--green">42m</span>
+              <p className="blue-metric-item__label">protected focus</p>
+            </div>
+
+            <div className="blue-metric-item">
+              <span className="blue-metric-item__num blue-metric-item__num--accent">02</span>
+              <p className="blue-metric-item__label">habits done</p>
+            </div>
+
+            <div className="blue-metric-item">
+              <span className="blue-metric-item__num blue-metric-item__num--amber">Ready</span>
+              <p className="blue-metric-item__label">tomorrow planned</p>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function MiniRow({ label }: { label: string }) {
-  return (
-    <div className="flex items-center gap-2">
-      <CheckCircle2 size={10} style={{ opacity: 0.5 }} />
-      <span style={{ fontSize: 11, opacity: 0.7 }}>{label}</span>
-    </div>
-  );
-}
-
-function MiniHabit({ icon, label, streak }: { icon: string; label: string; streak: number }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span style={{ fontSize: 12 }}>{icon}</span>
-      <span style={{ fontSize: 11, opacity: 0.7, flex: 1 }}>{label}</span>
-      <span style={{ fontSize: 9, opacity: 0.5 }}>
-        <Flame size={8} style={{ display: "inline", verticalAlign: "middle" }} /> {streak}
-      </span>
-    </div>
-  );
-}
-
-function StatPill({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded" style={{ padding: "4px 6px", background: "rgba(255,255,255,0.06)" }}>
-      <p style={{ fontSize: 9, opacity: 0.5, margin: 0 }}>{label}</p>
-      <p style={{ fontSize: 12, fontWeight: 600, margin: 0 }}>{value}</p>
     </div>
   );
 }

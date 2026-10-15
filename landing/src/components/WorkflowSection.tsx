@@ -50,7 +50,7 @@ export function WorkflowSection() {
             initial={{ opacity: 0, y: 12 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5 }}
-            className="inline-block text-xs font-medium uppercase tracking-widest text-accent mb-4"
+            className="inline-block text-sm font-medium text-accent mb-3"
           >
             How it works
           </motion.span>
@@ -58,7 +58,7 @@ export function WorkflowSection() {
             initial={{ opacity: 0, y: 16 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-section-mobile md:text-section font-medium text-text-primary"
+            className="type-section text-text-primary"
           >
             Life OS turns scattered days
             <br className="hidden md:block" /> into structured progress
@@ -83,10 +83,10 @@ export function WorkflowSection() {
                 size="lg"
                 className="relative z-10 mb-5"
               />
-              <span className="text-[10px] font-bold text-accent/60 uppercase tracking-widest mb-2">
+              <span className="text-sm font-medium text-accent mb-1.5">
                 {step.number}
               </span>
-              <h3 className="text-base font-semibold text-text-primary mb-2">
+              <h3 className="text-lg font-medium text-text-primary mb-2">
                 {step.title}
               </h3>
               <p className="text-sm text-text-secondary leading-relaxed">

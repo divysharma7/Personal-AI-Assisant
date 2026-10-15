@@ -184,11 +184,11 @@ export const discoverSections: Section[] = [
       legend: [
         {
           kind: "[P]",
-          text: "public signal — one Hacker News comment, not a representative view",
+          text: "public signal: one Hacker News comment, not a representative view",
         },
         {
           kind: "[S]",
-          text: "synthetic — invented personas answering our guide; hypotheses only, never evidence",
+          text: "synthetic: invented personas answering our guide; hypotheses only, never evidence",
         },
       ],
       signals: [

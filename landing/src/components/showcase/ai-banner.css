@@ -1,0 +1,299 @@
+/* ── AI Banner: tighter composition, restrained geometry ── */
+
+.ai-banner {
+  --banner-bg: #121a2c;
+  --surface: #192236;
+  --surface-soft: #202a3e;
+  --border: rgba(255, 255, 255, 0.12);
+  --border-soft: rgba(255, 255, 255, 0.07);
+  --text: #f5f7fb;
+  --text-muted: #aab2c3;
+  --accent: #747cff;
+
+  position: relative;
+  overflow: hidden;
+
+  width: 100%;
+  margin-inline: auto;
+
+  min-height: 500px;
+  max-height: 580px;
+
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+
+  background: var(--banner-bg);
+}
+
+/* Grid is subtle decoration, not the visual focus */
+.ai-banner__grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  opacity: 0.055;
+
+  background-image:
+    linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0.8) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.8) 1px,
+      transparent 1px
+    );
+
+  background-size: 88px 88px;
+}
+
+.ai-banner__inner {
+  position: relative;
+  z-index: 1;
+
+  width: 100%;
+  max-width: 1180px;
+  min-height: 500px;
+
+  margin-inline: auto;
+  padding: 56px 40px;
+
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(500px, 1.2fr);
+  gap: clamp(48px, 6vw, 96px);
+
+  align-items: center;
+}
+
+/* --------------------------
+   Feature list
+-------------------------- */
+
+.ai-banner__features {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.ai-feature {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.ai-feature__icon {
+  width: 34px;
+  height: 34px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 8px;
+
+  color: var(--accent);
+  background: rgba(116, 124, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.ai-feature h3 {
+  margin: 0 0 4px;
+
+  color: var(--text);
+
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.ai-feature p {
+  margin: 0;
+
+  color: var(--text-muted);
+
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* --------------------------
+   AI product demo
+-------------------------- */
+
+.assistant-demo {
+  width: 100%;
+
+  overflow: hidden;
+
+  border: 1px solid var(--border);
+  border-radius: 12px;
+
+  background: rgba(24, 33, 52, 0.82);
+}
+
+.assistant-demo__header {
+  min-height: 48px;
+
+  padding: 0 18px;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  border-bottom: 1px solid var(--border);
+
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.assistant-demo__status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+
+  background: var(--accent);
+}
+
+.assistant-demo__body {
+  padding: 22px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.assistant-demo__user {
+  align-self: flex-end;
+
+  max-width: 78%;
+
+  padding: 10px 15px;
+
+  border-radius: 10px;
+
+  color: #eef0ff;
+  background: rgba(116, 124, 255, 0.24);
+
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.assistant-demo__answer {
+  max-width: 88%;
+
+  padding: 13px 16px;
+
+  border-radius: 10px;
+
+  color: #e4e8f1;
+  background: var(--surface-soft);
+
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.assistant-demo__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 2px;
+}
+
+.assistant-demo__actions button {
+  min-height: 36px;
+
+  padding: 0 13px;
+
+  border: 1px solid rgba(116, 124, 255, 0.4);
+  border-radius: 8px;
+
+  color: #aeb4ff;
+  background: transparent;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+}
+
+.assistant-demo__actions button:hover {
+  color: #ffffff;
+  border-color: rgba(116, 124, 255, 0.7);
+  background: rgba(116, 124, 255, 0.08);
+}
+
+.assistant-demo__actions button:focus-visible {
+  outline: 2px solid #9298ff;
+  outline-offset: 2px;
+}
+
+/* --------------------------
+   Tablet
+-------------------------- */
+
+@media (max-width: 960px) {
+  .ai-banner {
+    min-height: auto;
+    max-height: none;
+  }
+
+  .ai-banner__inner {
+    grid-template-columns: 1fr;
+    gap: 48px;
+    min-height: auto;
+    padding: 48px 32px;
+  }
+
+  .assistant-demo {
+    max-width: 100%;
+  }
+}
+
+/* --------------------------
+   Mobile
+-------------------------- */
+
+@media (max-width: 640px) {
+  .ai-banner {
+    border-radius: 12px;
+    min-height: auto;
+    max-height: none;
+  }
+
+  .ai-banner__inner {
+    min-height: auto;
+    padding: 36px 18px;
+    gap: 36px;
+  }
+
+  .ai-banner__features {
+    gap: 20px;
+  }
+
+  .assistant-demo__body {
+    padding: 16px;
+  }
+
+  .assistant-demo__user,
+  .assistant-demo__answer {
+    max-width: 100%;
+  }
+
+  .assistant-demo__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .assistant-demo__actions button {
+    width: 100%;
+    text-align: center;
+  }
+}

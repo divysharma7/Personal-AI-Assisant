@@ -24,11 +24,11 @@ export function FinalCTA() {
           transition={{ duration: 0.6 }}
           className="max-w-text mx-auto text-center"
         >
-          <span className="inline-block text-xs font-medium uppercase tracking-widest text-accent mb-4">
+          <span className="inline-block type-eyebrow text-accent mb-3">
             Ready to begin?
           </span>
 
-          <h2 className="text-section-mobile md:text-section font-medium text-text-primary mb-5">
+          <h2 className="type-section text-text-primary mb-5">
             Stop managing apps.
             <br />
             <PixelSprite
@@ -39,17 +39,17 @@ export function FinalCTA() {
             Start running your day.
           </h2>
 
-          <p className="text-sm text-text-secondary mb-10 max-w-[480px] mx-auto leading-relaxed">
+          <p className="type-body text-text-secondary mb-10 max-w-[480px] mx-auto leading-relaxed">
             Life OS is free to start. No credit card, no setup wizard, no 30-minute
             onboarding video. Sign up and you're in.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a href="https://laif-iota.vercel.app/signup" className="btn3d">
-              Get Started Free
-              <ArrowRight size={16} />
+            <a href="https://laif-iota.vercel.app/signup" className="button-primary">
+              Get started free
+              <ArrowRight size={16} aria-hidden="true" />
             </a>
-            <a href="https://laif-iota.vercel.app/login" className="btn3d btn3d--ghost">
+            <a href="https://laif-iota.vercel.app/login" className="button-secondary">
               Log in
             </a>
           </div>

@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { useInView } from "../hooks/useInView";
 import { useCases } from "../data/useCases";
-import { ArrowRight } from "lucide-react";
 import { PageContainer } from "./layout/PageContainer";
 
 export function UseCaseSection() {
@@ -16,7 +15,7 @@ export function UseCaseSection() {
             initial={{ opacity: 0, y: 12 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5 }}
-            className="inline-block text-xs font-medium uppercase tracking-widest text-accent mb-4"
+            className="inline-block type-eyebrow text-accent mb-3"
           >
             Use cases
           </motion.span>
@@ -24,7 +23,7 @@ export function UseCaseSection() {
             initial={{ opacity: 0, y: 16 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-section-mobile md:text-section font-medium text-text-primary"
+            className="type-section text-text-primary"
           >
             Built for how you actually work
           </motion.h2>
@@ -37,24 +36,20 @@ export function UseCaseSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.15 + i * 0.1 }}
-              className="tile3d p-6 md:p-8 flex flex-col"
+              className="card p-6 md:p-8 flex flex-col"
             >
-              <span className="tile3d tile3d--accent inline-flex w-fit px-2.5 py-1 mb-4 text-[10px] font-semibold uppercase tracking-widest text-accent">
+              <span className="text-sm font-medium text-accent mb-3 block">
                 {uc.audience}
               </span>
-              <h3 className="text-sm font-semibold text-text-primary mb-3">
+              <h3 className="text-base md:text-lg font-medium text-text-primary mb-3 leading-snug">
                 {uc.challenge}
               </h3>
-              <p className="text-xs text-text-secondary leading-relaxed mb-4 flex-1">
+              <p className="text-sm text-text-secondary leading-relaxed mb-6 flex-1">
                 {uc.solution}
               </p>
-              <div className="tile3d tile3d--sunken px-4 py-3 mb-4">
-                <p className="text-xs text-text-muted italic">"{uc.outcome}"</p>
-              </div>
-              <a href="#" className="btn3d btn3d--ghost btn3d--sm w-fit">
-                Learn more
-                <ArrowRight size={12} />
-              </a>
+              <p className="text-sm text-text-secondary italic border-l border-border pl-3.5">
+                "{uc.outcome}"
+              </p>
             </motion.div>
           ))}
         </div>

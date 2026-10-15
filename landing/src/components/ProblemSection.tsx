@@ -39,7 +39,7 @@ export function ProblemSection() {
             initial={{ opacity: 0, y: 12 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5 }}
-            className="inline-block text-xs font-medium uppercase tracking-widest text-accent mb-4"
+            className="inline-block text-sm font-medium text-accent mb-3"
           >
             The problem
           </motion.span>
@@ -47,7 +47,7 @@ export function ProblemSection() {
             initial={{ opacity: 0, y: 16 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-section-mobile md:text-section font-medium text-text-primary"
+            className="type-section text-text-primary"
           >
             Five apps. Zero clarity.
           </motion.h2>
@@ -60,10 +60,10 @@ export function ProblemSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.15 + i * 0.1 }}
-              className="group bg-bg-secondary rounded-2xl p-6 md:p-8 border border-border hover:border-border-hover transition-colors"
+              className="group bg-bg-secondary rounded-xl p-6 md:p-8 border border-border hover:border-border-hover transition-colors"
             >
               <IconTile icon={problem.icon} color={problem.color} className="mb-5" />
-              <h3 className="text-base font-semibold text-text-primary mb-3">
+              <h3 className="text-lg font-medium text-text-primary mb-2.5">
                 {problem.title}
               </h3>
               <p className="text-sm text-text-secondary leading-relaxed">

@@ -10,7 +10,7 @@ export function ProductPanel() {
       <ul className="panelFeatures">
         {panelFeatures.map((feature) => (
           <li className="panelFeature" key={feature.title}>
-            <span className="featureSymbol">{feature.symbol}</span>
+            <span className="featureSymbol" aria-hidden="true">{feature.symbol}</span>
             <div>
               <h3 className="featureTitle">{feature.title}</h3>
               <p className="featureDetail">{feature.detail}</p>

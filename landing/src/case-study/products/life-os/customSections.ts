@@ -27,8 +27,50 @@ import { CandidatesCriteria } from "./custom/CandidatesCriteria";
 import { ScoringMatrix } from "./custom/ScoringMatrix";
 import { NarrowingDown } from "./custom/NarrowingDown";
 import { CausalCase } from "./custom/CausalCase";
+import { ExecutionGapOverview } from "./custom/ExecutionGapOverview";
+import { ProcessTimeline } from "./custom/ProcessTimeline";
+import { ExecutionParadox } from "./custom/ExecutionParadox";
+import { SecondaryResearchEmpathy } from "./custom/SecondaryResearchEmpathy";
+import { PrimaryResearchEmpathy } from "./custom/PrimaryResearchEmpathy";
+import { UnderstandingSynthesis } from "./custom/UnderstandingSynthesis";
+import { IntentionToActionFlow } from "./custom/IntentionToActionFlow";
+import { AffinityMappingGrid } from "./custom/AffinityMappingGrid";
+import { PatternEmergence } from "./custom/PatternEmergence";
+import { PrimaryUserPersona } from "./custom/PrimaryUserPersona";
+import { UserJourneyMap } from "./custom/UserJourneyMap";
+import { PainPointAnalysis } from "./custom/PainPointAnalysis";
+import { CompetitorAnalysisMatrix } from "./custom/CompetitorAnalysisMatrix";
+import { PyramidSearchAnalogy } from "./custom/PyramidSearchAnalogy";
+import { LifeOsIdeologyCoreValues } from "./custom/LifeOsIdeologyCoreValues";
+import { RedesignedBriefHmw } from "./custom/RedesignedBriefHmw";
+import { WireframeExploration } from "./custom/WireframeExploration";
+import { FinalSolutionScreens } from "./custom/FinalSolutionScreens";
+import { UsabilityEvaluation } from "./custom/UsabilityEvaluation";
+import { DesignLearnings } from "./custom/DesignLearnings";
+import { InformationArchitectureMap } from "./custom/InformationArchitectureMap";
 
 export const lifeOsCustomSections: CustomSectionRegistry = {
+  DesignLearnings,
+  UsabilityEvaluation,
+  FinalSolutionScreens,
+  WireframeExploration,
+  RedesignedBriefHmw,
+  LifeOsIdeologyCoreValues,
+  PyramidSearchAnalogy,
+  CompetitorAnalysisMatrix,
+  PainPointAnalysis,
+  UserJourneyMap,
+  PrimaryUserPersona,
+  PatternEmergence,
+  AffinityMappingGrid,
+  IntentionToActionFlow,
+  UnderstandingSynthesis,
+  PrimaryResearchEmpathy,
+  InformationArchitectureMap,
+  SecondaryResearchEmpathy,
+  ExecutionParadox,
+  ExecutionGapOverview,
+  ProcessTimeline,
   ThreeNumbersBand,
   FragmentationSplit,
   BeliefBehaviorSplit,

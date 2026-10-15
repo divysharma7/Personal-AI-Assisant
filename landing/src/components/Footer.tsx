@@ -1,107 +1,93 @@
-import { Github, Twitter } from "lucide-react";
+import { Link } from "react-router-dom";
 import { PageContainer } from "./layout/PageContainer";
-
-const columns = [
-  {
-    title: "Product",
-    links: [
-      { label: "Features", href: "#product" },
-      { label: "Use Cases", href: "#use-cases" },
-      { label: "Changelog", href: "#" },
-    ],
-  },
-  {
-    title: "Resources",
-    links: [
-      { label: "Documentation", href: "#" },
-      { label: "API Reference", href: "#" },
-      { label: "Blog", href: "#" },
-      { label: "FAQ", href: "#faq" },
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      { label: "About", href: "#" },
-      { label: "Contact", href: "#" },
-      { label: "Careers", href: "#" },
-    ],
-  },
-  {
-    title: "Legal",
-    links: [
-      { label: "Privacy Policy", href: "#" },
-      { label: "Terms of Service", href: "#" },
-    ],
-  },
-];
+import { LifeOsMark } from "./brand/LifeOsLogo";
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-bg-primary">
-      <PageContainer className="py-12 md:py-16">
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-8 md:gap-12">
-          {/* Brand */}
-          <div className="col-span-2">
-            <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
-                <span className="text-white font-bold text-sm">L</span>
+    <footer className="relative w-full overflow-hidden bg-bg-canvas pt-14 pb-12 text-text-primary md:pt-20 md:pb-16 transition-colors duration-200">
+      <PageContainer className="relative z-10">
+        {/* Card */}
+        <div className="mx-auto max-w-[1080px] rounded-2xl border border-border bg-bg-surface p-7 md:p-12 lg:p-14 transition-colors duration-200">
+          <div className="grid grid-cols-1 items-start gap-10 md:grid-cols-[1.5fr_1fr] md:gap-14">
+            {/* Left Column: Brand, Tagline, Description & CTA */}
+            <div>
+              <div className="flex items-center gap-3">
+                <LifeOsMark size={36} />
+                <span className="text-xl font-semibold tracking-tight text-text-primary">
+                  Life OS
+                </span>
               </div>
-              <span className="font-semibold text-lg text-text-primary">
-                Life OS
-              </span>
+
+              <p className="mt-5 text-base font-medium text-text-primary md:text-lg">
+                Turn intentions into action.
+              </p>
+
+              <p className="mt-2 max-w-[460px] text-sm leading-relaxed text-text-secondary">
+                A personal productivity system for people who want to spend less
+                time managing tasks and more time making meaningful progress.
+              </p>
+
+              <div className="mt-6 md:mt-8">
+                <a
+                  href="https://laif-iota.vercel.app/signup"
+                  className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+                >
+                  Start with what matters →
+                </a>
+              </div>
             </div>
-            <p className="text-xs text-text-muted leading-relaxed max-w-[240px] mb-5">
-              One calm interface for tasks, habits, calendar, focus, workflows,
-              and AI. Your daily operating system.
-            </p>
-            <div className="flex items-center gap-3">
-              <a
-                href="https://github.com/divysharma7/Personal-AI-Assisant"
-                className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-text-muted hover:text-text-primary hover:border-border-hover transition-colors"
-                aria-label="GitHub"
-              >
-                <Github size={14} />
-              </a>
-              <a
-                href="#"
-                className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-text-muted hover:text-text-primary hover:border-border-hover transition-colors"
-                aria-label="Twitter"
-              >
-                <Twitter size={14} />
-              </a>
+
+            {/* Right Column: Explore Navigation Links */}
+            <div className="md:pl-8 lg:pl-16">
+              <p className="text-sm font-medium text-text-muted">
+                Explore
+              </p>
+              <ul className="mt-4 space-y-3">
+                <li>
+                  <a
+                    href="/#product"
+                    className="text-sm text-text-secondary transition-colors hover:text-text-primary"
+                  >
+                    Why Life OS
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/#workflow"
+                    className="text-sm text-text-secondary transition-colors hover:text-text-primary"
+                  >
+                    How it works
+                  </a>
+                </li>
+                <li>
+                  <Link
+                    to="/case-study/life-os"
+                    className="text-sm text-text-secondary transition-colors hover:text-text-primary"
+                  >
+                    Case study
+                  </Link>
+                </li>
+                <li>
+                  <a
+                    href="/#faq"
+                    className="text-sm text-text-secondary transition-colors hover:text-text-primary"
+                  >
+                    FAQ
+                  </a>
+                </li>
+              </ul>
             </div>
           </div>
 
-          {/* Link columns */}
-          {columns.map((col) => (
-            <div key={col.title}>
-              <h4 className="text-xs font-medium text-text-primary mb-4">
-                {col.title}
-              </h4>
-              <ul className="space-y-2.5">
-                {col.links.map((link) => (
-                  <li key={link.label}>
-                    <a
-                      href={link.href}
-                      className="text-xs text-text-muted hover:text-text-secondary transition-colors"
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-12 pt-6 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-[11px] text-text-muted">
-            &copy; {new Date().getFullYear()} Life OS. All rights reserved.
-          </p>
-          <p className="text-[11px] text-text-muted">
-            Built with React · Express · Prisma
-          </p>
+          {/* Bottom Divider & Sign-off Row */}
+          <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-border pt-7 text-xs sm:flex-row sm:items-center md:mt-16">
+            <p className="text-text-muted">
+              © 2026 Life OS. All rights reserved.
+            </p>
+            <p className="text-text-secondary">
+              Made for people who want to do more of what matters.
+            </p>
+          </div>
         </div>
       </PageContainer>
     </footer>

@@ -15,6 +15,7 @@ import {
   Settings,
 } from "lucide-react";
 import { PageContainer } from "./layout/PageContainer";
+import { LifeOsMark } from "./brand/LifeOsLogo";
 
 const tabs = [
   { id: "overview", label: "Overview" },
@@ -30,7 +31,7 @@ export function ProductDemo() {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
 
   return (
-    <section className="section-padding" id="demo">
+    <section className="section-padding" id="demo" aria-labelledby="demo-title">
       <PageContainer>
         <div className="max-w-text mx-auto text-center mb-14 md:mb-20">
           <motion.span
@@ -38,15 +39,16 @@ export function ProductDemo() {
             initial={{ opacity: 0, y: 12 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5 }}
-            className="inline-block text-xs font-medium uppercase tracking-widest text-accent mb-4"
+            className="inline-block type-eyebrow text-accent mb-3"
           >
             Product
           </motion.span>
           <motion.h2
+            id="demo-title"
             initial={{ opacity: 0, y: 16 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-section-mobile md:text-section font-medium text-text-primary"
+            className="type-section text-text-primary"
           >
             See it in action
           </motion.h2>
@@ -54,7 +56,7 @@ export function ProductDemo() {
             initial={{ opacity: 0, y: 12 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5, delay: 0.15 }}
-            className="text-sm text-text-secondary mt-4"
+            className="type-body text-text-secondary mt-3"
           >
             Explore the core views that make Life OS your daily operating system.
           </motion.p>
@@ -66,13 +68,15 @@ export function ProductDemo() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="max-w-[1040px] mx-auto"
         >
-          {/* Tabs */}
-          <div className="flex items-center gap-1 mb-4 overflow-x-auto pb-2">
+          {/* View switcher buttons */}
+          <div className="flex items-center gap-1 mb-4 overflow-x-auto pb-2" role="group" aria-label="Demo view switcher">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                aria-pressed={activeTab === tab.id}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
                   activeTab === tab.id
                     ? "bg-accent/10 text-accent"
                     : "text-text-muted hover:text-text-secondary"
@@ -84,7 +88,7 @@ export function ProductDemo() {
           </div>
 
           {/* Demo window */}
-          <div className="rounded-2xl border border-border bg-bg-secondary overflow-hidden accent-glow">
+          <div className="rounded-xl border border-border bg-bg-secondary overflow-hidden">
             {/* Title bar */}
             <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-bg-tertiary/50">
               <div className="flex gap-1.5">
@@ -102,6 +106,10 @@ export function ProductDemo() {
             <div className="flex min-h-[400px] md:min-h-[460px]">
               {/* Sidebar */}
               <div className="hidden md:flex flex-col w-44 border-r border-border bg-bg-tertiary/30 p-3 gap-0.5">
+                <div className="flex items-center gap-2 px-2 py-1.5 mb-2 border-b border-border">
+                  <LifeOsMark size={18} />
+                  <span className="text-xs font-semibold text-text-primary">Life OS</span>
+                </div>
                 <SidebarItem icon={<LayoutGrid size={14} />} label="Dashboard" active={activeTab === "overview"} onClick={() => setActiveTab("overview")} />
                 <SidebarItem icon={<Calendar size={14} />} label="Today" active={activeTab === "workflow"} onClick={() => setActiveTab("workflow")} />
                 <SidebarItem icon={<Clock size={14} />} label="Focus" active={activeTab === "focus"} onClick={() => setActiveTab("focus")} />
@@ -152,14 +160,16 @@ function SidebarItem({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-[11px] transition-colors text-left ${
+      aria-pressed={active ? true : undefined}
+      className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-xs transition-colors text-left ${
         active
           ? "bg-accent/10 text-accent font-medium"
           : "text-text-muted hover:text-text-secondary hover:bg-bg-elevated/50"
       }`}
     >
-      {icon}
+      <span aria-hidden="true">{icon}</span>
       {label}
     </button>
   );
@@ -170,14 +180,14 @@ function OverviewTab() {
     <div>
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="text-sm font-semibold text-text-primary">Good morning, Divy</h3>
-          <p className="text-[10px] text-text-muted mt-0.5">4 tasks due · 2 habits pending</p>
+          <h3 className="text-sm font-medium text-text-primary">Good morning, Divy</h3>
+          <p className="text-xs text-text-muted mt-0.5">4 tasks due · 2 habits pending</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
         <div className="bg-bg-primary/40 rounded-xl p-3.5 border border-border">
-          <span className="text-[10px] font-medium text-text-secondary uppercase tracking-wide block mb-2.5">Today</span>
+          <span className="text-xs font-medium text-text-secondary block mb-2.5">Today</span>
           <div className="space-y-2">
             <DemoTask done label="Review design mockups" />
             <DemoTask label="Ship auth bugfix" />
@@ -185,7 +195,7 @@ function OverviewTab() {
           </div>
         </div>
         <div className="bg-bg-primary/40 rounded-xl p-3.5 border border-border">
-          <span className="text-[10px] font-medium text-text-secondary uppercase tracking-wide block mb-2.5">Habits</span>
+          <span className="text-xs font-medium text-text-secondary block mb-2.5">Habits</span>
           <div className="space-y-2">
             <DemoHabit icon="🏃" label="Run 5km" streak={12} checked />
             <DemoHabit icon="📚" label="Read 30 min" streak={7} checked />
@@ -196,10 +206,10 @@ function OverviewTab() {
 
       <div className="bg-accent/5 rounded-xl p-3.5 border border-accent/10">
         <div className="flex items-center gap-2 mb-1.5">
-          <Zap size={10} className="text-accent" />
-          <span className="text-[10px] font-medium text-accent">AI Brief</span>
+          <Zap size={12} className="text-accent" />
+          <span className="text-xs font-medium text-accent">AI brief</span>
         </div>
-        <p className="text-[10px] text-text-secondary leading-relaxed">
+        <p className="text-xs text-text-secondary leading-relaxed">
           You have 4 tasks today. Top priority: <span className="text-text-primary font-medium">Ship auth bugfix</span>. Your run habit streak is at 12 days. Keep it going.
         </p>
       </div>
@@ -211,13 +221,13 @@ function WorkflowTab() {
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
-        <h3 className="text-sm font-semibold text-text-primary">Today</h3>
-        <span className="text-[10px] text-text-muted">Thursday, Oct 2</span>
+        <h3 className="text-sm font-medium text-text-primary">Today</h3>
+        <span className="text-xs text-text-muted">Thursday, Oct 2</span>
       </div>
 
       <div className="space-y-0">
         {[
-          { label: "Morning Plan", time: "8:00 AM", type: "ritual", done: true },
+          { label: "Morning plan", time: "8:00 AM", type: "ritual", done: true },
           { label: "Ship auth bugfix", time: "9:00 AM", type: "task", done: true },
           { label: "Team standup", time: "10:30 AM", type: "event", done: false },
           { label: "Write Q4 doc", time: "11:00 AM", type: "task", done: false },
@@ -228,10 +238,10 @@ function WorkflowTab() {
             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
               item.done ? "bg-accent" : item.type === "event" ? "bg-blue-400" : item.type === "ritual" ? "bg-amber-400" : "bg-emerald-400"
             }`} />
-            <span className={`text-[11px] flex-1 ${item.done ? "text-text-muted line-through" : "text-text-primary"}`}>
+            <span className={`text-xs flex-1 ${item.done ? "text-text-muted line-through" : "text-text-primary"}`}>
               {item.label}
             </span>
-            <span className="text-[10px] text-text-muted">{item.time}</span>
+            <span className="text-xs text-text-muted">{item.time}</span>
           </div>
         ))}
       </div>
@@ -244,7 +254,7 @@ function FocusTab() {
     <div className="flex flex-col items-center justify-center py-4">
       <div className="relative w-28 h-28 mb-4">
         <svg className="w-28 h-28 -rotate-90" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
+          <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" className="text-black/10 dark:text-white/10" strokeWidth="6" />
           <circle
             cx="60" cy="60" r="52" fill="none" stroke="#6366f1" strokeWidth="6"
             strokeDasharray={`${2 * Math.PI * 52 * 0.65} ${2 * Math.PI * 52}`}
@@ -252,15 +262,15 @@ function FocusTab() {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold text-text-primary">16:22</span>
-          <span className="text-[10px] text-text-muted">remaining</span>
+          <span className="text-2xl font-semibold text-text-primary">16:22</span>
+          <span className="text-xs text-text-muted">remaining</span>
         </div>
       </div>
       <p className="text-xs text-text-primary font-medium mb-1">Ship auth bugfix</p>
-      <p className="text-[10px] text-text-muted mb-4">Session 2 of 4</p>
-      <div className="flex items-center gap-4">
-        <span className="text-[10px] px-3 py-1.5 rounded-lg bg-accent/10 text-accent font-medium">Pause</span>
-        <span className="text-[10px] px-3 py-1.5 rounded-lg border border-border text-text-muted">End Session</span>
+      <p className="text-xs text-text-muted mb-4">Session 2 of 4</p>
+      <div className="flex items-center gap-3">
+        <span className="text-xs px-3 py-1.5 rounded-lg bg-accent/10 text-accent font-medium">Pause</span>
+        <span className="text-xs px-3 py-1.5 rounded-lg border border-border text-text-muted">End session</span>
       </div>
     </div>
   );
@@ -269,7 +279,7 @@ function FocusTab() {
 function InsightsTab() {
   return (
     <div>
-      <h3 className="text-sm font-semibold text-text-primary mb-4">This Week</h3>
+      <h3 className="text-sm font-medium text-text-primary mb-4">This week</h3>
       <div className="grid grid-cols-2 gap-2 mb-4">
         {[
           { label: "Focus time", value: "12h 30m", delta: "+18%" },
@@ -278,14 +288,14 @@ function InsightsTab() {
           { label: "Best streak", value: "12d", delta: "running" },
         ].map((s) => (
           <div key={s.label} className="bg-bg-primary/40 rounded-lg p-3 border border-border">
-            <p className="text-[10px] text-text-muted">{s.label}</p>
-            <p className="text-sm font-semibold text-text-primary">{s.value}</p>
-            <p className="text-[10px] text-emerald-400">{s.delta}</p>
+            <p className="text-xs text-text-muted">{s.label}</p>
+            <p className="text-sm font-medium text-text-primary">{s.value}</p>
+            <p className="text-xs text-emerald-400">{s.delta}</p>
           </div>
         ))}
       </div>
       <div className="bg-bg-primary/40 rounded-lg p-3 border border-border">
-        <p className="text-[10px] text-text-muted mb-2">Focus time by day</p>
+        <p className="text-xs text-text-muted mb-2">Focus time by day</p>
         <div className="flex items-end gap-1.5 h-16">
           {[40, 65, 50, 80, 55, 30, 20].map((h, i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-1">
@@ -293,7 +303,7 @@ function InsightsTab() {
                 className="w-full rounded-sm bg-accent/60"
                 style={{ height: `${h}%` }}
               />
-              <span className="text-[8px] text-text-muted">
+              <span className="text-xs text-text-muted">
                 {["M", "T", "W", "T", "F", "S", "S"][i]}
               </span>
             </div>
@@ -308,11 +318,11 @@ function DemoTask({ label, done }: { label: string; done?: boolean }) {
   return (
     <div className="flex items-center gap-2.5">
       {done ? (
-        <CheckCircle2 size={13} className="text-accent flex-shrink-0" />
+        <CheckCircle2 size={13} className="text-accent flex-shrink-0" aria-hidden="true" />
       ) : (
-        <Circle size={13} className="text-text-muted flex-shrink-0" />
+        <Circle size={13} className="text-text-muted flex-shrink-0" aria-hidden="true" />
       )}
-      <span className={`text-[11px] ${done ? "text-text-muted line-through" : "text-text-primary"}`}>
+      <span className={`text-xs ${done ? "text-text-muted line-through" : "text-text-primary"}`}>
         {label}
       </span>
     </div>
@@ -332,16 +342,17 @@ function DemoHabit({
 }) {
   return (
     <div className="flex items-center gap-2.5">
-      <span className="text-xs">{icon}</span>
-      <span className="text-[11px] text-text-primary flex-1">{label}</span>
-      <span className="text-[9px] text-text-muted flex items-center gap-1">
-        <Flame size={9} className="text-orange-400" />
+      <span className="text-xs" aria-hidden="true">{icon}</span>
+      <span className="text-xs text-text-primary flex-1">{label}</span>
+      <span className="text-xs text-text-muted flex items-center gap-1">
+        <Flame size={10} className="text-orange-400" aria-hidden="true" />
         {streak}
       </span>
       <div
         className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${
           checked ? "bg-accent border-accent" : "border-text-muted"
         }`}
+        aria-hidden="true"
       >
         {checked && (
           <svg width="7" height="7" viewBox="0 0 12 12" fill="none">

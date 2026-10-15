@@ -2,22 +2,22 @@ import type { HeroPhase } from "./useHeroSequence";
 
 export const heroCopy = {
   headline: {
-    eyebrow: "THE OPERATING SYSTEM FOR YOUR DAY",
+    eyebrow: "The operating system for your day",
     title: "Powerful ideas.\nIn your hands.",
     subtitle:
       "One calm interface for tasks, habits, calendar, focus sessions, workflows, and AI.",
   },
   panel: {
-    eyebrow: "OUR MISSION",
+    eyebrow: "Our mission",
     mission: "We help people run their entire day from one calm interface.",
   },
   statement: "Everything connects.\nEverything flows.",
 };
 
 export const panelFeatures = [
-  { symbol: "✳", title: "Tasks & Habits", detail: "Everything in one view." },
-  { symbol: "◈", title: "Focus Sessions", detail: "Deep work that counts." },
-  { symbol: "↗", title: "AI Assistant", detail: "Knows your whole day." },
+  { symbol: "✳", title: "Tasks & habits", detail: "Everything in one view." },
+  { symbol: "◈", title: "Focus sessions", detail: "Deep work that counts." },
+  { symbol: "↗", title: "AI assistant", detail: "Knows your whole day." },
 ];
 
 export const matrixCells = [

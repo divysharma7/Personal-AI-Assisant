@@ -14,7 +14,7 @@ export function FeatureShowcase({ data, children }: Props) {
   const isInView = useInView(ref, { once: true, amount: 0.1 });
 
   return (
-    <section ref={ref} className="fs" aria-label={data.title}>
+    <section ref={ref} className={`fs fs--${data.theme}`} aria-label={data.title}>
       <PageContainer>
         {/* Header: heading + CTA */}
         <motion.div
@@ -24,9 +24,9 @@ export function FeatureShowcase({ data, children }: Props) {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
           <h2 className="fs__title">{data.title}</h2>
-          <a href="#" className="btn3d btn3d--ghost btn3d--sm">
+          <a href="#demo" className="button-secondary !min-h-[36px] !px-3.5 !text-sm">
             {data.cta}
-            <span className="fs__cta-arrow">→</span>
+            <span className="fs__cta-arrow" aria-hidden="true">→</span>
           </a>
         </motion.div>
 
