@@ -13,7 +13,10 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e:fullstack": "npm --prefix laif-api run test:e2e:fullstack --",
     "test:e2e:list": "playwright test --config playwright.fullstack.config.ts --list",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:landing": "npm --prefix landing run build",
+    "lint:landing": "npm --prefix landing run lint",
+    "check:all": "npm run lint && npm run test:run && npm run build && npm run lint:landing && npm run build:landing"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
