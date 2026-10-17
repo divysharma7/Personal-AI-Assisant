@@ -5,6 +5,7 @@ import {
   Flame,
   Bell,
   Clock,
+  Calendar,
 } from "lucide-react";
 import "./blue-visual.css";
 
@@ -100,12 +101,6 @@ function ClockToken() {
 
 /**
  * BlueVisual: "Scattered Life → Life OS Pulls It Together → Calm Order"
- *
- * Visual Concept:
- *   - The central product acts as a magnetic anchor (gravity center).
- *   - Small 3D tactile tokens orbit from the left and connect via subtle curved gravity lines.
- *   - Overlapping tokens on the edges break rigid card boundaries.
- *   - The right side delivers visual proof: large numbers ("Less to hold in your head").
  */
 export function BlueVisual() {
   return (
@@ -114,6 +109,86 @@ export function BlueVisual() {
       role="region"
       aria-label="How Life OS brings scattered daily tasks, calendar, habits, and focus into one calm center"
     >
+      {/* ── DEDICATED MOBILE COMPOSITION (<768px): Unified Daily Overview ── */}
+      <div className="blue-mobile-card" aria-label="Mobile Unified Workspace Overview">
+        {/* Topbar */}
+        <div className="blue-mob__topbar">
+          <div className="blue-mob__brand">
+            <CheckCircle2 size={13} className="blue-mob__brand-icon" strokeWidth={2.8} />
+            <span className="blue-mob__brand-name">Life OS</span>
+            <span className="blue-mob__date">Today · Thu 16</span>
+          </div>
+          <div className="blue-mob__badge">
+            <span className="blue-mob__dot" aria-hidden="true" />
+            <span>Aligned</span>
+          </div>
+        </div>
+
+        {/* Headline */}
+        <div className="blue-mob__header">
+          <h4 className="blue-mob__title">Good morning</h4>
+          <span className="blue-mob__capacity">
+            3 priorities · <strong>2h 10m left</strong>
+          </span>
+        </div>
+
+        {/* 3 Unified Pillars: Calendar, Priority Task, Daily Habits */}
+        <div className="blue-mob__pillars">
+          {/* Pillar 1: Calendar */}
+          <div className="blue-mob__row blue-mob__row--cal">
+            <div className="blue-mob__row-left">
+              <span className="blue-mob__icon-box blue-mob__icon-box--cal">
+                <Calendar size={13} />
+              </span>
+              <div className="blue-mob__row-text">
+                <p className="blue-mob__row-title">Team product sync</p>
+                <span className="blue-mob__row-sub">10:00 AM · Google Meet</span>
+              </div>
+            </div>
+            <span className="blue-mob__pill blue-mob__pill--cal">Calendar</span>
+          </div>
+
+          {/* Pillar 2: Priority Task */}
+          <div className="blue-mob__row blue-mob__row--task">
+            <div className="blue-mob__row-left">
+              <span className="blue-mob__idx">01</span>
+              <div className="blue-mob__row-text">
+                <p className="blue-mob__row-title">Ship auth bugfix</p>
+                <span className="blue-mob__row-sub">Next queued task</span>
+              </div>
+            </div>
+            <span className="blue-mob__pill blue-mob__pill--priority">Top priority</span>
+          </div>
+
+          {/* Pillar 3: Habit Routine */}
+          <div className="blue-mob__habit-card">
+            <div className="blue-mob__habit-header">
+              <span className="blue-mob__habit-title">Daily Habits</span>
+              <span className="blue-mob__habit-count">2 of 3 completed</span>
+            </div>
+            <div className="blue-mob__chips">
+              <div className="blue-mob__chip blue-mob__chip--done">
+                <Check size={11} strokeWidth={2.6} />
+                <span>Run 5km</span>
+              </div>
+              <div className="blue-mob__chip blue-mob__chip--done">
+                <Check size={11} strokeWidth={2.6} />
+                <span>Read 30m</span>
+              </div>
+              <div className="blue-mob__chip blue-mob__chip--pending">
+                <Flame size={11} className="blue-mob__flame-icon" />
+                <span>Meditate</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom AI Context Ribbon */}
+        <div className="blue-mob__ai">
+          <Sparkles size={12} className="blue-mob__ai-icon" />
+          <p className="blue-mob__ai-text">You're on track. All daily tools in one morning flow.</p>
+        </div>
+      </div>
       {/* ── BACKGROUND GRAVITY CONNECTOR LINES (SVG) ── */}
       <svg
         className="blue-gravity-svg"

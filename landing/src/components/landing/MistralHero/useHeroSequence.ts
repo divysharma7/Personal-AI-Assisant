@@ -1,30 +1,47 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback, type RefObject } from "react";
+import { useScroll, useMotionValueEvent } from "framer-motion";
 
 export type HeroPhase = "full" | "statement" | "strip" | "return";
 
 const STATIC_MEDIA = "(prefers-reduced-motion: reduce), (max-width: 1023px)";
 
-const sequence: { phase: HeroPhase; duration: number }[] = [
-  { phase: "full", duration: 3000 },
-  { phase: "statement", duration: 2600 },
-  { phase: "strip", duration: 2600 },
-  { phase: "return", duration: 2400 },
-];
+const PHASES: HeroPhase[] = ["full", "statement", "strip", "return"];
 
 function getForcedPhase(): HeroPhase | null {
+  if (typeof window === "undefined") return null;
   const value = new URLSearchParams(window.location.search).get("heroPhase");
-  return value && sequence.some((s) => s.phase === value)
+  return value && PHASES.includes(value as HeroPhase)
     ? (value as HeroPhase)
     : null;
 }
 
 function isStaticContext(): boolean {
+  if (typeof window === "undefined") return false;
   return window.matchMedia(STATIC_MEDIA).matches;
 }
 
-export function useHeroSequence(): { phase: HeroPhase; isStatic: boolean } {
+function calculatePhase(progress: number): HeroPhase {
+  if (progress < 0.22) {
+    return "full";
+  }
+  if (progress < 0.52) {
+    return "statement";
+  }
+  if (progress < 0.8) {
+    return "strip";
+  }
+  return "return";
+}
+
+export function useHeroSequence(trackRef?: RefObject<HTMLElement | null>): {
+  phase: HeroPhase;
+  isStatic: boolean;
+  progress: number;
+  scrollToPhase: (phase: HeroPhase) => void;
+} {
   const forcedPhase = useMemo(getForcedPhase, []);
-  const [index, setIndex] = useState(0);
+  const [phase, setPhase] = useState<HeroPhase>(forcedPhase ?? "full");
+  const [progress, setProgress] = useState(0);
   const [isStatic, setIsStatic] = useState(() => !forcedPhase && isStaticContext());
 
   useEffect(() => {
@@ -36,16 +53,58 @@ export function useHeroSequence(): { phase: HeroPhase; isStatic: boolean } {
     return () => mq.removeEventListener("change", onChange);
   }, [forcedPhase]);
 
+  const { scrollYProgress } = useScroll({
+    target: trackRef as RefObject<HTMLElement>,
+    offset: ["start start", "end end"],
+  });
+
+  // Sync phase on scroll
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    setProgress(latest);
+    if (forcedPhase || isStatic) return;
+
+    const targetPhase = calculatePhase(latest);
+    setPhase((current) => (current !== targetPhase ? targetPhase : current));
+  });
+
+  // Initial position check on mount
   useEffect(() => {
     if (forcedPhase || isStatic) return;
-    const timer = window.setTimeout(() => {
-      setIndex((current) => (current + 1) % sequence.length);
-    }, sequence[index].duration);
+    const currentProgress = scrollYProgress.get();
+    if (currentProgress > 0) {
+      setProgress(currentProgress);
+      setPhase(calculatePhase(currentProgress));
+    }
+  }, [forcedPhase, isStatic, scrollYProgress]);
 
-    return () => window.clearTimeout(timer);
-  }, [index, forcedPhase, isStatic]);
+  const scrollToPhase = useCallback(
+    (targetPhase: HeroPhase) => {
+      const node = trackRef?.current;
+      if (!node || typeof window === "undefined") return;
 
-  const phase = forcedPhase ?? (isStatic ? "full" : sequence[index].phase);
+      const rect = node.getBoundingClientRect();
+      const trackTop = rect.top + window.scrollY;
+      const trackHeight = node.offsetHeight;
+      const scrollableDistance = Math.max(0, trackHeight - window.innerHeight);
 
-  return { phase, isStatic };
+      const milestoneProgress: Record<HeroPhase, number> = {
+        full: 0.05,
+        statement: 0.35,
+        strip: 0.65,
+        return: 0.9,
+      };
+
+      const targetScroll =
+        trackTop + scrollableDistance * milestoneProgress[targetPhase];
+      window.scrollTo({ top: targetScroll, behavior: "smooth" });
+    },
+    [trackRef]
+  );
+
+  return {
+    phase: forcedPhase ?? (isStatic ? "full" : phase),
+    isStatic,
+    progress,
+    scrollToPhase,
+  };
 }

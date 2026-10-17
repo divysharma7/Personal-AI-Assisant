@@ -472,51 +472,220 @@
 }
 
 @media (max-width: 860px) {
+  .ritual-flow-canvas {
+    grid-template-columns: 24% 36% 24% 16%;
+    gap: 8px;
+  }
+}
+
+/* ── MOBILE: Dedicated Morning Ritual Hero Composition ── */
+@media (max-width: 767px) {
   .ritual-stage {
-    padding: 16px;
+    padding: 24px 16px;
     height: auto;
-    overflow-y: auto;
+    min-height: auto;
+    max-height: none;
+    overflow: visible;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
   }
 
-  .ritual-path-svg {
-    display: none;
-  }
+  /* Hide desktop-only elements */
+  .ritual-path-svg { display: none; }
 
+  /* Single centered column */
   .ritual-flow-canvas {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    align-items: center;
+    gap: 0;
     position: relative;
-    padding-left: 20px;
-    box-sizing: border-box;
+    padding: 0;
     width: 100%;
+    max-width: 360px;
+    height: auto;
+    box-sizing: border-box;
   }
 
-  /* Vertical ritual spine on mobile */
+  /* Remove chronology spine and pseudo elements */
   .ritual-flow-canvas::before {
-    content: "";
-    position: absolute;
-    left: 4px;
-    top: 10px;
-    bottom: 20px;
-    width: 1.5px;
-    background: #cbd5e1;
+    display: none;
+    content: none;
   }
 
+  /* Focus solely on the Morning Ritual Moment as the mobile hero */
   .ritual-moment {
     transform: none !important;
     width: 100%;
+    position: relative;
+    padding: 0;
+    margin: 0;
   }
 
+  .ritual-moment::before {
+    display: none;
+    content: none;
+  }
+
+  /* Hide redundant moments on mobile for a calm, purposeful presentation */
+  .ritual-moment--focus { display: none; }
+  .ritual-moment--evening { display: none; }
+  .ritual-moment--tomorrow { display: none; }
+
+  /* Time + tag meta */
+  .ritual-moment__meta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-bottom: 8px;
+    gap: 8px;
+  }
+
+  .ritual-moment__time {
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+  }
+
+  .ritual-moment__tag {
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+
+  /* Morning Ritual Card as tactile hero */
   .ritual-card {
     max-width: 100% !important;
+    width: 100%;
+    box-sizing: border-box;
   }
 
-  .ritual-focus__timer {
-    font-size: 36px;
+  .ritual-card--morning {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 16px;
+    padding: 16px 16px 14px;
+    box-shadow:
+      0 12px 28px -6px rgba(15, 23, 42, 0.08),
+      0 4px 10px -2px rgba(15, 23, 42, 0.04);
   }
 
-  .ritual-tomorrow {
-    padding-left: 0;
+  .ritual-morning__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .ritual-morning__title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+  }
+
+  .ritual-morning__capacity-pill {
+    font-size: 12px;
+    font-weight: 500;
+    color: #4338ca;
+    background: rgba(99, 102, 241, 0.09);
+    border: 1px solid rgba(99, 102, 241, 0.18);
+    padding: 6px 10px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .ritual-morning__sub {
+    font-size: 11.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+    margin: 0 0 8px;
+  }
+
+  .ritual-morning__tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .ritual-morning__task-row {
+    font-size: 13px;
+    font-weight: 500;
+    color: #1e293b;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .ritual-morning__task-row--top {
+    background: rgba(99, 102, 241, 0.04);
+    border-color: rgba(99, 102, 241, 0.16);
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .ritual-morning__task-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ritual-morning__radio {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1.75px solid #94a3b8;
+    flex-shrink: 0;
+  }
+
+  .ritual-morning__task-row--top .ritual-morning__radio {
+    border-color: #6366f1;
+  }
+
+  .ritual-morning__badge {
+    font-size: 10px;
+    font-weight: 600;
+    color: #4f46e5;
+    background: rgba(99, 102, 241, 0.1);
+    padding: 2px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .ritual-morning__footer {
+    font-size: 11px;
+    color: #94a3b8;
+    padding-top: 8px;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .ritual-moment__microcopy {
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #6366f1;
+    text-align: center;
   }
 }
+

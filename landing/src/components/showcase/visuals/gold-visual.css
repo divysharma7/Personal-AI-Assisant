@@ -439,6 +439,102 @@
   }
 }
 
+/* ── MOBILE: Focus Engine Card as sole hero ── */
+@media (max-width: 767px) {
+  .focus-machine {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 100%;
+    padding: 24px 16px 28px;
+    gap: 0;
+  }
+
+  /* Show only the center header on mobile */
+  .focus-machine__header--left { display: none; }
+  .focus-machine__header--right { display: none; }
+
+  .focus-machine__header--center {
+    text-align: center;
+    margin-bottom: 16px;
+    width: 100%;
+    min-height: auto;
+  }
+
+  .focus-machine__title {
+    font-size: clamp(24px, 6vw, 32px);
+    margin-bottom: 6px;
+  }
+
+  .focus-machine__sub {
+    font-size: 13px;
+    margin-inline: auto;
+    max-width: 280px;
+  }
+
+  .focus-machine__eyebrow {
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+
+  /* Hide side feature columns */
+  .focus-machine__body--left { display: none; }
+  .focus-machine__body--right { display: none; }
+
+  /* Hide all connectors */
+  .focus-machine__connector-left { display: none; }
+  .focus-machine__connector-right { display: none; }
+  .focus-machine__connector-mobile { display: none; }
+
+  /* Focus Engine Card is the hero */
+  .focus-machine__body--center {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .focus-engine-card {
+    max-width: 320px;
+    width: 100%;
+    padding: 16px 20px;
+    border-radius: 20px;
+  }
+
+  /* Status header */
+  .focus-engine-card__header { margin-bottom: 8px; }
+  .focus-engine-card__status { font-size: 12px; gap: 6px; }
+  .focus-engine-card__pulse-dot { width: 8px; height: 8px; }
+  .focus-engine-card__pill { font-size: 11px; }
+
+  /* Circular gauge: stays dominant */
+  .focus-engine-card__gauge-wrap {
+    width: 130px;
+    height: 130px;
+    margin: 0 auto;
+  }
+
+  .focus-engine-card__timer {
+    font-size: 28px;
+    margin-bottom: 3px;
+  }
+
+  .focus-engine-card__label {
+    font-size: 11px;
+  }
+
+  /* Divider */
+  .focus-engine-card__divider { margin: 12px 0 10px; }
+
+  /* Footer: task + hide Open Session CTA */
+  .focus-engine-card__footer { gap: 8px; }
+  .focus-engine-card__task-icon { width: 14px; height: 14px; }
+  .focus-engine-card__task-prefix { font-size: 11px; }
+  .focus-engine-card__task-name { font-size: 12px; }
+
+  /* Hide CTA inside visual per spec */
+  .focus-engine-card__btn { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .feature-icon {
     transition: none;
@@ -448,3 +544,4 @@
     transition: none;
   }
 }
+

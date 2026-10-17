@@ -1,0 +1,492 @@
+/* ── Life OS Signature Retro-Clone Hero Section ── */
+
+.mistral-hero-clone {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - var(--nav-height, 64px));
+  min-height: 560px;
+  background: var(--bg-canvas, #050810);
+  color: var(--text-primary, #f1f3f7);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+/* Atmospheric subtle indigo ambient glow behind the headline */
+.hero-ambient-glow {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(1150px, 92vw);
+  height: 600px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(120, 124, 248, 0.14) 0%,
+    rgba(67, 56, 202, 0.06) 45%,
+    transparent 72%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Concentric wireframe arcs in top left */
+.hero-wireframe-arc-outer {
+  position: absolute;
+  top: -138px;
+  left: -138px;
+  width: 506px;
+  height: 506px;
+  border-radius: 50%;
+  border: 1px solid rgba(120, 124, 248, 0.12);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hero-wireframe-arc-inner {
+  position: absolute;
+  top: -69px;
+  left: -69px;
+  width: 322px;
+  height: 322px;
+  border-radius: 50%;
+  border: 1px solid rgba(120, 124, 248, 0.06);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Vertical guide lines aligned to Life OS margins */
+.hero-guideline-left {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: clamp(24px, 4.5vw, 64px);
+  width: 1px;
+  background: rgba(120, 124, 248, 0.08);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hero-guideline-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: clamp(24px, 4.5vw, 64px);
+  width: 1px;
+  background: rgba(120, 124, 248, 0.08);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Top Center: Arcade Claw Crane ── */
+.hero-crane-wrapper {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) scale(1.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 10;
+  animation: craneSway 5s ease-in-out infinite;
+}
+
+@keyframes craneSway {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0) scale(1.15);
+  }
+  50% {
+    transform: translateX(-50%) translateY(7px) scale(1.15);
+  }
+}
+
+/* ── Center Headline ── */
+/* ── Center Headline ── */
+.hero-center-content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  max-width: 1130px;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hero-clone-headline {
+  font-family: var(--font-sans, "Inter", system-ui, -apple-system, sans-serif);
+  font-size: clamp(44px, 6.7vw, 90px);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+  margin: 0;
+  color: var(--text-primary, #ffffff);
+}
+
+/* ── Life OS Original Pixel Flag ── */
+.hero-flag-inline-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: -0.1em;
+  margin: 0 0.08em;
+}
+
+.hero-flag-svg {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  transform-origin: 20% 80%;
+  animation: lifeOsFlagWave 3.2s ease-in-out infinite;
+  filter: drop-shadow(0 2px 10px rgba(120, 124, 248, 0.4));
+}
+
+@keyframes lifeOsFlagWave {
+  0%, 100% {
+    transform: rotate(0deg) skewY(0deg);
+  }
+  35% {
+    transform: rotate(-3.5deg) skewY(2.5deg);
+  }
+  70% {
+    transform: rotate(2.5deg) skewY(-2deg);
+  }
+}
+
+/* ── Supporting Statement ── */
+.hero-supporting-statement {
+  font-family: var(--font-sans, "Inter", system-ui, -apple-system, sans-serif);
+  font-size: clamp(17px, 1.85vw, 22px);
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-secondary, #94a3b8);
+  max-width: 620px;
+  margin: clamp(16px, 2.1vw, 24px) auto 0;
+  letter-spacing: -0.012em;
+  text-align: center;
+}
+
+/* ── Interactive CTA Zone with Orange Cat Peek on Hover ── */
+.hero-cta-interactive-zone {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: clamp(28px, 3.7vw, 42px);
+  z-index: 25;
+}
+
+/* The Orange Cat rests hidden behind the top edge of the pill in normal state */
+.hero-orange-cat-peek {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(20%) scale(1.05);
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.6));
+}
+
+/* Hover & Keyboard Focus: The Orange Cat peeks smoothly above the pill */
+.hero-cta-interactive-zone:hover .hero-orange-cat-peek,
+.hero-cta-interactive-zone:focus-within .hero-orange-cat-peek {
+  transform: translateX(-50%) translateY(-86%) scale(1.15);
+  opacity: 1;
+}
+
+.hero-cta-interactive-zone:hover .hero-orange-cat-peek svg,
+.hero-cta-interactive-zone:focus-within .hero-orange-cat-peek svg {
+  animation: orangeCatHoverBreathing 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes orangeCatHoverBreathing {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-2px);
+  }
+}
+
+.hero-announcement-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9.5px 21px;
+  border-radius: 9999px;
+  background: rgba(10, 15, 30, 0.88);
+  border: 1px solid rgba(120, 124, 248, 0.25);
+  backdrop-filter: blur(14px);
+  text-decoration: none;
+  color: var(--text-primary, #f1f3f7);
+  font-size: 15.5px;
+  font-weight: 500;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 0 20px rgba(120, 124, 248, 0.1);
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  cursor: pointer;
+}
+
+.hero-announcement-pill:hover,
+.hero-announcement-pill:focus-visible {
+  background: rgba(16, 23, 46, 0.96);
+  border-color: rgba(120, 124, 248, 0.55);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55), 0 0 26px rgba(120, 124, 248, 0.22);
+  outline: none;
+}
+
+.pill-logo-box {
+  width: 23px;
+  height: 23px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, var(--accent, #787cf8) 0%, var(--accent-dark, #4338ca) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(120, 124, 248, 0.4);
+  overflow: hidden;
+}
+
+.pill-text {
+  color: var(--text-primary, #f1f3f7);
+  letter-spacing: -0.01em;
+}
+
+.pill-chevron {
+  color: var(--accent-light, #9398fa);
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+
+.hero-announcement-pill:hover .pill-chevron,
+.hero-announcement-pill:focus-visible .pill-chevron {
+  transform: translateX(2px);
+  color: #ffffff;
+}
+
+/* ── Side Peeking Characters (Black & White Cats outside main content) ── */
+.hero-side-cat-left {
+  position: absolute;
+  left: clamp(24px, 4.5vw, 64px);
+  bottom: clamp(60px, 14vh, 120px);
+  z-index: 15;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
+  transform: scale(1.15);
+  transform-origin: bottom left;
+  transition: transform 0.3s ease-out;
+}
+
+.hero-side-cat-right {
+  position: absolute;
+  right: clamp(24px, 4.5vw, 64px);
+  bottom: clamp(72px, 16vh, 140px);
+  z-index: 15;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
+  transform: scale(1.15);
+  transform-origin: bottom right;
+  transition: transform 0.3s ease-out;
+}
+
+/* ── Bottom Left Stepped Tower + White Cat + Factory ── */
+.hero-bottom-left {
+  position: absolute;
+  bottom: 0;
+  left: clamp(24px, 4.5vw, 64px);
+  display: flex;
+  align-items: flex-end;
+  z-index: 5;
+  transform: scale(1.15);
+  transform-origin: bottom left;
+}
+
+.stepped-column-stack {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sitting white cat perched on top of gold column */
+.white-cat-perch {
+  position: absolute;
+  top: -36px;
+  left: 14px;
+  z-index: 6;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+  transition: transform 0.2s ease;
+}
+
+.white-cat-perch:hover {
+  transform: translateY(-2px);
+}
+
+/* Life OS Signature Gold Top Column */
+.block-yellow-top {
+  width: 76px;
+  height: 104px;
+  background: var(--gold, #e8b84f);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Life OS Deep Indigo Base Column */
+.block-orange-bottom {
+  width: 76px;
+  height: 84px;
+  background: var(--accent-dark, #4338ca);
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Life OS Signature Indigo Step */
+.block-yellow-step {
+  width: 38px;
+  height: 44px;
+  background: var(--accent, #787cf8);
+  align-self: flex-end;
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+}
+
+.tiny-factory-anchor {
+  margin-left: 12px;
+  margin-bottom: 0;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+}
+
+/* ── Bottom Right Orange Pillar + Diamond + Castle ── */
+.hero-bottom-right {
+  position: absolute;
+  bottom: 0;
+  right: clamp(24px, 4.5vw, 64px);
+  display: flex;
+  align-items: flex-end;
+  z-index: 5;
+  transform: scale(1.15);
+  transform-origin: bottom right;
+}
+
+.tiny-castle-anchor {
+  margin-right: 14px;
+  margin-bottom: 0;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+}
+
+.pillar-with-diamond {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Life OS Signature Indigo Rotated Diamond */
+.rotated-diamond-block {
+  position: absolute;
+  top: -50px;
+  width: 52px;
+  height: 52px;
+  background: var(--accent, #787cf8);
+  transform: rotate(45deg);
+  z-index: 6;
+  box-shadow: 0 4px 16px rgba(120, 124, 248, 0.35);
+}
+
+/* Life OS Deep Indigo Base Pillar */
+.block-orange-pillar {
+  width: 76px;
+  height: 84px;
+  background: var(--accent-dark, #4338ca);
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ── Mobile Responsive Adjustments (< 768px) ── */
+/* ── Side Cat Responsive Visibility (< 860px) ── */
+@media (max-width: 860px) {
+  .hero-side-cat-left,
+  .hero-side-cat-right {
+    display: none;
+  }
+}
+
+/* ── Mobile Responsive Adjustments (< 768px) ── */
+@media (max-width: 767px) {
+  .mistral-hero-clone {
+    height: auto;
+    min-height: 460px;
+    padding: 42px 16px 68px 16px; /* Reduced by 30% from 60px / 100px */
+  }
+
+  .hero-center-content {
+    padding: 0 12px;
+  }
+
+  .hero-guideline-left,
+  .hero-guideline-right {
+    display: none;
+  }
+
+  .hero-wireframe-arc-outer,
+  .hero-wireframe-arc-inner {
+    opacity: 0.35;
+  }
+
+  .hero-bottom-left {
+    transform: scale(0.65);
+    transform-origin: bottom left;
+    left: 8px;
+  }
+
+  .hero-bottom-right {
+    transform: scale(0.65);
+    transform-origin: bottom right;
+    right: 8px;
+  }
+
+  .hero-crane-wrapper {
+    top: 0;
+    transform: translateX(-50%) scale(0.85);
+  }
+
+  .hero-supporting-statement {
+    font-size: 15px;
+    margin: 12px auto 0; /* Reduced by 30% from 18px */
+    padding: 0 8px;
+  }
+
+  .hero-cta-interactive-zone {
+    margin-top: 22px; /* Reduced by 30% from 32px */
+  }
+
+  .hero-announcement-pill {
+    padding: 8px 16px;
+    font-size: 14px;
+    max-width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ── Accessibility: Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .hero-crane-wrapper,
+  .hero-flag-svg,
+  .hero-orange-cat-peek svg {
+    animation: none !important;
+  }
+
+  .hero-orange-cat-peek {
+    transition: opacity 0.15s ease !important;
+    transform: translateX(-50%) translateY(-86%) scale(1.15) !important;
+  }
+
+  .hero-cta-interactive-zone:not(:hover):not(:focus-within) .hero-orange-cat-peek {
+    opacity: 0 !important;
+  }
+
+  .hero-announcement-pill {
+    transition: none !important;
+  }
+}

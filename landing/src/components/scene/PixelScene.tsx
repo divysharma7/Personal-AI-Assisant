@@ -1,6 +1,11 @@
 import { useRef } from "react";
-import { PixelSprite } from "./PixelSprite";
-import { cat, catEyes, walker, ranger, hanger, jumper } from "./pixelArt";
+import {
+  ClawCrane,
+  WhiteCat,
+  BlackCat,
+  TinyFactory,
+  TinyCastle,
+} from "../pixel/PixelArtAssets";
 import { useHeroAnimationState } from "./useHeroAnimationState";
 import "./PixelScene.css";
 
@@ -15,59 +20,40 @@ export function PixelScene() {
       data-animation={shouldAnimate ? "running" : "paused"}
       aria-hidden="true"
     >
-      <div className="pixelScene__grid" />
+      {/* ── Background Subtle Indigo Wireframe Arc ── */}
+      <div className="pixelScene__wireframeArc" />
 
-      <div className="pixelScene__topMark">
-        <span className="pixelScene__topMarkCore" />
+      {/* ── Top Center Arcade Claw Crane ── */}
+      <div className="pixelScene__crane">
+        <ClawCrane />
       </div>
 
-      <div className="pixelScene__world">
-        {/* LEFT WORLD */}
-        <div className="pixelScene__edge pixelScene__edge--left">
-          <div className="pixelScene__block pixelScene__block--leftMain" />
-          <div className="pixelScene__block pixelScene__block--leftSecond" />
-          <div className="pixelScene__block pixelScene__block--leftTiny" />
-          <div className="pixelScene__diamond pixelScene__diamond--left" />
-
-          <div className="pixelScene__cat">
-            <PixelSprite art={cat} pixel={4} />
-            <PixelSprite art={catEyes} pixel={4} className="pixelScene__catEyes" />
+      {/* ── Left Edge: Gold/Indigo Tower with White Cat & Tiny Factory ── */}
+      <div className="pixelScene__edge pixelScene__edge--left">
+        <div className="pixelScene__towerLeft">
+          <div className="pixelScene__whiteCatPerch">
+            <WhiteCat flip={false} />
           </div>
-
-          <PixelSprite
-            art={walker}
-            pixel={4}
-            className="pixelScene__sprite pixelScene__sprite--leftFloor"
-          />
+          <div className="pixelScene__blockGold" />
+          <div className="pixelScene__blockIndigoBase" />
         </div>
-
-        {/* CENTER EVENT */}
-        <div className="pixelScene__centerEvent">
-          <PixelSprite
-            art={jumper}
-            pixel={4}
-            className="pixelScene__sprite pixelScene__sprite--jumper"
-          />
-          <span className="pixelScene__jumperShadow" />
+        <div className="pixelScene__stepIndigo" />
+        <div className="pixelScene__factoryAnchor">
+          <TinyFactory />
         </div>
+      </div>
 
-        {/* RIGHT WORLD */}
-        <div className="pixelScene__edge pixelScene__edge--right">
-          <div className="pixelScene__block pixelScene__block--rightMain" />
-          <div className="pixelScene__block pixelScene__block--rightSecond" />
-          <div className="pixelScene__diamond pixelScene__diamond--right" />
-
-          <PixelSprite
-            art={ranger}
-            pixel={4}
-            className="pixelScene__sprite pixelScene__sprite--rightFloor"
-          />
-
-          <PixelSprite
-            art={hanger}
-            pixel={4}
-            className="pixelScene__sprite pixelScene__sprite--rightTop"
-          />
+      {/* ── Right Edge: Indigo Pillar with Rotated Diamond, Black Cat & Castle ── */}
+      <div className="pixelScene__edge pixelScene__edge--right">
+        <div className="pixelScene__castleAnchor">
+          <TinyCastle />
+        </div>
+        <div className="pixelScene__towerRight">
+          <div className="pixelScene__tabbyCatPerch">
+            <BlackCat flip />
+          </div>
+          <div className="pixelScene__diamondRotated" />
+          <div className="pixelScene__blockIndigoBase" />
         </div>
       </div>
     </div>

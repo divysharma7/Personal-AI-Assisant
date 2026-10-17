@@ -1,5 +1,7 @@
 export interface UseCase {
   audience: string;
+  icon: string;
+  color: string;
   challenge: string;
   solution: string;
   outcome: string;
@@ -8,6 +10,8 @@ export interface UseCase {
 export const useCases: UseCase[] = [
   {
     audience: "Founders & Operators",
+    icon: "🧭",
+    color: "#787cf8",
     challenge:
       "Your day is a mix of meetings, deep work, and reactive fire-fighting. Nothing is in one place.",
     solution:
@@ -17,6 +21,8 @@ export const useCases: UseCase[] = [
   },
   {
     audience: "Engineers & Makers",
+    icon: "🛠️",
+    color: "#10b981",
     challenge:
       "You have side projects, habits you're building, and a full-time job. Context-switching kills your flow.",
     solution:
@@ -26,6 +32,8 @@ export const useCases: UseCase[] = [
   },
   {
     audience: "Product Managers",
+    icon: "🎯",
+    color: "#e8b84f",
     challenge:
       "You manage backlogs, write specs, attend reviews, and try to maintain habits. Every tool is separate.",
     solution:
@@ -35,6 +43,8 @@ export const useCases: UseCase[] = [
   },
   {
     audience: "Knowledge Workers",
+    icon: "🧠",
+    color: "#ec4899",
     challenge:
       "You read articles, attend meetings, and have ideas, but nothing gets captured or revisited.",
     solution:

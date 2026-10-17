@@ -29,7 +29,7 @@ export function CaseStudyPreview() {
             </Link>
           </div>
           <div className="relative min-h-[205px] overflow-hidden rounded-xl border border-border bg-bg-canvas p-5 md:min-h-[240px]">
-            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
+            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "linear-gradient(var(--line-color) 1px, transparent 1px), linear-gradient(90deg, var(--line-color) 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
             <div className="relative flex h-full min-h-[165px] flex-col justify-between">
               <div className="flex items-center justify-between text-xs font-medium text-text-muted">
                 <span>Empirical research to direction</span>
@@ -50,3 +50,4 @@ export function CaseStudyPreview() {
     </section>
   );
 }
+

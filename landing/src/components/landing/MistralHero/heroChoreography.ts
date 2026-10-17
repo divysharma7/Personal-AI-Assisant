@@ -1,4 +1,4 @@
-import type { Transition } from "motion/react";
+import type { Transition } from "framer-motion";
 import type { HeroPhase } from "./useHeroSequence";
 
 export const spatialTransition: Transition = {

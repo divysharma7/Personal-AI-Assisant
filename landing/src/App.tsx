@@ -8,6 +8,7 @@ import { Footer } from "./components/Footer";
 import HomePage from "./pages/HomePage";
 
 const LifeOsCaseStudyPage = lazy(() => import("./pages/LifeOsCaseStudyPage"));
+const AboutPage = lazy(() => import("./pages/AboutPage"));
 
 export default function App() {
   return (
@@ -23,6 +24,14 @@ export default function App() {
             <main id="main-content" tabIndex={-1} className="outline-none">
               <Routes>
                 <Route path="/" element={<HomePage />} />
+                <Route
+                  path="/about"
+                  element={
+                    <Suspense fallback={<div className="px-6 py-20 text-center text-sm text-slate-500">Loading...</div>}>
+                      <AboutPage />
+                    </Suspense>
+                  }
+                />
                 <Route path="/case-study/life-os" element={<Suspense fallback={<div className="px-6 py-20 text-center text-sm text-slate-500">Loading the case study...</div>}><LifeOsCaseStudyPage /></Suspense>} />
                 <Route path="/case-study/life-os/:phase" element={<Suspense fallback={<div className="px-6 py-20 text-center text-sm text-slate-500">Loading the case study...</div>}><LifeOsCaseStudyPage /></Suspense>} />
               </Routes>

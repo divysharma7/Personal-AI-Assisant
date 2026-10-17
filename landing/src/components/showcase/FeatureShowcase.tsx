@@ -16,7 +16,7 @@ export function FeatureShowcase({ data, children }: Props) {
   return (
     <section ref={ref} className={`fs fs--${data.theme}`} aria-label={data.title}>
       <PageContainer>
-        {/* Header: heading + CTA */}
+        {/* 1. Heading */}
         <motion.div
           className="fs__header"
           initial={{ opacity: 0, y: 20 }}
@@ -24,15 +24,11 @@ export function FeatureShowcase({ data, children }: Props) {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
           <h2 className="fs__title">{data.title}</h2>
-          <a href="#demo" className="button-secondary !min-h-[36px] !px-3.5 !text-sm">
-            {data.cta}
-            <span className="fs__cta-arrow" aria-hidden="true">→</span>
-          </a>
         </motion.div>
 
         <div className="fs__divider" />
 
-        {/* Description */}
+        {/* 2. Supporting paragraph */}
         <motion.p
           className="fs__description"
           initial={{ opacity: 0, y: 16 }}
@@ -42,7 +38,7 @@ export function FeatureShowcase({ data, children }: Props) {
           {data.description}
         </motion.p>
 
-        {/* Colored media canvas — only this gets the accent color */}
+        {/* 3. Product visual / dashboard mockup */}
         <motion.div
           className={`fs__visual fs__visual--${data.theme}`}
           initial={{ opacity: 0, y: 30 }}
@@ -52,7 +48,7 @@ export function FeatureShowcase({ data, children }: Props) {
           <div className="fs__canvas-content">{children}</div>
         </motion.div>
 
-        {/* Tags — flush with the canvas edge */}
+        {/* 4. Tags / chips */}
         <div className="fs__tags">
           {data.tags.map((tag, i) => (
             <motion.span
@@ -70,6 +66,18 @@ export function FeatureShowcase({ data, children }: Props) {
             </motion.span>
           ))}
         </div>
+
+        {/* 5. CTA at the bottom */}
+        <motion.div
+          className="fs__action"
+          initial={{ opacity: 0, y: 12 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <a href="#demo" className="button-secondary button-sm">
+            {data.cta}
+          </a>
+        </motion.div>
       </PageContainer>
     </section>
   );

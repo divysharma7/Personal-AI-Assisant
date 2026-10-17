@@ -210,6 +210,16 @@
     box-shadow: none;
   }
 
+  .button-sm {
+    min-height: 36px;
+    padding: 0 14px;
+    font-size: 14px;
+  }
+
+  .button-primary.button-sm {
+    padding: 0 16px;
+  }
+
   .btn3d--sm {
     min-height: 38px;
     padding: 0 14px;
@@ -294,135 +304,6 @@
     background-size: 64px 64px;
   }
 
-  /* ── Mistral-style sticky scroll hero ── */
-  /* Pure CSS: position:sticky + native scroll. No JS. */
-
-  .hero-transition {
-    position: relative;
-    min-height: 200vh;
-  }
-
-  .hero-transition__layout {
-    display: grid;
-    grid-template-columns: minmax(0, 7fr) minmax(280px, 3fr);
-    align-items: start;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 40px;
-    gap: 48px;
-  }
-
-  .hero-transition__flow {
-    padding-top: 140px;
-  }
-
-  .hero-transition__sticky {
-    position: sticky;
-    top: 0;
-    height: 100dvh;
-    display: flex;
-    align-items: center;
-    padding: 80px 0;
-  }
-
-  /* Mission content: 600ms delayed fade-in, like Mistral's js-col-middle-middle */
-  @keyframes missionFadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(16px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .hero-mission {
-    animation: missionFadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.6s both;
-  }
-
-  /* Mission icons: staggered entrance after mission fade-in */
-  @keyframes iconSlideIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .hero-mission__icon {
-    opacity: 0;
-    animation: iconSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
-  }
-
-  /* Primary headline: no transforms needed — native scroll does the work */
-
-  /* Tablet */
-  @media (min-width: 768px) and (max-width: 1023px) {
-    .hero-transition {
-      min-height: 170vh;
-    }
-
-    .hero-transition__layout {
-      grid-template-columns: minmax(0, 6fr) minmax(240px, 4fr);
-      gap: 24px;
-      padding: 0 32px;
-    }
-  }
-
-  /* Mobile: single column, no sticky */
-  @media (max-width: 767px) {
-    .hero-transition {
-      min-height: auto;
-    }
-
-    .hero-transition__layout {
-      grid-template-columns: 1fr;
-      padding: 0 24px;
-      gap: 48px;
-    }
-
-    .hero-transition__flow {
-      padding-top: 60px;
-    }
-
-    .hero-transition__sticky {
-      position: relative;
-      height: auto;
-      padding: 0 0 40px;
-    }
-  }
-
-  /* Reduced motion */
-  @media (prefers-reduced-motion: reduce) {
-    .hero-transition {
-      min-height: auto;
-    }
-
-    .hero-transition__layout {
-      grid-template-columns: 1fr;
-    }
-
-    .hero-transition__sticky {
-      position: relative;
-      height: auto;
-    }
-
-    .hero-mission {
-      animation: none;
-      opacity: 1;
-    }
-
-    .hero-mission__icon {
-      animation: none;
-      opacity: 1;
-    }
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

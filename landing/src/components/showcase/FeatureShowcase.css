@@ -13,11 +13,7 @@
 /* ── Header ── */
 
 .fs__header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 40px;
+  margin-bottom: 36px;
 }
 
 .fs__title {
@@ -186,6 +182,14 @@
   border: 1px solid var(--border-color);
 }
 
+/* ── Action / CTA at bottom ── */
+
+.fs__action {
+  margin-top: 28px;
+  display: flex;
+  justify-content: flex-start;
+}
+
 /* ── Visual internals: content fills the canvas ── */
 
 .fs__canvas-content {
@@ -291,9 +295,7 @@
   }
 
   .fs__header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    margin-bottom: 24px;
   }
 
   .fs__title {
@@ -304,17 +306,46 @@
     font-size: 16px;
   }
 
-  .fs__visual {
-    aspect-ratio: 4 / 3;
+  /* Remove forced aspect-ratio — each visual defines its own mobile height */
+  .fs__visual,
+  .fs__visual--blue,
+  .fs__visual--light,
+  .fs__visual--gold,
+  .fs__visual--dark {
+    aspect-ratio: auto;
+    overflow: hidden;
+    border-radius: 16px;
   }
 
-  .fs__canvas-content {
-    padding: 16px;
+  /* Switch from absolute to relative so content defines the container height */
+  .fs__canvas-content,
+  .fs__visual--blue .fs__canvas-content,
+  .fs__visual--light .fs__canvas-content,
+  .fs__visual--gold .fs__canvas-content,
+  .fs__visual--dark .fs__canvas-content {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: auto;
+    min-height: auto;
+    padding: 0;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
   }
 
   .fs__tags {
     margin-top: 28px;
     gap: 6px;
+  }
+
+  /* Hide tags beyond the 3rd for a calmer mobile presentation */
+  .fs__tag:nth-child(n + 4) {
+    display: none;
+  }
+
+  .fs__action {
+    margin-top: 24px;
   }
 
   .fs__tag {

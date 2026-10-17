@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { useInView } from "../hooks/useInView";
 import { ArrowRight } from "lucide-react";
-import { PixelScene, PixelSprite, flag } from "./scene";
+import { PixelScene } from "./scene";
+import { PixelFlag } from "./pixel/PixelArtAssets";
 import { PageContainer } from "./layout/PageContainer";
 
 export function FinalCTA() {
@@ -12,7 +13,7 @@ export function FinalCTA() {
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-bg-primary via-bg-secondary to-bg-primary" />
       <div className="absolute inset-0 grid-bg opacity-50" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-accent/5 blur-[100px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[450px] bg-accent/10 blur-[120px] rounded-full pointer-events-none" />
 
       <PixelScene />
 
@@ -31,11 +32,7 @@ export function FinalCTA() {
           <h2 className="type-section text-text-primary mb-5">
             Stop managing apps.
             <br />
-            <PixelSprite
-              art={flag}
-              pixel={5}
-              className="inline-block align-middle mr-3"
-            />
+            <PixelFlag className="mr-2" />
             Start running your day.
           </h2>
 

@@ -1,0 +1,36 @@
+name: Verify Workspace
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Lint, Test & Build (Product + Landing)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            landing/package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install landing dependencies
+        run: npm --prefix landing ci
+
+      - name: Run unified workspace verification
+        run: npm run check:all

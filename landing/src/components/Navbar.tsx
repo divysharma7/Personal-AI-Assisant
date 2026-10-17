@@ -114,7 +114,7 @@ export function Navbar() {
           >
             {navigation.login.label}
           </a>
-          <a href={navigation.cta.href} className="button-primary !min-h-[36px] !px-4 !text-sm">
+          <a href={navigation.cta.href} className="button-primary button-sm">
             {navigation.cta.label}
           </a>
         </div>
@@ -180,7 +180,7 @@ export function Navbar() {
                 </a>
                 <a
                   href={navigation.cta.href}
-                  className="button-primary !min-h-[40px] !text-sm"
+                  className="button-primary"
                   onClick={() => setMobileOpen(false)}
                 >
                   {navigation.cta.label}
