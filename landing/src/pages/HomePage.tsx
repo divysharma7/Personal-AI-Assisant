@@ -1,4 +1,4 @@
-import { MistralHero } from "../components/landing/MistralHero";
+import HeroTransition from "../components/home/HeroTransition";
 import { ProblemSection } from "../components/ProblemSection";
 import { SystemSection } from "../components/SystemSection";
 import { WorkflowSection } from "../components/WorkflowSection";
@@ -27,7 +27,7 @@ const visuals = [
 export default function HomePage() {
   return (
     <>
-      <MistralHero />
+      <HeroTransition />
       <ProblemSection />
       <SystemSection />
       <WorkflowSection />
