@@ -3,8 +3,8 @@
 .grid-expand-section {
   position: relative;
   width: 100%;
-  height: 100vh;
-  height: 100svh;
+  height: calc(100vh - var(--total-header-height, 105px));
+  height: calc(100svh - var(--total-header-height, 105px));
   background: var(--bg-canvas, #050810);
   color: var(--text-primary, #f1f3f7);
   overflow: hidden;

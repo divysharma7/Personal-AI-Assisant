@@ -11,11 +11,11 @@ gsap.registerPlugin(ScrollTrigger)
 // TUNABLE CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
 export const PIN_END = '+=150%'          // Scroll distance to complete scrubbed animation
-export const SCRUB_VALUE = 0.8           // 0.8 for responsive, butter-smooth tracking
+export const SCRUB_VALUE = 0.5           // 0.5 for tight, steady tracking (or true for exact 1:1)
 export const GRID_GAP = 12               // Initial gap between grid cells in pixels
 export const BORDER_RADIUS = 16          // Initial border radius of cells in pixels
 export const TIMELINE_EASE = 'none'      // Ease for master scrubbed timeline
-export const TWEEN_EASE = 'power2.inOut' // Ease for track collapse & interpolation
+export const TWEEN_EASE = 'none'         // Linear ease: strictly steady speed without acceleration/deceleration
 
 // Safe isomorphic layout effect for React / SSR environments
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
@@ -55,6 +55,22 @@ export default function HeroTransition() {
     const grid = q('.expand-grid')[0] as HTMLElement | undefined
     if (!grid) return
 
+    // Dynamically measure announcement banner and sticky navbar
+    const updateHeaderDimensions = () => {
+      const banner = document.querySelector('[role="region"][aria-label="Announcement"]') as HTMLElement | null
+      const nav = document.querySelector('header') as HTMLElement | null
+      const bannerH = banner ? banner.offsetHeight : 0
+      const navH = nav ? nav.offsetHeight : 64
+      const totalH = bannerH + navH
+
+      section.style.setProperty('--banner-height', `${bannerH}px`)
+      section.style.setProperty('--nav-height', `${navH}px`)
+      section.style.setProperty('--total-header-height', `${totalH}px`)
+      return { bannerH, navH, totalH }
+    }
+
+    updateHeaderDimensions()
+
     const mm = gsap.matchMedia()
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -63,6 +79,8 @@ export default function HeroTransition() {
     mm.add(
       '(min-width: 768px) and (prefers-reduced-motion: no-preference)',
       () => {
+        updateHeaderDimensions()
+
         // Initial 3:1 column ratio (75% / 25%) and 1:2 row ratio (33.333% / 66.667%)
         grid.style.setProperty('--col-a', '75%')
         grid.style.setProperty('--col-b', '25%')
@@ -83,7 +101,8 @@ export default function HeroTransition() {
         const tl = gsap.timeline({
           scrollTrigger: {
             trigger: section,
-            start: 'top top',
+            // Pins right below the sticky navbar once the announcement banner scrolls away
+            start: () => `top ${document.querySelector('header')?.offsetHeight || 64}px`,
             end: PIN_END,
             pin: true,
             pinSpacing: true,
@@ -112,11 +131,11 @@ export default function HeroTransition() {
               const heightB = 100 - heightA
               const gap = GRID_GAP * (1 - p)
 
-              grid.style.setProperty('--col-a', `${widthA.toFixed(3)}%`)
-              grid.style.setProperty('--col-b', `${widthB.toFixed(3)}%`)
-              grid.style.setProperty('--row-a', `${heightA.toFixed(3)}%`)
-              grid.style.setProperty('--row-b', `${heightB.toFixed(3)}%`)
-              grid.style.setProperty('--grid-gap', `${gap.toFixed(2)}px`)
+              grid.style.setProperty('--col-a', `${widthA}%`)
+              grid.style.setProperty('--col-b', `${widthB}%`)
+              grid.style.setProperty('--row-a', `${heightA}%`)
+              grid.style.setProperty('--row-b', `${heightB}%`)
+              grid.style.setProperty('--grid-gap', `${gap}px`)
             },
           },
           0
