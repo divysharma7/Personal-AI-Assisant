@@ -1,12 +1,14 @@
 import { motion } from "framer-motion";
 import { useInView } from "../hooks/useInView";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { PixelScene } from "./scene";
 import { PixelFlag } from "./pixel/PixelArtAssets";
 import { PageContainer } from "./layout/PageContainer";
+import { useWaitlistModal } from "../context/WaitlistContext";
 
 export function FinalCTA() {
-  const { ref, inView } = useInView();
+  const { inView, ref } = useInView();
+  const { openWaitlist } = useWaitlistModal();
 
   return (
     <section className="section-padding relative overflow-hidden" id="cta">
@@ -25,8 +27,9 @@ export function FinalCTA() {
           transition={{ duration: 0.6 }}
           className="max-w-text mx-auto text-center"
         >
-          <span className="inline-block type-eyebrow text-accent mb-3">
-            Ready to begin?
+          <span className="inline-flex items-center gap-1.5 type-eyebrow text-accent mb-3">
+            <Sparkles size={13} />
+            Early Access Cohort
           </span>
 
           <h2 className="type-section text-text-primary mb-5">
@@ -37,18 +40,18 @@ export function FinalCTA() {
           </h2>
 
           <p className="type-body text-text-secondary mb-10 max-w-[480px] mx-auto leading-relaxed">
-            Life OS is free to start. No credit card, no setup wizard, no 30-minute
-            onboarding video. Sign up and you're in.
+            We are rolling out early access in limited weekly batches. Reserve your spot today to secure priority access.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a href="https://laif-iota.vercel.app/signup" className="button-primary">
-              Get started free
+            <button
+              type="button"
+              onClick={openWaitlist}
+              className="button-primary"
+            >
+              Join the Waitlist
               <ArrowRight size={16} aria-hidden="true" />
-            </a>
-            <a href="https://laif-iota.vercel.app/login" className="button-secondary">
-              Log in
-            </a>
+            </button>
           </div>
         </motion.div>
       </PageContainer>

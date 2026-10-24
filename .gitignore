@@ -69,3 +69,7 @@ client_secret*.json
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Supabase CLI local metadata
+/supabase/
+landing/supabase/

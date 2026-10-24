@@ -6,9 +6,12 @@ import { navigation } from "../data/navigation";
 import { PageContainer } from "./layout/PageContainer";
 import { LifeOsMark } from "./brand/LifeOsLogo";
 import { useTheme } from "../context/ThemeContext";
+import { useWaitlistModal } from "../context/WaitlistContext";
 
 export function Navbar() {
+  const { openWaitlist } = useWaitlistModal();
   const [scrolled, setScrolled] = useState(false);
+
   const [mobileOpen, setMobileOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const { theme, toggleTheme } = useTheme();
@@ -114,9 +117,13 @@ export function Navbar() {
           >
             {navigation.login.label}
           </a>
-          <a href={navigation.cta.href} className="button-primary button-sm">
-            {navigation.cta.label}
-          </a>
+          <button
+            type="button"
+            onClick={openWaitlist}
+            className="button-primary button-sm"
+          >
+            Join Waitlist
+          </button>
         </div>
 
         <div className="flex md:hidden items-center gap-2">
@@ -178,13 +185,16 @@ export function Navbar() {
                 >
                   {navigation.login.label}
                 </a>
-                <a
-                  href={navigation.cta.href}
-                  className="button-primary"
-                  onClick={() => setMobileOpen(false)}
+                <button
+                  type="button"
+                  className="button-primary text-center justify-center"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    openWaitlist();
+                  }}
                 >
-                  {navigation.cta.label}
-                </a>
+                  Join Waitlist
+                </button>
               </div>
             </PageContainer>
           </motion.div>

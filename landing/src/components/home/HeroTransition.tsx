@@ -3,6 +3,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ChevronRight } from "lucide-react";
 import { LifeOsMark } from "../brand/LifeOsLogo";
+import { useWaitlistModal } from "../../context/WaitlistContext";
 import {
   PixelFlag,
   ClawCrane,
@@ -21,11 +22,13 @@ const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 export default function HeroTransition() {
+  const { openWaitlist } = useWaitlistModal();
   const sectionRef = useRef<HTMLElement>(null);
   const headlineRef = useRef<HTMLDivElement>(null);
   const craneRef = useRef<HTMLDivElement>(null);
   const leftCatRef = useRef<HTMLDivElement>(null);
   const rightCatRef = useRef<HTMLDivElement>(null);
+
 
   useIsomorphicLayoutEffect(() => {
     const section = sectionRef.current;
@@ -149,19 +152,21 @@ export default function HeroTransition() {
           <div className="hero-orange-cat-peek" aria-hidden="true">
             <OrangeCat />
           </div>
-          <a
-            href="#product"
+          <button
+            type="button"
+            onClick={openWaitlist}
             className="hero-announcement-pill"
-            aria-label="Introducing Life OS"
+            aria-label="Introducing Life OS - Join Waitlist"
           >
             <div className="pill-logo-box">
               <LifeOsMark size={16} />
             </div>
-            <span className="pill-text">Introducing Life OS</span>
+            <span className="pill-text">Introducing Life OS • Join Waitlist</span>
             <ChevronRight size={16} className="pill-chevron" />
-          </a>
+          </button>
         </div>
       </div>
+
 
       {/* ── Bottom Left Stepped Tower + Tiny Factory ── */}
       <div className="hero-bottom-left">
